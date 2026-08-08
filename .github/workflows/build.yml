@@ -1,0 +1,59 @@
+name: Build Echo App to IPA
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 1. Unzip project
+    - name: Unzip Echo project
+      run: |
+        unzip Echo.swiftpm.zip -d project_dir
+
+    # 2. Vind de juiste map en bouw
+    - name: Build Swift PM App
+      run: |
+        # Zoek de map waar Package.swift staat
+        PACKAGE_DIR=$(find project_dir -name "Package.swift" -exec dirname {} \;)
+        echo "Gevonden Package map: $PACKAGE_DIR"
+        cd "$PACKAGE_DIR"
+        
+        # Bouw met expliciete signing flags om exit 65 te voorkomen
+        xcodebuild build \
+          -scheme Echo \
+          -destination 'generic/platform=iOS' \
+          -configuration Release \
+          CODE_SIGNING_ALLOWED=NO \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGN_IDENTITY="" \
+          BUILD_DIR=../../build
+
+    # 3. Maak de .ipa
+    - name: Create .ipa Package
+      run: |
+        mkdir -p Payload
+        APP_PATH=$(find build/Release-iphoneos -name "*.app" | head -n 1)
+        
+        if [ -z "$APP_PATH" ]; then
+          echo "FOUT: Geen .app bestand gevonden!"
+          exit 1
+        fi
+        
+        echo "Gevonden app op: $APP_PATH"
+        cp -r "$APP_PATH" Payload/
+        zip -r Echo.ipa Payload
+
+    # 4. Upload de .ipa
+    - name: Upload .ipa Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Echo-IPA
+        path: Echo.ipa
