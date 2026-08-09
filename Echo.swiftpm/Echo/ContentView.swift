@@ -225,32 +225,31 @@ struct TabBarShiftAnimator: UIViewRepresentable {
             applyShift(animated: false)
         }
         
-        func applyShift(animated: Bool) {
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self,
-                      let window = self.window,
-                      let tabBar = self.findTabBar(in: window) else { return }
-                
-                let targetX: CGFloat = self.isShifted ? -32 : 0
-                
-                // Voorkom opstapeleffect: voer alleen uit als de positie afwijkt
-                if tabBar.transform.tx == targetX { return }
-                
-                if animated {
-                    UIView.animate(
-                        withDuration: 0.4,
-                        delay: 0,
-                        usingSpringWithDamping: 0.82,
-                        initialSpringVelocity: 0.2,
-                        options: [.beginFromCurrentState, .allowUserInteraction]
-                    ) {
-                        tabBar.transform = CGAffineTransform(translationX: targetX, y: 0)
-                    }
-                } else {
-                    tabBar.transform = CGAffineTransform(translationX: targetX, y: 0)
-                }
-            }
+      
+
+func applyShift(animated: Bool) {
+    // Find tab bar directly on the current window hierarchy
+    guard let window = self.window,
+          let tabBar = self.findTabBar(in: window) else { return }
+    
+    let targetX: CGFloat = self.isShifted ? -32 : 0
+    
+    // Check if transform is already set to target to avoid redundant animations
+    if tabBar.transform.tx == targetX { return }
+    
+    if animated {
+        // Animate from current transform to target transform instantly
+        UIView.animate(
+            withDuration: 0.35,
+            delay: 0,
+            options: [.beginFromCurrentState, .allowUserInteraction]
+        ) {
+            tabBar.transform = CGAffineTransform(translationX: targetX, y: 0)
         }
+    } else {
+        tabBar.transform = CGAffineTransform(translationX: targetX, y: 0)
+    }
+}
         
         private func findTabBar(in view: UIView) -> UITabBar? {
             if let tabBar = view as? UITabBar { return tabBar }
