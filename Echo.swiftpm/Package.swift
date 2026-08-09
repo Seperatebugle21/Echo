@@ -16,7 +16,7 @@ let package = Package(
         .iOSApplication(
             name: "Echo",
             targets: ["AppModule"],
-            bundeIdentifier: "com.echomusic.app",
+            bundleIdentifier: "com.echomusic.app",
             displayVersion: "1.0",
             bundleVersion: "1",
             appIcon: .asset("AppIcon"),
