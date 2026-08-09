@@ -1,4 +1,4 @@
-# Echo-music-app
+# Echo - The AI local music app
 
 
 Echo is a modern music player project built with Swift and SwiftUI, designed with a strong focus on a clean, simple and modern user experience.
