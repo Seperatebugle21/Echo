@@ -314,7 +314,7 @@ struct TabBarShiftAnimator: UIViewRepresentable {
             
             let shift: CGFloat = isShifted
             ? -32
-            : -16
+            : 0
             
             
             UIView.animate(
