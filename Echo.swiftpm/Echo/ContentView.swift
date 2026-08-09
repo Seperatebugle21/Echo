@@ -32,14 +32,14 @@ struct ContentView: View {
                 }
         }
         
-        // Verschuift de echte UITabBar op een stabiele manier
+        // Shifting is hier uitgeschakeld (isShifted: false)
         .background {
             TabBarShiftAnimator(
-                isShifted: miniPlayerHidden
+                isShifted: false
             )
         }
         
-        // MARK: - MiniPlayer Overlay
+        // MARK: - MiniPlayer
         .overlay(alignment: .bottom) {
             ZStack {
                 
@@ -56,7 +56,7 @@ struct ContentView: View {
                     )
                 }
                 
-                // MARK: MiniPlayer Button (Equalizer)
+                // MARK: MiniPlayer button
                 if miniPlayerHidden {
                     HStack {
                         Spacer()
@@ -82,7 +82,8 @@ struct ContentView: View {
                             )
                         )
                         .padding(.trailing, 20)
-                        .offset(y: 12) // Offset gebruikt in plaats van negatieve bottom padding
+                        // Knop staat nu op exact dezelfde hoogte (Y-as) als de MiniPlayer!
+                        .padding(.bottom, 60)
                     }
                     .zIndex(100)
                     .transition(
@@ -93,6 +94,7 @@ struct ContentView: View {
             }
             .zIndex(100)
         }
+        
         .animation(
             .spring(
                 response: 0.4,
@@ -148,7 +150,7 @@ struct MiniPlayerEqualizer: View {
 }
 
 
-// MARK: - Random Bar (Met Structured Concurrency Task)
+// MARK: - Random Bar
 
 struct RandomBar: View {
     
@@ -172,7 +174,6 @@ struct RandomBar: View {
                     return
                 }
                 
-                // Animatieloop op de achtergrond zonder Timer-leaks
                 while !Task.isCancelled && isPlaying {
                     let newHeight = CGFloat.random(in: minHeight...maxHeight)
                     let duration = Double.random(in: 0.08...0.30)
@@ -190,9 +191,7 @@ struct RandomBar: View {
 }
 
 
-// MARK: - TabBar Animator (Gerepareerde Positie Tracker)
-
-// MARK: - TabBar Animator (Natieve UITabBar Fix)
+// MARK: - TabBar Animator (Gedeactiveerd/Inactief gehouden)
 
 struct TabBarShiftAnimator: UIViewRepresentable {
     
@@ -210,16 +209,9 @@ struct TabBarShiftAnimator: UIViewRepresentable {
         uiView.updatePosition(animated: context.transaction.animation != nil)
     }
     
-    // Custom UIView die direct op het UIKit layout-niveau ingrijpt
     class ShiftTrackerView: UIView {
         
-        var isShifted: Bool = false {
-            didSet {
-                if oldValue != isShifted {
-                    setNeedsLayout()
-                }
-            }
-        }
+        var isShifted: Bool = false
         
         override func didMoveToWindow() {
             super.didMoveToWindow()
@@ -228,8 +220,6 @@ struct TabBarShiftAnimator: UIViewRepresentable {
         
         override func layoutSubviews() {
             super.layoutSubviews()
-            // Zonder DispatchQueue.main.async! 
-            // Dit zorgt ervoor dat UIKit de tabbar NIET eerst in het midden kan tekenen.
             updatePosition(animated: false)
         }
         
@@ -240,7 +230,6 @@ struct TabBarShiftAnimator: UIViewRepresentable {
             let targetX: CGFloat = isShifted ? -32 : 0
             let targetTransform = CGAffineTransform(translationX: targetX, y: 0)
             
-            // Voorkom dubbele updates als de transform al klopt
             if tabBar.transform == targetTransform { return }
             
             if animated {
