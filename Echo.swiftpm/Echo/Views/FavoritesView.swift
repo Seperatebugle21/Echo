@@ -15,6 +15,46 @@ struct FavoritesView: View {
         
         List {
             
+            // MARK: - Header / Knoppen
+            if !songs.isEmpty {
+                Section {
+                    VStack(spacing: 16) {
+                        
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.red)
+                            .frame(width: 120, height: 120)
+                            .background(.thinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                        
+                        Text("\(songs.count) nummers")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        
+                        HStack(spacing: 12) {
+                            
+                            Button {
+                                playFavorites()
+                            } label: {
+                                Label("Speel alles", systemImage: "play.fill")
+                                    .foregroundStyle(.white)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            
+                            Button {
+                                playFavorites(shuffle: true)
+                            } label: {
+                                Label("Shuffle", systemImage: "shuffle")
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical)
+                }
+            }
+            
+            // MARK: - Lijst van favorieten
             if songs.isEmpty {
                 
                 ContentUnavailableView {
@@ -23,9 +63,7 @@ struct FavoritesView: View {
                         systemImage: "heart"
                     )
                 } description: {
-                    Text(
-                        "Voeg nummers toe met de plusknop."
-                    )
+                    Text("Voeg nummers toe met de plusknop.")
                 }
                 
             } else {
@@ -40,37 +78,19 @@ struct FavoritesView: View {
                             Image(uiImage: image)
                                 .resizable()
                                 .scaledToFill()
-                                .frame(
-                                    width: 50,
-                                    height: 50
-                                )
-                                .clipShape(
-                                    RoundedRectangle(
-                                        cornerRadius: 10
-                                    )
-                                )
+                                .frame(width: 50, height: 50)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                             
                         } else {
                             
                             Image(systemName: "music.note")
                                 .font(.title2)
-                                .frame(
-                                    width: 50,
-                                    height: 50
-                                )
+                                .frame(width: 50, height: 50)
                                 .background(.thinMaterial)
-                                .clipShape(
-                                    RoundedRectangle(
-                                        cornerRadius: 10
-                                    )
-                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                         
-                        VStack(
-                            alignment: .leading,
-                            spacing: 2
-                        ) {
-                            
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(song.title)
                                 .font(.headline)
                             
@@ -86,25 +106,22 @@ struct FavoritesView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        
                         if let url = library.getURL(for: song) {
-                            
                             audioPlayer.play(
                                 song: song,
                                 url: url,
                                 queue: songs
                             )
+                            
+                            audioPlayer.allSongs = library.songs
+                            audioPlayer.fillAutoNext(from: library.songs)
                         }
                     }
                     .swipeActions(edge: .trailing) {
-                        
                         Button {
                             library.toggleFavorite(song)
                         } label: {
-                            Label(
-                                "Verwijder",
-                                systemImage: "heart.slash"
-                            )
+                            Label("Verwijder", systemImage: "heart.slash")
                         }
                         .tint(.red)
                     }
@@ -113,9 +130,7 @@ struct FavoritesView: View {
         }
         .navigationTitle("Favorieten")
         .toolbar {
-            
             ToolbarItem(placement: .topBarTrailing) {
-                
                 Button {
                     showSongPicker = true
                 } label: {
@@ -124,8 +139,29 @@ struct FavoritesView: View {
             }
         }
         .sheet(isPresented: $showSongPicker) {
-            
             SongPickerView(isFavorites: true)
+        }
+    }
+    
+    // MARK: - Playback Helper
+    func playFavorites(shuffle: Bool = false) {
+        var queue = songs
+        
+        if shuffle {
+            queue.shuffle()
+        }
+        
+        guard let firstSong = queue.first else { return }
+        
+        if let url = library.getURL(for: firstSong) {
+            audioPlayer.play(
+                song: firstSong,
+                url: url,
+                queue: queue
+            )
+            
+            audioPlayer.allSongs = library.songs
+            audioPlayer.fillAutoNext(from: library.songs)
         }
     }
 }
