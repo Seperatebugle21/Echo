@@ -17,12 +17,14 @@ struct NowPlayingView: View {
             
             // Sluit knop
             HStack {
+
+                Spacer()
                 
                 Button {
                     dismiss()
                 } label: {
                     Image(systemName: "chevron.down")
-                        .font(.title2)
+                        .font(.title)
                 }
                 
                 Spacer()
