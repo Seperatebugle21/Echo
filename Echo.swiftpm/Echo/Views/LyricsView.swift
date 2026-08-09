@@ -111,7 +111,7 @@ struct LyricsView: View {
                                     .font(
                                         index == currentLineIndex
                                         ? .title2
-                                        : .title3
+                                        : .title2
                                     )
                                     .fontWeight(
                                         index == currentLineIndex
