@@ -98,8 +98,8 @@ struct ContentView: View {
                                 cornerRadius: 18
                             )
                         )
-                       .padding(Edge.Set.trailing, 10)
-                       .padding(Edge.Set.bottom, -5)
+                       .padding(Edge.Set.trailing, 15)
+                       .padding(Edge.Set.bottom, -10)
 
                     }
                     .zIndex(100)
