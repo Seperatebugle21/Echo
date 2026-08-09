@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import MediaPlayer
 import AVFAudio
+import UIKit
 
 enum RepeatMode: Equatable {
     case off
@@ -9,17 +10,15 @@ enum RepeatMode: Equatable {
     case one
 }
 
-
-
 @Observable
 class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
+    
+    static let shared = AudioPlayerManager()
     
     override init() {
         super.init()
         setupRemoteCommands()
     }
-    
-    static let shared = AudioPlayerManager()
     
     var lastPlaybackDirection: PlaybackDirection = .fade
     
@@ -30,7 +29,6 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
     }
     
     private let lyricsManager = LyricsManager.shared
-    
     
     private var player: AVAudioPlayer?
     private var timer: Timer?
@@ -49,31 +47,22 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
     var currentTime: Double = 0
     var duration: Double = 0
     
-    
     var queue: [Song] = []
     var currentIndex: Int = 0
     var history: [Song] = []
     
-    
     var autoNextQueue: [Song] = []
     var autoNextIndex: Int = 0
     
-    
     var allSongs: [Song] = []
-    
-    
     
     var shuffleEnabled = false
     var repeatMode: RepeatMode = .off
     
-    
-    
-    
-    
+    // MARK: - Now Playing Info Center Setup
     
     func updateNowPlaying() {
-        
-        guard let song = currentSong else {
+        guard let song = currentSong, let player = player else {
             return
         }
         
@@ -82,31 +71,24 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         info[MPMediaItemPropertyTitle] = song.title
         info[MPMediaItemPropertyArtist] = song.artist
         
-        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentTime
-        info[MPMediaItemPropertyPlaybackDuration] = duration
+        // Exacte voortgang doorgeven aan iOS
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime
+        info[MPMediaItemPropertyPlaybackDuration] = player.duration
         
-        info[MPNowPlayingInfoPropertyPlaybackRate] =
-        isPlaying ? 1 : 0
-        
+        // 1.0 als het nummer afspeelt, 0.0 als het gepauzeerd is
+        info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
         
         if let data = song.coverData,
            let image = UIImage(data: data) {
             
-            let artwork = MPMediaItemArtwork(
-                boundsSize: image.size
-            ) { _ in
+            let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in
                 image
             }
-            
             info[MPMediaItemPropertyArtwork] = artwork
         }
         
-        
-        MPNowPlayingInfoCenter.default()
-            .nowPlayingInfo = info
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
-    
-    
     
     func setupAudioSession() {
         do {
@@ -124,99 +106,76 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         }
     }
     
+    // MARK: - Remote Commands (Control Center & Dynamic Island)
     
     func setupRemoteCommands() {
-        
         let commandCenter = MPRemoteCommandCenter.shared()
         
-        
         commandCenter.playCommand.addTarget { [weak self] _ in
-            
             self?.togglePlayPause()
-            
             return .success
         }
-        
         
         commandCenter.pauseCommand.addTarget { [weak self] _ in
-            
             self?.togglePlayPause()
-            
             return .success
         }
-        
         
         commandCenter.nextTrackCommand.addTarget { [weak self] _ in
-            
             self?.next()
-            
             return .success
         }
         
-        
         commandCenter.previousTrackCommand.addTarget { [weak self] _ in
-            
             self?.previous()
+            return .success
+        }
+        
+        // Dynamic Island & Control Center Slider ondersteuning
+        commandCenter.changePlaybackPositionCommand.isEnabled = true
+        commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let self = self,
+                  let event = event as? MPChangePlaybackPositionCommandEvent else {
+                return .commandFailed
+            }
             
+            self.seek(to: event.positionTime)
             return .success
         }
     }
     
-    
+    // MARK: - Playback Controls
     
     func play(
         song: Song,
         url: URL,
         queue: [Song] = []
     ) {
-        do {
-            let session = AVAudioSession.sharedInstance()
-            
-            try session.setCategory(
-                .playback,
-                mode: .default
-            )
-            
-            try session.setActive(true)
-            
-        } catch {
-            print("Audio session fout:", error)
-        }
-        
         setupAudioSession()
         
         if !queue.isEmpty {
             self.queue = queue
         }
         
-        
-        if let index = self.queue.firstIndex(where: {
-            $0.id == song.id
-        }) {
+        if let index = self.queue.firstIndex(where: { $0.id == song.id }) {
             currentIndex = index
         }
         
-        
         do {
-            
             timer?.invalidate()
             
             player = try AVAudioPlayer(contentsOf: url)
             player?.delegate = self
-            
             player?.prepareToPlay()
-            
             
             duration = player?.duration ?? 0
             currentTime = 0
             
-            if let oldSong = currentSong,
-               oldSong.id != song.id {
+            if let oldSong = currentSong, oldSong.id != song.id {
                 history.append(oldSong)
             }
             
             currentSong = song
-            
             currentLyrics = nil
             currentSyncedLyrics = nil
             
@@ -226,71 +185,40 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
             UIApplication.shared.beginReceivingRemoteControlEvents()
             isPlaying = true
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                self.updateNowPlaying()
-                print("Now Playing gestuurd:", song.title)
-            }
-            
+            updateNowPlaying()
             startTimer()
-            
-            
             fillQueue(from: queue)
             
-            
-            
         } catch {
-            
-            print(
-                "Kan nummer niet afspelen:",
-                error.localizedDescription
-            )
+            print("Kan nummer niet afspelen:", error.localizedDescription)
         }
     }
     
-    
-    
-    
-    
-    
-    
     func loadLyrics(for song: Song) {
-        
-        // Eerst kijken of de song zelf al lyrics heeft opgeslagen
-        if let savedSong = MusicLibraryManager.shared.songs.first(where: {
-            $0.id == song.id
-        }) {
-            
+        if let savedSong = MusicLibraryManager.shared.songs.first(where: { $0.id == song.id }) {
             if savedSong.lyrics != nil || savedSong.syncedLyrics != nil {
-                
                 currentLyrics = savedSong.lyrics
                 currentSyncedLyrics = savedSong.syncedLyrics
                 lyricsNeedsInternet = false
-                
                 print("Opgeslagen lyrics geladen voor:", song.title)
                 return
             }
         }
         
-        
-        // Geen opgeslagen lyrics → internet proberen
         lyricsNeedsInternet = false
         
         Task {
-            
             let result = await lyricsManager.fetchLyrics(
                 for: song,
                 duration: duration
             )
             
             await MainActor.run {
-                
                 if let result {
-                    
                     self.currentLyrics = result.plainLyrics
                     self.currentSyncedLyrics = result.syncedLyrics
                     self.lyricsNeedsInternet = false
                     
-                    // Permanent opslaan
                     MusicLibraryManager.shared.updateLyrics(
                         for: song,
                         lyrics: result.plainLyrics,
@@ -298,48 +226,31 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
                     )
                     
                     print("Nieuwe lyrics opgeslagen voor:", song.title)
-                    
                 } else {
-                    
-                    // Geen resultaat van API
                     self.currentLyrics = nil
                     self.currentSyncedLyrics = nil
-                    
-                    // We kunnen hier nog bepalen of er internet is
-                    // via je LyricsManager.
                     self.lyricsNeedsInternet = true
-                    
                     print("Geen opgeslagen lyrics en ophalen mislukt voor:", song.title)
                 }
             }
         }
     }
     
-    
-    
-    
     func next() {
-        
         lastPlaybackDirection = .next
         
-        // Normale queue
         if queue.count > currentIndex + 1 {
-            
             currentIndex += 1
-            
             let song = queue[currentIndex]
             
-            // Gebruik de vooraf geladen speler
             if preloadedSong?.id == song.id,
                let preparedPlayer = preloadedPlayer {
                 
                 player?.stop()
-                
                 player = preparedPlayer
                 player?.delegate = self
                 
                 currentSong = song
-                
                 currentTime = 0
                 duration = player?.duration ?? 0
                 
@@ -347,105 +258,63 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
                 preloadedPlayer = nil
                 
                 player?.play()
-                
                 isPlaying = true
                 
                 startTimer()
                 updateNowPlaying()
-                
-                // Meteen het volgende nummer klaarzetten
-                
-                
                 return
             }
             
-            // Fallback als preload nog niet klaar was
             playSongAtIndex()
-            
             return
         }
         
-        
-        // Auto-next queue
         if let nextSong = autoNextQueue.first {
-            
             autoNextQueue.removeFirst()
             
             if let url = getURL(for: nextSong) {
-                
                 play(
                     song: nextSong,
                     url: url,
                     queue: []
                 )
-                
-                fillAutoNext(
-                    from: allSongs
-                )
+                fillAutoNext(from: allSongs)
             }
-            
             return
         }
-        
         
         isPlaying = false
+        updateNowPlaying()
     }
-    
-    
-    
     
     func previous() {
-        
         lastPlaybackDirection = .previous
         
-        // Als je al even aan het luisteren bent:
-        // gewoon huidige nummer opnieuw starten
         if currentTime > 3 {
-            
-            player?.currentTime = 0
-            currentTime = 0
-            
+            seek(to: 0)
             return
         }
         
-        
-        // Anders echt naar vorig nummer
         if let previousSong = history.popLast() {
-            
             playPreviousSong(previousSong)
-            
         } else {
-            
-            player?.currentTime = 0
-            currentTime = 0
+            seek(to: 0)
         }
     }
     
-    
     func playNext(_ song: Song) {
-        
-        guard let currentIndex = queue.firstIndex(where: {
-            $0.id == currentSong?.id
-        }) else {
+        guard let currentIndex = queue.firstIndex(where: { $0.id == currentSong?.id }) else {
             return
         }
         
-        // voorkomt dubbele nummers direct na elkaar
-        queue.removeAll {
-            $0.id == song.id
-        }
-        
+        queue.removeAll { $0.id == song.id }
         queue.insert(song, at: currentIndex + 1)
     }
     
-    
-    
     private func playSongAtIndex() {
-        
         let song = queue[currentIndex]
         
         if let url = getURL(for: song) {
-            
             play(
                 song: song,
                 url: url,
@@ -454,45 +323,24 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         }
     }
     
-    
-    func fillQueue(
-        from songs: [Song]
-    ) {
+    func fillQueue(from songs: [Song]) {
+        guard let currentSong else { return }
         
-        guard let currentSong else {
-            return
-        }
-        
-        let upcoming = queue.drop(
-            while: { $0.id != currentSong.id }
-        )
-            .dropFirst()
-        
+        let upcoming = queue.drop(while: { $0.id != currentSong.id }).dropFirst()
         let missing = 30 - upcoming.count
         
         if missing > 0 {
-            
             let availableSongs = songs.filter {
-                $0.id != currentSong.id &&
-                !queue.contains(where: {
-                    $0.id == $0.id
-                })
+                $0.id != currentSong.id && !queue.contains(where: { $0.id == $0.id })
             }
             
-            let extra = availableSongs.shuffled()
-                .prefix(missing)
-            
+            let extra = availableSongs.shuffled().prefix(missing)
             queue.append(contentsOf: extra)
         }
     }
     
-    
-    
     func playPreviousSong(_ song: Song) {
-        
-        guard let url = getURL(for: song) else {
-            return
-        }
+        guard let url = getURL(for: song) else { return }
         
         player?.stop()
         
@@ -504,81 +352,45 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         
         currentSong = song
         
-        // Oude lyrics wissen
         currentLyrics = nil
         currentSyncedLyrics = nil
         
-        // Lyrics van het vorige nummer laden
         loadLyrics(for: song)
         
         player?.play()
         isPlaying = true
         
         startTimer()
-        
         updateNowPlaying()
     }
     
-    
-    
-    
     func addToQueue(_ song: Song) {
-        
-        if !queue.contains(where: {
-            $0.id == song.id
-        }) {
+        if !queue.contains(where: { $0.id == song.id }) {
             queue.append(song)
         }
     }
     
-    
-    
-    
     func playFromQueue(_ song: Song) {
-        
-        guard let index = queue.firstIndex(where: {
-            $0.id == song.id
-        }) else {
+        guard let index = queue.firstIndex(where: { $0.id == song.id }) else {
             return
         }
-        
         currentIndex = index
         playSongAtIndex()
     }
     
-    
-    
-    
-    func moveQueue(
-        from source: IndexSet,
-        to destination: Int
-    ) {
-        
-        queue.move(
-            fromOffsets: source,
-            toOffset: destination
-        )
+    func moveQueue(from source: IndexSet, to destination: Int) {
+        queue.move(fromOffsets: source, toOffset: destination)
     }
     
-    
-    
     func fillAutoNext(from songs: [Song]) {
-        
         while autoNextQueue.count < 10 {
-            
             let availableSongs = songs.filter { song in
-                
                 song.id != currentSong?.id &&
-                !queue.contains(where: {
-                    $0.id == song.id
-                }) &&
-                !autoNextQueue.contains(where: {
-                    $0.id == song.id
-                })
+                !queue.contains(where: { $0.id == song.id }) &&
+                !autoNextQueue.contains(where: { $0.id == song.id })
             }
             
-            guard let randomSong = availableSongs.randomElement()
-            else {
+            guard let randomSong = availableSongs.randomElement() else {
                 return
             }
             
@@ -586,152 +398,82 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         }
     }
     
-    
-    
-    
-    func removeFromQueue(
-        at offsets: IndexSet
-    ) {
-        
-        queue.remove(
-            atOffsets: offsets
-        )
+    func removeFromQueue(at offsets: IndexSet) {
+        queue.remove(atOffsets: offsets)
     }
     
-    
-    
-    
     func togglePlayPause() {
-        
         guard let player else { return }
         
-        
         if player.isPlaying {
-            
             player.pause()
             isPlaying = false
-            updateNowPlaying()
-            
         } else {
-            
             player.play()
             isPlaying = true
             startTimer()
-            updateNowPlaying()
         }
+        
+        updateNowPlaying()
     }
     
-    
-    
-    
     func toggleShuffle() {
-        
         shuffleEnabled.toggle()
     }
     
-    
-    
-    
     func toggleRepeat() {
-        
         switch repeatMode {
-            
         case .off:
             repeatMode = .all
-            
         case .all:
             repeatMode = .one
-            
         case .one:
             repeatMode = .off
         }
     }
     
-    
-    
-    
     private func startTimer() {
-        
         timer?.invalidate()
         
-        timer = Timer.scheduledTimer(
-            withTimeInterval: 0.05,
-            repeats: true
-        ) { _ in
-            
-            self.currentTime =
-            self.player?.currentTime ?? 0
-            self.updateNowPlaying()
+        // Timer update alleen de SwiftUI UI.
+        // Roep hier NIET updateNowPlaying() aan om de iOS system slider niet te storen.
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            self.currentTime = self.player?.currentTime ?? 0
         }
     }
     
-    
-    
-    
-    func seek(
-        to time: Double
-    ) {
-        
+    func seek(to time: Double) {
         player?.currentTime = time
         currentTime = time
+        updateNowPlaying()
     }
     
-    
-    
-    
     func pauseForSeeking() {
-        
         player?.pause()
     }
     
-    
-    
-    
     func resumeAfterSeeking() {
-        
         player?.play()
+        updateNowPlaying()
     }
     
-    
-    
-    
-    func getURL(
-        for song: Song
-    ) -> URL? {
-        
+    func getURL(for song: Song) -> URL? {
         FileManager.default
-            .urls(
-                for: .documentDirectory,
-                in: .userDomainMask
-            )[0]
-            .appendingPathComponent(
-                song.fileName
-            )
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(song.fileName)
     }
     
-    
-    
-    
-    func audioPlayerDidFinishPlaying(
-        _ player: AVAudioPlayer,
-        successfully flag: Bool
-    ) {
-        
-        
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         if repeatMode == .one {
-            
-            if let song = currentSong,
-               let url = getURL(for: song) {
-                
+            if let song = currentSong, let url = getURL(for: song) {
                 play(
                     song: song,
                     url: url,
                     queue: queue
                 )
             }
-            
         } else {
-            
             next()
         }
     }
