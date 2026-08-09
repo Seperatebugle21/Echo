@@ -153,7 +153,7 @@ struct MiniPlayer: View {
                             return
                         }
 
-                        if value.translation.height < 50 {
+                        if value.translation.height < -50 {
                             
                             showNowPlaying = true
                             
