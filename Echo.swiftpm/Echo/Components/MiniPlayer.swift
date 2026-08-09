@@ -152,6 +152,13 @@ struct MiniPlayer: View {
                             
                             return
                         }
+
+                        if value.translation.height < 50 {
+                            
+                            showNowPlaying = true
+                            
+                            return
+                        }
                         
                         
                         // Naar links → volgend nummer
