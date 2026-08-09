@@ -58,7 +58,7 @@ struct ContentView: View {
                         miniPlayerHidden = true
                         
                     }
-                    .padding(.bottom, 70)
+                    .padding(.bottom, 60)
                     .padding(.horizontal)
                     .transition(
                         .move(edge: .bottom)
@@ -314,7 +314,7 @@ struct TabBarShiftAnimator: UIViewRepresentable {
             
             let shift: CGFloat = isShifted
             ? -32
-            : 0
+            : -16
             
             
             UIView.animate(
