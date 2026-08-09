@@ -37,11 +37,19 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      # 4. Maak de IPA map
+      # 4. Maak de IPA map & injecteer Background Audio in Info.plist
       - name: Create IPA Package
         run: |
           mkdir -p Payload
           cp -r build/Echo.xcarchive/Products/Applications/*.app Payload/ 2>/dev/null || cp -r build/Echo.xcarchive/Products/Applications/*.swiftpm Payload/
+          
+          # Zoek de gecompileerde app op en injecteer UIBackgroundModes = ["audio"]
+          APP_PATH=$(find Payload -maxdepth 2 \( -name "*.app" -o -name "*.swiftpm" \))
+          echo "App gevonden op: $APP_PATH"
+          
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$APP_PATH/Info.plist" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$APP_PATH/Info.plist" 2>/dev/null || true
+
           zip -r Echo.ipa Payload
 
       # 5. Sla op als GitHub Artifact
