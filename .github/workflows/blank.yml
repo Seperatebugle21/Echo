@@ -1,59 +1,105 @@
-name: Build Echo App to IPA
-
-on:
-  push:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
-
+name: Flutter Build and Upload iOS IPA
+on: workflow_dispatch
+    
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3     # Checkout the Repository on the Virtual Machine
 
-    # 1. Unzip project
-    - name: Unzip Echo project
-      run: |
-        unzip Echo.swiftpm.zip -d project_dir
+      # Install the Apple certificate and provisioning profile 
+      - name: Install the Apple certificate and provisioning profile
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPSTORE_CERT_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPSTORE_CERT_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.MOBILEPROVISION_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create Environmental variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          # Import Certificate and Provisioning Profile from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode --output $PP_PATH
+          # Create Temporary Keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          # Import Certificate to Keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          # Apply provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles  
 
-    # 2. Vind de juiste map en bouw
-    - name: Build Swift PM App
-      run: |
-        # Zoek de map waar Package.swift staat
-        PACKAGE_DIR=$(find project_dir -name "Package.swift" -exec dirname {} \;)
-        echo "Gevonden Package map: $PACKAGE_DIR"
-        cd "$PACKAGE_DIR"
-        
-        # Bouw met expliciete signing flags om exit 65 te voorkomen
-        xcodebuild build \
-          -scheme Echo \
-          -destination 'generic/platform=iOS' \
-          -configuration Release \
-          CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGN_IDENTITY="" \
-          BUILD_DIR=../../build
+      - name: Install yq
+        uses: mikefarah/yq@v4.42.1
 
-    # 3. Maak de .ipa
-    - name: Create .ipa Package
-      run: |
-        mkdir -p Payload
-        APP_PATH=$(find build/Release-iphoneos -name "*.app" | head -n 1)
-        
-        if [ -z "$APP_PATH" ]; then
-          echo "FOUT: Geen .app bestand gevonden!"
-          exit 1
-        fi
-        
-        echo "Gevonden app op: $APP_PATH"
-        cp -r "$APP_PATH" Payload/
-        zip -r Echo.ipa Payload
+      - name: Get pubspec version
+        id: get_flutter_app_version
+        run: |
+          VERSION=$(yq .version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' pubspec.yaml | head -n 1)
+          echo "TAG_VERSION=$VERSION" >> $GITHUB_OUTPUT
+  
+      - name: Create git tag
+        run: |
+          git tag "v${{ steps.get_flutter_app_version.outputs.TAG_VERSION }}"
 
-    # 4. Upload de .ipa
-    - name: Upload .ipa Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Echo-IPA
-        path: Echo.ipa
+      - name: Install Flutter               # Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'main'
+
+      - name: Get Flutter dependencies      # Get the Libraries and Dependencies
+        run: flutter pub get
+
+      - name: Building IPA                  # Build and sign the ipa using a single flutter command
+        run: flutter build ipa --release --export-options-plist=ios/Runner/ExportOptions.plist
+              
+      - name: Save IPA to Artifacts         # Collect the file and upload as artifact 
+        uses: actions/upload-artifact@v3
+        with:
+         name: release-ipa
+         path: build/ios/ipa/*.ipa
+
+      - name: Create Github Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/ios/ipa/*.ipa"
+          tag: "v${{ steps.get_flutter_app_version.outputs.TAG_VERSION }}-ios"
+
+      # Important! Cleanup: remove the certificate and provisioning profile from the GitHub Machine [Runner]!
+      - name: Clean up keychain and provisioning profile
+        if: ${{ always() }}
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
+
+  # TODO:  Upload to Firebase - for App Distribution
+  # Release job, upload the ipa to Firebase App Distribution
+  # release:
+  #   name: Release ipa to Firebase
+  #   needs: [ build ]
+  #   runs-on: ubuntu-latest
+  #   steps:
+    
+  #   # Retrieve ipa file from GitHub artifacts
+  #   - uses: actions/checkout@v3
+  #   - name: Get release-ipa from artifacts
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       name: release-ipa
+
+  #   # Upload ipa file to Firebase
+  #   - name: Upload artifact to Firebase App Distribution
+  #     uses: wzieba/Firebase-Distribution-Github-Action@v1
+  #     with:
+  #       appId: ${{secrets.FIREBASE_IOS_APP_ID}}
+  #       serviceCredentialsFileContent: ${{ secrets.CREDENTIAL_FILE_CONTENT }}
+  #       groups: ios-developers
+  #       file: ${{secrets.APP_NAME}}.ipa
