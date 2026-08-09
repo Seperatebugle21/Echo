@@ -192,64 +192,71 @@ struct RandomBar: View {
 
 // MARK: - TabBar Animator (Gerepareerde Positie Tracker)
 
+// MARK: - TabBar Animator (Natieve UITabBar Fix)
+
 struct TabBarShiftAnimator: UIViewRepresentable {
     
     let isShifted: Bool
     
-    func makeUIView(context: Context) -> UIView {
+    func makeUIView(context: Context) -> ShiftTrackerView {
         let view = ShiftTrackerView()
         view.backgroundColor = .clear
         view.isUserInteractionEnabled = false
         return view
     }
     
-    func updateUIView(_ uiView: UIView, context: Context) {
-        guard let tracker = uiView as? ShiftTrackerView else { return }
-        tracker.isShifted = isShifted
-        tracker.applyShift(animated: true)
+    func updateUIView(_ uiView: ShiftTrackerView, context: Context) {
+        uiView.isShifted = isShifted
+        uiView.updatePosition(animated: context.transaction.animation != nil)
     }
     
-    // Custom UIView die de UIKit layout-cycles van de TabBar overschrijft
+    // Custom UIView die direct op het UIKit layout-niveau ingrijpt
     class ShiftTrackerView: UIView {
         
-        var isShifted: Bool = false
+        var isShifted: Bool = false {
+            didSet {
+                if oldValue != isShifted {
+                    setNeedsLayout()
+                }
+            }
+        }
         
         override func didMoveToWindow() {
             super.didMoveToWindow()
-            applyShift(animated: false)
+            updatePosition(animated: false)
         }
         
         override func layoutSubviews() {
             super.layoutSubviews()
-            // Zorgt ervoor dat de positie wordt hersteld als UIKit de tabbar reset
-            applyShift(animated: false)
+            // Zonder DispatchQueue.main.async! 
+            // Dit zorgt ervoor dat UIKit de tabbar NIET eerst in het midden kan tekenen.
+            updatePosition(animated: false)
         }
         
-      
-
-func applyShift(animated: Bool) {
-    // Find tab bar directly on the current window hierarchy
-    guard let window = self.window,
-          let tabBar = self.findTabBar(in: window) else { return }
-    
-    let targetX: CGFloat = self.isShifted ? -32 : 0
-    
-    // Check if transform is already set to target to avoid redundant animations
-    if tabBar.transform.tx == targetX { return }
-    
-    if animated {
-        // Animate from current transform to target transform instantly
-        UIView.animate(
-            withDuration: 0.35,
-            delay: 0,
-            options: [.beginFromCurrentState, .allowUserInteraction]
-        ) {
-            tabBar.transform = CGAffineTransform(translationX: targetX, y: 0)
+        func updatePosition(animated: Bool) {
+            guard let window = self.window,
+                  let tabBar = findTabBar(in: window) else { return }
+            
+            let targetX: CGFloat = isShifted ? -32 : 0
+            let targetTransform = CGAffineTransform(translationX: targetX, y: 0)
+            
+            // Voorkom dubbele updates als de transform al klopt
+            if tabBar.transform == targetTransform { return }
+            
+            if animated {
+                UIView.animate(
+                    withDuration: 0.4,
+                    delay: 0,
+                    usingSpringWithDamping: 0.82,
+                    initialSpringVelocity: 0.2,
+                    options: [.beginFromCurrentState, .allowUserInteraction]
+                ) {
+                    tabBar.transform = targetTransform
+                }
+            } else {
+                tabBar.transform = targetTransform
+            }
         }
-    } else {
-        tabBar.transform = CGAffineTransform(translationX: targetX, y: 0)
-    }
-}
         
         private func findTabBar(in view: UIView) -> UITabBar? {
             if let tabBar = view as? UITabBar { return tabBar }
