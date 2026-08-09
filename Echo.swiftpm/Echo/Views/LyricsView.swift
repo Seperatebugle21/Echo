@@ -108,7 +108,11 @@ struct LyricsView: View {
                                 audioPlayer.seek(to: line.time)
                             } label: {
                                 Text(line.text)
-                                    .font(.title3)
+                                    .font(
+                                        index == currentLineIndex
+                                        ? .title2
+                                        : .title3
+                                    )
                                     .fontWeight(
                                         index == currentLineIndex
                                         ? .bold
