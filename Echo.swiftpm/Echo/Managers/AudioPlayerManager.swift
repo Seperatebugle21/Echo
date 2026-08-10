@@ -48,6 +48,8 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
     var duration: Double = 0
     
     var queue: [Song] = []
+    private var originalQueue: [Song] = [] // 💡 Bewaart de niet-geschudde volgorde
+    
     var currentIndex: Int = 0
     var history: [Song] = []
     
@@ -155,6 +157,7 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         
         if !queue.isEmpty {
             self.queue = queue
+            self.originalQueue = queue // 💡 Sla de originele wachtrij op bij starten
         }
         
         if let index = self.queue.firstIndex(where: { $0.id == song.id }) {
@@ -236,81 +239,80 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         }
     }
     
-   func next() {
-    lastPlaybackDirection = .next
+    func next() {
+        lastPlaybackDirection = .next
 
-       if repeatMode == .one {
-        repeatMode = .all
-    }
-    
-    // 1. Is er nog een volgend nummer in de wachtrij?
-    if queue.count > currentIndex + 1 {
-        currentIndex += 1
-        playPreloadedOrNextSong()
-        return
-    }
-    
-    // 2. Zijn we aan het einde van de wachtrij én staat Repeat op .all?
-    if repeatMode == .all && !queue.isEmpty {
-        currentIndex = 0
-        playSongAtIndex()
-        return
-    }
-    
-    // 3. Fallback naar AutoNext als repeat uit staat
-    if let nextSong = autoNextQueue.first {
-        autoNextQueue.removeFirst()
-        
-        if let url = getURL(for: nextSong) {
-            play(
-                song: nextSong,
-                url: url,
-                queue: []
-            )
-            fillAutoNext(from: allSongs)
+        if repeatMode == .one {
+            repeatMode = .all
         }
-        return
-    }
-    
-    // 4. Geen nummers meer
-    isPlaying = false
-    updateNowPlaying()
-}
-
-// Kleine hulpmethode om dubbele code te voorkomen bij preloading
-private func playPreloadedOrNextSong() {
-    let song = queue[currentIndex]
-    
-    if preloadedSong?.id == song.id,
-       let preparedPlayer = preloadedPlayer {
         
-        player?.stop()
-        player = preparedPlayer
-        player?.delegate = self
+        // 1. Is er nog een volgend nummer in de wachtrij?
+        if queue.count > currentIndex + 1 {
+            currentIndex += 1
+            playPreloadedOrNextSong()
+            return
+        }
         
-        currentSong = song
-        currentTime = 0
-        duration = player?.duration ?? 0
+        // 2. Zijn we aan het einde van de wachtrij én staat Repeat op .all?
+        if repeatMode == .all && !queue.isEmpty {
+            currentIndex = 0
+            playSongAtIndex()
+            return
+        }
         
-        preloadedSong = nil
-        preloadedPlayer = nil
+        // 3. Fallback naar AutoNext als repeat uit staat
+        if let nextSong = autoNextQueue.first {
+            autoNextQueue.removeFirst()
+            
+            if let url = getURL(for: nextSong) {
+                play(
+                    song: nextSong,
+                    url: url,
+                    queue: []
+                )
+                fillAutoNext(from: allSongs)
+            }
+            return
+        }
         
-        player?.play()
-        isPlaying = true
-        
-        startTimer()
+        // 4. Geen nummers meer
+        isPlaying = false
         updateNowPlaying()
-    } else {
-        playSongAtIndex()
     }
-}
+
+    private func playPreloadedOrNextSong() {
+        let song = queue[currentIndex]
+        
+        if preloadedSong?.id == song.id,
+           let preparedPlayer = preloadedPlayer {
+            
+            player?.stop()
+            player = preparedPlayer
+            player?.delegate = self
+            
+            currentSong = song
+            currentTime = 0
+            duration = player?.duration ?? 0
+            
+            preloadedSong = nil
+            preloadedPlayer = nil
+            
+            player?.play()
+            isPlaying = true
+            
+            startTimer()
+            updateNowPlaying()
+        } else {
+            playSongAtIndex()
+        }
+    }
     
     func previous() {
         lastPlaybackDirection = .previous
 
         if repeatMode == .one {
-        repeatMode = .all
-    }
+            repeatMode = .all
+        }
         
         if currentTime > 3 {
             seek(to: 0)
@@ -441,6 +443,25 @@ private func playPreloadedOrNextSong() {
     
     func toggleShuffle() {
         shuffleEnabled.toggle()
+        
+        if shuffleEnabled {
+            // Als we shufflen, bewaren we eerst de huidige ongeschudde staat
+            if originalQueue.isEmpty {
+                originalQueue = queue
+            }
+            
+            // Houd het huidige nummer op zijn plek, schud alle volgende nummers
+            let playedSongs = Array(queue.prefix(currentIndex + 1))
+            let upcomingSongs = Array(queue.dropFirst(currentIndex + 1)).shuffled()
+            
+            queue = playedSongs + upcomingSongs
+        } else {
+            // Shuffle uit: Herstel de originele volgorde
+            if let current = currentSong, let originalIndex = originalQueue.firstIndex(where: { $0.id == current.id }) {
+                queue = originalQueue
+                currentIndex = originalIndex
+            }
+        }
     }
     
     func toggleRepeat() {
@@ -457,8 +478,6 @@ private func playPreloadedOrNextSong() {
     private func startTimer() {
         timer?.invalidate()
         
-        // Timer update alleen de SwiftUI UI.
-        // Roep hier NIET updateNowPlaying() aan om de iOS system slider niet te storen.
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.currentTime = self.player?.currentTime ?? 0
