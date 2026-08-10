@@ -23,6 +23,9 @@ struct SongsView: View {
     @State private var selectedSongIDs = Set<Song.ID>()
     @State private var showDeleteConfirmation = false
     
+    // Sheet voor meerdere nummers toevoegen aan playlist
+    @State private var selectedSongsForPlaylist: [Song]? = nil
+    
     var filteredSongs: [Song] {
         if searchText.isEmpty {
             return library.songs
@@ -88,7 +91,7 @@ struct SongsView: View {
                         
                         Spacer()
                         
-                        // Drie puntjes (verdwijnen tijdens bewerken)
+                        // Drie puntjes
                         if editMode == .inactive {
                             Button {
                                 selectedSong = song
@@ -103,7 +106,7 @@ struct SongsView: View {
                     }
                     .contentShape(Rectangle())
                     
-                    // Nummer afspelen (alleen als we niet bewerken)
+                    // Nummer afspelen
                     .onTapGesture {
                         guard editMode == .inactive else { return }
                         
@@ -140,7 +143,7 @@ struct SongsView: View {
             
             // Toolbar
             .toolbar {
-                // Linkerbovenhoek: Wijzig / Annuleer
+                // Linkerbovenhoek: Wijzig / Gereed
                 ToolbarItem(placement: .topBarLeading) {
                     Button(editMode == .active ? "Gereed" : "Wijzig") {
                         withAnimation {
@@ -156,14 +159,11 @@ struct SongsView: View {
                 
                 // Rechterbovenhoek knoppen
                 if editMode == .active {
-                    // Als 'Wijzig' actief is: toon de acties bovenaan
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        // Knop: Aan playlist toevoegen
+                        // Knop: Alle geselecteerde nummers toevoegen
                         Button {
                             let songsToAdd = library.songs.filter { selectedSongIDs.contains($0.id) }
-                            for song in songsToAdd {
-                                library.songToAddToPlaylist = song
-                            }
+                            selectedSongsForPlaylist = songsToAdd
                         } label: {
                             Image(systemName: "music.note.list")
                         }
@@ -179,7 +179,6 @@ struct SongsView: View {
                         .disabled(selectedSongIDs.isEmpty)
                     }
                 } else {
-                    // Normale modus: Sorteermenu en Importeren
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         Menu {
                             Button {
@@ -265,9 +264,14 @@ struct SongsView: View {
                 Text("\"\(library.duplicateSongName)\" staat al in je bibliotheek.")
             }
             
-            // Playlist kiezen
+            // Playlist kiezen (1 nummer via 3 puntjes)
             .sheet(item: Bindable(library).songToAddToPlaylist) { song in
-                PlaylistPickerView(song: song)
+                PlaylistPickerView(songs: [song])
+            }
+            
+            // Playlist kiezen (meerdere geselecteerde nummers)
+            .sheet(item: $selectedSongsForPlaylist) { songs in
+                PlaylistPickerView(songs: songs)
             }
             
             // Song opties
@@ -282,6 +286,13 @@ struct SongsView: View {
                 }
             }
         }
+    }
+}
+
+// Extensie zodat [Song] als 'Identifiable' item gebruikt kan worden in .sheet(item:)
+extension Array: @retroactive Identifiable where Element == Song {
+    public var id: String {
+        map { $0.id.uuidString }.joined(separator: "-")
     }
 }
 
