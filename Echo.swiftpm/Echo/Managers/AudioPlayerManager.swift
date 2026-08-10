@@ -238,6 +238,10 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
     
    func next() {
     lastPlaybackDirection = .next
+
+       if repeatMode == .one {
+        repeatMode = .all
+    }
     
     // 1. Is er nog een volgend nummer in de wachtrij?
     if queue.count > currentIndex + 1 {
@@ -303,6 +307,10 @@ private func playPreloadedOrNextSong() {
     
     func previous() {
         lastPlaybackDirection = .previous
+
+        if repeatMode == .one {
+        repeatMode = .all
+    }
         
         if currentTime > 3 {
             seek(to: 0)
