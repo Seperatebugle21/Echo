@@ -7,6 +7,12 @@ enum SongSortOption: String, CaseIterable {
     case lastPlayed = "Laatst afgespeeld"
 }
 
+// Wrapper struct om te voorkomen dat de Swift compiler crasht op Array-extensions
+struct SelectedSongsSheetItem: Identifiable {
+    let id = UUID()
+    let songs: [Song]
+}
+
 struct SongsView: View {
     
     @Environment(MusicLibraryManager.self) private var library
@@ -24,7 +30,7 @@ struct SongsView: View {
     @State private var showDeleteConfirmation = false
     
     // Sheet voor meerdere nummers toevoegen aan playlist
-    @State private var selectedSongsForPlaylist: [Song]? = nil
+    @State private var playlistSheetItem: SelectedSongsSheetItem? = nil
     
     var filteredSongs: [Song] {
         if searchText.isEmpty {
@@ -163,7 +169,7 @@ struct SongsView: View {
                         // Knop: Alle geselecteerde nummers toevoegen
                         Button {
                             let songsToAdd = library.songs.filter { selectedSongIDs.contains($0.id) }
-                            selectedSongsForPlaylist = songsToAdd
+                            playlistSheetItem = SelectedSongsSheetItem(songs: songsToAdd)
                         } label: {
                             Image(systemName: "music.note.list")
                         }
@@ -264,14 +270,14 @@ struct SongsView: View {
                 Text("\"\(library.duplicateSongName)\" staat al in je bibliotheek.")
             }
             
-            // Playlist kiezen (1 nummer via 3 puntjes)
+            // Playlist kiezen (1 nummer via library binding)
             .sheet(item: Bindable(library).songToAddToPlaylist) { song in
                 PlaylistPickerView(songs: [song])
             }
             
-            // Playlist kiezen (meerdere geselecteerde nummers)
-            .sheet(item: $selectedSongsForPlaylist) { songs in
-                PlaylistPickerView(songs: songs)
+            // Playlist kiezen (meerdere geselecteerde nummers via struct wrapper)
+            .sheet(item: $playlistSheetItem) { item in
+                PlaylistPickerView(songs: item.songs)
             }
             
             // Song opties
@@ -286,13 +292,6 @@ struct SongsView: View {
                 }
             }
         }
-    }
-}
-
-// Extensie zodat [Song] als 'Identifiable' item gebruikt kan worden in .sheet(item:)
-extension Array: @retroactive Identifiable where Element == Song {
-    public var id: String {
-        map { $0.id.uuidString }.joined(separator: "-")
     }
 }
 
