@@ -236,56 +236,70 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         }
     }
     
-    func next() {
-        lastPlaybackDirection = .next
-        
-        if queue.count > currentIndex + 1 {
-            currentIndex += 1
-            let song = queue[currentIndex]
-            
-            if preloadedSong?.id == song.id,
-               let preparedPlayer = preloadedPlayer {
-                
-                player?.stop()
-                player = preparedPlayer
-                player?.delegate = self
-                
-                currentSong = song
-                currentTime = 0
-                duration = player?.duration ?? 0
-                
-                preloadedSong = nil
-                preloadedPlayer = nil
-                
-                player?.play()
-                isPlaying = true
-                
-                startTimer()
-                updateNowPlaying()
-                return
-            }
-            
-            playSongAtIndex()
-            return
-        }
-        
-        if let nextSong = autoNextQueue.first {
-            autoNextQueue.removeFirst()
-            
-            if let url = getURL(for: nextSong) {
-                play(
-                    song: nextSong,
-                    url: url,
-                    queue: []
-                )
-                fillAutoNext(from: allSongs)
-            }
-            return
-        }
-        
-        isPlaying = false
-        updateNowPlaying()
+   func next() {
+    lastPlaybackDirection = .next
+    
+    // 1. Is er nog een volgend nummer in de wachtrij?
+    if queue.count > currentIndex + 1 {
+        currentIndex += 1
+        playPreloadedOrNextSong()
+        return
     }
+    
+    // 2. Zijn we aan het einde van de wachtrij én staat Repeat op .all?
+    if repeatMode == .all && !queue.isEmpty {
+        currentIndex = 0
+        playSongAtIndex()
+        return
+    }
+    
+    // 3. Fallback naar AutoNext als repeat uit staat
+    if let nextSong = autoNextQueue.first {
+        autoNextQueue.removeFirst()
+        
+        if let url = getURL(for: nextSong) {
+            play(
+                song: nextSong,
+                url: url,
+                queue: []
+            )
+            fillAutoNext(from: allSongs)
+        }
+        return
+    }
+    
+    // 4. Geen nummers meer
+    isPlaying = false
+    updateNowPlaying()
+}
+
+// Kleine hulpmethode om dubbele code te voorkomen bij preloading
+private func playPreloadedOrNextSong() {
+    let song = queue[currentIndex]
+    
+    if preloadedSong?.id == song.id,
+       let preparedPlayer = preloadedPlayer {
+        
+        player?.stop()
+        player = preparedPlayer
+        player?.delegate = self
+        
+        currentSong = song
+        currentTime = 0
+        duration = player?.duration ?? 0
+        
+        preloadedSong = nil
+        preloadedPlayer = nil
+        
+        player?.play()
+        isPlaying = true
+        
+        startTimer()
+        updateNowPlaying()
+    } else {
+        playSongAtIndex()
+    }
+}
     
     func previous() {
         lastPlaybackDirection = .previous
