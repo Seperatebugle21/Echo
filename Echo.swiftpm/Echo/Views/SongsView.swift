@@ -275,10 +275,16 @@ struct SongsView: View {
                 PlaylistPickerView(songs: [song])
             }
             
-            // Playlist kiezen (meerdere geselecteerde nummers via struct wrapper)
-            .sheet(item: $playlistSheetItem) { item in
-                PlaylistPickerView(songs: item.songs)
-            }
+   // Playlist kiezen (meerdere geselecteerde nummers via struct wrapper)
+.sheet(item: $playlistSheetItem, onDismiss: {
+    withAnimation {
+        editMode = .inactive
+        selectedSongIDs.removeAll()
+    }
+}) { item in
+    PlaylistPickerView(songs: item.songs)
+}
+
             
             // Song opties
             .sheet(item: $selectedSong) { song in
