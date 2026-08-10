@@ -35,6 +35,13 @@ struct SettingsView: View {
                         Text("Donker")
                             .tag("dark")
                     }
+
+                    Picker("Taal", selection: Bindable(languageManager).currentLanguage) {
+                    Text("Nederlands 🇳🇱").tag("nl")
+                    Text("English 🇬🇧").tag("en")
+                    Text("Français 🇫🇷").tag("fr")
+                }
+                .pickerStyle(.menu)
                     
                     
                 }
