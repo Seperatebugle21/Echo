@@ -1,71 +1,84 @@
 import SwiftUI
 
-
 struct PlaylistPickerView: View {
     
     @Environment(MusicLibraryManager.self) private var library
     @Environment(\.dismiss) private var dismiss
     
-    let song: Song
+    let songs: [Song]
     
+    // Convenience initializer voor wanneer je slechts 1 nummer meegeeft
+    init(song: Song) {
+        self.songs = [song]
+    }
+    
+    // Initializer voor meerdere nummers
+    init(songs: [Song]) {
+        self.songs = songs
+    }
+    
+    // Controleert of alle geselecteerde nummers al favoriet zijn
+    private var areAllFavorites: Bool {
+        guard !songs.isEmpty else { return false }
+        return songs.allSatisfy { library.isFavorite($0) }
+    }
+    
+    // Controleert of alle geselecteerde nummers in een specifieke playlist staan
+    private func areAllInPlaylist(_ playlist: Playlist) -> Bool {
+        guard !songs.isEmpty else { return false }
+        return songs.allSatisfy { playlist.songIDs.contains($0.id) }
+    }
     
     var body: some View {
-        
         NavigationStack {
-            
             List {
-                
                 // Favorieten
                 Button {
-                    
-                    if !library.isFavorite(song) {
-                        library.toggleFavorite(song)
+                    for song in songs {
+                        if !library.isFavorite(song) {
+                            library.toggleFavorite(song)
+                        }
                     }
-                    
                     dismiss()
-                    
                 } label: {
-                    
                     playlistRow(
                         image: nil,
                         systemImage: "heart.fill",
                         title: "Favorieten",
                         subtitle: "\(library.favoriteSongs.count) nummers",
-                        isSelected: library.isFavorite(song)
+                        isSelected: areAllFavorites
                     )
                 }
                 
-                
                 // Eigen playlists
                 ForEach(library.playlists) { playlist in
-                    
                     Button {
-                        
-                        library.addSong(
-                            song,
-                            to: playlist
-                        )
-                        
+                        for song in songs {
+                            library.addSong(song, to: playlist)
+                        }
                         dismiss()
-                        
                     } label: {
-                        
                         playlistRow(
                             image: playlist.imageData,
                             systemImage: "music.note.list",
                             title: playlist.name,
                             subtitle: "\(playlist.songIDs.count) nummers",
-                            isSelected: playlist.songIDs.contains(song.id)
+                            isSelected: areAllInPlaylist(playlist)
                         )
                     }
                 }
             }
             .navigationTitle("Playlist kiezen")
             .tint(.primary)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Annuleer") {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
-    
-    
     
     @ViewBuilder
     func playlistRow(
@@ -75,27 +88,15 @@ struct PlaylistPickerView: View {
         subtitle: String,
         isSelected: Bool
     ) -> some View {
-        
         HStack(spacing: 12) {
-            
             if let image,
                let uiImage = UIImage(data: image) {
-                
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(
-                        width: 55,
-                        height: 55
-                    )
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 14
-                        )
-                    )
-                
+                    .frame(width: 55, height: 55)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
             } else {
-                
                 Image(systemName: systemImage)
                     .font(.title2)
                     .foregroundStyle(
@@ -103,24 +104,12 @@ struct PlaylistPickerView: View {
                         ? .red
                         : .primary
                     )
-                    .frame(
-                        width: 55,
-                        height: 55
-                    )
+                    .frame(width: 55, height: 55)
                     .background(.thinMaterial)
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 14
-                        )
-                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             
-            
-            VStack(
-                alignment: .leading,
-                spacing: 4
-            ) {
-                
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
                     .foregroundStyle(.primary)
@@ -130,12 +119,9 @@ struct PlaylistPickerView: View {
                     .foregroundStyle(.secondary)
             }
             
-            
             Spacer()
             
-            
             if isSelected {
-                
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.blue)
             }
