@@ -5,13 +5,15 @@ struct QueueView: View {
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @Environment(\.dismiss) private var dismiss
     
-    @State private var showAutoNext = true // Standaard opengeklapt voor beter overzicht
+    @State private var showAutoNext = true
+    @State private var editMode: EditMode = .inactive
+    @State private var selectedSongIDs = Set<UUID>() // Slaat de geselecteerde nummers op
     
     var body: some View {
         
         NavigationStack {
             
-            List {
+            List(selection: $selectedSongIDs) {
                 
                 // MARK: - Herhaal Status Banner
                 if audioPlayer.repeatMode != .off {
@@ -40,11 +42,8 @@ struct QueueView: View {
                 
                 // MARK: - Nu Afgespeeld
                 if let current = audioPlayer.currentSong {
-                    
                     Section("Nu afgespeeld") {
-                        
                         HStack(spacing: 12) {
-                            
                             songCoverImage(for: current)
                             
                             VStack(alignment: .leading) {
@@ -64,34 +63,27 @@ struct QueueView: View {
                     }
                 }
                 
-                // MARK: - Handmatige Wachtrij
+                // MARK: - Handmatige Wachtrij (Selecteerbaar)
                 let upcomingSongs = Array(audioPlayer.queue.dropFirst(audioPlayer.currentIndex + 1))
                 
                 if !upcomingSongs.isEmpty {
                     Section("Volgende") {
-                        
                         ForEach(upcomingSongs) { song in
-                            
-                            Button {
-                                audioPlayer.playFromQueue(song)
-                            } label: {
-                                songRow(for: song)
-                            }
-                            .buttonStyle(.plain)
+                            songRow(for: song)
+                                .tag(song.id) // Nodig voor de selectiemodus
                         }
                         .onMove { from, to in
-                            audioPlayer.queue.move(
-                                fromOffsets: from,
-                                toOffset: to
-                            )
+                            // Pas de offsets aan vanwege dropFirst
+                            let actualFrom = IndexSet(from.map { $0 + audioPlayer.currentIndex + 1 })
+                            let actualTo = to + audioPlayer.currentIndex + 1
+                            audioPlayer.queue.move(fromOffsets: actualFrom, toOffset: actualTo)
                         }
                     }
                 }
                 
-                // MARK: - Automatische Wachtrij (Remake)
+                // MARK: - Automatische Wachtrij
                 if !audioPlayer.autoNextQueue.isEmpty {
                     Section {
-                        
                         Button {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                 showAutoNext.toggle()
@@ -114,7 +106,6 @@ struct QueueView: View {
                         if showAutoNext {
                             ForEach(audioPlayer.autoNextQueue) { song in
                                 Button {
-                                    // Direct afspelen uit de auto-wachtrij
                                     if let url = audioPlayer.getURL(for: song) {
                                         audioPlayer.play(song: song, url: url, queue: [])
                                     }
@@ -129,25 +120,51 @@ struct QueueView: View {
                     }
                 }
             }
+            .environment(\.editMode, $editMode)
             .navigationTitle("Wachtrij")
             .navigationBarTitleDisplayMode(.inline)
             
+            // MARK: - Toolbar met Verwijderknop
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Sluit") {
-                        dismiss()
+                    if editMode.isEditing {
+                        Button("Verwijder", role: .destructive) {
+                            deleteSelectedSongs()
+                        }
+                        .disabled(selectedSongIDs.isEmpty) // Alleen inklikbaar als er iets gekozen is
+                    } else {
+                        Button("Sluit") {
+                            dismiss()
+                        }
                     }
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    EditButton()
+                    Button(editMode.isEditing ? "Gereed" : "Wijzig") {
+                        withAnimation {
+                            editMode = editMode.isEditing ? .inactive : .active
+                            if !editMode.isEditing {
+                                selectedSongIDs.removeAll()
+                            }
+                        }
+                    }
                 }
             }
         }
     }
     
-    // MARK: - Helper Views (Schoon & Herbruikbaar)
+    // MARK: - Logica voor Verwijderen
+    private func deleteSelectedSongs() {
+        withAnimation {
+            audioPlayer.queue.removeAll { song in
+                selectedSongIDs.contains(song.id)
+            }
+            selectedSongIDs.removeAll()
+            editMode = .inactive
+        }
+    }
     
+    // MARK: - Helper Views
     @ViewBuilder
     private func songCoverImage(for song: Song) -> some View {
         if let data = song.coverData, let image = UIImage(data: data) {
