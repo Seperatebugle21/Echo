@@ -16,7 +16,7 @@ struct SongsView: View {
     @State private var searchText = ""
     @State private var sortOption: SongSortOption = .name
     
-    @State private var selectedSong: Song? // Voor de 3-puntjes menu sheet
+    @State private var selectedSong: Song? // Voor het 3-puntjes menu
     
     // Bewerken & Selectie
     @State private var editMode: EditMode = .inactive
@@ -55,122 +55,92 @@ struct SongsView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                List(selection: $selectedSongIDs) {
-                    ForEach(sortedSongs) { song in
-                        HStack(spacing: 12) {
-                            
-                            // Albumhoes
-                            if let data = song.coverData,
-                               let image = UIImage(data: data) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 50, height: 50)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            } else {
-                                Image(systemName: "music.note")
-                                    .font(.title2)
-                                    .frame(width: 50, height: 50)
-                                    .background(.thinMaterial)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            }
-                            
-                            // Titel + artiest
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(song.title)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                
-                                Text(song.artist)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            // Drie puntjes (alleen tonen als we niet in bewerkmodus zijn)
-                            if editMode == .inactive {
-                                Button {
-                                    selectedSong = song
-                                } label: {
-                                    Image(systemName: "ellipsis")
-                                        .font(.title3)
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 30, height: 30)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .contentShape(Rectangle())
+            List(selection: $selectedSongIDs) {
+                ForEach(sortedSongs) { song in
+                    HStack(spacing: 12) {
                         
-                        // Nummer afspelen (alleen als we niet bewerken)
-                        .onTapGesture {
-                            guard editMode == .inactive else { return }
-                            
-                            if let url = library.getURL(for: song) {
-                                library.markAsPlayed(song)
-                                audioPlayer.lastPlaybackDirection = .fade
-                                audioPlayer.play(
-                                    song: song,
-                                    url: url,
-                                    queue: [song]
-                                )
-                                audioPlayer.allSongs = library.songs
-                                audioPlayer.fillAutoNext(from: library.songs)
-                            }
+                        // Albumhoes
+                        if let data = song.coverData,
+                           let image = UIImage(data: data) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 50, height: 50)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            Image(systemName: "music.note")
+                                .font(.title2)
+                                .frame(width: 50, height: 50)
+                                .background(.thinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                         
-                        // Swipe naar links = favoriet
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button {
-                                library.toggleFavorite(song)
-                            } label: {
-                                Label(
-                                    library.isFavorite(song) ? "Verwijder" : "Favoriet",
-                                    systemImage: library.isFavorite(song) ? "heart.slash" : "heart.fill"
-                                )
-                            }
-                            .tint(.red)
+                        // Titel + artiest
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(song.title)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            
+                            Text(song.artist)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
-                    }
-                }
-                .environment(\.editMode, $editMode)
-                
-                // Onderste balk bij actieve bewerkmodus
-                if editMode == .active {
-                    HStack {
-                        // Aan playlist toevoegen
-                        Button {
-                            let songsToAdd = library.songs.filter { selectedSongIDs.contains($0.id) }
-                            for song in songsToAdd {
-                                library.songToAddToPlaylist = song
-                            }
-                        } label: {
-                            Label("Aan playlist", systemImage: "music.note.list")
-                        }
-                        .disabled(selectedSongIDs.isEmpty)
                         
                         Spacer()
                         
-                        // Verwijderen met bevestiging
-                        Button(role: .destructive) {
-                            showDeleteConfirmation = true
-                        } label: {
-                            Label("Verwijder (\(selectedSongIDs.count))", systemImage: "trash")
+                        // Drie puntjes (verdwijnen tijdens bewerken)
+                        if editMode == .inactive {
+                            Button {
+                                selectedSong = song
+                            } label: {
+                                Image(systemName: "ellipsis")
+                                    .font(.title3)
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 30, height: 30)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .disabled(selectedSongIDs.isEmpty)
                     }
-                    .padding()
-                    .background(.ultraThinMaterial)
+                    .contentShape(Rectangle())
+                    
+                    // Nummer afspelen (alleen als we niet bewerken)
+                    .onTapGesture {
+                        guard editMode == .inactive else { return }
+                        
+                        if let url = library.getURL(for: song) {
+                            library.markAsPlayed(song)
+                            audioPlayer.lastPlaybackDirection = .fade
+                            audioPlayer.play(
+                                song: song,
+                                url: url,
+                                queue: [song]
+                            )
+                            audioPlayer.allSongs = library.songs
+                            audioPlayer.fillAutoNext(from: library.songs)
+                        }
+                    }
+                    
+                    // Swipe naar links = favoriet
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button {
+                            library.toggleFavorite(song)
+                        } label: {
+                            Label(
+                                library.isFavorite(song) ? "Verwijder" : "Favoriet",
+                                systemImage: library.isFavorite(song) ? "heart.slash" : "heart.fill"
+                            )
+                        }
+                        .tint(.red)
+                    }
                 }
             }
+            .environment(\.editMode, $editMode)
             .navigationTitle("Nummers")
             .searchable(text: $searchText)
             
             // Toolbar
             .toolbar {
-                // Wijzig knop
+                // Linkerbovenhoek: Wijzig / Annuleer
                 ToolbarItem(placement: .topBarLeading) {
                     Button(editMode == .active ? "Gereed" : "Wijzig") {
                         withAnimation {
@@ -184,46 +154,69 @@ struct SongsView: View {
                     }
                 }
                 
-                // Sorteermenu
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
+                // Rechterbovenhoek knoppen
+                if editMode == .active {
+                    // Als 'Wijzig' actief is: toon de acties bovenaan
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        // Knop: Aan playlist toevoegen
                         Button {
-                            sortOption = .name
+                            let songsToAdd = library.songs.filter { selectedSongIDs.contains($0.id) }
+                            for song in songsToAdd {
+                                library.songToAddToPlaylist = song
+                            }
                         } label: {
-                            Label(
-                                "Naam",
-                                systemImage: sortOption == .name ? "checkmark" : ""
-                            )
+                            Image(systemName: "music.note.list")
                         }
+                        .disabled(selectedSongIDs.isEmpty)
                         
-                        Button {
-                            sortOption = .dateAdded
+                        // Knop: Verwijderen
+                        Button(role: .destructive) {
+                            showDeleteConfirmation = true
                         } label: {
-                            Label(
-                                "Laatst toegevoegd",
-                                systemImage: sortOption == .dateAdded ? "checkmark" : ""
-                            )
+                            Image(systemName: "trash")
                         }
-                        
-                        Button {
-                            sortOption = .lastPlayed
-                        } label: {
-                            Label(
-                                "Laatst afgespeeld",
-                                systemImage: sortOption == .lastPlayed ? "checkmark" : ""
-                            )
-                        }
-                    } label: {
-                        Image(systemName: "arrow.up.arrow.down.circle")
+                        .tint(.red)
+                        .disabled(selectedSongIDs.isEmpty)
                     }
-                }
-                
-                // Muziek importeren
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showImporter = true
-                    } label: {
-                        Image(systemName: "plus")
+                } else {
+                    // Normale modus: Sorteermenu en Importeren
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Menu {
+                            Button {
+                                sortOption = .name
+                            } label: {
+                                Label(
+                                    "Naam",
+                                    systemImage: sortOption == .name ? "checkmark" : ""
+                                )
+                            }
+                            
+                            Button {
+                                sortOption = .dateAdded
+                            } label: {
+                                Label(
+                                    "Laatst toegevoegd",
+                                    systemImage: sortOption == .dateAdded ? "checkmark" : ""
+                                )
+                            }
+                            
+                            Button {
+                                sortOption = .lastPlayed
+                            } label: {
+                                Label(
+                                    "Laatst afgespeeld",
+                                    systemImage: sortOption == .lastPlayed ? "checkmark" : ""
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down.circle")
+                        }
+                        
+                        Button {
+                            showImporter = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
                     }
                 }
             }
@@ -252,7 +245,7 @@ struct SongsView: View {
                 Button("Verwijder", role: .destructive) {
                     let songsToDelete = library.songs.filter { selectedSongIDs.contains($0.id) }
                     for song in songsToDelete {
-                        library.deleteSong(song) // Zorg dat deze methode bestaat op MusicLibraryManager
+                        library.deleteSong(song)
                     }
                     selectedSongIDs.removeAll()
                     editMode = .inactive
