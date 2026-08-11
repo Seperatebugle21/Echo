@@ -263,7 +263,7 @@ struct PlaylistDetailView: View {
                 deleteSelectedSongs()
             }
         } message: {
-            Text("remove_songs_confirmation_message \(selectedSongIDs.count)")
+            Text("remove_songs_confirmation_message \(selectedCount)")
         }
     }
     
