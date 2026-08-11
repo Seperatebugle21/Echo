@@ -1188,6 +1188,65 @@
           }
         }
       }
+    },
+
+"delete_playlist_alert_title": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wiedergabeliste löschen?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete Playlist?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer la playlist ?"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist verwijderen?"
+          }
+        }
+      }
+    },
+    "delete_playlist_alert_message": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Wiedergabeliste wird gelöscht. Die Titel bleiben in deiner Mediathek."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The playlist will be deleted. The songs will remain in your library."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La playlist sera supprimée. Les morceaux resteront dans votre bibliothèque."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De playlist wordt verwijderd. De nummers blijven in je bibliotheek."
+          }
+        }
+      }
     }
 
 
