@@ -7,7 +7,9 @@ final class LyricsManager {
     
     private let lrclibURL = "https://lrclib.net/api/get"
     
-    private let geniusToken = "YBbunVMkKG6HYPDt2M0IKolgbXmGJnWInbfsHOoRims5kH6vSu2r5gnopfMXphd8"
+    private var geniusToken: String {
+        UserDefaults.standard.string(forKey: "geniusAccessToken") ?? ""
+    }
     
     private init() {}
     
@@ -34,6 +36,13 @@ final class LyricsManager {
             
             print("Lyrics via LRCLIB")
             return lyrics
+        }
+
+
+        // Check of er wel een Genius token is ingevuld
+        guard !geniusToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            print("Geen Genius token ingesteld")
+            return nil
         }
         
         
