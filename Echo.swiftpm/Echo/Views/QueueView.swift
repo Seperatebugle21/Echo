@@ -25,13 +25,13 @@ struct QueueView: View {
                                 .foregroundStyle(.red)
                             
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(audioPlayer.repeatMode == .one ? LocalLocalizedStringKey("repeat_one_active") : LocalLocalizedStringKey("repeat_all_active"))
+                                Text(audioPlayer.repeatMode == .one ? "repeat_one_active" : "repeat_all_active")
                                     .font(.subheadline)
                                     .bold()
                                 
                                 Text(audioPlayer.repeatMode == .one 
-                                     ? LocalLocalizedStringKey("repeat_one_description") 
-                                     : LocalLocalizedStringKey("repeat_all_description"))
+                                     ? "repeat_one_description" 
+                                     : "repeat_all_description")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -140,7 +140,7 @@ struct QueueView: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(editMode.isEditing ? LocalLocalizedStringKey("action_done") : LocalLocalizedStringKey("action_edit")) {
+                    Button(editMode.isEditing ? "action_done" : "action_edit") {
                         withAnimation {
                             editMode = editMode.isEditing ? .inactive : .active
                             if !editMode.isEditing {
