@@ -68,7 +68,7 @@ struct PlaylistDetailView: View {
                         .font(.largeTitle)
                         .bold()
                     
-                    Text("favorites_song_count \(songs.count)")
+                    Text("songs_count_format \(songs.count)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
