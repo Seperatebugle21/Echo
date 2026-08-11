@@ -1277,30 +1277,31 @@
         }
       }
     },
-"settings.api.header": {
+
+  "settings.api.header": {
     "localizations": {
       "en": {
         "stringUnit": {
           "state": "translated",
-          "value": "API Settings"
+          "value": "Lyric API Tokens"
         }
       },
       "nl": {
         "stringUnit": {
           "state": "translated",
-          "value": "API-instellingen"
+          "value": "Songtekst API-tokens"
         }
       },
       "fr": {
         "stringUnit": {
           "state": "translated",
-          "value": "Paramètres API"
+          "value": "Jetons API de paroles"
         }
       },
       "de": {
         "stringUnit": {
           "state": "translated",
-          "value": "API-Einstellungen"
+          "value": "Songtext-API-Tokens"
         }
       }
     }
@@ -1310,25 +1311,25 @@
       "en": {
         "stringUnit": {
           "state": "translated",
-          "value": "Enter your Genius API Client Access Token to search via Genius as well. If left empty, only LRCLIB will be used."
+          "value": "Enter your Genius API Client Access Token to search via Genius as well. If left empty, only LRCLIB will be used to fetch lyrics."
         }
       },
       "nl": {
         "stringUnit": {
           "state": "translated",
-          "value": "Voer je Genius API Client Access Token in om ook via Genius te zoeken. Als je dit leeg laat, wordt alleen LRCLIB gebruikt."
+          "value": "Voer je Genius API Client Access Token in om ook via Genius te zoeken. Als je dit leeg laat, wordt alleen LRCLIB gebruikt om songteksten op te halen."
         }
       },
       "fr": {
         "stringUnit": {
           "state": "translated",
-          "value": "Entrez votre jeton d'accès client Genius API pour rechercher également via Genius. Si ce champ reste vide, seul LRCLIB sera utilisé."
+          "value": "Entrez votre jeton d'accès client Genius API pour rechercher également via Genius. Si ce champ reste vide, seul LRCLIB sera utilisé pour récupérer les paroles."
         }
       },
       "de": {
         "stringUnit": {
           "state": "translated",
-          "value": "Geben Sie Ihren Genius API Client Access Token ein, um auch über Genius zu suchen. Wenn das Feld leer bleibt, wird nur LRCLIB verwendet."
+          "value": "Geben Sie Ihren Genius API Client Access Token ein, um auch über Genius zu suchen. Wenn das Feld leer bleibt, wird nur LRCLIB verwendet, um Songtexte abzurufen."
         }
       }
     }
