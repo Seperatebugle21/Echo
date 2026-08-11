@@ -15,6 +15,7 @@ struct EchoApp: App {
         
         WindowGroup {
             ContentView()
+                .environment(\.locale, Locale(identifier: selectedLanguage))
                 .environment(library)
                 .environment(audioPlayer)
                 .preferredColorScheme(colorScheme)
