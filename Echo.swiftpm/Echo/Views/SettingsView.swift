@@ -4,6 +4,8 @@ struct SettingsView: View {
     
     @Environment(MusicLibraryManager.self) private var library
 
+    @AppStorage("geniusAccessToken") private var geniusToken: String = ""
+
     @AppStorage("selectedLanguage") private var selectedLanguage: String = "en"
     
     @AppStorage("appearanceMode") private var appearanceMode = "system"
@@ -53,6 +55,13 @@ struct SettingsView: View {
                         )
                     }
                     .pickerStyle(.menu)
+                }
+
+
+                Section(header: Text("API tab_settings")) {
+                    SecureField("Genius Access Token", text: $geniusToken)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
                 }
 
                 
