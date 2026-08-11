@@ -1159,31 +1159,32 @@
         }
       }
     },
-    "remove_songs_confirmation_message": {
+    
+     "remove_songs_confirmation_message": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Titel werden aus dieser Wiedergabeliste entfernt."
+            "value": "%d Titel werden aus dieser Wiedergabeliste entfernt."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "song(s) will be removed from this playlist."
+            "value": "%d song(s) will be removed from this playlist."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "morceau(x) seront supprimés de cette playlist."
+            "value": "%d morceau(x) seront supprimés de cette playlist."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "nummer(s) worden uit deze playlist verwijderd."
+            "value": "%d nummer(s) worden uit deze playlist verwijderd."
           }
         }
       }
