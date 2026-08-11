@@ -1276,7 +1276,63 @@
           }
         }
       }
+    },
+"settings.api.header": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "API Settings"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "API-instellingen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Paramètres API"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "API-Einstellungen"
+        }
+      }
     }
+  },
+  "settings.genius.footer": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enter your Genius API Client Access Token to search via Genius as well. If left empty, only LRCLIB will be used."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voer je Genius API Client Access Token in om ook via Genius te zoeken. Als je dit leeg laat, wordt alleen LRCLIB gebruikt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Entrez votre jeton d'accès client Genius API pour rechercher également via Genius. Si ce champ reste vide, seul LRCLIB sera utilisé."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geben Sie Ihren Genius API Client Access Token ein, um auch über Genius zu suchen. Wenn das Feld leer bleibt, wird nur LRCLIB verwendet."
+        }
+      }
+    }
+  }
 
 
 
