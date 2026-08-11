@@ -577,6 +577,151 @@
         "fr" : { "stringUnit" : { "state" : "translated", "value" : "Enregistrer" } },
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Speichern" } }
       }
+    },
+"lyrics_wifi_needed_title": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WLAN-Verbindung erforderlich"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wi-Fi Connection Needed"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connexion Wi-Fi requise"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wifi-verbinding nodig"
+          }
+        }
+      }
+    },
+    "lyrics_wifi_needed_description": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für diesen Titel sind noch keine Songtexte gespeichert. Verbinde dich mit dem Internet, um sie abzurufen. Falls du mit dem Internet verbunden bist, versuche das Lied neu zu starten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No lyrics are saved for this song yet. Connect to the internet to retrieve lyrics. If you are already connected to Wi-Fi or cellular data, try restarting the song."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune parole n'est encore enregistrée pour ce morceau. Connectez-vous à Internet pour les récupérer. Si vous êtes déjà connecté au Wi-Fi ou aux données mobiles, essayez de relancer le morceau."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Er zijn nog geen lyrics opgeslagen voor dit nummer. Verbind met internet om de lyrics op te halen. Als je toch verbonden bent met wifi of mobiele data, probeer dan het lied te herstarten."
+          }
+        }
+      }
+    },
+    "lyrics_unavailable_title": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Songtexte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Lyrics"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de paroles"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geen lyrics"
+          }
+        }
+      }
+    },
+    "lyrics_unavailable_description": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für diesen Titel sind keine Songtexte verfügbar."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No lyrics are available for this song."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune parole n'est disponible pour ce morceau."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voor dit nummer zijn geen lyrics beschikbaar."
+          }
+        }
+      }
+    },
+    "lyrics_navigation_title": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Songtexte"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paroles"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics"
+          }
+        }
+      }
     }
   }
 }
