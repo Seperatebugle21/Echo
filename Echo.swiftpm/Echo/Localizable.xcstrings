@@ -1,0 +1,582 @@
+{
+  "sourceLanguage" : "en",
+  "version" : "1.0",
+  "strings" : {
+    "tab_songs" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Nummers" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Songs" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Morceaux" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Titel" } }
+      }
+    },
+    "tab_playlists" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Playlists" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Playlists" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Listes de lecture" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Wiedergabelisten" } }
+      }
+    },
+    "tab_settings" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Instellingen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Réglages" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Einstellungen" } }
+      }
+    },
+    "songs_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Nummers" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Songs" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Morceaux" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Titel" } }
+      }
+    },
+    "search_prompt" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Zoeken" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Search" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Rechercher" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Suchen" } }
+      }
+    },
+    "action_edit" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Wijzig" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Bearbeiten" } }
+      }
+    },
+    "action_done" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Gereed" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Fertig" } }
+      }
+    },
+    "action_delete" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Verwijder" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Löschen" } }
+      }
+    },
+    "action_cancel" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Annuleer" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Annuler" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Abbrechen" } }
+      }
+    },
+    "action_continue" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Doorgaan" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Continuer" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Fortfahren" } }
+      }
+    },
+    "action_delete_everything" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Verwijder alles" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Everything" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Tout supprimer" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alles löschen" } }
+      }
+    },
+    "action_play_now" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Speel nu" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Play Now" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Lancer la lecture" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Jetzt spielen" } }
+      }
+    },
+    "action_play_next" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Speel als volgende" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Play Next" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Lire ensuite" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Als Nächstes spielen" } }
+      }
+    },
+    "action_add_to_queue" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Voeg toe aan wachtrij" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add to Queue" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter à la file d'attente" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Zur Warteschlange hinzufügen" } }
+      }
+    },
+    "action_add_to_playlist" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Voeg toe aan playlist" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add to Playlist" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter à une liste de lecture" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Zur Wiedergabeliste hinzufügen" } }
+      }
+    },
+    "action_add_to_favorites" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Voeg toe aan favorieten" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add to Favorites" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter aux favoris" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Zu Favoriten hinzufügen" } }
+      }
+    },
+    "action_remove_from_favorites" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Verwijder uit favorieten" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove from Favorites" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Retirer des favoris" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Aus Favoriten entfernen" } }
+      }
+    },
+    "action_edit_info" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Wijzig info" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit Info" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier les informations" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Info bearbeiten" } }
+      }
+    },
+    "settings_section_appearance" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Weergave" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Appearance" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Apparence" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Erscheinungsbild" } }
+      }
+    },
+    "settings_appearance_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Weergave" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Appearance" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Apparence" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Erscheinungsbild" } }
+      }
+    },
+    "appearance_system" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Systeem" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "System" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Système" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "System" } }
+      }
+    },
+    "appearance_light" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Licht" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Light" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Clair" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Hell" } }
+      }
+    },
+    "appearance_dark" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Donker" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dark" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Sombre" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dunkel" } }
+      }
+    },
+    "settings_language_section" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Taal" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Langue" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Sprache" } }
+      }
+    },
+    "settings_language_label" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "App-taal" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "App Language" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Langue de l'application" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "App-Sprache" } }
+      }
+    },
+    "settings_section_library" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Bibliotheek" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Library" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Bibliothèque" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mediathek" } }
+      }
+    },
+    "settings_refresh_library" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Bibliotheek vernieuwen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Refresh Library" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Actualiser la bibliothèque" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mediathek aktualisieren" } }
+      }
+    },
+    "settings_section_danger" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Gevaarzone" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Danger Zone" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Zone à risques" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Gefahrenzone" } }
+      }
+    },
+    "settings_clear_cache" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Cache wissen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear Cache" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Vider le cache" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Cache leeren" } }
+      }
+    },
+    "settings_delete_all_music" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Verwijder alle muziek" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete All Music" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer toute la musique" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Musik löschen" } }
+      }
+    },
+    "settings_section_about" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Over Echo" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "About Echo" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "À propos d'Echo" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Über Echo" } }
+      }
+    },
+    "settings_version" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Versie" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Version" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Version" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Version" } }
+      }
+    },
+    "settings_made_with" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Gemaakt met SwiftUI" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Built with SwiftUI" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Développé avec SwiftUI" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Erstellt mit SwiftUI" } }
+      }
+    },
+    "alert_delete_lyrics_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Opgeslagen lyrics verwijderen?" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Saved Lyrics?" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer les paroles enregistrées ?" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Gespeicherte Songtexte löschen?" } }
+      }
+    },
+    "alert_delete_lyrics_message" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Alle opgeslagen lyrics worden verwijderd. De nummers zelf blijven behouden." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All saved lyrics will be deleted. The songs themselves will remain." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Toutes les paroles enregistrées seront supprimées. Les morceaux seront conservés." } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle gespeicherten Songtexte werden gelöscht. Die Titel selbst bleiben erhalten." } }
+      }
+    },
+    "alert_delete_all_music_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Alle muziek verwijderen?" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete All Music?" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer toute la musique ?" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Musik löschen?" } }
+      }
+    },
+    "alert_delete_all_music_message" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Alle geïmporteerde nummers worden verwijderd." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All imported songs will be deleted." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Tous les morceaux importés seront supprimés." } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle importierten Titel werden gelöscht." } }
+      }
+    },
+    "alert_cannot_be_undone_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Dit kan niet ongedaan worden gemaakt" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This Cannot Be Undone" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Cette action est irréversible" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dies kann nicht rückgängig gemacht werden" } }
+      }
+    },
+    "alert_cannot_be_undone_message" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Je muziekbestanden en bibliotheekgegevens worden definitief verwijderd." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your music files and library data will be permanently deleted." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Vos fichiers musicaux et les données de votre bibliothèque seront définitivement supprimés." } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Deine Musikdateien und Mediathek-Daten werden dauerhaft gelöscht." } }
+      }
+    },
+    "alert_delete_confirmation_message" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Dit verwijdert alle geïmporteerde nummers uit Echo." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This will remove all imported songs from Echo." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Cela supprimera tous les morceaux importés d'Echo." } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dadurch werden alle importierten Titel aus Echo entfernt." } }
+      }
+    },
+    "alert_delete_single_song_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Nummer verwijderen?" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Song?" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer le morceau ?" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Titel löschen?" } }
+      }
+    },
+    "alert_delete_single_song_message %@" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Weet je zeker dat je “%@” wilt verwijderen?" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Are you sure you want to delete “%@”?" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Voulez-vous vraiment supprimer « %@ » ?" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Bist du sicher, dass du „%@“ löschen möchtest?" } }
+      }
+    },
+    "sort_name" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Naam" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Name" } }
+      }
+    },
+    "sort_date_added" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Laatst toegevoegd" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recently Added" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajoutés récemment" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Zuletzt hinzugefügt" } }
+      }
+    },
+    "sort_last_played" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Laatst afgespeeld" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recently Played" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Écoutés récemment" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Zuletzt gespielt" } }
+      }
+    },
+    "alert_delete_songs_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Nummers verwijderen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Songs" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer les morceaux" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Titel löschen" } }
+      }
+    },
+    "alert_delete_songs_message %lld" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Weet je zeker dat je %lld nummer(s) wilt verwijderen uit je bibliotheek?" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Are you sure you want to delete %lld song(s) from your library?" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Voulez-vous vraiment supprimer %lld morceau(x) de votre bibliothèque ?" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Bist du sicher, dass du %lld Titel aus deiner Mediathek löschen möchtest?" } }
+      }
+    },
+    "alert_duplicate_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Nummer bestaat al" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Song Already Exists" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Le morceau existe déjà" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Titel bereits vorhanden" } }
+      }
+    },
+    "alert_duplicate_message %@" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "“%@” staat al in je bibliotheek." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "“%@” is already in your library." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "« %@ » est déjà dans votre bibliothèque." } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "„%@“ befindet sich bereits in deiner Mediathek." } }
+      }
+    },
+    "picker_add_favorites_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Voeg favorieten toe" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Favorites" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter des favoris" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Favoriten hinzufügen" } }
+      }
+    },
+    "picker_add_songs_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Voeg nummers toe" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Songs" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter des morceaux" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Titel hinzufügen" } }
+      }
+    },
+    "button_add_favorites_count %lld" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Voeg %lld favorieten toe" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add %lld Favorites" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter %lld favoris" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "%lld Favoriten hinzufügen" } }
+      }
+    },
+    "button_add_songs_count %lld" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Voeg %lld nummers toe" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add %lld Songs" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ajouter %lld morceaux" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "%lld Titel hinzufügen" } }
+      }
+    },
+    "queue_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Wachtrij" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Queue" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "File d'attente" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Warteschlange" } }
+      }
+    },
+    "queue_now_playing" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Nu afgespeeld" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Now Playing" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "En cours de lecture" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Jetzt läuft" } }
+      }
+    },
+    "queue_up_next" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Volgende" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Up Next" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "À suivre" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Nächste" } }
+      }
+    },
+    "queue_auto_next" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Automatisch volgende" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Auto Play" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Lecture automatique" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Automatisch weiter" } }
+      }
+    },
+    "queue_recommended" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Aanbevolen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Recommended" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Recommandations" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Empfohlen" } }
+      }
+    },
+    "action_close" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Sluit" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Close" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fermer" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Schließen" } }
+      }
+    },
+    "repeat_one_active" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Herhaal 1 actief" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Repeat One Active" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Répéter 1 titre" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Titel wiederholen aktiv" } }
+      }
+    },
+    "repeat_all_active" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Herhaal alles actief" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Repeat All Active" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Tout répéter" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle wiederholen aktiv" } }
+      }
+    },
+    "repeat_one_description" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Het huidige nummer wordt oneindig herhaald." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The current song will repeat indefinitely." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Le morceau actuel sera répété en boucle." } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Der aktuelle Titel wird dauerhaft wiederholt." } }
+      }
+    },
+    "repeat_all_description" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "De huidige wachtrij blijft herhalen. Automatische nummers worden niet afgespeeld." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The current queue will keep repeating. Autoplay songs won't play." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "La file d'attente sera répétée. La lecture automatique est désactivée." } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Die aktuelle Warteschlange wird wiederholt. Automatische Titel werden nicht abgespielt." } }
+      }
+    },
+    "playlists_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Playlists" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Playlists" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Listes de lecture" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Wiedergabelisten" } }
+      }
+    },
+    "favorites_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Favorieten" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Favorites" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Favoris" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Favoriten" } }
+      }
+    },
+    "songs_count_format %lld" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "%lld nummers" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld songs" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "%lld morceaux" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "%lld Titel" } }
+      }
+    },
+    "action_edit_playlist" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Wijzig playlist" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit playlist" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier la liste" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Playlist bearbeiten" } }
+      }
+    },
+    "action_delete_playlist" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Verwijder playlist" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete playlist" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Supprimer la liste" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Playlist löschen" } }
+      }
+    },
+    "playlist_name_section" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Naam" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Name" } }
+      }
+    },
+    "playlist_name_placeholder" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Naam" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Name" } }
+      }
+    },
+    "edit_info_title" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Info wijzigen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit Details" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier les infos" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Info bearbeiten" } }
+      }
+    },
+    "action_save" : {
+      "localizations" : {
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Bewaar" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Enregistrer" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Speichern" } }
+      }
+    }
+  }
+}
