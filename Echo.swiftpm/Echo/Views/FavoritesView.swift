@@ -27,7 +27,7 @@ struct FavoritesView: View {
                             .background(.thinMaterial)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                         
-                        Text("favorites_song_count \(songs.count)")
+                        Text("favorites_song_count \(favoriteSongs.count)")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         
