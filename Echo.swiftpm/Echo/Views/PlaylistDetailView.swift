@@ -16,6 +16,7 @@ struct PlaylistDetailView: View {
     @State private var selectedImage: PhotosPickerItem?
     @State private var playlistImage: UIImage?
     
+    // MARK: - Computed Properties
     var songs: [Song] {
         guard let currentPlaylist = library.playlists.first(where: {
             $0.id == playlist.id
@@ -28,6 +29,12 @@ struct PlaylistDetailView: View {
                 $0.id == id
             }
         }
+    }
+    
+    // Helpt de compiler en haalt direct de juiste vertaling op
+    private var removeConfirmationMessage: String {
+        let format = NSLocalizedString("remove_songs_confirmation_message", comment: "")
+        return String(format: format, selectedSongs.count)
     }
     
     var body: some View {
@@ -61,7 +68,7 @@ struct PlaylistDetailView: View {
                         .font(.largeTitle)
                         .bold()
                     
-                    Text("songs_count_format \(songs.count)")
+                    Text("favorites_song_count \(songs.count)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
@@ -263,10 +270,11 @@ struct PlaylistDetailView: View {
                 deleteSelectedSongs()
             }
         } message: {
-           Text("remove_songs_confirmation_message \(selectedSongs.count)")
+            Text(removeConfirmationMessage)
         }
     }
     
+    // MARK: - Helper Methods
     func loadPlaylistImage() {
         guard let data = playlist.imageData,
               let image = UIImage(data: data)
