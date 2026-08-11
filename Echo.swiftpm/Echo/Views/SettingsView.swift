@@ -58,8 +58,11 @@ struct SettingsView: View {
                 }
 
 
-                Section(header: Text("API tab_settings")) {
-                    SecureField("Genius Access Token", text: $geniusToken)
+                Section(
+                    header: Text("settings.api.header"),
+                    footer: Text("settings.genius.footer")
+                ) {
+                    SecureField("GENIUS API TOKEN", text: $geniusToken)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                 }
