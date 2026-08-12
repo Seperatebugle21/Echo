@@ -1389,7 +1389,47 @@
         }
       }
     }
-  }
+  },
+"edit_info_title" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Info bearbeiten" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit Details" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier les infos" } },
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Info wijzigen" } }
+      }
+    },
+    "action_skip" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Überspringen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Skip" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ignorer" } },
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Overslaan" } }
+      }
+    },
+    "action_replace" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ersetzen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Replace" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Remplacer" } },
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Vervangen" } }
+      }
+    },
+    "action_skip_all" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Für alle überspringen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Skip for all" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ignorer pour tous" } },
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Overslaan voor alle" } }
+      }
+    },
+    "action_replace_all" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Für alle ersetzen" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Replace for all" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Remplacer pour tous" } },
+        "nl" : { "stringUnit" : { "state" : "translated", "value" : "Vervangen voor alle" } }
+      }
+    }
 
 
 
