@@ -9,7 +9,7 @@ struct PlaylistDetailView: View {
     let playlist: Playlist
     
     @State private var showSongPicker = false
-    @State private var isEditing = false
+    @State private var editMode: EditMode = .inactive
     @State private var selectedSongs: Set<UUID> = []
     @State private var showDeleteConfirmation = false
     
@@ -31,14 +31,14 @@ struct PlaylistDetailView: View {
         }
     }
     
-    // Helpt de compiler en haalt direct de juiste vertaling op
     private var removeConfirmationMessage: String {
         let format = NSLocalizedString("remove_songs_confirmation_message", comment: "")
         return String(format: format, selectedSongs.count)
     }
     
     var body: some View {
-        List {
+        List(selection: $selectedSongs) {
+            // MARK: Header Sectie
             Section {
                 VStack(spacing: 16) {
                     PhotosPicker(
@@ -100,7 +100,9 @@ struct PlaylistDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical)
             }
+            .selectionDisabled(true) // Zorgt ervoor dat de header niet geselecteerd kan worden
             
+            // MARK: Nummers Sectie
             if songs.isEmpty {
                 ContentUnavailableView {
                     Label(
@@ -121,19 +123,10 @@ struct PlaylistDetailView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
+                .selectionDisabled(true)
             } else {
                 ForEach(songs) { song in
                     HStack(spacing: 12) {
-                        if isEditing {
-                            Image(
-                                systemName:
-                                    selectedSongs.contains(song.id)
-                                ? "checkmark.circle.fill"
-                                : "circle"
-                            )
-                            .foregroundStyle(.blue)
-                        }
-                        
                         if let data = song.coverData,
                            let image = UIImage(data: data) {
                             Image(uiImage: image)
@@ -156,6 +149,7 @@ struct PlaylistDetailView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(song.title)
                                 .font(.headline)
+                                .foregroundStyle(.primary)
                             
                             Text(song.artist)
                                 .font(.caption)
@@ -166,25 +160,20 @@ struct PlaylistDetailView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        if isEditing {
-                            if selectedSongs.contains(song.id) {
-                                selectedSongs.remove(song.id)
-                            } else {
-                                selectedSongs.insert(song.id)
-                            }
-                        } else {
-                            if let url = library.getURL(for: song) {
-                                audioPlayer.play(
-                                    song: song,
-                                    url: url,
-                                    queue: songs
-                                )
-                                
-                                audioPlayer.allSongs = library.songs
-                                audioPlayer.fillAutoNext(
-                                    from: library.songs
-                                )
-                            }
+                        // Tikken op nummer werkt alleen als we NIET aan het bewerken zijn
+                        guard editMode == .inactive else { return }
+                        
+                        if let url = library.getURL(for: song) {
+                            audioPlayer.play(
+                                song: song,
+                                url: url,
+                                queue: songs
+                            )
+                            
+                            audioPlayer.allSongs = library.songs
+                            audioPlayer.fillAutoNext(
+                                from: library.songs
+                            )
                         }
                     }
                 }
@@ -196,17 +185,14 @@ struct PlaylistDetailView: View {
                 }
             }
         }
-        .environment(
-            \.editMode,
-             .constant(isEditing ? .active : .inactive)
-        )
+        .environment(\.editMode, $editMode)
         .navigationTitle(playlist.name)
         .onAppear {
             loadPlaylistImage()
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                if isEditing {
+                if editMode == .active {
                     Button {
                         showDeleteConfirmation = true
                     } label: {
@@ -221,23 +207,27 @@ struct PlaylistDetailView: View {
                 HStack {
                     Button {
                         withAnimation {
-                            isEditing.toggle()
-                            if !isEditing {
+                            if editMode == .active {
+                                editMode = .inactive
                                 selectedSongs.removeAll()
+                            } else {
+                                editMode = .active
                             }
                         }
                     } label: {
                         Text(
-                            isEditing
+                            editMode == .active
                             ? LocalizedStringKey("action_done")
                             : LocalizedStringKey("action_edit")
                         )
                     }
                     
-                    Button {
-                        showSongPicker = true
-                    } label: {
-                        Image(systemName: "plus")
+                    if editMode == .inactive {
+                        Button {
+                            showSongPicker = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
                     }
                 }
             }
@@ -307,7 +297,7 @@ struct PlaylistDetailView: View {
         selectedSongs.removeAll()
         
         withAnimation {
-            isEditing = false
+            editMode = .inactive
         }
     }
     
