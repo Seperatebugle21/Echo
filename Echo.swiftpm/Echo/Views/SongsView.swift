@@ -31,7 +31,7 @@ struct SongsView: View {
     // Sheet voor meerdere nummers
     @State private var playlistSheetItem: SelectedSongsSheetItem? = nil
     
-    // --- VOORTGANG IMPORT (NIEUW) ---
+    // VOORTGANG IMPORT
     @State private var isImporting = false
     @State private var importProgress = 0
     @State private var importTotal = 0
@@ -67,6 +67,8 @@ struct SongsView: View {
     }
     
     var body: some View {
+        @Bindable var bindableLibrary = library
+        
         NavigationStack {
             List(selection: $selectedSongIDs) {
                 ForEach(sortedSongs) { song in
@@ -222,12 +224,12 @@ struct SongsView: View {
                         } label: {
                             Image(systemName: "plus")
                         }
-                        .disabled(isImporting) // Schakel uit tijdens importeren
+                        .disabled(isImporting)
                     }
                 }
             }
             
-            // File importer MET ASYNCHRONE VERWERKING
+            // File importer
             .fileImporter(
                 isPresented: $showImporter,
                 allowedContentTypes: [.audio],
@@ -235,7 +237,6 @@ struct SongsView: View {
             ) { result in
                 switch result {
                 case .success(let files):
-                    // Start achtergrondtaak om vastlopen van UI te voorkomen
                     Task {
                         await MainActor.run {
                             importTotal = files.count
@@ -244,15 +245,12 @@ struct SongsView: View {
                         }
                         
                         for file in files {
-                            // Voeg het nummer toe via de library
                             library.importSong(from: file)
                             
-                            // Update de voortgang
                             await MainActor.run {
                                 importProgress += 1
                             }
                             
-                            // Geef de UI even tijd om te hertekenen bij grote lijsten
                             try? await Task.sleep(nanoseconds: 10_000_000) 
                         }
                         
@@ -266,7 +264,7 @@ struct SongsView: View {
                 }
             }
             
-            // --- LAAD-OVERLAY (NIEUW) ---
+            // Overlay voor importeren
             .overlay {
                 if isImporting {
                     ZStack {
@@ -296,7 +294,7 @@ struct SongsView: View {
                 }
             }
             
-            // Alerts & Sheets
+            // Alerts & Sheets (Nieuwe, veilige binding-notatie)
             .alert(
                 LocalizedStringKey("alert_delete_songs_title"),
                 isPresented: $showDeleteConfirmation
@@ -316,14 +314,14 @@ struct SongsView: View {
             
             .alert(
                 LocalizedStringKey("alert_duplicate_title"),
-                isPresented: Bindable(library).showDuplicateAlert
+                isPresented: $bindableLibrary.showDuplicateAlert
             ) {
                 Button(LocalizedStringKey("action_ok"), role: .cancel) { }
             } message: {
                 Text("alert_duplicate_message \(library.duplicateSongName)")
             }
             
-            .sheet(item: Bindable(library).songToAddToPlaylist) { song in
+            .sheet(item: $bindableLibrary.songToAddToPlaylist) { song in
                 PlaylistPickerView(songs: [song])
             }
             
@@ -340,7 +338,7 @@ struct SongsView: View {
                 SongOptionsView(song: song)
             }
             
-            .sheet(isPresented: Bindable(library).showEditSheet) {
+            .sheet(isPresented: $bindableLibrary.showEditSheet) {
                 if let song = library.editingSong {
                     EditSongView(song: song)
                 }
