@@ -23,15 +23,19 @@ class MusicLibraryManager {
     
     static let shared = MusicLibraryManager()
     
-    // MARK: - Song Editing
+    // MARK: - Song Editing & Alerts (Bestaande variabelen)
     
     var editingSong: Song?
     var showEditSheet = false
     var songToAddToPlaylist: Song?
     
+    // Deze stonden in je originele code en zijn nu weer terug!
+    var showDuplicateAlert = false
+    var duplicateSongName = ""
+    
     var favoriteSongIDs: [UUID] = []
     
-    // MARK: - Import Conflict State
+    // MARK: - Import Conflict State (Nieuw)
     
     var pendingConflicts: [ImportConflict] = []
     var currentConflict: ImportConflict?
@@ -117,14 +121,12 @@ class MusicLibraryManager {
             
             let audioExtensions = ["mp3", "m4a", "wav", "flac"]
             
-            // Reset "Pas toe op alles" voor een nieuwe synchronisatie
             applyToAllChoice = nil
             
             for url in fileURLs {
                 let extensionName = url.pathExtension.lowercased()
                 guard audioExtensions.contains(extensionName) else { continue }
                 
-                // Verwerk de mogelijke import/conflict
                 processImport(from: url)
             }
         } catch {
@@ -146,17 +148,20 @@ class MusicLibraryManager {
         
         let fileName = url.lastPathComponent
         
-        // 1. Controleer of het bestand al bestaat in de bibliotheek
+        // Controleer of het bestand al bestaat
         if let existingSong = songs.first(where: { $0.fileName == fileName }) {
             
-            // Als de gebruiker eerder op "Pas toe op alles" heeft geklikt:
+            // Vul ook de oude alert-variabelen in voor de zekerheid
+            duplicateSongName = fileName
+            
+            // Als er al "Pas toe op alles" is gekozen:
             if let choice = applyToAllChoice {
                 let conflict = ImportConflict(fileURL: url, existingSong: existingSong, newTitle: fileName)
                 resolveConflict(conflict, action: choice, applyToAll: true)
                 return
             }
             
-            // Voeg conflict toe aan de wachtrij
+            // Nieuwe conflict-wachtrij
             let conflict = ImportConflict(fileURL: url, existingSong: existingSong, newTitle: fileName)
             if !pendingConflicts.contains(where: { $0.fileURL == url }) {
                 pendingConflicts.append(conflict)
@@ -168,7 +173,7 @@ class MusicLibraryManager {
             return
         }
         
-        // 2. Geen dubbelganger? Importeer direct
+        // Geen dubbelganger? Gewoon importeren
         importNewSong(from: url)
     }
     
@@ -181,7 +186,6 @@ class MusicLibraryManager {
         
         switch action {
         case .skip:
-            // Verwijder het dubbele bestand van de schijf als het in Documents staat
             let destination = FileManager.default
                 .urls(for: .documentDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent(conflict.fileURL.lastPathComponent)
@@ -192,14 +196,11 @@ class MusicLibraryManager {
             print("Nummer overgeslagen en opgeruimd:", conflict.newTitle)
             
         case .replace:
-            // Verwijder het oude nummer uit het geheugen
             deleteSong(conflict.existingSong)
-            // Importeer het nieuwe bestand
             importNewSong(from: conflict.fileURL)
             print("Nummer vervangen:", conflict.newTitle)
         }
         
-        // Werk de wachtrij bij
         pendingConflicts.removeAll { $0.id == conflict.id }
         currentConflict = pendingConflicts.first
     }
