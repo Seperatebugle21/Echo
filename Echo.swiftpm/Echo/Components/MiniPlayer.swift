@@ -40,6 +40,9 @@ struct MiniPlayer: View {
                     alignment: .leading
                 )
                 .clipped()
+
+
+                AirPlayButton()
                 
                 
                 // MARK: - Play / Pause
