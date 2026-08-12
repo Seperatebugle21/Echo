@@ -37,9 +37,9 @@ struct ContentView: View {
                 }
         }
 
-        .sheet(item: $lib.currentConflict) { conflict in
+       .sheet(item: $lib.currentConflict) { conflict in
             ImportConflictView(conflict: conflict)
-                .interactiveDismissDisabled() // Voorkomt dat gebruikers de melding wegswipen zonder te kiezen
+                .interactiveDismissDisabled()
         }
         
         // Shifting is hier uitgeschakeld (isShifted: false)
