@@ -36,18 +36,23 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      # 3. Maak de IPA map & injecteer Background Audio in Info.plist
+      # 3. Maak de IPA map & injecteer Info.plist instellingen
       - name: Create IPA Package
         run: |
           mkdir -p Payload
           cp -r build/Echo.xcarchive/Products/Applications/*.app Payload/ 2>/dev/null || cp -r build/Echo.xcarchive/Products/Applications/*.swiftpm Payload/ 2>/dev/null || true
           
-          # Zoek de gecompileerde app op en injecteer UIBackgroundModes = ["audio"]
+          # Zoek de gecompileerde app op
           APP_PATH=$(find Payload -maxdepth 2 \( -name "*.app" -o -name "*.swiftpm" \))
           echo "App gevonden op: $APP_PATH"
           
+          # 1. Background Audio injecteren
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$APP_PATH/Info.plist" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$APP_PATH/Info.plist" 2>/dev/null || true
+
+          # 2. Bestanden-app toegang (iTunes File Sharing & Open In Place) injecteren
+          /usr/libexec/PlistBuddy -c "Add :UIFileSharingEnabled bool true" "$APP_PATH/Info.plist" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :UIFileSharingEnabled true" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :LSSupportsOpeningDocumentsInPlace bool true" "$APP_PATH/Info.plist" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :LSSupportsOpeningDocumentsInPlace true" "$APP_PATH/Info.plist"
 
           zip -r Echo.ipa Payload
 
