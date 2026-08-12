@@ -147,7 +147,7 @@ struct SettingsView: View {
                         
                         Spacer()
                         
-                        Text("1.0")
+                        Text("2.0")
                             .foregroundStyle(.secondary)
                     }
                     
