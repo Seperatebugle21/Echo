@@ -4,8 +4,13 @@ import UIKit
 struct ContentView: View {
     
     @State private var miniPlayerHidden = false
+
+    @Environment(MusicLibraryManager.self) private var library
     
     var body: some View {
+
+      @Bindable var lib = library
+        
         TabView {
             SongsView()
                 .tabItem {
@@ -30,6 +35,11 @@ struct ContentView: View {
                         systemImage: "gearshape"
                     )
                 }
+        }
+
+        .sheet(item: $lib.currentConflict) { conflict in
+            ImportConflictView(conflict: conflict)
+                .interactiveDismissDisabled() // Voorkomt dat gebruikers de melding wegswipen zonder te kiezen
         }
         
         // Shifting is hier uitgeschakeld (isShifted: false)
