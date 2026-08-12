@@ -5,11 +5,9 @@ struct ContentView: View {
     
     @State private var miniPlayerHidden = false
 
-    @Environment(MusicLibraryManager.self) private var library
     
     var body: some View {
 
-      @Bindable var lib = library
         
         TabView {
             SongsView()
@@ -37,10 +35,7 @@ struct ContentView: View {
                 }
         }
 
-       .sheet(item: $lib.currentConflict) { conflict in
-            ImportConflictView(conflict: conflict)
-                .interactiveDismissDisabled()
-        }
+       
         
         // Shifting is hier uitgeschakeld (isShifted: false)
         .background {
