@@ -7,7 +7,6 @@ enum SongSortOption: String, CaseIterable {
     case lastPlayed = "sort_last_played"
 }
 
-// Wrapper struct om te voorkomen dat de Swift compiler crasht op Array-extensions
 struct SelectedSongsSheetItem: Identifiable {
     let id = UUID()
     let songs: [Song]
@@ -22,15 +21,20 @@ struct SongsView: View {
     @State private var searchText = ""
     @State private var sortOption: SongSortOption = .name
     
-    @State private var selectedSong: Song? // Voor het 3-puntjes menu
+    @State private var selectedSong: Song?
     
     // Bewerken & Selectie
     @State private var editMode: EditMode = .inactive
     @State private var selectedSongIDs = Set<Song.ID>()
     @State private var showDeleteConfirmation = false
     
-    // Sheet voor meerdere nummers toevoegen aan playlist
+    // Sheet voor meerdere nummers
     @State private var playlistSheetItem: SelectedSongsSheetItem? = nil
+    
+    // --- VOORTGANG IMPORT (NIEUW) ---
+    @State private var isImporting = false
+    @State private var importProgress = 0
+    @State private var importTotal = 0
     
     var filteredSongs: [Song] {
         if searchText.isEmpty {
@@ -149,7 +153,6 @@ struct SongsView: View {
             
             // Toolbar
             .toolbar {
-                // Linkerbovenhoek: Wijzig / Gereed
                 ToolbarItem(placement: .topBarLeading) {
                     Button(editMode == .active ? LocalizedStringKey("action_done") : LocalizedStringKey("action_edit")) {
                         withAnimation {
@@ -163,10 +166,8 @@ struct SongsView: View {
                     }
                 }
                 
-                // Rechterbovenhoek knoppen
                 if editMode == .active {
                     ToolbarItemGroup(placement: .topBarTrailing) {
-                        // Knop: Alle geselecteerde nummers toevoegen
                         Button {
                             let songsToAdd = library.songs.filter { selectedSongIDs.contains($0.id) }
                             playlistSheetItem = SelectedSongsSheetItem(songs: songsToAdd)
@@ -175,7 +176,6 @@ struct SongsView: View {
                         }
                         .disabled(selectedSongIDs.isEmpty)
                         
-                        // Knop: Verwijderen
                         Button(role: .destructive) {
                             showDeleteConfirmation = true
                         } label: {
@@ -222,11 +222,12 @@ struct SongsView: View {
                         } label: {
                             Image(systemName: "plus")
                         }
+                        .disabled(isImporting) // Schakel uit tijdens importeren
                     }
                 }
             }
             
-            // File importer
+            // File importer MET ASYNCHRONE VERWERKING
             .fileImporter(
                 isPresented: $showImporter,
                 allowedContentTypes: [.audio],
@@ -234,15 +235,68 @@ struct SongsView: View {
             ) { result in
                 switch result {
                 case .success(let files):
-                    for file in files {
-                        library.importSong(from: file)
+                    // Start achtergrondtaak om vastlopen van UI te voorkomen
+                    Task {
+                        await MainActor.run {
+                            importTotal = files.count
+                            importProgress = 0
+                            isImporting = true
+                        }
+                        
+                        for file in files {
+                            // Voeg het nummer toe via de library
+                            library.importSong(from: file)
+                            
+                            // Update de voortgang
+                            await MainActor.run {
+                                importProgress += 1
+                            }
+                            
+                            // Geef de UI even tijd om te hertekenen bij grote lijsten
+                            try? await Task.sleep(nanoseconds: 10_000_000) 
+                        }
+                        
+                        await MainActor.run {
+                            isImporting = false
+                        }
                     }
+                    
                 case .failure(let error):
                     print("Import fout:", error.localizedDescription)
                 }
             }
             
-            // Alert voor bevestiging verwijderen
+            // --- LAAD-OVERLAY (NIEUW) ---
+            .overlay {
+                if isImporting {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                        
+                        VStack(spacing: 16) {
+                            ProgressView(value: Double(importProgress), total: Double(importTotal))
+                                .progressViewStyle(.circular)
+                                .scaleEffect(1.5)
+                            
+                            VStack(spacing: 4) {
+                                Text("Nummers importeren...")
+                                    .font(.headline)
+                                
+                                Text("\(importProgress) van \(importTotal) geüpload")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(24)
+                        .background(.regularMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(radius: 10)
+                    }
+                    .transition(.opacity)
+                }
+            }
+            
+            // Alerts & Sheets
             .alert(
                 LocalizedStringKey("alert_delete_songs_title"),
                 isPresented: $showDeleteConfirmation
@@ -260,7 +314,6 @@ struct SongsView: View {
                 Text("alert_delete_songs_message \(selectedSongIDs.count)")
             }
             
-            // Dubbel nummer alert
             .alert(
                 LocalizedStringKey("alert_duplicate_title"),
                 isPresented: Bindable(library).showDuplicateAlert
@@ -270,12 +323,10 @@ struct SongsView: View {
                 Text("alert_duplicate_message \(library.duplicateSongName)")
             }
             
-            // Playlist kiezen (1 nummer via library binding)
             .sheet(item: Bindable(library).songToAddToPlaylist) { song in
                 PlaylistPickerView(songs: [song])
             }
             
-            // Playlist kiezen (meerdere geselecteerde nummers via struct wrapper)
             .sheet(item: $playlistSheetItem, onDismiss: {
                 withAnimation {
                     editMode = .inactive
@@ -285,12 +336,10 @@ struct SongsView: View {
                 PlaylistPickerView(songs: item.songs)
             }
             
-            // Song opties
             .sheet(item: $selectedSong) { song in
                 SongOptionsView(song: song)
             }
             
-            // Info wijzigen
             .sheet(isPresented: Bindable(library).showEditSheet) {
                 if let song = library.editingSong {
                     EditSongView(song: song)
@@ -298,10 +347,4 @@ struct SongsView: View {
             }
         }
     }
-}
-
-#Preview {
-    SongsView()
-        .environment(MusicLibraryManager())
-        .environment(AudioPlayerManager())
 }
