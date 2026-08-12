@@ -43,6 +43,7 @@ struct MiniPlayer: View {
 
 
                 AirPlayButton()
+                .frame(width: 30, height: 30)
                 
                 
                 // MARK: - Play / Pause
