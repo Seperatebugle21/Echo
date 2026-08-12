@@ -94,6 +94,10 @@ struct ContentView: View {
             }
             .zIndex(100)
         }
+        .sheet(item: Bindable(library).currentConflict) { conflict in
+    ImportConflictView(conflict: conflict)
+        .interactiveDismissDisabled()
+}
         
         .animation(
             .spring(
