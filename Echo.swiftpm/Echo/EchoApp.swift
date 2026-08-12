@@ -6,6 +6,8 @@ struct EchoApp: App {
     @AppStorage("selectedLanguage") private var selectedLanguage: String = "en"
     
     @AppStorage("appearanceMode") private var appearanceMode = "system"
+
+    @Environment(\.scenePhase) private var scenePhase
     
    
     @State private var library = MusicLibraryManager()
@@ -20,6 +22,11 @@ struct EchoApp: App {
                 .environment(library)
                 .environment(audioPlayer)
                 .preferredColorScheme(colorScheme)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                library.syncDocumentsFolder()
+            }
         }
     }
     
