@@ -43,6 +43,7 @@ class MusicLibraryManager {
         loadSongs()
         loadPlaylists()
         loadFavorites()
+        syncDocumentsFolder()
     }
     
     func removeAllLyrics() {
@@ -108,6 +109,38 @@ class MusicLibraryManager {
     // MARK: - Import
     
     // MARK: - Import
+
+func syncDocumentsFolder() {
+    let fileManager = FileManager.default
+    guard let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+    
+    do {
+        // Haal alle bestanden uit de app-map op
+        let fileURLs = try fileManager.contentsOfDirectory(
+            at: documentsURL, 
+            includingPropertiesForKeys: nil, 
+            options: .skipsHiddenFiles
+        )
+        
+        let audioExtensions = ["mp3", "m4a", "wav", "flac"]
+        
+        for url in fileURLs {
+            let extensionName = url.pathExtension.lowercased()
+            let fileName = url.lastPathComponent
+            
+            // Sla het JSON-bestand en niet-audiobestanden over
+            guard audioExtensions.contains(extensionName) else { continue }
+            
+            // Als het nummer nog NIET in de bibliotheek staat, importeer het
+            if !songs.contains(where: { $0.fileName == fileName }) {
+                importSong(from: url)
+            }
+        }
+    } catch {
+        print("Fout bij synchroniseren van de map:", error)
+    }
+}
+
     
     func importSong(from url: URL) {
         
