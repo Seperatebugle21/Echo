@@ -135,7 +135,7 @@ struct FavoritesView: View {
                         Button {
                             library.toggleFavorite(song)
                         } label: {
-                            Label("remove_action", systemImage: "heart.slash")
+                            Label("action_remove", systemImage: "heart.slash")
                         }
                         .tint(.red)
                     }
