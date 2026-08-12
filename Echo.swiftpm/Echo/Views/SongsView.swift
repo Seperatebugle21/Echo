@@ -313,32 +313,31 @@ struct SongsView: View {
             } message: {
                 Text("alert_delete_songs_message \(selectedSongIDs.count)")
             }
-            
-           .alert(
-    Text("alert_duplicate_title"), // Localized Key: "alert_duplicate_title"
-    isPresented: $manager.showDuplicateAlert
+            
+         .alert(
+    Text("alert_duplicate_title"),
+    isPresented: $library.showDuplicateAlert
 ) {
     Button(String(localized: "action_skip")) {
-        manager.resolveDuplicate(choice: .skip, applyToAll: false)
+        library.resolveDuplicate(choice: .skip, applyToAll: false)
     }
     
     Button(String(localized: "action_replace"), role: .destructive) {
-        manager.resolveDuplicate(choice: .replace, applyToAll: false)
+        library.resolveDuplicate(choice: .replace, applyToAll: false)
     }
     
     Button(String(localized: "action_skip_all")) {
-        manager.resolveDuplicate(choice: .skip, applyToAll: true)
+        library.resolveDuplicate(choice: .skip, applyToAll: true)
     }
     
     Button(String(localized: "action_replace_all"), role: .destructive) {
-        manager.resolveDuplicate(choice: .replace, applyToAll: true)
+        library.resolveDuplicate(choice: .replace, applyToAll: true)
     }
     
     Button(String(localized: "action_cancel"), role: .cancel) {}
     
 } message: {
-    // Gebruikt de key met de variabelenaam ingevuld
-    Text("alert_duplicate_message \(manager.duplicateSongName)")
+    Text("alert_duplicate_message \(library.duplicateSongName)")
 }
             
             .sheet(item: Bindable(library).songToAddToPlaylist) { song in
