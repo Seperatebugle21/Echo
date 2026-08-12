@@ -1333,6 +1333,62 @@
         }
       }
     }
+  },
+"action_remove": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Remove"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verwijder"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Supprimer"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Entfernen"
+        }
+      }
+    }
+  },
+  "action_favorite": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favorite"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favoriet"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favori"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favorit"
+        }
+      }
+    }
   }
 
 
