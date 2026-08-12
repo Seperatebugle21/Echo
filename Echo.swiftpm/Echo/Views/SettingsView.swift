@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(MusicLibraryManager.self) private var library
 
     @AppStorage("geniusAccessToken") private var geniusToken: String = ""
+    @AppStorage("musixmatchApiKey") private var musixmatchApiKey: String = ""
 
     @AppStorage("selectedLanguage") private var selectedLanguage: String = "en"
     
@@ -63,6 +64,10 @@ struct SettingsView: View {
                     footer: Text("settings.genius.footer")
                 ) {
                     SecureField("GENIUS API TOKEN", text: $geniusToken)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                    
+                    SecureField("MUSIXMATCH API KEY", text: $musixmatchApiKey)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                 }
