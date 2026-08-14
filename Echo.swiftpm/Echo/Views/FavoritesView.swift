@@ -1,14 +1,28 @@
 import SwiftUI
 
-// 👈 Unieke enum-naam om conflicten te voorkomen
 enum FavoritesSortOption: String, CaseIterable, Identifiable {
-    case custom = "Standaard"
-    case title = "Titel (A-Z)"
-    case artist = "Artiest (A-Z)"
-    case dateAdded = "Laatst toegevoegd"
-    case lastPlayed = "Laatst afgespeeld"
+    case custom
+    case title
+    case artist
+    case dateAdded
+    case lastPlayed
     
     var id: String { self.rawValue }
+    
+    var localizedLabel: LocalizedStringKey {
+        switch self {
+        case .custom:
+            return LocalizedStringKey("MUSIC_APP_SORT_OPTION_DEFAULT_CUSTOM_ORDER")
+        case .title:
+            return LocalizedStringKey("MUSIC_APP_SORT_OPTION_ALPHABETICAL_TITLE")
+        case .artist:
+            return LocalizedStringKey("MUSIC_APP_SORT_OPTION_ALPHABETICAL_ARTIST")
+        case .dateAdded:
+            return LocalizedStringKey("MUSIC_APP_SORT_OPTION_CHRONOLOGICAL_DATE_ADDED")
+        case .lastPlayed:
+            return LocalizedStringKey("MUSIC_APP_SORT_OPTION_CHRONOLOGICAL_LAST_PLAYED")
+        }
+    }
 }
 
 struct FavoritesView: View {
@@ -21,13 +35,12 @@ struct FavoritesView: View {
     @State private var selectedSongs = Set<Song.ID>()
     @State private var showDeleteConfirmation = false
     @State private var searchText = ""
-    @State private var sortOption: FavoritesSortOption = .custom // 👈 Gebruikt FavoritesSortOption
+    @State private var sortOption: FavoritesSortOption = .custom
     
     var songs: [Song] {
         library.favoriteSongs
     }
     
-    // Gesorteerde en gefilterde nummers
     var processedSongs: [Song] {
         let filtered = songs.filter { song in
             searchText.isEmpty ||
@@ -174,7 +187,10 @@ struct FavoritesView: View {
                 }
             }
         }
-        .searchable(text: $searchText, prompt: Text("Zoek nummers..."))
+        .searchable(
+            text: $searchText,
+            prompt: Text(LocalizedStringKey("MUSIC_APP_FAVORITES_SEARCH_PLACEHOLDER_TEXT"))
+        )
         .environment(\.editMode, $editMode)
         .navigationTitle(Text(LocalizedStringKey("favorites_navigation_title")))
         .toolbar {
@@ -194,12 +210,34 @@ struct FavoritesView: View {
                 HStack(spacing: 16) {
                     if editMode == .inactive && !songs.isEmpty {
                         Menu {
-                            Picker("Sorteer op", selection: $sortOption) {
-                                Label("Standaard", systemImage: "arrow.up.arrow.down").tag(FavoritesSortOption.custom)
-                                Label("Titel (A-Z)", systemImage: "textformat").tag(FavoritesSortOption.title)
-                                Label("Artiest (A-Z)", systemImage: "person").tag(FavoritesSortOption.artist)
-                                Label("Laatst toegevoegd", systemImage: "calendar").tag(FavoritesSortOption.dateAdded)
-                                Label("Laatst afgespeeld", systemImage: "play.circle").tag(FavoritesSortOption.lastPlayed)
+                            Picker(
+                                LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"),
+                                selection: $sortOption
+                            ) {
+                                Label(
+                                    FavoritesSortOption.custom.localizedLabel,
+                                    systemImage: "arrow.up.arrow.down"
+                                ).tag(FavoritesSortOption.custom)
+                                
+                                Label(
+                                    FavoritesSortOption.title.localizedLabel,
+                                    systemImage: "textformat"
+                                ).tag(FavoritesSortOption.title)
+                                
+                                Label(
+                                    FavoritesSortOption.artist.localizedLabel,
+                                    systemImage: "person"
+                                ).tag(FavoritesSortOption.artist)
+                                
+                                Label(
+                                    FavoritesSortOption.dateAdded.localizedLabel,
+                                    systemImage: "calendar"
+                                ).tag(FavoritesSortOption.dateAdded)
+                                
+                                Label(
+                                    FavoritesSortOption.lastPlayed.localizedLabel,
+                                    systemImage: "play.circle"
+                                ).tag(FavoritesSortOption.lastPlayed)
                             }
                         } label: {
                             Image(systemName: "arrow.up.arrow.down.circle")
@@ -252,7 +290,6 @@ struct FavoritesView: View {
         }
     }
     
-    // MARK: - Helper Methods
     func removeSelectedFavorites() {
         let songsToRemove = songs.filter { selectedSongs.contains($0.id) }
         for song in songsToRemove {
