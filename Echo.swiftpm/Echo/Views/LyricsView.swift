@@ -13,10 +13,13 @@ struct LyricsView: View {
     @State private var isUserScrolling = false
     @State private var scrollResetTimer: Timer?
     
+    // Aangepaste ankerpositie: 35% vanaf de bovenkant (iets boven het midden)
+    private let customScrollAnchor = UnitPoint(x: 0.5, y: 0.35)
+    
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 22) {
                     if lines.isEmpty {
                         if let lyrics = audioPlayer.currentLyrics, !lyrics.isEmpty {
                             plainLyricsView(lyrics)
@@ -32,31 +35,29 @@ struct LyricsView: View {
                                 audioPlayer.seek(to: line.time)
                             } label: {
                                 Text(line.text)
-                                    .font(.system(size: isCurrent ? 28 : 24, weight: .bold, design: .rounded))
+                                    .font(.system(size: 24, weight: .bold, design: .rounded))
                                     .foregroundStyle(isCurrent ? .primary : .secondary)
-                                    // Blur-effect: als de gebruiker scrolt is de blur 0, anders neemt de blur toe naarmate de regel verder onder/boven de huidige regel staat.
+                                    // Subtiele blur: veel minder heftig dan voorheen (max 3pt)
                                     .blur(radius: calculateBlur(for: distance))
                                     .opacity(calculateOpacity(for: distance))
-                                    .scaleEffect(isCurrent ? 1.02 : 0.98, anchor: .leading)
-                                    .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
+                                    // Zachte scale zonder dat de tekst-layout opnieuw wordt berekend
+                                    .scaleEffect(isCurrent ? 1.03 : 1.0, anchor: .leading)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             .buttonStyle(.plain)
                             .id(index)
-                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentLineIndex)
-                            .animation(.easeInOut(duration: 0.25), value: isUserScrolling)
+                            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: currentLineIndex)
+                            .animation(.easeInOut(duration: 0.2), value: isUserScrolling)
                         }
                     }
                 }
                 .padding(.horizontal, 24)
-                .padding(.vertical, 80)
+                .padding(.vertical, 100)
             }
-            // Detecteer scroll-interacties van de gebruiker
             .simultaneousGesture(
                 DragGesture().onChanged { _ in
                     isUserScrolling = true
-                    // Reset timer bij elke sleepbeweging
                     scrollResetTimer?.invalidate()
-                    // Zorg dat het verwazigingseffect weer terugkomt 3 seconden nadat de gebruiker stopt met scrollen
                     scrollResetTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
                         withAnimation {
                             isUserScrolling = false
@@ -67,8 +68,9 @@ struct LyricsView: View {
             .onChange(of: currentLineIndex) { _, newIndex in
                 guard !lines.isEmpty, !isUserScrolling else { return }
                 
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
-                    proxy.scrollTo(newIndex, anchor: .center)
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                    // Scrollt nu naar de aangepaste positie (iets boven het midden)
+                    proxy.scrollTo(newIndex, anchor: customScrollAnchor)
                 }
             }
         }
@@ -81,32 +83,30 @@ struct LyricsView: View {
         .onChange(of: audioPlayer.currentLyrics) { _, _ in parseLyrics() }
     }
     
-    // MARK: - Helper Modifiers voor visuele effecten
+    // MARK: - Subtiele Effecten
     
-    /// Berekent de hoeveelheid Blur op basis van hoe ver de regel verwijderd is van de actieve regel
     private func calculateBlur(for distance: Int) -> CGFloat {
-        if isUserScrolling { return 0 } // Geen blur tijdens handmatig scrollen
-        if distance <= 0 { return 0 }   // Regel is al geweest of is de actieve regel
+        if isUserScrolling { return 0 }
+        if distance <= 0 { return 0 }
         
-        // Zorgt ervoor dat regels eronder steeds waziger worden (max 8pt blur)
-        return min(CGFloat(distance) * 2.2, 8.0)
+        // Milde vervaging: max 3.5pt blur voor regels ver eronder
+        return min(CGFloat(distance) * 0.8, 3.5)
     }
     
-    /// Berekent de transparantie op basis van de afstand tot de actieve regel
     private func calculateOpacity(for distance: Int) -> Double {
-        if isUserScrolling { return 1.0 } // Volledig leesbaar tijdens scrollen
-        if distance == 0 { return 1.0 }   // Actieve regel
+        if isUserScrolling { return 1.0 }
+        if distance == 0 { return 1.0 }
         
         if distance < 0 {
-            // Regels die al geweest zijn vervagen licht
-            return max(1.0 - Double(abs(distance)) * 0.25, 0.3)
+            // Vorige zinnen
+            return max(1.0 - Double(abs(distance)) * 0.2, 0.35)
         } else {
-            // Regels die nog moeten komen worden steeds transparanter
-            return max(1.0 - Double(distance) * 0.2, 0.15)
+            // Komende zinnen
+            return max(1.0 - Double(distance) * 0.15, 0.4)
         }
     }
     
-    // MARK: - Subviews
+    // MARK: - Subviews & Logic
     
     @ViewBuilder
     private var unavailableLyricsView: some View {
