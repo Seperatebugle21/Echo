@@ -1,5 +1,16 @@
 import SwiftUI
 
+// Optioneel: Sorteer-enum voor schone code
+enum SongSortOption: String, CaseIterable, Identifiable {
+    case custom = "Standaard"
+    case title = "Titel (A-Z)"
+    case artist = "Artiest (A-Z)"
+    case dateAdded = "Laatst toegevoegd"
+    case lastPlayed = "Laatst afgespeeld"
+    
+    var id: String { self.rawValue }
+}
+
 struct FavoritesView: View {
     
     @Environment(MusicLibraryManager.self) private var library
@@ -9,21 +20,36 @@ struct FavoritesView: View {
     @State private var editMode: EditMode = .inactive
     @State private var selectedSongs = Set<Song.ID>()
     @State private var showDeleteConfirmation = false
-    @State private var searchText = "" // 👈 ZOEKSTATE TOEGEVOEGD
+    @State private var searchText = ""
+    @State private var sortOption: SongSortOption = .custom // 👈 SORTEERSTATE TOEGEVOEGD
     
     var songs: [Song] {
         library.favoriteSongs
     }
     
-    // 👈 GEFILTERDE NUMMERS OP BASIS VAN ZOEKOPDRACHT
-    var filteredSongs: [Song] {
-        if searchText.isEmpty {
-            return songs
-        } else {
-            return songs.filter { song in
-                song.title.localizedCaseInsensitiveContains(searchText) ||
-                song.artist.localizedCaseInsensitiveContains(searchText)
-            }
+    // 👈 GESORTEERDE EN GEFILTERDE NUMMERS
+    var processedSongs: [Song] {
+        // 1. Eerst filteren op zoektekst
+        let filtered = songs.filter { song in
+            searchText.isEmpty ||
+            song.title.localizedCaseInsensitiveContains(searchText) ||
+            song.artist.localizedCaseInsensitiveContains(searchText)
+        }
+        
+        // 2. Vervolgens sorteren op basis van de gekozen optie
+        switch sortOption {
+        case .custom:
+            return filtered
+        case .title:
+            return filtered.sorted { $0.title.localizedCompare($1.title) == .orderedAscending }
+        case .artist:
+            return filtered.sorted { $0.artist.localizedCompare($1.artist) == .orderedAscending }
+        case .dateAdded:
+            // Let op: 'dateAdded' moet bestaan op je Song-model
+            return filtered.sorted { ($0.dateAdded ?? .distantPast) > ($1.dateAdded ?? .distantPast) }
+        case .lastPlayed:
+            // Let op: 'lastPlayed' moet bestaan op je Song-model
+            return filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
         }
     }
     
@@ -36,7 +62,6 @@ struct FavoritesView: View {
         List(selection: $selectedSongs) {
             
             // MARK: - Header / Knoppen
-            // Altijd verbergen tijdens het zoeken om rommel op het scherm te voorkomen
             if !songs.isEmpty && searchText.isEmpty {
                 Section {
                     VStack(spacing: 16) {
@@ -78,7 +103,6 @@ struct FavoritesView: View {
             
             // MARK: - Lijst van favorieten
             if songs.isEmpty {
-                
                 ContentUnavailableView {
                     Label(
                         LocalizedStringKey("favorites_empty_title"),
@@ -89,27 +113,22 @@ struct FavoritesView: View {
                 }
                 .selectionDisabled(true)
                 
-            } else if filteredSongs.isEmpty {
-                // 👈 Mocht de zoekopdracht geen resultaat opleveren
+            } else if processedSongs.isEmpty {
                 ContentUnavailableView.search(text: searchText)
                     .selectionDisabled(true)
             } else {
                 
-                ForEach(filteredSongs) { song in // 👈 Gebruikt filteredSongs i.p.v. songs
-                    
+                ForEach(processedSongs) { song in
                     HStack(spacing: 12) {
                         
                         if let data = song.coverData,
                            let image = UIImage(data: data) {
-                            
                             Image(uiImage: image)
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 50, height: 50)
                                 .clipShape(RoundedRectangle(cornerRadius: 10))
-                            
                         } else {
-                            
                             Image(systemName: "music.note")
                                 .font(.title2)
                                 .frame(width: 50, height: 50)
@@ -141,7 +160,7 @@ struct FavoritesView: View {
                             audioPlayer.play(
                                 song: song,
                                 url: url,
-                                queue: filteredSongs
+                                queue: processedSongs
                             )
                             
                             audioPlayer.allSongs = library.songs
@@ -159,7 +178,7 @@ struct FavoritesView: View {
                 }
             }
         }
-        .searchable(text: $searchText, prompt: Text("Zoek nummers...")) // 👈 ZOEKBALK TOEGEVOEGD
+        .searchable(text: $searchText, prompt: Text("Zoek nummers..."))
         .environment(\.editMode, $editMode)
         .navigationTitle(Text(LocalizedStringKey("favorites_navigation_title")))
         .toolbar {
@@ -176,7 +195,22 @@ struct FavoritesView: View {
             }
             
             ToolbarItem(placement: .topBarTrailing) {
-                HStack {
+                HStack(spacing: 16) {
+                    // 👈 SORTEERMENU TOEGEVOEGD
+                    if editMode == .inactive && !songs.isEmpty {
+                        Menu {
+                            Picker("Sorteer op", selection: $sortOption) {
+                                Label("Standaard", systemImage: "arrow.up.arrow.down").tag(SongSortOption.custom)
+                                Label("Titel (A-Z)", systemImage: "textformat").tag(SongSortOption.title)
+                                Label("Artiest (A-Z)", systemImage: "person").tag(SongSortOption.artist)
+                                Label("Laatst toegevoegd", systemImage: "calendar").tag(SongSortOption.dateAdded)
+                                Label("Laatst afgespeeld", systemImage: "play.circle").tag(SongSortOption.lastPlayed)
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down.circle")
+                        }
+                    }
+                    
                     if !songs.isEmpty {
                         Button {
                             withAnimation {
@@ -214,15 +248,8 @@ struct FavoritesView: View {
             LocalizedStringKey("delete_songs_title"),
             isPresented: $showDeleteConfirmation
         ) {
-            Button(
-                LocalizedStringKey("action_cancel"),
-                role: .cancel
-            ) { }
-            
-            Button(
-                LocalizedStringKey("action_delete"),
-                role: .destructive
-            ) {
+            Button(LocalizedStringKey("action_cancel"), role: .cancel) { }
+            Button(LocalizedStringKey("action_delete"), role: .destructive) {
                 removeSelectedFavorites()
             }
         } message: {
@@ -233,34 +260,20 @@ struct FavoritesView: View {
     // MARK: - Helper Methods
     func removeSelectedFavorites() {
         let songsToRemove = songs.filter { selectedSongs.contains($0.id) }
-        
         for song in songsToRemove {
             library.toggleFavorite(song)
         }
-        
         selectedSongs.removeAll()
-        
-        withAnimation {
-            editMode = .inactive
-        }
+        withAnimation { editMode = .inactive }
     }
     
     func playFavorites(shuffle: Bool = false) {
-        var queue = songs
-        
-        if shuffle {
-            queue.shuffle()
-        }
-        
+        var queue = processedSongs
+        if shuffle { queue.shuffle() }
         guard let firstSong = queue.first else { return }
         
         if let url = library.getURL(for: firstSong) {
-            audioPlayer.play(
-                song: firstSong,
-                url: url,
-                queue: queue
-            )
-            
+            audioPlayer.play(song: firstSong, url: url, queue: queue)
             audioPlayer.allSongs = library.songs
             audioPlayer.fillAutoNext(from: library.songs)
         }
