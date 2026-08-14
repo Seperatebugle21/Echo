@@ -206,9 +206,31 @@ struct PlaylistDetailView: View {
                     .disabled(selectedSongs.isEmpty)
                 }
             }
+
+            
             
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
+
+     
+                    Button {
+                        withAnimation {
+                            if editMode == .active {
+                                editMode = .inactive
+                                selectedSongs.removeAll()
+                            } else {
+                                editMode = .active
+                            }
+                        }
+                    } label: {
+                        Text(
+                            editMode == .active
+                            ? LocalizedStringKey("action_done")
+                            : LocalizedStringKey("action_edit")
+                        )
+                    }
+
+                    
                     if editMode == .inactive && !songs.isEmpty {
                         Menu {
                             Picker(
@@ -245,22 +267,7 @@ struct PlaylistDetailView: View {
                         }
                     }
                     
-                    Button {
-                        withAnimation {
-                            if editMode == .active {
-                                editMode = .inactive
-                                selectedSongs.removeAll()
-                            } else {
-                                editMode = .active
-                            }
-                        }
-                    } label: {
-                        Text(
-                            editMode == .active
-                            ? LocalizedStringKey("action_done")
-                            : LocalizedStringKey("action_edit")
-                        )
-                    }
+                    
                     
                     if editMode == .inactive {
                         Button {
