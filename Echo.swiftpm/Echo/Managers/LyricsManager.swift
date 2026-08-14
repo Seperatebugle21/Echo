@@ -27,46 +27,75 @@ final class LyricsManager {
     
     // MARK: - Main Fetch Method
     
-    func fetchLyrics(
-        for song: Song,
-        duration: Double
-    ) async -> LyricsResponse? {
+   func fetchLyrics(
+    for song: Song,
+    duration: Double
+) async -> LyricsResponse? {
+    
+    // Hierin bewaren we de eerste 'gewone' lyrics die we tegenkomen als reserve
+    var fallbackResponse: LyricsResponse?
+    
+    // Helper sluiting om een respons te verwerken
+    func process(_ response: LyricsResponse?) -> LyricsResponse? {
+        guard let response = response else { return nil }
         
-        // 1. Eerst LRCLIB Exact Match
-        if let lyrics = await fetchLRCLIBExact(for: song, duration: duration) {
-            print("Lyrics via LRCLIB (Exact)")
-            return lyrics
+        // 1. Hebben we gesynchroniseerde lyrics? Direct gebruiken!
+        if response.syncedLyrics != nil {
+            return response
         }
         
-        // 2. Daarna LRCLIB Search Fallback
-        if let searchLyrics = await fetchLRCLIBSearch(for: song) {
-            print("Lyrics via LRCLIB (Search)")
-            return searchLyrics
+        // 2. Geen synced lyrics, maar wel plain lyrics? 
+        // Bewaar deze als reserve als we nog geen reserve hadden.
+        if fallbackResponse == nil && response.plainLyrics != nil {
+            fallbackResponse = response
         }
         
-        // 3. Probeer Musixmatch als er een API key is ingesteld
-        if !musixmatchApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            if let musixmatchLyrics = await fetchMusixmatch(for: song) {
-                print("Lyrics via Musixmatch")
-                return musixmatchLyrics
-            }
-        } else {
-            print("Geen Musixmatch API Key ingesteld")
-        }
-        
-        // 4. Als laatste Genius proberen als er een token is
-        if !geniusToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            if let geniusLyrics = await fetchGenius(for: song) {
-                print("Lyrics via Genius")
-                return geniusLyrics
-            }
-        } else {
-            print("Geen Genius token ingesteld")
-        }
-        
-        print("Geen lyrics gevonden bij alle bronnen")
         return nil
     }
+    
+    // --- STAP 1: LRCLIB Exact ---
+    if let exact = await fetchLRCLIBExact(for: song, duration: duration),
+       let match = process(exact) {
+        print("Gesynchroniseerde lyrics via LRCLIB (Exact)")
+        return match
+    }
+    
+    // --- STAP 2: LRCLIB Search ---
+    if let search = await fetchLRCLIBSearch(for: song),
+       let match = process(search) {
+        print("Gesynchroniseerde lyrics via LRCLIB (Search)")
+        return match
+    }
+    
+    // --- STAP 3: Musixmatch ---
+    if !musixmatchApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if let musixmatch = await fetchMusixmatch(for: song),
+           let match = process(musixmatch) {
+            print("Gesynchroniseerde lyrics via Musixmatch")
+            return match
+        }
+    }
+    
+    // --- STAP 4: Genius ---
+    if !geniusToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if let genius = await fetchGenius(for: song),
+           let match = process(genius) {
+            print("Gesynchroniseerde lyrics via Genius")
+            return match
+        }
+    }
+    
+    // --- FINALE CHECK ---
+    // Nergens gesynchroniseerde lyrics gevonden? Gebruik de reserve (gewone lyrics)!
+    if let fallback = fallbackResponse {
+        print("Geen gesynchroniseerde lyrics gevonden. Gebruik gewone tekst-fallback.")
+        return fallback
+    }
+    
+    print("Geen lyrics gevonden bij alle bronnen")
+    return nil
+}
+
     
     // MARK: - LRCLIB Exact (/api/get)
     
