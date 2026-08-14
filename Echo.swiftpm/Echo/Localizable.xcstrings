@@ -1429,7 +1429,74 @@
         "fr" : { "stringUnit" : { "state" : "translated", "value" : "Remplacer pour tous" } },
         "nl" : { "stringUnit" : { "state" : "translated", "value" : "Vervangen voor alle" } }
       }
-    }
+    },
+
+
+"MUSIC_APP_FAVORITES_SEARCH_PLACEHOLDER_TEXT": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Zoek op titel of artiest in favorieten..." } },
+    "en": { "stringUnit": { "state": "translated", "value": "Search by title or artist in favorites..." } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Rechercher par titre ou artiste dans les favoris..." } },
+    "de": { "stringUnit": { "state": "translated", "value": "Suche nach Titel oder Künstler in Favoriten..." } }
+  }
+},
+"MUSIC_APP_PLAYLIST_SEARCH_PLACEHOLDER_TEXT": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Zoek op titel of artiest in afspeellijst..." } },
+    "en": { "stringUnit": { "state": "translated", "value": "Search by title or artist in playlist..." } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Rechercher par titre ou artiste dans la liste..." } },
+    "de": { "stringUnit": { "state": "translated", "value": "Suche nach Titel oder Künstler in der Playliste..." } }
+  }
+},
+"MUSIC_APP_SORT_OPTION_DEFAULT_CUSTOM_ORDER": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Standaard volgorde" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Default order" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Ordre par défaut" } },
+    "de": { "stringUnit": { "state": "translated", "value": "Standardreihenfolge" } }
+  }
+},
+"MUSIC_APP_SORT_OPTION_ALPHABETICAL_TITLE": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Titel (A-Z)" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Title (A-Z)" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Titre (A-Z)" } },
+    "de": { "stringUnit": { "state": "translated", "value": "Titel (A-Z)" } }
+  }
+},
+"MUSIC_APP_SORT_OPTION_ALPHABETICAL_ARTIST": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Artiest (A-Z)" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Artist (A-Z)" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Artiste (A-Z)" } },
+    "de": { "stringUnit": { "state": "translated", "value": "Künstler (A-Z)" } }
+  }
+},
+"MUSIC_APP_SORT_OPTION_CHRONOLOGICAL_DATE_ADDED": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Lijst laatst toegevoegd" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Recently added" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Ajoutés récemment" } },
+    "de": { "stringUnit": { "state": "translated", "value": "Kürzlich hinzugefügt" } }
+  }
+},
+"MUSIC_APP_SORT_OPTION_CHRONOLOGICAL_LAST_PLAYED": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Lijst laatst afgespeeld" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Recently played" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Écoutés récemment" } },
+    "de": { "stringUnit": { "state": "translated", "value": "Kürzlich gespielt" } }
+  }
+},
+"MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE": {
+  "localizations": {
+    "nl": { "stringUnit": { "state": "translated", "value": "Sorteer nummers op" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Sort songs by" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Trier les morceaux par" } },
+    "de": { "stringUnit": { "state": "translated", "value": "Titel sortieren nach" } }
+  }
+}
+
 
 
 
