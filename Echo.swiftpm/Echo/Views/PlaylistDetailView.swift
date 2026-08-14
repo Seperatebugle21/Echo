@@ -16,9 +16,8 @@ struct PlaylistDetailView: View {
     @State private var selectedImage: PhotosPickerItem?
     @State private var playlistImage: UIImage?
     @State private var searchText = ""
-    @State private var sortOption: FavoritesSortOption = .custom // 👈 Gebruikt FavoritesSortOption
+    @State private var sortOption: FavoritesSortOption = .custom
     
-    // MARK: - Computed Properties
     var songs: [Song] {
         guard let currentPlaylist = library.playlists.first(where: {
             $0.id == playlist.id
@@ -31,7 +30,6 @@ struct PlaylistDetailView: View {
         }
     }
     
-    // Gesorteerde en gefilterde nummers
     var processedSongs: [Song] {
         let filtered = songs.filter { song in
             searchText.isEmpty ||
@@ -184,11 +182,13 @@ struct PlaylistDetailView: View {
                         }
                     }
                 }
-                // Verslepen alleen toestaan bij standaardvolgorde en lege zoekopdracht
                 .onMove(perform: (searchText.isEmpty && sortOption == .custom) ? moveSongs : nil)
             }
         }
-        .searchable(text: $searchText, prompt: Text("Zoek in afspeellijst..."))
+        .searchable(
+            text: $searchText,
+            prompt: Text(LocalizedStringKey("MUSIC_APP_PLAYLIST_SEARCH_PLACEHOLDER_TEXT"))
+        )
         .environment(\.editMode, $editMode)
         .navigationTitle(playlist.name)
         .onAppear {
@@ -211,12 +211,34 @@ struct PlaylistDetailView: View {
                 HStack(spacing: 16) {
                     if editMode == .inactive && !songs.isEmpty {
                         Menu {
-                            Picker("Sorteer op", selection: $sortOption) {
-                                Label("Handmatig", systemImage: "line.3.horizontal.decrease").tag(FavoritesSortOption.custom)
-                                Label("Titel (A-Z)", systemImage: "textformat").tag(FavoritesSortOption.title)
-                                Label("Artiest (A-Z)", systemImage: "person").tag(FavoritesSortOption.artist)
-                                Label("Laatst toegevoegd", systemImage: "calendar").tag(FavoritesSortOption.dateAdded)
-                                Label("Laatst afgespeeld", systemImage: "play.circle").tag(FavoritesSortOption.lastPlayed)
+                            Picker(
+                                LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"),
+                                selection: $sortOption
+                            ) {
+                                Label(
+                                    FavoritesSortOption.custom.localizedLabel,
+                                    systemImage: "line.3.horizontal.decrease"
+                                ).tag(FavoritesSortOption.custom)
+                                
+                                Label(
+                                    FavoritesSortOption.title.localizedLabel,
+                                    systemImage: "textformat"
+                                ).tag(FavoritesSortOption.title)
+                                
+                                Label(
+                                    FavoritesSortOption.artist.localizedLabel,
+                                    systemImage: "person"
+                                ).tag(FavoritesSortOption.artist)
+                                
+                                Label(
+                                    FavoritesSortOption.dateAdded.localizedLabel,
+                                    systemImage: "calendar"
+                                ).tag(FavoritesSortOption.dateAdded)
+                                
+                                Label(
+                                    FavoritesSortOption.lastPlayed.localizedLabel,
+                                    systemImage: "play.circle"
+                                ).tag(FavoritesSortOption.lastPlayed)
                             }
                         } label: {
                             Image(systemName: "arrow.up.arrow.down.circle")
@@ -272,7 +294,6 @@ struct PlaylistDetailView: View {
         }
     }
     
-    // MARK: - Helper Methods
     func loadPlaylistImage() {
         guard let data = playlist.imageData, let image = UIImage(data: data) else { return }
         playlistImage = image
