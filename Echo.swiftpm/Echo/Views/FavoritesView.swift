@@ -1,6 +1,11 @@
 import SwiftUI
 
-// Optioneel: Sorteer-enum voor schone code
+
+
+struct FavoritesView: View {
+
+
+    
 enum SongSortOption: String, CaseIterable, Identifiable {
     case custom = "Standaard"
     case title = "Titel (A-Z)"
@@ -10,8 +15,7 @@ enum SongSortOption: String, CaseIterable, Identifiable {
     
     var id: String { self.rawValue }
 }
-
-struct FavoritesView: View {
+            
     
     @Environment(MusicLibraryManager.self) private var library
     @Environment(AudioPlayerManager.self) private var audioPlayer
