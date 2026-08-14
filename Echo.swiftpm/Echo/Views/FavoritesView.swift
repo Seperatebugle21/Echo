@@ -208,6 +208,27 @@ struct FavoritesView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
+
+                        if !songs.isEmpty {
+                        Button {
+                            withAnimation {
+                                if editMode == .active {
+                                    editMode = .inactive
+                                    selectedSongs.removeAll()
+                                } else {
+                                    editMode = .active
+                                }
+                            }
+                        } label: {
+                            Text(
+                                editMode == .active
+                                ? LocalizedStringKey("action_done")
+                                : LocalizedStringKey("action_edit")
+                            )
+                        }
+                    }
+                    
+                    
                     if editMode == .inactive && !songs.isEmpty {
                         Menu {
                             Picker(
@@ -244,25 +265,7 @@ struct FavoritesView: View {
                         }
                     }
                     
-                    if !songs.isEmpty {
-                        Button {
-                            withAnimation {
-                                if editMode == .active {
-                                    editMode = .inactive
-                                    selectedSongs.removeAll()
-                                } else {
-                                    editMode = .active
-                                }
-                            }
-                        } label: {
-                            Text(
-                                editMode == .active
-                                ? LocalizedStringKey("action_done")
-                                : LocalizedStringKey("action_edit")
-                            )
-                        }
-                    }
-                    
+                
                     if editMode == .inactive {
                         Button {
                             showSongPicker = true
