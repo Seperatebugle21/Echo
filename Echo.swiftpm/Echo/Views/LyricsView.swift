@@ -76,6 +76,7 @@ struct LyricsView: View {
         }
         .navigationTitle(Text(LocalizedStringKey("lyrics_navigation_title")))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear {
             parseLyrics()
         }
