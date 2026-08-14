@@ -1,12 +1,7 @@
 import SwiftUI
 
 
-
-struct FavoritesView: View {
-
-
-    
-enum SongSortOption: String, CaseIterable, Identifiable {
+enum FavoritesSortOption: String, CaseIterable, Identifiable {
     case custom = "Standaard"
     case title = "Titel (A-Z)"
     case artist = "Artiest (A-Z)"
@@ -15,6 +10,13 @@ enum SongSortOption: String, CaseIterable, Identifiable {
     
     var id: String { self.rawValue }
 }
+
+
+struct FavoritesView: View {
+
+
+    
+
             
     
     @Environment(MusicLibraryManager.self) private var library
@@ -25,7 +27,7 @@ enum SongSortOption: String, CaseIterable, Identifiable {
     @State private var selectedSongs = Set<Song.ID>()
     @State private var showDeleteConfirmation = false
     @State private var searchText = ""
-    @State private var sortOption: SongSortOption = .custom // 👈 SORTEERSTATE TOEGEVOEGD
+    @State private var sortOption: FavoritesSortOption = .custom
     
     var songs: [Song] {
         library.favoriteSongs
