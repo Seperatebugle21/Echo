@@ -9,9 +9,22 @@ struct FavoritesView: View {
     @State private var editMode: EditMode = .inactive
     @State private var selectedSongs = Set<Song.ID>()
     @State private var showDeleteConfirmation = false
+    @State private var searchText = "" // 👈 ZOEKSTATE TOEGEVOEGD
     
     var songs: [Song] {
         library.favoriteSongs
+    }
+    
+    // 👈 GEFILTERDE NUMMERS OP BASIS VAN ZOEKOPDRACHT
+    var filteredSongs: [Song] {
+        if searchText.isEmpty {
+            return songs
+        } else {
+            return songs.filter { song in
+                song.title.localizedCaseInsensitiveContains(searchText) ||
+                song.artist.localizedCaseInsensitiveContains(searchText)
+            }
+        }
     }
     
     private var removeConfirmationMessage: String {
@@ -23,7 +36,8 @@ struct FavoritesView: View {
         List(selection: $selectedSongs) {
             
             // MARK: - Header / Knoppen
-            if !songs.isEmpty {
+            // Altijd verbergen tijdens het zoeken om rommel op het scherm te voorkomen
+            if !songs.isEmpty && searchText.isEmpty {
                 Section {
                     VStack(spacing: 16) {
                         
@@ -59,7 +73,7 @@ struct FavoritesView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical)
                 }
-                .selectionDisabled(true) // Zorgt ervoor dat de header niet geselecteerd kan worden
+                .selectionDisabled(true)
             }
             
             // MARK: - Lijst van favorieten
@@ -75,9 +89,13 @@ struct FavoritesView: View {
                 }
                 .selectionDisabled(true)
                 
+            } else if filteredSongs.isEmpty {
+                // 👈 Mocht de zoekopdracht geen resultaat opleveren
+                ContentUnavailableView.search(text: searchText)
+                    .selectionDisabled(true)
             } else {
                 
-                ForEach(songs) { song in
+                ForEach(filteredSongs) { song in // 👈 Gebruikt filteredSongs i.p.v. songs
                     
                     HStack(spacing: 12) {
                         
@@ -110,7 +128,6 @@ struct FavoritesView: View {
                         
                         Spacer()
                         
-                        // Enkel hartje tonen als er niet bewerkt wordt
                         if editMode == .inactive {
                             Image(systemName: "heart.fill")
                                 .foregroundStyle(.red)
@@ -124,7 +141,7 @@ struct FavoritesView: View {
                             audioPlayer.play(
                                 song: song,
                                 url: url,
-                                queue: songs
+                                queue: filteredSongs
                             )
                             
                             audioPlayer.allSongs = library.songs
@@ -142,10 +159,10 @@ struct FavoritesView: View {
                 }
             }
         }
+        .searchable(text: $searchText, prompt: Text("Zoek nummers...")) // 👈 ZOEKBALK TOEGEVOEGD
         .environment(\.editMode, $editMode)
         .navigationTitle(Text(LocalizedStringKey("favorites_navigation_title")))
         .toolbar {
-            // Prullenbak knop linkerbovenhoek als we bewerken
             ToolbarItem(placement: .topBarLeading) {
                 if editMode == .active {
                     Button {
@@ -158,7 +175,6 @@ struct FavoritesView: View {
                 }
             }
             
-            // Rechterbovenhoek knoppen (Bewerken & Toevoegen)
             ToolbarItem(placement: .topBarTrailing) {
                 HStack {
                     if !songs.isEmpty {
