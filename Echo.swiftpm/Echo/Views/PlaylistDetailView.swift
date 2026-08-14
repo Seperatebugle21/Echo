@@ -16,7 +16,7 @@ struct PlaylistDetailView: View {
     @State private var selectedImage: PhotosPickerItem?
     @State private var playlistImage: UIImage?
     @State private var searchText = ""
-    @State private var sortOption: SongSortOption = .custom // 👈 SORTEERSTATE TOEGEVOEGD
+    @State private var sortOption: FavoritesSortOption = .custom // 👈 Gebruikt FavoritesSortOption
     
     // MARK: - Computed Properties
     var songs: [Song] {
@@ -31,7 +31,7 @@ struct PlaylistDetailView: View {
         }
     }
     
-    // 👈 GESORTEERDE EN GEFILTERDE NUMMERS
+    // Gesorteerde en gefilterde nummers
     var processedSongs: [Song] {
         let filtered = songs.filter { song in
             searchText.isEmpty ||
@@ -209,15 +209,14 @@ struct PlaylistDetailView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
-                    // 👈 SORTEERMENU TOEGEVOEGD
                     if editMode == .inactive && !songs.isEmpty {
                         Menu {
                             Picker("Sorteer op", selection: $sortOption) {
-                                Label("Handmatig", systemImage: "line.3.horizontal.decrease").tag(SongSortOption.custom)
-                                Label("Titel (A-Z)", systemImage: "textformat").tag(SongSortOption.title)
-                                Label("Artiest (A-Z)", systemImage: "person").tag(SongSortOption.artist)
-                                Label("Laatst toegevoegd", systemImage: "calendar").tag(SongSortOption.dateAdded)
-                                Label("Laatst afgespeeld", systemImage: "play.circle").tag(SongSortOption.lastPlayed)
+                                Label("Handmatig", systemImage: "line.3.horizontal.decrease").tag(FavoritesSortOption.custom)
+                                Label("Titel (A-Z)", systemImage: "textformat").tag(FavoritesSortOption.title)
+                                Label("Artiest (A-Z)", systemImage: "person").tag(FavoritesSortOption.artist)
+                                Label("Laatst toegevoegd", systemImage: "calendar").tag(FavoritesSortOption.dateAdded)
+                                Label("Laatst afgespeeld", systemImage: "play.circle").tag(FavoritesSortOption.lastPlayed)
                             }
                         } label: {
                             Image(systemName: "arrow.up.arrow.down.circle")
