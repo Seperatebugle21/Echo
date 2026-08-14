@@ -15,7 +15,8 @@ struct PlaylistDetailView: View {
     
     @State private var selectedImage: PhotosPickerItem?
     @State private var playlistImage: UIImage?
-    @State private var searchText = "" // 👈 ZOEKSTATE TOEGEVOEGD
+    @State private var searchText = ""
+    @State private var sortOption: SongSortOption = .custom // 👈 SORTEERSTATE TOEGEVOEGD
     
     // MARK: - Computed Properties
     var songs: [Song] {
@@ -26,21 +27,29 @@ struct PlaylistDetailView: View {
         }
         
         return currentPlaylist.songIDs.compactMap { id in
-            library.songs.first {
-                $0.id == id
-            }
+            library.songs.first { $0.id == id }
         }
     }
     
-    // 👈 GEFILTERDE NUMMERS OP BASIS VAN ZOEKOPDRACHT
-    var filteredSongs: [Song] {
-        if searchText.isEmpty {
-            return songs
-        } else {
-            return songs.filter { song in
-                song.title.localizedCaseInsensitiveContains(searchText) ||
-                song.artist.localizedCaseInsensitiveContains(searchText)
-            }
+    // 👈 GESORTEERDE EN GEFILTERDE NUMMERS
+    var processedSongs: [Song] {
+        let filtered = songs.filter { song in
+            searchText.isEmpty ||
+            song.title.localizedCaseInsensitiveContains(searchText) ||
+            song.artist.localizedCaseInsensitiveContains(searchText)
+        }
+        
+        switch sortOption {
+        case .custom:
+            return filtered
+        case .title:
+            return filtered.sorted { $0.title.localizedCompare($1.title) == .orderedAscending }
+        case .artist:
+            return filtered.sorted { $0.artist.localizedCompare($1.artist) == .orderedAscending }
+        case .dateAdded:
+            return filtered.sorted { ($0.dateAdded ?? .distantPast) > ($1.dateAdded ?? .distantPast) }
+        case .lastPlayed:
+            return filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
         }
     }
     
@@ -52,7 +61,7 @@ struct PlaylistDetailView: View {
     var body: some View {
         List(selection: $selectedSongs) {
             // MARK: Header Sectie
-            if searchText.isEmpty { // Header verbergen tijdens het zoeken
+            if searchText.isEmpty {
                 Section {
                     VStack(spacing: 16) {
                         PhotosPicker(
@@ -64,17 +73,13 @@ struct PlaylistDetailView: View {
                                     .resizable()
                                     .scaledToFill()
                                     .frame(width: 150, height: 150)
-                                    .clipShape(
-                                        RoundedRectangle(cornerRadius: 20)
-                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
                             } else {
                                 Image(systemName: "music.note")
                                     .font(.system(size: 70))
                                     .frame(width: 150, height: 150)
                                     .background(.thinMaterial)
-                                    .clipShape(
-                                        RoundedRectangle(cornerRadius: 20)
-                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
                             }
                         }
                         
@@ -91,21 +96,15 @@ struct PlaylistDetailView: View {
                                 Button {
                                     playPlaylist()
                                 } label: {
-                                    Label(
-                                        LocalizedStringKey("play_all_action"),
-                                        systemImage: "play.fill"
-                                    )
-                                    .foregroundStyle(.white)
+                                    Label(LocalizedStringKey("play_all_action"), systemImage: "play.fill")
+                                        .foregroundStyle(.white)
                                 }
                                 .buttonStyle(.borderedProminent)
                                 
                                 Button {
                                     playPlaylist(shuffle: true)
                                 } label: {
-                                    Label(
-                                        LocalizedStringKey("shuffle_action"),
-                                        systemImage: "shuffle"
-                                    )
+                                    Label(LocalizedStringKey("shuffle_action"), systemImage: "shuffle")
                                 }
                                 .buttonStyle(.bordered)
                             }
@@ -120,10 +119,7 @@ struct PlaylistDetailView: View {
             // MARK: Nummers Sectie
             if songs.isEmpty {
                 ContentUnavailableView {
-                    Label(
-                        LocalizedStringKey("no_songs_title"),
-                        systemImage: "music.note.list"
-                    )
+                    Label(LocalizedStringKey("no_songs_title"), systemImage: "music.note.list")
                 } description: {
                     Text(LocalizedStringKey("add_songs_to_playlist_description"))
                 } actions: {
@@ -139,12 +135,11 @@ struct PlaylistDetailView: View {
                     .buttonStyle(.borderedProminent)
                 }
                 .selectionDisabled(true)
-            } else if filteredSongs.isEmpty {
-                // 👈 Mocht de zoekopdracht geen resultaat opleveren
+            } else if processedSongs.isEmpty {
                 ContentUnavailableView.search(text: searchText)
                     .selectionDisabled(true)
             } else {
-                ForEach(filteredSongs) { song in // 👈 Gebruikt filteredSongs
+                ForEach(processedSongs) { song in
                     HStack(spacing: 12) {
                         if let data = song.coverData,
                            let image = UIImage(data: data) {
@@ -152,17 +147,13 @@ struct PlaylistDetailView: View {
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 50, height: 50)
-                                .clipShape(
-                                    RoundedRectangle(cornerRadius: 10)
-                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         } else {
                             Image(systemName: "music.note")
                                 .font(.title2)
                                 .frame(width: 50, height: 50)
                                 .background(.thinMaterial)
-                                .clipShape(
-                                    RoundedRectangle(cornerRadius: 10)
-                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                         
                         VStack(alignment: .leading, spacing: 2) {
@@ -185,21 +176,19 @@ struct PlaylistDetailView: View {
                             audioPlayer.play(
                                 song: song,
                                 url: url,
-                                queue: filteredSongs
+                                queue: processedSongs
                             )
                             
                             audioPlayer.allSongs = library.songs
-                            audioPlayer.fillAutoNext(
-                                from: library.songs
-                            )
+                            audioPlayer.fillAutoNext(from: library.songs)
                         }
                     }
                 }
-                // 👈 Verslepen/Slepen alleen inschakelen als er NIET gezocht wordt
-                .onMove(perform: searchText.isEmpty ? moveSongs : nil)
+                // Verslepen alleen toestaan bij standaardvolgorde en lege zoekopdracht
+                .onMove(perform: (searchText.isEmpty && sortOption == .custom) ? moveSongs : nil)
             }
         }
-        .searchable(text: $searchText, prompt: Text("Zoek in afspeellijst...")) // 👈 ZOEKBALK TOEGEVOEGD
+        .searchable(text: $searchText, prompt: Text("Zoek in afspeellijst..."))
         .environment(\.editMode, $editMode)
         .navigationTitle(playlist.name)
         .onAppear {
@@ -219,7 +208,22 @@ struct PlaylistDetailView: View {
             }
             
             ToolbarItem(placement: .topBarTrailing) {
-                HStack {
+                HStack(spacing: 16) {
+                    // 👈 SORTEERMENU TOEGEVOEGD
+                    if editMode == .inactive && !songs.isEmpty {
+                        Menu {
+                            Picker("Sorteer op", selection: $sortOption) {
+                                Label("Handmatig", systemImage: "line.3.horizontal.decrease").tag(SongSortOption.custom)
+                                Label("Titel (A-Z)", systemImage: "textformat").tag(SongSortOption.title)
+                                Label("Artiest (A-Z)", systemImage: "person").tag(SongSortOption.artist)
+                                Label("Laatst toegevoegd", systemImage: "calendar").tag(SongSortOption.dateAdded)
+                                Label("Laatst afgespeeld", systemImage: "play.circle").tag(SongSortOption.lastPlayed)
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down.circle")
+                        }
+                    }
+                    
                     Button {
                         withAnimation {
                             if editMode == .active {
@@ -259,19 +263,9 @@ struct PlaylistDetailView: View {
                 }
             }
         }
-        .alert(
-            LocalizedStringKey("delete_songs_title"),
-            isPresented: $showDeleteConfirmation
-        ) {
-            Button(
-                LocalizedStringKey("action_cancel"),
-                role: .cancel
-            ) { }
-            
-            Button(
-                LocalizedStringKey("action_delete"),
-                role: .destructive
-            ) {
+        .alert(LocalizedStringKey("delete_songs_title"), isPresented: $showDeleteConfirmation) {
+            Button(LocalizedStringKey("action_cancel"), role: .cancel) { }
+            Button(LocalizedStringKey("action_delete"), role: .destructive) {
                 deleteSelectedSongs()
             }
         } message: {
@@ -281,79 +275,36 @@ struct PlaylistDetailView: View {
     
     // MARK: - Helper Methods
     func loadPlaylistImage() {
-        guard let data = playlist.imageData,
-              let image = UIImage(data: data)
-        else {
-            return
-        }
+        guard let data = playlist.imageData, let image = UIImage(data: data) else { return }
         playlistImage = image
     }
     
     func savePlaylistImage(_ data: Data) {
-        guard let index = library.playlists.firstIndex(
-            where: { $0.id == playlist.id }
-        ) else {
-            return
-        }
+        guard let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         library.playlists[index].imageData = data
     }
     
     func deleteSelectedSongs() {
-        guard let index = library.playlists.firstIndex(
-            where: { $0.id == playlist.id }
-        ) else {
-            return
-        }
-        
-        library.playlists[index].songIDs.removeAll {
-            selectedSongs.contains($0)
-        }
-        
+        guard let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        library.playlists[index].songIDs.removeAll { selectedSongs.contains($0) }
         selectedSongs.removeAll()
-        
-        withAnimation {
-            editMode = .inactive
-        }
+        withAnimation { editMode = .inactive }
     }
     
     func playPlaylist(shuffle: Bool = false) {
-        var queue = songs
-        
-        if shuffle {
-            queue.shuffle()
-        }
-        
-        guard let firstSong = queue.first else {
-            return
-        }
+        var queue = processedSongs
+        if shuffle { queue.shuffle() }
+        guard let firstSong = queue.first else { return }
         
         if let url = library.getURL(for: firstSong) {
-            audioPlayer.play(
-                song: firstSong,
-                url: url,
-                queue: queue
-            )
-            
+            audioPlayer.play(song: firstSong, url: url, queue: queue)
             audioPlayer.allSongs = library.songs
-            audioPlayer.fillAutoNext(
-                from: library.songs
-            )
+            audioPlayer.fillAutoNext(from: library.songs)
         }
     }
     
-    func moveSongs(
-        from source: IndexSet,
-        to destination: Int
-    ) {
-        guard let index = library.playlists.firstIndex(
-            where: { $0.id == playlist.id }
-        ) else {
-            return
-        }
-        
-        library.playlists[index].songIDs.move(
-            fromOffsets: source,
-            toOffset: destination
-        )
+    func moveSongs(from source: IndexSet, to destination: Int) {
+        guard let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        library.playlists[index].songIDs.move(fromOffsets: source, toOffset: destination)
     }
 }
