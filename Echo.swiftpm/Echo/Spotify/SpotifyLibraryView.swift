@@ -217,6 +217,15 @@ struct SpotifyTrackRow: View {
                     )
                 }
 
+                NavigationLink {
+    YouTubeSearchView(track: track)
+} label: {
+    Label(
+        "Find on YouTube",
+        systemImage: "magnifyingglass"
+    )
+}
+
             } label: {
 
                 Image(
