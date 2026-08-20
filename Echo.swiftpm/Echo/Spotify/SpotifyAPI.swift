@@ -114,9 +114,8 @@ final class SpotifyAPI {
         _ url: URL
     ) async throws -> Data {
 
-        guard let token = spotify.accessToken else {
-            throw SpotifyAPIError.notAuthenticated
-        }
+        let token =
+    try await spotify.validAccessToken()
 
         var request = URLRequest(url: url)
 
