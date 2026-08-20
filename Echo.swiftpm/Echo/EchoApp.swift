@@ -22,6 +22,11 @@ struct EchoApp: App {
                 .environment(library)
                 .environment(audioPlayer)
                 .preferredColorScheme(colorScheme)
+                .onOpenURL { url in
+                             Task {
+                await SpotifyManager.shared.handleCallback(url: url)
+              }
+           }
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
