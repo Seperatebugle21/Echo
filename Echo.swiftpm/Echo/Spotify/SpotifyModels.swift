@@ -93,17 +93,27 @@ struct SpotifyAPIPlaylist: Decodable {
     let name: String
     let images: [SpotifyAPIImage]
     let externalURLs: SpotifyExternalURLs
-    let tracks: SpotifyPlaylistTracksInfo
+
+    // Spotify renamed `tracks` -> `items` in 2026
+    let items: SpotifyPlaylistItemsInfo?
+
+    // Fallback for older responses
+    let tracks: SpotifyPlaylistItemsInfo?
+
+    var trackCount: Int {
+        items?.total ?? tracks?.total ?? 0
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
         case name
         case images
         case externalURLs = "external_urls"
+        case items
         case tracks
     }
 }
 
-struct SpotifyPlaylistTracksInfo: Decodable {
+struct SpotifyPlaylistItemsInfo: Decodable {
     let total: Int
 }
