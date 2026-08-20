@@ -167,7 +167,9 @@ final class ApifyAudioSource {
 
             "storeInKVStore": true,
 
-            "preferredFormat": "mp3",
+            "preferredQuality": "720p",
+
+            "preferredFormat": "mp4",
 
             "filenameTemplateParts": [
                 "title"
