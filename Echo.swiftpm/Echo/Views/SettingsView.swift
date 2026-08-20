@@ -76,7 +76,22 @@ struct SettingsView: View {
                         .disableAutocorrection(true)
                 }
 
-                Section("Apify") {
+              Section("Apify") {
+
+    Picker(
+        "Method",
+        selection:
+            $apifySettings.downloadMethod
+    ) {
+
+        ForEach(
+            ApifyDownloadMethod.allCases
+        ) { method in
+
+            Text(method.title)
+                .tag(method)
+        }
+    }
 
     HStack {
 
@@ -84,21 +99,26 @@ struct SettingsView: View {
 
             TextField(
                 "Apify API token",
-                text: $apifySettings.apiToken
+                text:
+                    $apifySettings.apiToken
             )
-            .textInputAutocapitalization(.never)
+            .textInputAutocapitalization(
+                .never
+            )
             .autocorrectionDisabled()
 
         } else {
 
             SecureField(
                 "Apify API token",
-                text: $apifySettings.apiToken
+                text:
+                    $apifySettings.apiToken
             )
-            .textInputAutocapitalization(.never)
+            .textInputAutocapitalization(
+                .never
+            )
             .autocorrectionDisabled()
         }
-
 
         Button {
 
@@ -116,12 +136,10 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-
-    Button("Save API Token") {
+    Button("Save") {
 
         apifySettings.save()
     }
-
 
     if apifySettings.isConfigured {
 
@@ -132,15 +150,6 @@ struct SettingsView: View {
         )
         .foregroundStyle(.green)
 
-
-        Button(
-            "Remove API Token",
-            role: .destructive
-        ) {
-
-            apifySettings.removeToken()
-        }
-
     } else {
 
         Label(
@@ -149,6 +158,14 @@ struct SettingsView: View {
                 "exclamationmark.triangle"
         )
         .foregroundStyle(.secondary)
+    }
+
+    Button(
+        "Remove API Token",
+        role: .destructive
+    ) {
+
+        apifySettings.removeToken()
     }
 }
 
