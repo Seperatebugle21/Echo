@@ -380,208 +380,254 @@ private func startIfNeeded() {
 
     // MARK: - Process
 
-    private func process(
-        _ item: FetchItem
-    ) async {
+   private func process(
+    _ item: FetchItem
+) async {
 
-        item.status = .preparing
+    item.status = .preparing
 
-        do {
+    do {
 
-            let method =
-                ApifySettings.shared
-                    .downloadMethod
+        let method =
+            ApifySettings.shared
+                .downloadMethod
 
-            let downloadResult:
-                FetchAudioResult
-
-
-            // MARK: Resolve download
-
-            switch method {
-
-            // =========================================
-            // YOUTUBE
-            // =========================================
-
-            case .youtube:
-
-                guard let youtubeURL =
-                        item.youtubeURL
-                else {
-
-                    throw
-                        ApifyDownloadError
-                            .invalidURL
-                }
-
-                let apifyResult =
-                    try await
-                    ApifyAudioSource.shared
-                        .resolveMP3(
-                            youtubeURL:
-                                youtubeURL,
-
-                            permissionConfirmed:
-                                item.permissionConfirmed
-                        )
-
-                downloadResult =
-                    FetchAudioResult(
-                        downloadURL:
-                            apifyResult.downloadURL,
-
-                        suggestedFileName:
-                            makeTemporaryVideoName(
-                                item: item
-                            )
-                    )
+        let downloadResult:
+            FetchAudioResult
 
 
-            // =========================================
-            // SPOTIFY
-            // =========================================
+        print(
+            "Processing:",
+            item.title
+        )
 
-            case .spotify:
+        print(
+            "Selected method:",
+            method.rawValue
+        )
 
-                guard
-                    item.permissionConfirmed
-                else {
+        print(
+            "Spotify URL:",
+            item.spotifyURL
+        )
 
-                    throw
-                        ApifyDownloadError
-                            .permissionRequired
-                }
+        print(
+            "YouTube URL:",
+            item.youtubeURL?.absoluteString
+            ?? "NONE"
+        )
 
-                let spotifyResult =
-                    try await
-                    SpotifyApifyAudioSource
-                        .shared
-                        .resolve(
-                            spotifyURL:
-                                item.spotifyURL
-                        )
+        print(
+            "Permission:",
+            item.permissionConfirmed
+        )
 
-                downloadResult =
-                    FetchAudioResult(
-                        downloadURL:
-                            spotifyResult.downloadURL,
 
-                        suggestedFileName:
-                            makeSpotifyAudioName(
-                                item: item
-                            )
-                    )
+        // MARK: - Resolve download source
+
+        switch method {
+
+        // =========================================
+        // YOUTUBE
+        // =========================================
+
+        case .youtube:
+
+            guard let youtubeURL =
+                    item.youtubeURL
+            else {
+
+                throw
+                    ApifyDownloadError
+                        .invalidURL
             }
 
-
-            // MARK: - Download
-
-            item.status =
-                .downloading(0)
-
-            let downloadedFile =
+            let apifyResult =
                 try await
-                FetchDownloadEngine.shared
-                    .download(
-                        item: item,
-                        result: downloadResult
-                    ) { progress in
+                ApifyAudioSource.shared
+                    .resolveMP3(
+                        youtubeURL:
+                            youtubeURL,
 
-                        item.status =
-                            .downloading(
-                                progress
-                            )
-                    }
+                        permissionConfirmed:
+                            item.permissionConfirmed
+                    )
 
+            downloadResult =
+                FetchAudioResult(
+                    downloadURL:
+                        apifyResult.downloadURL,
 
-            // MARK: - Processing
-
-            item.status =
-                .processing
-
-
-            switch method {
-
-            // =========================================
-            // YouTube gives us MP4
-            // Convert MP4 -> M4A
-            // =========================================
-
-            case .youtube:
-
-                let finalAudioURL =
-                    try await
-                    FetchMediaProcessor.shared
-                        .convertToM4A(
-                            sourceURL:
-                                downloadedFile,
+                    suggestedFileName:
+                        makeTemporaryVideoName(
                             item: item
                         )
-
-                print(
-                    "Final Echo audio:",
-                    finalAudioURL
                 )
 
-                // Remove temporary MP4
 
-                try?
-                    FileManager.default
-                        .removeItem(
-                            at: downloadedFile
-                        )
+        // =========================================
+        // SPOTIFY
+        // =========================================
 
+        case .spotify:
 
-            // =========================================
-            // Spotify Actor returns audio directly
-            // =========================================
+            guard
+                item.permissionConfirmed
+            else {
 
-            case .spotify:
-
-                print(
-                    "Final Spotify audio:",
-                    downloadedFile
-                )
-
-                /*
-                 Geen MP4 -> M4A-conversie.
-
-                 Het bestand dat van de
-                 Spotify Actor komt blijft
-                 rechtstreeks in Documents.
-                 */
+                throw
+                    ApifyDownloadError
+                        .permissionRequired
             }
 
-
-            // MARK: - Refresh Echo Library
-
-            NotificationCenter.default.post(
-                name: .echoFetchCompleted,
-                object: nil
-            )
-
-
-            item.status =
-                .completed
-
-
-        } catch {
-
-            item.status =
-                .failed(
-                    error.localizedDescription
-                )
+            let spotifyResult =
+                try await
+                SpotifyApifyAudioSource
+                    .shared
+                    .resolve(
+                        spotifyURL:
+                            item.spotifyURL
+                    )
 
             print(
-                "Fetch failed:",
-                error
+                "Spotify resolved URL:",
+                spotifyResult.downloadURL
             )
+
+            print(
+                "Spotify suggested filename:",
+                spotifyResult.suggestedFileName
+                ?? "NONE"
+            )
+
+            downloadResult =
+                FetchAudioResult(
+                    downloadURL:
+                        spotifyResult.downloadURL,
+
+                    suggestedFileName:
+                        spotifyResult
+                            .suggestedFileName
+                        ?? makeTemporarySpotifyName(
+                            item: item
+                        )
+                )
         }
+
+
+        // MARK: - Download
+
+        item.status =
+            .downloading(0)
+
+        let downloadedFile =
+            try await
+            FetchDownloadEngine.shared
+                .download(
+                    item: item,
+                    result: downloadResult
+                ) { progress in
+
+                    item.status =
+                        .downloading(
+                            progress
+                        )
+                }
+
+
+        print(
+            "Downloaded source:",
+            downloadedFile
+        )
+
+
+        // MARK: - Processing
+
+        item.status =
+            .processing
+
+
+        /*
+         Zowel YouTube als Spotify worden nu
+         door dezelfde processor gestuurd.
+
+         Daardoor krijgen beide:
+
+         - echte M4A output
+         - title metadata
+         - artist metadata
+         - album metadata
+         - artwork
+        */
+
+        let finalAudioURL =
+            try await
+            FetchMediaProcessor.shared
+                .convertToM4A(
+                    sourceURL:
+                        downloadedFile,
+                    item: item
+                )
+
+
+        print(
+            "Final Echo audio:",
+            finalAudioURL
+        )
+
+
+        // MARK: - Remove temporary source
+
+        if downloadedFile != finalAudioURL {
+
+            try?
+                FileManager.default
+                    .removeItem(
+                        at: downloadedFile
+                    )
+        }
+
+
+        // MARK: - Refresh Echo Library
+
+        NotificationCenter.default.post(
+            name: .echoFetchCompleted,
+            object: nil
+        )
+
+
+        // Als je MusicLibraryManager.shared
+        // effectief gebruikt in je project,
+        // mag dit ook blijven:
+        //
+        // MusicLibraryManager.shared
+        //     .syncDocumentsFolder()
+
+
+        item.status =
+            .completed
+
+
+        print(
+            "Fetch completed:",
+            item.title
+        )
+
+
+    } catch {
+
+        item.status =
+            .failed(
+                error.localizedDescription
+            )
+
+        print(
+            "Fetch failed:",
+            item.title,
+            error
+        )
     }
-
-
-    // MARK: - File Names
+}
 
     private func makeTemporaryVideoName(
         item: FetchItem
@@ -610,6 +656,33 @@ private func startIfNeeded() {
             "\(cleaned)-source.mp4"
     }
 
+
+    private func makeTemporarySpotifyName(
+    item: FetchItem
+) -> String {
+
+    let illegal =
+        CharacterSet(
+            charactersIn:
+                "/\\:*?\"<>|"
+        )
+
+    let base =
+        "\(item.title) - \(item.artist)"
+
+    let cleaned =
+        base
+            .components(
+                separatedBy:
+                    illegal
+            )
+            .joined(
+                separator: ""
+            )
+
+    return
+        "\(cleaned)-spotify-source"
+}
 
     private func makeSpotifyAudioName(
         item: FetchItem
