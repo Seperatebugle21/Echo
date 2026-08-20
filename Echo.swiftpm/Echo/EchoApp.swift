@@ -27,6 +27,14 @@ struct EchoApp: App {
                 await SpotifyManager.shared.handleCallback(url: url)
               }
            }
+            .onReceive(
+    NotificationCenter.default.publisher(
+        for: .echoFetchCompleted
+    )
+) { _ in
+
+    library.syncDocumentsFolder()
+}
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
