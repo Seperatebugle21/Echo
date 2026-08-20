@@ -1,0 +1,72 @@
+name: Build Echo IPA (Unsigned)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Haal de repository op
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Zoek de SwiftPM map en bouw via xcodebuild zonder code signing
+      - name: Build SwiftPM
+        run: |
+          # Zoek de map waar Package.swift in staat
+          PACKAGE_DIR=$(find . -name "Package.swift" -exec dirname {} \; | head -n 1)
+          echo "Gevonden Package map: $PACKAGE_DIR"
+          cd "$PACKAGE_DIR"
+
+          # Maak de relatieve paden aan vanaf de package map
+          mkdir -p ../build
+
+          xcodebuild archive \
+            -scheme Echo \
+            -destination 'generic/platform=iOS' \
+            -archivePath ../build/Echo.xcarchive \
+            -derivedDataPath ../build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      # 3. Maak de IPA map & injecteer Info.plist instellingen
+      - name: Create IPA Package
+        run: |
+          mkdir -p Payload
+          cp -r build/Echo.xcarchive/Products/Applications/*.app Payload/ 2>/dev/null || cp -r build/Echo.xcarchive/Products/Applications/*.swiftpm Payload/ 2>/dev/null || true
+          
+          # Zoek de gecompileerde app op
+          APP_PATH=$(find Payload -maxdepth 2 \( -name "*.app" -o -name "*.swiftpm" \))
+          echo "App gevonden op: $APP_PATH"
+          
+          # 1. Background Audio injecteren
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$APP_PATH/Info.plist" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$APP_PATH/Info.plist" 2>/dev/null || true
+
+          # 2. Bestanden-app toegang (iTunes File Sharing & Open In Place) injecteren
+          /usr/libexec/PlistBuddy -c "Add :UIFileSharingEnabled bool true" "$APP_PATH/Info.plist" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :UIFileSharingEnabled true" "$APP_PATH/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :LSSupportsOpeningDocumentsInPlace bool true" "$APP_PATH/Info.plist" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :LSSupportsOpeningDocumentsInPlace true" "$APP_PATH/Info.plist"
+
+          zip -r Echo.ipa Payload
+
+      # 4. Sla op als GitHub Artifact
+      - name: Save IPA to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Echo-Release-IPA
+          path: Echo.ipa
+
+      # 5. Maak GitHub Release
+      - name: Create Github Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "Echo.ipa"
+          tag: "v1.0.${{ github.run_number }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
