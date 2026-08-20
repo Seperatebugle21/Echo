@@ -136,10 +136,9 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    Button("Save") {
-
-        apifySettings.save()
-    }
+    Button("Save API Token") {
+    apifySettings.saveToken()
+}
 
     if apifySettings.isConfigured {
 
