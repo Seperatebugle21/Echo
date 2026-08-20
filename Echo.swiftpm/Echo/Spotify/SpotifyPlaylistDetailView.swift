@@ -143,3 +143,78 @@ struct SpotifyPlaylistDetailView: View {
         isLoading = false
     }
 }
+
+
+
+struct SpotifyPlaylistTrackRow: View {
+
+    let track: SpotifyTrack
+
+    var body: some View {
+
+        HStack(spacing: 12) {
+
+            AsyncImage(
+                url: track.artworkURL
+            ) { image in
+
+                image
+                    .resizable()
+                    .scaledToFill()
+
+            } placeholder: {
+
+                RoundedRectangle(
+                    cornerRadius: 7
+                )
+                .fill(
+                    .secondary.opacity(0.15)
+                )
+                .overlay {
+
+                    Image(
+                        systemName:
+                            "music.note"
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
+            }
+            .frame(
+                width: 50,
+                height: 50
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: 7
+                )
+            )
+
+
+            VStack(
+                alignment: .leading,
+                spacing: 3
+            ) {
+
+                Text(track.name)
+                    .font(.headline)
+                    .lineLimit(1)
+
+                Text(track.artist)
+                    .font(.subheadline)
+                    .foregroundStyle(
+                        .secondary
+                    )
+                    .lineLimit(1)
+
+                Text(track.album)
+                    .font(.caption)
+                    .foregroundStyle(
+                        .secondary
+                    )
+                    .lineLimit(1)
+            }
+        }
+    }
+}
