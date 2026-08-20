@@ -313,25 +313,24 @@ struct SpotifyPlaylistRow: View {
 
 
            Menu {
-    Button {
-        Task {
-            do {
-                try await FetchManager.shared.preparePlaylist(
-                    playlist
-                )
-            } catch {
-                print(
-                    "Playlist fetch failed:",
-                    error
-                )
-            }
+   Button {
+    Task {
+        do {
+            try await FetchManager.shared
+                .preparePlaylist(playlist)
+        } catch {
+            print(
+                "Playlist fetch failed:",
+                error
+            )
         }
-    } label: {
-        Label(
-            "Fetch Playlist",
-            systemImage: "arrow.down.circle.fill"
-        )
     }
+} label: {
+    Label(
+        "Fetch Playlist",
+        systemImage: "arrow.down.circle.fill"
+    )
+}
 } label: {
     Image(systemName: "ellipsis")
 }
