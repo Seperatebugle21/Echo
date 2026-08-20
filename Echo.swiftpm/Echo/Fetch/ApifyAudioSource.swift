@@ -106,16 +106,15 @@ final class ApifyAudioSource {
         }
 
 
-        // Read token from compiled Info.plist
+let token =
+    ApifySettings.shared.apiToken
+        .trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
 
-        guard
-            let token = Bundle.main.object(
-                forInfoDictionaryKey: "APIFY_API_TOKEN"
-            ) as? String,
-            !token.isEmpty
-        else {
-            throw ApifyDownloadError.missingToken
-        }
+guard !token.isEmpty else {
+    throw ApifyDownloadError.missingToken
+}
 
 
         // MARK: Endpoint
