@@ -286,6 +286,36 @@ final class FetchManager {
         }
     }
 
+    func addAuthorizedSpotifyTrack(
+    _ track: SpotifyTrack
+) {
+
+    print(
+        "Adding Spotify track to queue:",
+        track.name,
+        track.spotifyURL
+    )
+
+    let item = FetchItem(
+        spotifyURL: track.spotifyURL,
+        title: track.name,
+        artist: track.artist,
+        album: track.album,
+        artworkURL: track.artworkURL,
+        youtubeURL: nil,
+        permissionConfirmed: true
+    )
+
+    items.append(item)
+
+    print(
+        "Fetch queue count:",
+        items.count
+    )
+
+    startIfNeeded()
+}
+
 
     // MARK: - Queue
 private func startIfNeeded() {
