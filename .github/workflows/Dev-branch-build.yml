@@ -63,10 +63,4 @@ jobs:
           name: Echo-Release-IPA
           path: Echo.ipa
 
-      # 5. Maak GitHub Release
-      - name: Create Github Release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "Echo.ipa"
-          tag: "v1.0.${{ github.run_number }}"
-          token: ${{ secrets.GITHUB_TOKEN }}
+      
