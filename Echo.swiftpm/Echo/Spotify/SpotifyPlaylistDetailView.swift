@@ -78,18 +78,9 @@ struct SpotifyPlaylistDetailView: View {
 
             ForEach(filteredTracks) { track in
 
-                NavigationLink {
-
-                    YouTubeSearchView(
-                        track: track
-                    )
-
-                } label: {
-
-                    SpotifyPlaylistTrackRow(
-                        track: track
-                    )
-                }
+               SpotifyFetchButton(
+                 track: track
+               )
             }
         }
         .navigationTitle(
