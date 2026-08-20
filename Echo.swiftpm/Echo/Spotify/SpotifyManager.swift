@@ -96,6 +96,16 @@ final class SpotifyManager {
         UIApplication.shared.open(url)
     }
 
+
+
+    func disconnect() {
+    clearSession()
+}
+
+
+
+    
+
     func handleCallback(
         url: URL
     ) async {
@@ -153,6 +163,161 @@ final class SpotifyManager {
             )
         }
     }
+
+    func validAccessToken() async throws -> String {
+
+    if let accessToken,
+       let expiration = tokenExpiration,
+       expiration >
+        Date().addingTimeInterval(60) {
+
+        return accessToken
+    }
+
+
+    try await refreshAccessToken()
+
+
+    guard let accessToken else {
+        throw SpotifyError.authenticationFailed
+    }
+
+
+    return accessToken
+}
+
+
+    private func clearSession() {
+
+    accessToken = nil
+    refreshToken = nil
+    tokenExpiration = nil
+
+    isConnected = false
+
+
+    KeychainHelper.delete(
+        accessTokenKey
+    )
+
+    KeychainHelper.delete(
+        refreshTokenKey
+    )
+
+    KeychainHelper.delete(
+        expirationKey
+    )
+}
+
+    private func refreshAccessToken()
+async throws {
+
+    guard let refreshToken else {
+
+        isConnected = false
+
+        throw SpotifyError
+            .authenticationFailed
+    }
+
+
+    let url = URL(
+        string:
+            "https://accounts.spotify.com/api/token"
+    )!
+
+
+    var request =
+        URLRequest(url: url)
+
+
+    request.httpMethod = "POST"
+
+
+    request.setValue(
+        "application/x-www-form-urlencoded",
+        forHTTPHeaderField:
+            "Content-Type"
+    )
+
+
+    var components =
+        URLComponents()
+
+
+    components.queryItems = [
+
+        URLQueryItem(
+            name: "grant_type",
+            value: "refresh_token"
+        ),
+
+        URLQueryItem(
+            name: "refresh_token",
+            value: refreshToken
+        ),
+
+        URLQueryItem(
+            name: "client_id",
+            value: clientID
+        )
+    ]
+
+
+    request.httpBody =
+        components
+            .percentEncodedQuery?
+            .data(using: .utf8)
+
+
+    let (data, response) =
+        try await URLSession.shared
+            .data(for: request)
+
+
+    guard let http =
+        response as? HTTPURLResponse
+    else {
+        throw SpotifyError
+            .authenticationFailed
+    }
+
+
+    if http.statusCode == 400 {
+
+        if let object =
+            try? JSONSerialization.jsonObject(
+                with: data
+            ) as? [String: Any],
+
+           let error =
+            object["error"] as? String,
+
+           error == "invalid_grant" {
+
+            clearSession()
+
+            throw SpotifyError
+                .authenticationFailed
+        }
+    }
+
+
+    guard http.statusCode == 200 else {
+        throw SpotifyError
+            .authenticationFailed
+    }
+
+
+    let token =
+        try JSONDecoder().decode(
+            SpotifyTokenResponse.self,
+            from: data
+        )
+
+
+    saveTokenResponse(token)
+}
 
     private func restoreSession() {
 
@@ -258,9 +423,56 @@ final class SpotifyManager {
                 from: data
             )
 
-        accessToken = token.accessToken
-        isConnected = true
+        saveTokenResponse(token)
     }
+
+    private func saveTokenResponse(
+    _ token: SpotifyTokenResponse
+) {
+
+    accessToken =
+        token.accessToken
+
+    KeychainHelper.save(
+        token.accessToken,
+        for: accessTokenKey
+    )
+
+
+    // Spotify geeft niet bij iedere refresh
+    // per se een nieuwe refresh token.
+
+    if let newRefreshToken =
+        token.refreshToken {
+
+        refreshToken =
+            newRefreshToken
+
+        KeychainHelper.save(
+            newRefreshToken,
+            for: refreshTokenKey
+        )
+    }
+
+
+    let expiration =
+        Date().addingTimeInterval(
+            TimeInterval(token.expiresIn)
+        )
+
+    tokenExpiration =
+        expiration
+
+    KeychainHelper.save(
+        String(
+            expiration.timeIntervalSince1970
+        ),
+        for: expirationKey
+    )
+
+
+    isConnected = true
+}
 
     private func generateCodeVerifier() -> String {
         generateRandomString(length: 64)
