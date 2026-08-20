@@ -31,10 +31,12 @@ struct ApifyAccountsView: View {
                     settings.accounts
                 ) { account in
 
+                   Section {
                     ApifyAccountRow(
                         account: account
                     )
-                   Spacer()
+                   }
+                   
                 }
                 .onDelete {
                     offsets in
