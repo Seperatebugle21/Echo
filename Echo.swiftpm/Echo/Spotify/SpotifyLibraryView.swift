@@ -12,6 +12,19 @@ struct SpotifyLibraryView: View {
 
         List {
 
+            Section {
+
+    NavigationLink {
+        SpotifySearchView()
+    } label: {
+
+        Label(
+            "Search Spotify",
+            systemImage: "magnifyingglass"
+        )
+    }
+}
+
             // MARK: - Playlists
 
             Section("Playlists") {
