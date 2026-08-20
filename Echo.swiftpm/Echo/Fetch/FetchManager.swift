@@ -10,24 +10,24 @@ final class FetchManager {
 
     private var running = false
 
-    private var audioSource: FetchAudioSource =
-    DirectMP3AudioSource.shared
-
     private init() {}
+
 
     // MARK: - Raw Spotify URL
 
     func addSpotifyURL(_ string: String) {
 
         guard let reference =
-            SpotifyURLParser.parse(string)
+                SpotifyURLParser.parse(string)
         else {
             return
         }
 
         let item = FetchItem(
             spotifyURL: reference.url,
-            title: defaultTitle(for: reference.type),
+            title: defaultTitle(
+                for: reference.type
+            ),
             artist: "Spotify"
         )
 
@@ -37,70 +37,12 @@ final class FetchManager {
     }
 
 
+    // MARK: - Authorized YouTube Match
+
     func addAuthorizedMatch(
-    track: SpotifyTrack,
-    youtubeResult: YouTubeSearchResult
-) {
-
-    let item = FetchItem(
-        spotifyURL: track.spotifyURL,
-        title: track.name,
-        artist: track.artist,
-        album: track.album,
-        artworkURL: track.artworkURL,
-
-        youtubeURL:
-            youtubeResult.videoURL,
-
-        permissionConfirmed: true
-    )
-
-    items.append(item)
-
-    startIfNeeded()
-}
-
-
-   func preparePlaylist(
-    _ playlist: SpotifyPlaylist
-) async throws {
-
-    let tracks =
-        try await SpotifyAPI.shared
-            .getPlaylistTracks(
-                playlistID: playlist.id
-            )
-
-    for track in tracks {
-
-        await preparePlaylistTrack(track)
-    }
-
-       startIfNeeded()
-}
-
-    private func preparePlaylistTrack(
-    _ track: SpotifyTrack
-) async {
-
-    do {
-
-        let results =
-            try await YouTubeAPI.shared.search(
-                title: track.name,
-                artist: track.artist,
-                maxResults: 1
-            )
-
-        guard let firstResult = results.first else {
-
-            print(
-                "Geen YouTube-resultaat voor:",
-                track.name
-            )
-
-            return
-        }
+        track: SpotifyTrack,
+        youtubeResult: YouTubeSearchResult
+    ) {
 
         let item = FetchItem(
             spotifyURL: track.spotifyURL,
@@ -108,75 +50,182 @@ final class FetchManager {
             artist: track.artist,
             album: track.album,
             artworkURL: track.artworkURL,
-            youtubeURL: firstResult.videoURL,
+            youtubeURL: youtubeResult.videoURL,
             permissionConfirmed: true
         )
 
         items.append(item)
 
-    } catch {
-
-        print(
-            "Playlist track voorbereiden mislukt:",
-            track.name,
-            error
-        )
+        startIfNeeded()
     }
-}
 
-    private func prepareTrack(
-    _ track: SpotifyTrack
-) async {
 
-    do {
+    // MARK: - Authorized Spotify Track
 
-        let results =
-            try await YouTubeAPI.shared.search(
-                title: track.name,
-                artist: track.artist,
-                maxResults: 1
+    func addAuthorizedSpotifyTrack(
+        _ track: SpotifyTrack
+    ) {
+
+        let item = FetchItem(
+            spotifyURL: track.spotifyURL,
+            title: track.name,
+            artist: track.artist,
+            album: track.album,
+            artworkURL: track.artworkURL,
+            youtubeURL: nil,
+            permissionConfirmed: true
+        )
+
+        items.append(item)
+
+        startIfNeeded()
+    }
+
+
+    // MARK: - Playlist
+    //
+    // Voorlopig niet gebruiken vanuit de UI.
+    // We laten de functie bestaan voor later.
+
+    func preparePlaylist(
+        _ playlist: SpotifyPlaylist
+    ) async throws {
+
+        let tracks =
+            try await SpotifyAPI.shared
+                .getPlaylistTracks(
+                    playlistID: playlist.id
+                )
+
+        for track in tracks {
+
+            await preparePlaylistTrack(
+                track
             )
-
-        guard let firstResult =
-            results.first
-        else {
-            print(
-                "Geen match gevonden:",
-                track.name
-            )
-
-            return
         }
 
-        print(
-            "Match:",
-            track.name,
-            "→",
-            firstResult.title
-        )
-
-        // Hier bewaren we de automatisch
-        // gevonden eerste kandidaat.
-        //
-        // Niet automatisch downloaden;
-        // eerst tonen/controleren.
+        startIfNeeded()
     }
 
-    catch {
 
-        print(
-            "YouTube zoeken mislukt:",
-            track.name,
-            error
-        )
+    private func preparePlaylistTrack(
+        _ track: SpotifyTrack
+    ) async {
+
+        do {
+
+            switch ApifySettings.shared.downloadMethod {
+
+            case .youtube:
+
+                let results =
+                    try await YouTubeAPI.shared.search(
+                        title: track.name,
+                        artist: track.artist,
+                        maxResults: 1
+                    )
+
+                guard let firstResult =
+                        results.first
+                else {
+
+                    print(
+                        "Geen YouTube-resultaat voor:",
+                        track.name
+                    )
+
+                    return
+                }
+
+                let item = FetchItem(
+                    spotifyURL: track.spotifyURL,
+                    title: track.name,
+                    artist: track.artist,
+                    album: track.album,
+                    artworkURL: track.artworkURL,
+                    youtubeURL: firstResult.videoURL,
+                    permissionConfirmed: true
+                )
+
+                items.append(item)
+
+
+            case .spotify:
+
+                let item = FetchItem(
+                    spotifyURL: track.spotifyURL,
+                    title: track.name,
+                    artist: track.artist,
+                    album: track.album,
+                    artworkURL: track.artworkURL,
+                    youtubeURL: nil,
+                    permissionConfirmed: true
+                )
+
+                items.append(item)
+            }
+
+        } catch {
+
+            print(
+                "Playlist track voorbereiden mislukt:",
+                track.name,
+                error
+            )
+        }
     }
-}
 
-    
+
+    // MARK: - Prepare Track
+
+    private func prepareTrack(
+        _ track: SpotifyTrack
+    ) async {
+
+        do {
+
+            let results =
+                try await YouTubeAPI.shared.search(
+                    title: track.name,
+                    artist: track.artist,
+                    maxResults: 1
+                )
+
+            guard let firstResult =
+                    results.first
+            else {
+
+                print(
+                    "Geen match gevonden:",
+                    track.name
+                )
+
+                return
+            }
+
+            print(
+                "Match:",
+                track.name,
+                "→",
+                firstResult.title
+            )
+
+        } catch {
+
+            print(
+                "YouTube zoeken mislukt:",
+                track.name,
+                error
+            )
+        }
+    }
+
 
     // MARK: - Spotify Library Track
 
-    func add(_ track: SpotifyTrack) {
+    func add(
+        _ track: SpotifyTrack
+    ) {
 
         let item = FetchItem(
             spotifyURL: track.spotifyURL,
@@ -194,13 +243,17 @@ final class FetchManager {
 
     // MARK: - Spotify Playlist
 
-    func add(_ playlist: SpotifyPlaylist) {
+    func add(
+        _ playlist: SpotifyPlaylist
+    ) {
 
         let item = FetchItem(
             spotifyURL: playlist.spotifyURL,
             title: playlist.name,
-            artist: "\(playlist.trackCount) songs",
-            artworkURL: playlist.artworkURL
+            artist:
+                "\(playlist.trackCount) songs",
+            artworkURL:
+                playlist.artworkURL
         )
 
         items.append(item)
@@ -211,7 +264,9 @@ final class FetchManager {
 
     // MARK: - Remove
 
-    func remove(_ item: FetchItem) {
+    func remove(
+        _ item: FetchItem
+    ) {
 
         items.removeAll {
             $0.id == item.id
@@ -222,6 +277,7 @@ final class FetchManager {
     func clearCompleted() {
 
         items.removeAll {
+
             if case .completed = $0.status {
                 return true
             }
@@ -254,163 +310,280 @@ final class FetchManager {
 
         for item in items {
 
-            guard case .queued = item.status else {
+            guard case .queued =
+                    item.status
+            else {
                 continue
             }
 
-            await process(item)
+            await process(
+                item
+            )
         }
     }
 
+
+    // MARK: - Process
 
     private func process(
-    _ item: FetchItem
-) async {
+        _ item: FetchItem
+    ) async {
 
-    item.status = .preparing
+        item.status = .preparing
+
+        do {
+
+            let method =
+                ApifySettings.shared
+                    .downloadMethod
+
+            let downloadResult:
+                FetchAudioResult
 
 
-    do {
+            // MARK: Resolve download
 
-        guard let youtubeURL =
-            item.youtubeURL
-        else {
+            switch method {
 
-            throw ApifyDownloadError.invalidURL
-        }
+            // =========================================
+            // YOUTUBE
+            // =========================================
+
+            case .youtube:
+
+                guard let youtubeURL =
+                        item.youtubeURL
+                else {
+
+                    throw
+                        ApifyDownloadError
+                            .invalidURL
+                }
+
+                let apifyResult =
+                    try await
+                    ApifyAudioSource.shared
+                        .resolveMP3(
+                            youtubeURL:
+                                youtubeURL,
+
+                            permissionConfirmed:
+                                item.permissionConfirmed
+                        )
+
+                downloadResult =
+                    FetchAudioResult(
+                        downloadURL:
+                            apifyResult.downloadURL,
+
+                        suggestedFileName:
+                            makeTemporaryVideoName(
+                                item: item
+                            )
+                    )
 
 
-        // MARK: Apify
+            // =========================================
+            // SPOTIFY
+            // =========================================
 
-        let apifyResult =
-            try await ApifyAudioSource.shared
-                .resolveMP3(
-                    youtubeURL: youtubeURL,
-                    permissionConfirmed:
-                        item.permissionConfirmed
+            case .spotify:
+
+                guard
+                    item.permissionConfirmed
+                else {
+
+                    throw
+                        ApifyDownloadError
+                            .permissionRequired
+                }
+
+                let spotifyResult =
+                    try await
+                    SpotifyApifyAudioSource
+                        .shared
+                        .resolve(
+                            spotifyURL:
+                                item.spotifyURL
+                        )
+
+                downloadResult =
+                    FetchAudioResult(
+                        downloadURL:
+                            spotifyResult.downloadURL,
+
+                        suggestedFileName:
+                            makeSpotifyAudioName(
+                                item: item
+                            )
+                    )
+            }
+
+
+            // MARK: - Download
+
+            item.status =
+                .downloading(0)
+
+            let downloadedFile =
+                try await
+                FetchDownloadEngine.shared
+                    .download(
+                        item: item,
+                        result: downloadResult
+                    ) { progress in
+
+                        item.status =
+                            .downloading(
+                                progress
+                            )
+                    }
+
+
+            // MARK: - Processing
+
+            item.status =
+                .processing
+
+
+            switch method {
+
+            // =========================================
+            // YouTube gives us MP4
+            // Convert MP4 -> M4A
+            // =========================================
+
+            case .youtube:
+
+                let finalAudioURL =
+                    try await
+                    FetchMediaProcessor.shared
+                        .convertToM4A(
+                            sourceURL:
+                                downloadedFile,
+                            item: item
+                        )
+
+                print(
+                    "Final Echo audio:",
+                    finalAudioURL
                 )
 
+                // Remove temporary MP4
 
-        item.status =
-            .downloading(0)
+                try?
+                    FileManager.default
+                        .removeItem(
+                            at: downloadedFile
+                        )
 
 
-        // MARK: Download generated MP3
+            // =========================================
+            // Spotify Actor returns audio directly
+            // =========================================
 
-       let downloadResult =
-    FetchAudioResult(
-        downloadURL:
-            apifyResult.downloadURL,
+            case .spotify:
 
-        suggestedFileName:
-            makeTemporaryVideoName(
-                item: item
+                print(
+                    "Final Spotify audio:",
+                    downloadedFile
+                )
+
+                /*
+                 Geen MP4 -> M4A-conversie.
+
+                 Het bestand dat van de
+                 Spotify Actor komt blijft
+                 rechtstreeks in Documents.
+                 */
+            }
+
+
+            // MARK: - Refresh Echo Library
+
+            NotificationCenter.default.post(
+                name: .echoFetchCompleted,
+                object: nil
             )
-    )
 
 
-item.status =
-    .downloading(0)
+            item.status =
+                .completed
 
 
-let downloadedMP4 =
-    try await FetchDownloadEngine.shared.download(
-        item: item,
-        result: downloadResult
-    ) { progress in
+        } catch {
 
-        item.status =
-            .downloading(progress)
+            item.status =
+                .failed(
+                    error.localizedDescription
+                )
+
+            print(
+                "Fetch failed:",
+                error
+            )
+        }
     }
 
 
-// MARK: - MP4 -> M4A
-
-item.status = .processing
-
-
-let finalAudioURL =
-    try await FetchMediaProcessor.shared
-        .convertToM4A(
-            sourceURL: downloadedMP4,
-            item: item
-        )
-
-
-print(
-    "Final Echo audio:",
-    finalAudioURL
-)
-
-
-// Tijdelijke MP4 verwijderen
-
-try? FileManager.default.removeItem(
-    at: downloadedMP4
-)
-
-
-// Library opnieuw synchroniseren
-
-MusicLibraryManager.shared
-    .syncDocumentsFolder()
-
-
-item.status = .completed
-
-        item.status = .processing
-
-
-        /*
-         MP3 staat nu in Documents.
-
-         Echo's MusicLibraryManager scant die map.
-        */
-
-        NotificationCenter.default.post(
-            name: .echoFetchCompleted,
-            object: nil
-        )
-
-
-        item.status = .completed
-
-
-    } catch {
-
-        item.status =
-            .failed(
-                error.localizedDescription
-            )
-
-        print(
-            "Fetch failed:",
-            error
-        )
-    }
-}
+    // MARK: - File Names
 
     private func makeTemporaryVideoName(
-    item: FetchItem
-) -> String {
+        item: FetchItem
+    ) -> String {
 
-    let illegal = CharacterSet(
-        charactersIn: "/\\:*?\"<>|"
-    )
-
-    let base =
-        "\(item.title) - \(item.artist)"
-
-    let cleaned =
-        base
-            .components(
-                separatedBy: illegal
+        let illegal =
+            CharacterSet(
+                charactersIn:
+                    "/\\:*?\"<>|"
             )
-            .joined(separator: "")
 
-    return "\(cleaned)-source.mp4"
-}
+        let base =
+            "\(item.title) - \(item.artist)"
 
+        let cleaned =
+            base
+                .components(
+                    separatedBy:
+                        illegal
+                )
+                .joined(
+                    separator: ""
+                )
+
+        return
+            "\(cleaned)-source.mp4"
+    }
+
+
+    private func makeSpotifyAudioName(
+        item: FetchItem
+    ) -> String {
+
+        let illegal =
+            CharacterSet(
+                charactersIn:
+                    "/\\:*?\"<>|"
+            )
+
+        let base =
+            "\(item.title) - \(item.artist)"
+
+        let cleaned =
+            base
+                .components(
+                    separatedBy:
+                        illegal
+                )
+                .joined(
+                    separator: ""
+                )
+
+        return "\(cleaned).mp3"
+    }
+
+
+    // MARK: - Default Title
 
     private func defaultTitle(
         for type: SpotifyContentType
@@ -429,6 +602,9 @@ item.status = .completed
         }
     }
 }
+
+
+// MARK: - Notifications
 
 extension Notification.Name {
 
