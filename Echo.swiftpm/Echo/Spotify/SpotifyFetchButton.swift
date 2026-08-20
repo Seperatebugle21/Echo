@@ -9,103 +9,95 @@ struct SpotifyFetchButton: View {
 
     var body: some View {
 
-        Group {
+        switch ApifySettings.shared.downloadMethod {
 
-            switch ApifySettings.shared.downloadMethod {
+        case .youtube:
 
-            // MARK: - YouTube
+            NavigationLink {
 
-            case .youtube:
+                YouTubeSearchView(
+                    track: track
+                )
 
-                NavigationLink {
+            } label: {
 
-                    YouTubeSearchView(
-                        track: track
-                    )
-
-                } label: {
-
-                    Label(
-                        "Fetch to Echo",
-                        systemImage:
-                            "arrow.down.circle"
-                    )
-                }
-
-
-            // MARK: - Spotify
-
-            case .spotify:
-
-                Button {
-
-                    showPermission = true
-
-                } label: {
-
-                    Label(
-                        "Fetch to Echo",
-                        systemImage:
-                            "arrow.down.circle"
-                    )
-                }
+                Label(
+                    "Fetch to Echo",
+                    systemImage:
+                        "arrow.down.circle"
+                )
             }
-        }
 
-        // MARK: Permission
 
-        .confirmationDialog(
-            "Fetch from Spotify?",
-            isPresented:
-                $showPermission,
-            titleVisibility:
-                .visible
-        ) {
+        case .spotify:
 
-            Button(
-                "I have permission — Add to Queue"
+            Button {
+
+                showPermission = true
+
+            } label: {
+
+                Label(
+                    "Fetch to Echo",
+                    systemImage:
+                        "arrow.down.circle"
+                )
+            }
+
+            .confirmationDialog(
+                "Fetch from Spotify",
+                isPresented:
+                    $showPermission,
+                titleVisibility:
+                    .visible
             ) {
 
-                FetchManager.shared
-                    .addAuthorizedSpotifyTrack(
-                        track
+                Button(
+                    "Add to Queue"
+                ) {
+
+                    print(
+                        "Spotify Fetch pressed:",
+                        track.name
                     )
 
-                showAdded = true
+                    FetchManager.shared
+                        .addAuthorizedSpotifyTrack(
+                            track
+                        )
+
+                    showAdded = true
+                }
+
+                Button(
+                    "Cancel",
+                    role: .cancel
+                ) {}
+
+            } message: {
+
+                Text(
+                    "Continue only for content you own or have permission to download."
+                )
             }
 
+            .alert(
+                "Added to Queue",
+                isPresented:
+                    $showAdded
+            ) {
 
-            Button(
-                "Cancel",
-                role: .cancel
-            ) {}
+                Button(
+                    "Close",
+                    role: .cancel
+                ) {}
 
-        } message: {
+            } message: {
 
-            Text(
-                "Only continue if you own this content or have permission to download it."
-            )
-        }
-
-
-        // MARK: Added
-
-        .alert(
-            "Added to Queue",
-            isPresented:
-                $showAdded
-        ) {
-
-            Button(
-                "Close",
-                role: .cancel
-            ) {}
-
-        } message: {
-
-            Text(
-                "\(track.name) by \(track.artist) was added to Downloads."
-            )
+                Text(
+                    "\(track.name) has been added to Downloads."
+                )
+            }
         }
     }
 }
