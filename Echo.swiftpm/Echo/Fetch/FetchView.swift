@@ -4,37 +4,47 @@ struct FetchView: View {
 
     @State private var manager = FetchManager.shared
     @State private var settings = FetchSettings.shared
+    @State private var spotify = SpotifyManager.shared
+
     @State private var spotifyLink = ""
 
     var body: some View {
+
         NavigationStack {
+
             List {
+
+                // MARK: - Spotify
 
                 Section("Spotify") {
 
-    if SpotifyManager.shared.isConnected {
+                    if spotify.isConnected {
 
-        Label(
-            "Connected to Spotify",
-            systemImage: "checkmark.circle.fill"
-        )
-        .foregroundStyle(.green)
+                        Label(
+                            "Connected to Spotify",
+                            systemImage: "checkmark.circle.fill"
+                        )
+                        .foregroundStyle(.green)
 
-    } else {
+                    } else {
 
-        Button {
-            SpotifyManager.shared.connect()
-        } label: {
-            Label(
-                "Connect Spotify",
-                systemImage: "person.crop.circle.badge.plus"
-            )
-        }
-    }
-}
+                        Button {
+                            spotify.connect()
+                        } label: {
+                            Label(
+                                "Connect Spotify",
+                                systemImage: "person.crop.circle.badge.plus"
+                            )
+                        }
+                    }
+                }
+
+
+                // MARK: - Add Link
 
                 Section {
-                    HStack {
+                    HStack(spacing: 12) {
+
                         Image(systemName: "link")
                             .foregroundStyle(.secondary)
 
@@ -45,6 +55,17 @@ struct FetchView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
+                        if !spotifyLink.isEmpty {
+
+                            Button {
+                                spotifyLink = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
                         Button {
                             addLink()
                         } label: {
@@ -53,30 +74,50 @@ struct FetchView: View {
                         }
                         .disabled(
                             spotifyLink
-                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                                .trimmingCharacters(
+                                    in: .whitespacesAndNewlines
+                                )
                                 .isEmpty
                         )
                     }
                     .padding(.vertical, 4)
+
                 } header: {
                     Text("Add to Fetch")
+
+                } footer: {
+                    Text(
+                        "Paste a Spotify track, album or playlist link."
+                    )
                 }
 
+
+                // MARK: - Downloads
+
                 Section {
+
                     NavigationLink {
                         FetchQueueView()
                     } label: {
-                        Label(
-                            "Downloads",
-                            systemImage: "arrow.down.circle"
-                        )
 
-                        Spacer()
+                        HStack {
 
-                        Text("\(manager.items.count)")
-                            .foregroundStyle(.secondary)
+                            Label(
+                                "Downloads",
+                                systemImage: "arrow.down.circle"
+                            )
+
+                            Spacer()
+
+                            Text("\(manager.items.count)")
+                                .foregroundStyle(.secondary)
+                        }
                     }
+
                 }
+
+
+                // MARK: - Settings
 
                 Section("Settings") {
 
@@ -84,16 +125,22 @@ struct FetchView: View {
                         "Quality",
                         selection: $settings.quality
                     ) {
-                        ForEach(FetchQuality.allCases) { quality in
+
+                        ForEach(
+                            FetchQuality.allCases
+                        ) { quality in
+
                             Text(quality.title)
                                 .tag(quality)
                         }
                     }
 
+
                     Toggle(
                         "Artwork",
                         isOn: $settings.embedArtwork
                     )
+
 
                     Toggle(
                         "Metadata",
@@ -101,12 +148,24 @@ struct FetchView: View {
                     )
                 }
 
+
+                // MARK: - Recent
+
                 if !manager.items.isEmpty {
+
                     Section("Recent") {
+
                         ForEach(
-                            manager.items.prefix(5)
+                            Array(
+                                manager.items
+                                    .reversed()
+                                    .prefix(5)
+                            )
                         ) { item in
-                            FetchItemRow(item: item)
+
+                            FetchItemRow(
+                                item: item
+                            )
                         }
                     }
                 }
@@ -115,13 +174,22 @@ struct FetchView: View {
         }
     }
 
-    private func addLink() {
-        let link = spotifyLink
-            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !link.isEmpty else { return }
+    // MARK: - Add Spotify Link
+
+    private func addLink() {
+
+        let link = spotifyLink
+            .trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+        guard !link.isEmpty else {
+            return
+        }
 
         manager.addSpotifyURL(link)
+
         spotifyLink = ""
     }
 }
