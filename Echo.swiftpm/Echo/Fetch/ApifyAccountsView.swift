@@ -34,6 +34,7 @@ struct ApifyAccountsView: View {
                     ApifyAccountRow(
                         account: account
                     )
+                   Spacer()
                 }
                 .onDelete {
                     offsets in
