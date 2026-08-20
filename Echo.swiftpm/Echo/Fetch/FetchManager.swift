@@ -469,49 +469,33 @@ private func startIfNeeded() {
         // SPOTIFY
         // =========================================
 
-        case .spotify:
+      case .spotify:
 
-            guard
-                item.permissionConfirmed
-            else {
+    guard item.permissionConfirmed else {
+        throw ApifyDownloadError.permissionRequired
+    }
 
-                throw
-                    ApifyDownloadError
-                        .permissionRequired
-            }
-
-            let spotifyResult =
-                try await
-                SpotifyApifyAudioSource
-                    .shared
-                    .resolve(
-                        spotifyURL:
-                            item.spotifyURL
-                    )
-
-            print(
-                "Spotify resolved URL:",
-                spotifyResult.downloadURL
+    let spotifyResult =
+        try await SpotifyApifyAudioSource.shared
+            .resolve(
+                spotifyURL: item.spotifyURL
             )
 
-            print(
-                "Spotify suggested filename:",
-                spotifyResult.suggestedFileName
-                ?? "NONE"
-            )
+    print(
+        "Spotify resolved URL:",
+        spotifyResult.downloadURL
+    )
 
-            downloadResult =
-                FetchAudioResult(
-                    downloadURL:
-                        spotifyResult.downloadURL,
+    downloadResult =
+        FetchAudioResult(
+            downloadURL:
+                spotifyResult.downloadURL,
 
-                    suggestedFileName:
-                        spotifyResult
-                            .suggestedFileName
-                        ?? makeTemporarySpotifyName(
-                            item: item
-                        )
+            suggestedFileName:
+                makeTemporarySpotifyName(
+                    item: item
                 )
+        )
         }
 
 
@@ -657,14 +641,13 @@ private func startIfNeeded() {
     }
 
 
-    private func makeTemporarySpotifyName(
+   private func makeTemporarySpotifyName(
     item: FetchItem
 ) -> String {
 
     let illegal =
         CharacterSet(
-            charactersIn:
-                "/\\:*?\"<>|"
+            charactersIn: "/\\:*?\"<>|"
         )
 
     let base =
@@ -673,15 +656,11 @@ private func startIfNeeded() {
     let cleaned =
         base
             .components(
-                separatedBy:
-                    illegal
+                separatedBy: illegal
             )
-            .joined(
-                separator: ""
-            )
+            .joined(separator: "")
 
-    return
-        "\(cleaned)-spotify-source"
+    return "\(cleaned)-spotify-source.mp3"
 }
 
     private func makeSpotifyAudioName(
