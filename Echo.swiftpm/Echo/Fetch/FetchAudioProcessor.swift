@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import SwiftLAME
 
 enum FetchProcessingError: LocalizedError {
     case unsupportedInput
@@ -227,30 +228,35 @@ final class FetchAudioProcessor {
     }
 
 
-    // MARK: - WAV -> MP3
+   private func encodeMP3(
+    wavURL: URL,
+    outputURL: URL,
+    bitrate: Int
+) async throws {
 
-    private func encodeMP3(
-        wavURL: URL,
-        outputURL: URL,
-        bitrate: Int
-    ) async throws {
+    let progress = Progress(totalUnitCount: 100)
 
-        /*
-         Hier komt de LAME encoder.
+    let encoder = try SwiftLameEncoder(
+        sourceUrl: wavURL,
+        configuration: .init(
+            sampleRate: .constant(44100),
+            bitrateMode: .constant(bitrate),
+            quality: .mp3Best
+        ),
+        destinationUrl: outputURL,
+        progress: progress
+    )
 
-         Input:
-         wavURL
+    try await encoder.encode(
+        priority: .userInitiated
+    )
 
-         Output:
-         outputURL
-
-         Bitrate:
-         128 / 192 / 320
-        */
-
-        throw FetchProcessingError
-            .conversionFailed
+    guard FileManager.default.fileExists(
+        atPath: outputURL.path
+    ) else {
+        throw FetchProcessingError.conversionFailed
     }
+}
 
 
     // MARK: - Artwork
