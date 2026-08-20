@@ -31,8 +31,8 @@ struct SpotifySearchView: View {
             ForEach(results) { track in
 
                 NavigationLink {
-                    YouTubeSearchView(
-                        track: track
+                   SpotifyFetchButton(
+                    track: track
                     )
                 } label: {
 
