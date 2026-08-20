@@ -61,14 +61,15 @@ final class ApifyUsageAPI {
 
     func getUsage() async throws -> ApifyUsageInfo {
 
-        guard
-            let token = Bundle.main.object(
-                forInfoDictionaryKey: "APIFY_API_TOKEN"
-            ) as? String,
-            !token.isEmpty
-        else {
-            throw ApifyUsageError.missingToken
-        }
+        let token =
+    ApifySettings.shared.apiToken
+        .trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+guard !token.isEmpty else {
+    throw ApifyUsageError.missingToken
+}
 
         var components = URLComponents(
             string: "https://api.apify.com/v2/users/me/limits"
