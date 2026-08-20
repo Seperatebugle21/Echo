@@ -30,13 +30,109 @@ jobs:
 
 
       # ============================================
-      # 2. SwiftPM project bouwen
+      # 2. SwiftLAME dependency injecteren
+      # ============================================
+
+      - name: Add SwiftLAME dependency
+        run: |
+          PACKAGE_FILE=$(find . -name "Package.swift" | head -n 1)
+
+          echo "Package.swift gevonden op:"
+          echo "$PACKAGE_FILE"
+
+          if [ -z "$PACKAGE_FILE" ]; then
+            echo "Geen Package.swift gevonden."
+            exit 1
+          fi
+
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          package = next(Path(".").rglob("Package.swift"))
+          text = package.read_text()
+
+          print("Package:", package)
+
+          # ============================================
+          # Package dependency toevoegen
+          # ============================================
+
+          if "hidden-spectrum/swiftlame" not in text.lower():
+
+              # Voeg dependencies toe vóór targets:
+              marker = "\n    targets: ["
+
+              if marker not in text:
+                  raise SystemExit(
+                      "Kon 'targets: [' niet vinden in Package.swift"
+                  )
+
+              dependency_block = """
+    dependencies: [
+        .package(
+            url: "https://github.com/hidden-spectrum/swiftlame",
+            .upToNextMajor(from: "0.1.0")
+        )
+    ],
+"""
+
+              text = text.replace(
+                  marker,
+                  "\n" + dependency_block + "    targets: [",
+                  1
+              )
+
+
+          # ============================================
+          # SwiftLAME aan AppModule target koppelen
+          # ============================================
+
+          if '.product(name: "SwiftLAME"' not in text:
+
+              pattern = r'(\.executableTarget\(\s*name:\s*"AppModule",)'
+
+              replacement = r'''\1
+            dependencies: [
+                .product(
+                    name: "SwiftLAME",
+                    package: "swiftlame"
+                )
+            ],'''
+
+              new_text, count = re.subn(
+                  pattern,
+                  replacement,
+                  text,
+                  count=1
+              )
+
+              if count == 0:
+                  raise SystemExit(
+                      "Kon executableTarget AppModule niet vinden."
+                  )
+
+              text = new_text
+
+
+          package.write_text(text)
+
+          print("")
+          print("================================")
+          print(" PATCHED PACKAGE.SWIFT")
+          print("================================")
+          print("")
+          print(text)
+          PY
+
+
+      # ============================================
+      # 3. SwiftPM project bouwen
       # ============================================
 
       - name: Build SwiftPM
         run: |
 
-          # Zoek automatisch de map waar Package.swift staat
           PACKAGE_DIR=$(find . -name "Package.swift" -exec dirname {} \; | head -n 1)
 
           echo "Gevonden Package map: $PACKAGE_DIR"
@@ -48,10 +144,8 @@ jobs:
 
           cd "$PACKAGE_DIR"
 
-          # Build-map aanmaken
           mkdir -p ../build
 
-          # Archive bouwen zonder codesigning
           xcodebuild archive \
             -scheme Echo \
             -destination 'generic/platform=iOS' \
@@ -63,7 +157,7 @@ jobs:
 
 
       # ============================================
-      # 3. IPA maken + Info.plist aanpassen
+      # 4. IPA maken + Info.plist aanpassen
       # ============================================
 
       - name: Create IPA Package
@@ -72,13 +166,11 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
 
-          # Zoek de gebouwde .app
           BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
             -maxdepth 1 \
             -name "*.app" \
             | head -n 1)
 
-          # Fallback voor eventueel .swiftpm output
           if [ -z "$BUILT_APP" ]; then
             BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
               -maxdepth 1 \
@@ -94,10 +186,8 @@ jobs:
             exit 1
           fi
 
-          # Kopieer app naar Payload
           cp -R "$BUILT_APP" Payload/
 
-          # Zoek de gekopieerde app
           APP_PATH=$(find Payload \
             -maxdepth 1 \
             \( -name "*.app" -o -name "*.swiftpm" \) \
@@ -121,7 +211,7 @@ jobs:
 
 
           # ============================================
-          # 3A. Background Audio
+          # 4A. Background Audio
           # ============================================
 
           /usr/libexec/PlistBuddy \
@@ -138,7 +228,7 @@ jobs:
 
 
           # ============================================
-          # 3B. Files-app toegang
+          # 4B. Files-app toegang
           # ============================================
 
           /usr/libexec/PlistBuddy \
@@ -157,45 +247,36 @@ jobs:
 
 
           # ============================================
-          # 3C. Spotify callback URL scheme
-          #
-          # echo-spotify-login://callback
+          # 4C. Spotify callback URL scheme
           # ============================================
 
-          # Verwijder bestaande CFBundleURLTypes
-          # zodat we zeker geen oude configuratie houden
           /usr/libexec/PlistBuddy \
             -c "Delete :CFBundleURLTypes" \
             "$INFO_PLIST" 2>/dev/null || true
 
-          # Root array
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes array" \
             "$INFO_PLIST"
 
-          # Eerste URL type
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0 dict" \
             "$INFO_PLIST"
 
-          # Naam
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLName string echo.spotify.login" \
             "$INFO_PLIST"
 
-          # Schemes array
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
             "$INFO_PLIST"
 
-          # Echo Spotify URL scheme
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string echo-spotify-login" \
             "$INFO_PLIST"
 
 
           # ============================================
-          # 3D. Debug / controle
+          # 4D. Debug / controle
           # ============================================
 
           echo ""
@@ -220,7 +301,7 @@ jobs:
 
 
           # ============================================
-          # 3E. IPA maken
+          # 4E. IPA maken
           # ============================================
 
           rm -f Echo.ipa
@@ -229,7 +310,7 @@ jobs:
 
 
       # ============================================
-      # 4. IPA als GitHub Artifact opslaan
+      # 5. IPA als GitHub Artifact opslaan
       # ============================================
 
       - name: Save IPA to Artifacts
@@ -241,7 +322,7 @@ jobs:
 
 
       # ============================================
-      # 5. GitHub Release maken
+      # 6. GitHub Release maken
       # ============================================
 
       - name: Create Github Release
@@ -249,7 +330,5 @@ jobs:
 
         with:
           artifacts: "Echo.ipa"
-
           tag: "v1.0.${{ github.run_number }}"
-
           token: ${{ secrets.GITHUB_TOKEN }}
