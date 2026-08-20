@@ -18,25 +18,40 @@ struct FetchView: View {
 
                 Section("Spotify") {
 
-                    if spotify.isConnected {
+                   if spotify.isConnected {
 
-                        Label(
-                            "Connected to Spotify",
-                            systemImage: "checkmark.circle.fill"
-                        )
-                        .foregroundStyle(.green)
+    NavigationLink {
+        SpotifyLibraryView()
+    } label: {
 
-                    } else {
+        Label(
+            "Spotify Library",
+            systemImage: "music.note.list"
+        )
+    }
 
-                        Button {
-                            spotify.connect()
-                        } label: {
-                            Label(
-                                "Connect Spotify",
-                                systemImage: "person.crop.circle.badge.plus"
-                            )
-                        }
-                    }
+    Label(
+        "Connected to Spotify",
+        systemImage:
+            "checkmark.circle.fill"
+    )
+    .foregroundStyle(.green)
+
+} else {
+
+    Button {
+
+        spotify.connect()
+
+    } label: {
+
+        Label(
+            "Connect Spotify",
+            systemImage:
+                "person.crop.circle.badge.plus"
+        )
+    }
+}
                 }
 
 
