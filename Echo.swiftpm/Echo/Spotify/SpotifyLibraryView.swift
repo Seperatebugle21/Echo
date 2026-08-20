@@ -66,24 +66,11 @@ struct SpotifyLibraryView: View {
 
                     ForEach(likedSongs) { track in
 
-                     //   SpotifyTrackRow(
-                     //       track: track
-                     //   )
+                        SpotifyTrackRow(
+                             track: track
+                        )
 
-                           NavigationLink {
-                   SpotifyFetchButton(
-                    track: track
-                    )
-                } label: {
-
-                Image(
-                    systemName: "ellipsis"
-                )
-                .frame(
-                    width: 32,
-                    height: 32
-                )
-            }               
+                                    
                     }
                 }
             }
