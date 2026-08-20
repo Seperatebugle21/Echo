@@ -7,6 +7,8 @@ struct YouTubeResultView: View {
 
     @State private var hasPermission = false
 
+    @State private var showAddedConfirmation = false
+
     var body: some View {
 
         Form {
@@ -44,10 +46,12 @@ struct YouTubeResultView: View {
             Section {
 
                 Button {
-                      FetchManager.shared.addAuthorizedMatch(
-                        track: track,
-                        youtubeResult: result
-                      )
+                       FetchManager.shared.addAuthorizedMatch(
+        track: track,
+        youtubeResult: result
+    )
+
+    showAddedConfirmation = true
                 } label: {
 
                     Label(
@@ -59,5 +63,17 @@ struct YouTubeResultView: View {
             }
         }
         .navigationTitle("Fetch")
+        .sheet(
+    isPresented: $showAddedConfirmation
+) {
+
+    AddedToQueueView(
+        track: track
+    )
+    .presentationDetents([
+        .height(260)
+    ])
+    .presentationDragIndicator(.visible)
+}
     }
 }
