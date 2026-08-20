@@ -288,39 +288,84 @@ final class FetchManager {
 
 
     // MARK: - Queue
+private func startIfNeeded() {
 
-    private func startIfNeeded() {
+    guard !running else {
 
-        guard !running else {
-            return
-        }
+        print(
+            "Fetch queue already running"
+        )
 
-        running = true
-
-        Task {
-
-            await processQueue()
-
-            running = false
-        }
+        return
     }
 
+    guard items.contains(
+        where: { item in
 
-    private func processQueue() async {
-
-        for item in items {
-
-            guard case .queued =
-                    item.status
-            else {
-                continue
+            if case .queued = item.status {
+                return true
             }
 
-            await process(
-                item
-            )
+            return false
+        }
+    ) else {
+
+        print(
+            "No queued Fetch items"
+        )
+
+        return
+    }
+
+    running = true
+
+    Task {
+
+        await processQueue()
+
+        running = false
+
+        // Voor het geval er exact op dit
+        // moment nog iets toegevoegd werd.
+
+        if items.contains(
+            where: { item in
+
+                if case .queued = item.status {
+                    return true
+                }
+
+                return false
+            }
+        ) {
+            startIfNeeded()
         }
     }
+}
+
+
+  private func processQueue() async {
+
+    while true {
+
+        guard let nextItem =
+                items.first(
+                    where: { item in
+
+                        if case .queued = item.status {
+                            return true
+                        }
+
+                        return false
+                    }
+                )
+        else {
+            break
+        }
+
+        await process(nextItem)
+    }
+}
 
 
     // MARK: - Process
