@@ -12,7 +12,7 @@ final class SpotifyManager {
     private(set) var accessToken: String?
 
     private let clientID = "6fb432cf1a8f4454875812a2213d34c5"
-    private let redirectURI = "echo://spotify-callback"
+    private let redirectURI = "echo-spotify-login://callback"
 
     private var codeVerifier: String?
     private var state: String?
