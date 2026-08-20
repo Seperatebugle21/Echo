@@ -1,29 +1,39 @@
 import Foundation
 
+
+// MARK: - Errors
+
 enum ApifyDownloadError: LocalizedError {
+
     case missingToken
     case invalidURL
-    case requestFailed(Int)
-    case invalidResponse
+    case requestFailed(Int, String?)
+    case invalidResponse(String)
     case noDownloadURL
     case permissionRequired
 
     var errorDescription: String? {
+
         switch self {
+
         case .missingToken:
             return "Apify API token ontbreekt."
 
         case .invalidURL:
-            return "Ongeldige Apify URL."
+            return "Ongeldige YouTube- of Apify-URL."
 
-        case .requestFailed(let code):
+        case .requestFailed(let code, let message):
+            if let message, !message.isEmpty {
+                return "Apify fout \(code): \(message)"
+            }
+
             return "Apify download mislukt. HTTP \(code)."
 
-        case .invalidResponse:
-            return "Echo kon het Apify-resultaat niet lezen."
+        case .invalidResponse(let response):
+            return "Echo kon het Apify-resultaat niet lezen: \(response)"
 
         case .noDownloadURL:
-            return "Apify heeft geen downloadbaar MP3-bestand teruggegeven."
+            return "Apify heeft geen downloadbaar bestand teruggegeven."
 
         case .permissionRequired:
             return "Bevestig eerst dat je toestemming hebt."
@@ -32,13 +42,19 @@ enum ApifyDownloadError: LocalizedError {
 }
 
 
+// MARK: - Result used by Echo
+
 struct ApifyDownloadResult {
+
     let downloadURL: URL
     let fileName: String?
 }
 
 
+// MARK: - Actor Dataset Item
+
 private struct ApifyActorResult: Decodable {
+
     let note: String?
     let id: String?
     let input: String?
@@ -47,8 +63,18 @@ private struct ApifyActorResult: Decodable {
     let fileKey: String?
 
     let audioOnlyUrl: String?
+    let videoOnlyUrl: String?
 }
 
+
+// MARK: - Possible wrapper
+
+private struct ApifyWrappedResponse: Decodable {
+    let data: [ApifyActorResult]?
+}
+
+
+// MARK: - Source
 
 @MainActor
 final class ApifyAudioSource {
@@ -58,7 +84,7 @@ final class ApifyAudioSource {
     private init() {}
 
 
-    // MARK: - Download MP3
+    // MARK: Resolve
 
     func resolveMP3(
         youtubeURL: URL,
@@ -69,6 +95,19 @@ final class ApifyAudioSource {
             throw ApifyDownloadError.permissionRequired
         }
 
+
+        // Check YouTube URL
+
+        guard let host = youtubeURL.host?.lowercased(),
+              host.contains("youtube.com") ||
+              host.contains("youtu.be")
+        else {
+            throw ApifyDownloadError.invalidURL
+        }
+
+
+        // Read token from compiled Info.plist
+
         guard
             let token = Bundle.main.object(
                 forInfoDictionaryKey: "APIFY_API_TOKEN"
@@ -78,6 +117,8 @@ final class ApifyAudioSource {
             throw ApifyDownloadError.missingToken
         }
 
+
+        // MARK: Endpoint
 
         var components = URLComponents(
             string:
@@ -96,15 +137,23 @@ final class ApifyAudioSource {
         }
 
 
+        // MARK: Request
+
         var request = URLRequest(url: endpoint)
 
         request.httpMethod = "POST"
 
-        request.timeoutInterval = 180
+        // MP3 conversion can take a while
+        request.timeoutInterval = 300
 
         request.setValue(
             "application/json",
             forHTTPHeaderField: "Content-Type"
+        )
+
+        request.setValue(
+            "application/json",
+            forHTTPHeaderField: "Accept"
         )
 
 
@@ -112,16 +161,12 @@ final class ApifyAudioSource {
 
             "videos": [
                 [
-                    "url":
-                        youtubeURL.absoluteString
+                    "url": youtubeURL.absoluteString
                 ]
             ],
 
-            // Laat Apify het resultaat opslaan,
-            // zodat we een download-URL terugkrijgen.
             "storeInKVStore": true,
 
-            // Vraag MP3
             "preferredFormat": "mp3",
 
             "filenameTemplateParts": [
@@ -136,98 +181,190 @@ final class ApifyAudioSource {
             )
 
 
+        print("===== APIFY REQUEST =====")
+        print("YouTube:", youtubeURL.absoluteString)
+        print("Endpoint:", endpoint.absoluteString)
+
+
+        // MARK: Execute
+
         let (data, response) =
             try await URLSession.shared.data(
                 for: request
             )
 
 
-        guard
-            let http =
-                response as? HTTPURLResponse
+        guard let http =
+            response as? HTTPURLResponse
         else {
-            throw ApifyDownloadError.invalidResponse
+            throw ApifyDownloadError.invalidResponse(
+                "Geen HTTP-response."
+            )
         }
+
+
+        let rawResponse =
+            String(
+                data: data,
+                encoding: .utf8
+            ) ?? "<geen tekst>"
+
+
+        print("")
+        print("===== APIFY RESPONSE =====")
+        print("HTTP:", http.statusCode)
+        print(rawResponse)
+        print("==========================")
+        print("")
 
 
         guard 200..<300 ~= http.statusCode else {
 
-            if let text = String(
-                data: data,
-                encoding: .utf8
-            ) {
-
-                print(
-                    "Apify error:",
-                    text
-                )
-            }
-
             throw ApifyDownloadError.requestFailed(
-                http.statusCode
+                http.statusCode,
+                rawResponse
             )
         }
 
 
+        // MARK: Decode
+
+        let decoder = JSONDecoder()
+
         let results: [ApifyActorResult]
 
-        do {
 
-            results =
-                try JSONDecoder().decode(
-                    [ApifyActorResult].self,
-                    from: data
-                )
+        // Vorm 1:
+        //
+        // [
+        //   {
+        //      "downloadedFileUrl": "..."
+        //   }
+        // ]
 
-        } catch {
+        if let array =
+            try? decoder.decode(
+                [ApifyActorResult].self,
+                from: data
+            ) {
 
-            print(
-                "Apify JSON:",
-                String(
-                    data: data,
-                    encoding: .utf8
-                ) ?? "?"
+            results = array
+
+
+        // Vorm 2:
+        //
+        // {
+        //    "downloadedFileUrl": "..."
+        // }
+
+        } else if let single =
+            try? decoder.decode(
+                ApifyActorResult.self,
+                from: data
+            ) {
+
+            results = [single]
+
+
+        // Vorm 3:
+        //
+        // {
+        //    "data": [...]
+        // }
+
+        } else if let wrapped =
+            try? decoder.decode(
+                ApifyWrappedResponse.self,
+                from: data
+            ),
+            let data = wrapped.data {
+
+            results = data
+
+
+        } else {
+
+            throw ApifyDownloadError.invalidResponse(
+                rawResponse
             )
-
-            throw ApifyDownloadError.invalidResponse
         }
 
 
         guard let result = results.first else {
-            throw ApifyDownloadError.invalidResponse
+
+            throw ApifyDownloadError.invalidResponse(
+                "Apify gaf een lege dataset terug."
+            )
         }
 
 
+        print("Apify video ID:", result.id ?? "nil")
         print(
-            "Apify note:",
-            result.note ?? "none"
+            "downloadedFileUrl:",
+            result.downloadedFileUrl ?? "nil"
+        )
+        print(
+            "audioOnlyUrl:",
+            result.audioOnlyUrl ?? "nil"
+        )
+        print(
+            "fileKey:",
+            result.fileKey ?? "nil"
         )
 
-        print(
-            "Apify file:",
-            result.downloadedFileUrl ?? "none"
-        )
+
+        // MARK: Prefer stored file
+
+        if let string = result.downloadedFileUrl,
+           let url = URL(string: string) {
+
+            return ApifyDownloadResult(
+                downloadURL: url,
+                fileName: makeFileName(
+                    result.fileKey
+                )
+            )
+        }
 
 
-        /*
-         We gebruiken downloadedFileUrl.
+        // Fallback:
+        // audioOnlyUrl might exist even when
+        // storeInKVStore did not produce a file.
 
-         audioOnlyUrl kan bijvoorbeeld een directe
-         audio-stream zijn, maar is niet gegarandeerd
-         een MP3. We doen dus niet alsof die een MP3 is.
-        */
+        if let string = result.audioOnlyUrl,
+           let url = URL(string: string) {
 
-        guard
-            let string = result.downloadedFileUrl,
-            let downloadURL = URL(string: string)
+            return ApifyDownloadResult(
+                downloadURL: url,
+                fileName: nil
+            )
+        }
+
+
+        throw ApifyDownloadError.noDownloadURL
+    }
+
+
+    // MARK: File name
+
+    private func makeFileName(
+        _ fileKey: String?
+    ) -> String? {
+
+        guard let fileKey,
+              !fileKey.isEmpty
         else {
-            throw ApifyDownloadError.noDownloadURL
+            return nil
         }
 
+        let last =
+            URL(
+                fileURLWithPath: fileKey
+            )
+            .lastPathComponent
 
-        return ApifyDownloadResult(
-            downloadURL: downloadURL,
-            fileName: result.fileKey
-        )
+        return last.isEmpty
+            ? nil
+            : last
     }
 }
