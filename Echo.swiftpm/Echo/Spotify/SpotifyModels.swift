@@ -124,7 +124,7 @@ struct SpotifyPlaylistItemsResponse: Decodable {
 }
 
 struct SpotifyPlaylistItem: Decodable {
-    let track: SpotifyAPITrack?
+    let item: SpotifyAPITrack?
 }
 
 struct SpotifySearchResponse: Decodable {
