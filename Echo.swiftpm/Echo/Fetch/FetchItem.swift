@@ -50,17 +50,21 @@ final class FetchItem: Identifiable {
 
     var status: FetchStatus = .queued
 
-    init(
-        spotifyURL: URL,
-        title: String,
-        artist: String,
-        album: String? = nil,
-        artworkURL: URL? = nil
-    ) {
-        self.spotifyURL = spotifyURL
-        self.title = title
-        self.artist = artist
-        self.album = album
-        self.artworkURL = artworkURL
-    }
+  init(
+    spotifyURL: URL,
+    title: String,
+    artist: String,
+    album: String? = nil,
+    artworkURL: URL? = nil,
+    youtubeURL: URL? = nil,
+    permissionConfirmed: Bool = false
+) {
+    self.spotifyURL = spotifyURL
+    self.title = title
+    self.artist = artist
+    self.album = album
+    self.artworkURL = artworkURL
+    self.youtubeURL = youtubeURL
+    self.permissionConfirmed = permissionConfirmed
+}
 }
