@@ -44,10 +44,10 @@ struct YouTubeResultView: View {
             Section {
 
                 Button {
-                    /*
-                     Hier koppelen we straks de
-                     daadwerkelijke toegestane bron/import.
-                    */
+                      FetchManager.shared.addAuthorizedMatch(
+                        track: track,
+                        youtubeResult: result
+                      )
                 } label: {
 
                     Label(
