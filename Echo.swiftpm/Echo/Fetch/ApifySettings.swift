@@ -32,10 +32,25 @@ final class ApifySettings {
     private let methodKey =
         "echo.apify.downloadMethod"
 
+
     var apiToken: String = ""
 
-    var downloadMethod:
-        ApifyDownloadMethod = .youtube
+
+    var downloadMethod: ApifyDownloadMethod {
+        didSet {
+
+            UserDefaults.standard.set(
+                downloadMethod.rawValue,
+                forKey: methodKey
+            )
+
+            print(
+                "Apify method saved:",
+                downloadMethod.rawValue
+            )
+        }
+    }
+
 
     private init() {
 
@@ -45,18 +60,28 @@ final class ApifySettings {
             ) ?? ""
 
         if
-            let savedMethod =
+            let saved =
                 UserDefaults.standard.string(
                     forKey: methodKey
                 ),
             let method =
                 ApifyDownloadMethod(
-                    rawValue: savedMethod
+                    rawValue: saved
                 )
         {
             downloadMethod = method
+
+        } else {
+
+            downloadMethod = .youtube
         }
+
+        print(
+            "Apify method restored:",
+            downloadMethod.rawValue
+        )
     }
+
 
     var isConfigured: Bool {
 
@@ -67,7 +92,8 @@ final class ApifySettings {
             .isEmpty
     }
 
-    func save() {
+
+    func saveToken() {
 
         let cleaned =
             apiToken.trimmingCharacters(
@@ -89,12 +115,8 @@ final class ApifySettings {
                 for: tokenKey
             )
         }
-
-        UserDefaults.standard.set(
-            downloadMethod.rawValue,
-            forKey: methodKey
-        )
     }
+
 
     func removeToken() {
 
