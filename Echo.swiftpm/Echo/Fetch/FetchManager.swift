@@ -61,6 +61,70 @@ final class FetchManager {
 }
 
 
+    func preparePlaylist(
+    _ playlist: SpotifyPlaylist
+) async throws {
+
+    let tracks =
+        try await SpotifyAPI.shared
+            .getPlaylistTracks(
+                playlistID: playlist.id
+            )
+
+    for track in tracks {
+
+        await prepareTrack(track)
+    }
+}
+
+    private func prepareTrack(
+    _ track: SpotifyTrack
+) async {
+
+    do {
+
+        let results =
+            try await YouTubeAPI.shared.search(
+                title: track.name,
+                artist: track.artist,
+                maxResults: 1
+            )
+
+        guard let firstResult =
+            results.first
+        else {
+            print(
+                "Geen match gevonden:",
+                track.name
+            )
+
+            return
+        }
+
+        print(
+            "Match:",
+            track.name,
+            "→",
+            firstResult.title
+        )
+
+        // Hier bewaren we de automatisch
+        // gevonden eerste kandidaat.
+        //
+        // Niet automatisch downloaden;
+        // eerst tonen/controleren.
+    }
+
+    catch {
+
+        print(
+            "YouTube zoeken mislukt:",
+            track.name,
+            error
+        )
+    }
+}
+
     
 
     // MARK: - Spotify Library Track
