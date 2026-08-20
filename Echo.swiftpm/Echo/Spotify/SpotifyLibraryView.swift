@@ -302,17 +302,26 @@ struct SpotifyPlaylistRow: View {
             Menu {
 
                 Button {
-
-                    fetch.add(playlist)
-
-                } label: {
-
-                    Label(
-                        "Fetch to Echo",
-                        systemImage:
-                            "arrow.down.circle"
-                    )
-                }
+        Task {
+            do {
+                try await FetchManager.shared.preparePlaylist(
+                    playlist
+                )
+            } catch {
+                print(
+                    "Playlist fetch failed:",
+                    error
+                )
+            }
+        }
+    } label: {
+        Label(
+            "Fetch Playlist",
+            systemImage: "arrow.down.circle.fill"
+        )
+    }
+} label: {
+    Image(systemName: "ellipsis")
 
             } label: {
 
