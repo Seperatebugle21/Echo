@@ -206,9 +206,7 @@ struct SpotifyTrackRow: View {
 
                 Button {
 
-                    fetch.addSpotifyURL(
-                        track.spotifyURL.absoluteString
-                    )
+                    fetch.add(track)
 
                 } label: {
 
@@ -296,10 +294,7 @@ struct SpotifyPlaylistRow: View {
 
                 Button {
 
-                    fetch.addSpotifyURL(
-                        playlist.spotifyURL
-                            .absoluteString
-                    )
+                    fetch.add(playlist)
 
                 } label: {
 
