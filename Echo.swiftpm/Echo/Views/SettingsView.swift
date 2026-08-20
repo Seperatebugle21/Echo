@@ -93,6 +93,46 @@ struct SettingsView: View {
         }
     }
 
+                  NavigationLink {
+
+        ApifyAccountsView()
+
+    } label: {
+
+        HStack {
+
+            Label(
+
+                "API Accounts",
+
+                systemImage:
+
+                    "person.2"
+
+            )
+
+            Spacer()
+
+            if let account =
+
+                apifySettings.activeAccount {
+
+                Text(account.name)
+
+                    .foregroundStyle(
+
+                        .secondary
+
+                    )
+
+            }
+
+        }
+
+    }
+
+
+
     HStack {
 
         if showApifyToken {
