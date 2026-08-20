@@ -120,3 +120,180 @@ struct SpotifyLibraryView: View {
         isLoading = false
     }
 }
+
+
+struct SpotifyTrackRow: View {
+
+    let track: SpotifyTrack
+
+    @State private var fetch =
+        FetchManager.shared
+
+    var body: some View {
+
+        HStack(spacing: 12) {
+
+            AsyncImage(
+                url: track.artworkURL
+            ) { image in
+
+                image
+                    .resizable()
+                    .scaledToFill()
+
+            } placeholder: {
+
+                Image(systemName: "music.note")
+                    .foregroundStyle(.secondary)
+            }
+            .frame(
+                width: 52,
+                height: 52
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: 8
+                )
+            )
+
+
+            VStack(
+                alignment: .leading,
+                spacing: 3
+            ) {
+
+                Text(track.name)
+                    .font(.headline)
+                    .lineLimit(1)
+
+                Text(track.artist)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+
+            Spacer()
+
+
+            Menu {
+
+                Button {
+
+                    fetch.addSpotifyURL(
+                        track.spotifyURL.absoluteString
+                    )
+
+                } label: {
+
+                    Label(
+                        "Fetch to Echo",
+                        systemImage:
+                            "arrow.down.circle"
+                    )
+                }
+
+            } label: {
+
+                Image(
+                    systemName: "ellipsis"
+                )
+                .frame(
+                    width: 32,
+                    height: 32
+                )
+            }
+        }
+    }
+}
+
+
+struct SpotifyPlaylistRow: View {
+
+    let playlist: SpotifyPlaylist
+
+    @State private var fetch =
+        FetchManager.shared
+
+    var body: some View {
+
+        HStack(spacing: 12) {
+
+            AsyncImage(
+                url: playlist.artworkURL
+            ) { image in
+
+                image
+                    .resizable()
+                    .scaledToFill()
+
+            } placeholder: {
+
+                Image(
+                    systemName:
+                        "music.note.list"
+                )
+                .foregroundStyle(.secondary)
+            }
+            .frame(
+                width: 52,
+                height: 52
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: 8
+                )
+            )
+
+
+            VStack(
+                alignment: .leading,
+                spacing: 3
+            ) {
+
+                Text(playlist.name)
+                    .font(.headline)
+                    .lineLimit(1)
+
+                Text(
+                    "\(playlist.trackCount) songs"
+                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+
+
+            Spacer()
+
+
+            Menu {
+
+                Button {
+
+                    fetch.addSpotifyURL(
+                        playlist.spotifyURL
+                            .absoluteString
+                    )
+
+                } label: {
+
+                    Label(
+                        "Fetch to Echo",
+                        systemImage:
+                            "arrow.down.circle"
+                    )
+                }
+
+            } label: {
+
+                Image(
+                    systemName: "ellipsis"
+                )
+                .frame(
+                    width: 32,
+                    height: 32
+                )
+            }
+        }
+    }
+}
