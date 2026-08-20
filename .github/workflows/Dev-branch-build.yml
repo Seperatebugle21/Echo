@@ -67,8 +67,7 @@ jobs:
       # ============================================
 
       - name: Create IPA Package
-              env:
-          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+             
           
         run: |
 
