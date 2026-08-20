@@ -25,8 +25,8 @@ enum FetchStatus: Equatable {
         case .completed:
             return "Completed"
 
-        case .failed(let error):
-            return error
+        case .failed(let message):
+            return message
         }
     }
 }
@@ -42,21 +42,29 @@ final class FetchItem: Identifiable {
     var artist: String
     var album: String?
 
+    var youtubeURL: URL?
+ 
+    var permissionConfirmed = false
+ 
     var artworkURL: URL?
 
     var status: FetchStatus = .queued
 
-    init(
-        spotifyURL: URL,
-        title: String = "Spotify track",
-        artist: String = "Unknown artist",
-        album: String? = nil,
-        artworkURL: URL? = nil
-    ) {
-        self.spotifyURL = spotifyURL
-        self.title = title
-        self.artist = artist
-        self.album = album
-        self.artworkURL = artworkURL
-    }
+  init(
+    spotifyURL: URL,
+    title: String,
+    artist: String,
+    album: String? = nil,
+    artworkURL: URL? = nil,
+    youtubeURL: URL? = nil,
+    permissionConfirmed: Bool = false
+) {
+    self.spotifyURL = spotifyURL
+    self.title = title
+    self.artist = artist
+    self.album = album
+    self.artworkURL = artworkURL
+    self.youtubeURL = youtubeURL
+    self.permissionConfirmed = permissionConfirmed
+}
 }

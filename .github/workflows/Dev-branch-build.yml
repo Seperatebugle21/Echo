@@ -2,31 +2,56 @@ name: Build Echo IPA (Unsigned)
 
 on:
   workflow_dispatch:
+
   push:
-    branches: [ "Add-spotify-downloader" ]
+    branches:
+      - main
+      - master
+      - Add-spotify-downloader
+
 
 jobs:
   build:
+
     runs-on: macos-latest
+
     permissions:
       contents: write
 
+
     steps:
-      # 1. Haal de repository op
+
+      # ============================================
+      # 1. Repository ophalen
+      # ============================================
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Zoek de SwiftPM map en bouw via xcodebuild zonder code signing
+
+      # ============================================
+      # 2. SwiftPM project bouwen
+      # ============================================
+
       - name: Build SwiftPM
         run: |
-          # Zoek de map waar Package.swift in staat
+
+          # Zoek automatisch de map waar Package.swift staat
           PACKAGE_DIR=$(find . -name "Package.swift" -exec dirname {} \; | head -n 1)
+
           echo "Gevonden Package map: $PACKAGE_DIR"
+
+          if [ -z "$PACKAGE_DIR" ]; then
+            echo "Geen Package.swift gevonden."
+            exit 1
+          fi
+
           cd "$PACKAGE_DIR"
 
-          # Maak de relatieve paden aan vanaf de package map
+          # Build-map aanmaken
           mkdir -p ../build
 
+          # Archive bouwen zonder codesigning
           xcodebuild archive \
             -scheme Echo \
             -destination 'generic/platform=iOS' \
@@ -36,34 +61,201 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
-      # 3. Maak de IPA map & injecteer Info.plist instellingen
+
+      # ============================================
+      # 3. IPA maken + Info.plist aanpassen
+      # ============================================
+
       - name: Create IPA Package
               env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
           
         run: |
-          mkdir -p Payload
-          cp -r build/Echo.xcarchive/Products/Applications/*.app Payload/ 2>/dev/null || cp -r build/Echo.xcarchive/Products/Applications/*.swiftpm Payload/ 2>/dev/null || true
-          
-          # Zoek de gecompileerde app op
-          APP_PATH=$(find Payload -maxdepth 2 \( -name "*.app" -o -name "*.swiftpm" \))
-          echo "App gevonden op: $APP_PATH"
-          
-          # 1. Background Audio injecteren
-          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" "$APP_PATH/Info.plist" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" "$APP_PATH/Info.plist" 2>/dev/null || true
 
-          # 2. Bestanden-app toegang (iTunes File Sharing & Open In Place) injecteren
-          /usr/libexec/PlistBuddy -c "Add :UIFileSharingEnabled bool true" "$APP_PATH/Info.plist" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :UIFileSharingEnabled true" "$APP_PATH/Info.plist"
-          /usr/libexec/PlistBuddy -c "Add :LSSupportsOpeningDocumentsInPlace bool true" "$APP_PATH/Info.plist" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :LSSupportsOpeningDocumentsInPlace true" "$APP_PATH/Info.plist"
+          rm -rf Payload
+          mkdir -p Payload
+
+          # Zoek de gebouwde .app
+          BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
+            -maxdepth 1 \
+            -name "*.app" \
+            | head -n 1)
+
+          # Fallback voor eventueel .swiftpm output
+          if [ -z "$BUILT_APP" ]; then
+            BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
+              -maxdepth 1 \
+              -name "*.swiftpm" \
+              | head -n 1)
+          fi
+
+          echo "Gebouwde app gevonden op:"
+          echo "$BUILT_APP"
+
+          if [ -z "$BUILT_APP" ]; then
+            echo "Geen gebouwde Echo app gevonden."
+            exit 1
+          fi
+
+          # Kopieer app naar Payload
+          cp -R "$BUILT_APP" Payload/
+
+          # Zoek de gekopieerde app
+          APP_PATH=$(find Payload \
+            -maxdepth 1 \
+            \( -name "*.app" -o -name "*.swiftpm" \) \
+            | head -n 1)
+
+          echo "App in Payload:"
+          echo "$APP_PATH"
+
+          if [ -z "$APP_PATH" ]; then
+            echo "App niet gevonden in Payload."
+            exit 1
+          fi
+
+          INFO_PLIST="$APP_PATH/Info.plist"
+
+          if [ ! -f "$INFO_PLIST" ]; then
+            echo "Info.plist niet gevonden op:"
+            echo "$INFO_PLIST"
+            exit 1
+          fi
+
+
+          # ============================================
+          # 3A. Background Audio
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :UIBackgroundModes" \
+            "$INFO_PLIST" 2>/dev/null || true
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes array" \
+            "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes:0 string audio" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # 3B. Files-app toegang
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIFileSharingEnabled bool true" \
+            "$INFO_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy \
+            -c "Set :UIFileSharingEnabled true" \
+            "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :LSSupportsOpeningDocumentsInPlace bool true" \
+            "$INFO_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy \
+            -c "Set :LSSupportsOpeningDocumentsInPlace true" \
+            "$INFO_PLIST"
+
+
+        
+
+
+          # ============================================
+          # 3C. Spotify callback URL scheme
+          #
+          # echo-spotify-login://callback
+          # ============================================
+
+          # Verwijder bestaande CFBundleURLTypes
+          # zodat we zeker geen oude configuratie houden
+          /usr/libexec/PlistBuddy \
+            -c "Delete :CFBundleURLTypes" \
+            "$INFO_PLIST" 2>/dev/null || true
+
+          # Root array
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes array" \
+            "$INFO_PLIST"
+
+          # Eerste URL type
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0 dict" \
+            "$INFO_PLIST"
+
+          # Naam
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLName string echo.spotify.login" \
+            "$INFO_PLIST"
+
+          # Schemes array
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
+            "$INFO_PLIST"
+
+          # Echo Spotify URL scheme
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string echo-spotify-login" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # 3D. Debug / controle
+          # ============================================
+
+          echo ""
+          echo "================================"
+          echo " FINAL INFO.PLIST"
+          echo "================================"
+          echo ""
+
+          /usr/libexec/PlistBuddy \
+            -c "Print" \
+            "$INFO_PLIST"
+
+          echo ""
+          echo "================================"
+          echo " URL TYPES"
+          echo "================================"
+          echo ""
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :CFBundleURLTypes" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # 3E. IPA maken
+          # ============================================
+
+          rm -f Echo.ipa
 
           zip -r Echo.ipa Payload
 
-      # 4. Sla op als GitHub Artifact
+
+      # ============================================
+      # 4. IPA als GitHub Artifact opslaan
+      # ============================================
+
       - name: Save IPA to Artifacts
         uses: actions/upload-artifact@v4
+
         with:
           name: Echo-Release-IPA
           path: Echo.ipa
 
-      
+
+      # ============================================
+      # 5. GitHub Release maken
+      # ============================================
+
+      - name: Create Github Release
+        uses: ncipollo/release-action@v1
+
+        with:
+          artifacts: "Echo.ipa"
+
+          tag: "v3.0.${{ github.run_number }}"
+
+          token: ${{ secrets.GITHUB_TOKEN }}

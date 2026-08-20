@@ -22,6 +22,19 @@ struct EchoApp: App {
                 .environment(library)
                 .environment(audioPlayer)
                 .preferredColorScheme(colorScheme)
+                .onOpenURL { url in
+                             Task {
+                await SpotifyManager.shared.handleCallback(url: url)
+              }
+           }
+            .onReceive(
+    NotificationCenter.default.publisher(
+        for: .echoFetchCompleted
+    )
+) { _ in
+
+    library.syncDocumentsFolder()
+}
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {

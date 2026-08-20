@@ -15,7 +15,11 @@ struct SettingsView: View {
     @State private var showFirstDeleteAlert = false
     @State private var showFinalDeleteAlert = false
     @State private var showDeleteLyricsAlert = false
-    
+
+    @State private var apifySettings =
+    ApifySettings.shared
+
+    @State private var showApifyToken = false
     
     var body: some View {
         
@@ -71,6 +75,82 @@ struct SettingsView: View {
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                 }
+
+                Section("Apify") {
+
+    HStack {
+
+        if showApifyToken {
+
+            TextField(
+                "Apify API token",
+                text: $apifySettings.apiToken
+            )
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+
+        } else {
+
+            SecureField(
+                "Apify API token",
+                text: $apifySettings.apiToken
+            )
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+        }
+
+
+        Button {
+
+            showApifyToken.toggle()
+
+        } label: {
+
+            Image(
+                systemName:
+                    showApifyToken
+                    ? "eye.slash"
+                    : "eye"
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+
+    Button("Save API Token") {
+
+        apifySettings.save()
+    }
+
+
+    if apifySettings.isConfigured {
+
+        Label(
+            "Apify is configured",
+            systemImage:
+                "checkmark.circle.fill"
+        )
+        .foregroundStyle(.green)
+
+
+        Button(
+            "Remove API Token",
+            role: .destructive
+        ) {
+
+            apifySettings.removeToken()
+        }
+
+    } else {
+
+        Label(
+            "No Apify API token configured",
+            systemImage:
+                "exclamationmark.triangle"
+        )
+        .foregroundStyle(.secondary)
+    }
+}
 
                 
                 Section(LocalizedStringKey("settings_section_library")) {
@@ -147,7 +227,7 @@ struct SettingsView: View {
                         
                         Spacer()
                         
-                        Text("2.0")
+                        Text("3.0")
                             .foregroundStyle(.secondary)
                     }
                     
