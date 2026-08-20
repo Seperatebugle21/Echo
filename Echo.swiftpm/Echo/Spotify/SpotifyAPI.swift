@@ -216,7 +216,7 @@ final class SpotifyAPI {
 
         for item in response.items {
 
-            guard let track = item.track else {
+            guard let track = item.item else {
                 continue
             }
 
