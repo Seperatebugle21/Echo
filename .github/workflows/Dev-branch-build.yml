@@ -38,8 +38,7 @@ jobs:
 
       # 3. Maak de IPA map & injecteer Info.plist instellingen
       - name: Create IPA Package
-              env:
-          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+           
           
         run: |
           mkdir -p Payload
