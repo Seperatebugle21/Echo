@@ -10,6 +10,29 @@ struct FetchView: View {
         NavigationStack {
             List {
 
+                Section("Spotify") {
+
+    if SpotifyManager.shared.isConnected {
+
+        Label(
+            "Connected to Spotify",
+            systemImage: "checkmark.circle.fill"
+        )
+        .foregroundStyle(.green)
+
+    } else {
+
+        Button {
+            SpotifyManager.shared.connect()
+        } label: {
+            Label(
+                "Connect Spotify",
+                systemImage: "person.crop.circle.badge.plus"
+            )
+        }
+    }
+}
+
                 Section {
                     HStack {
                         Image(systemName: "link")
