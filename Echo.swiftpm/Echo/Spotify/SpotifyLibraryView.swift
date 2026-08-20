@@ -299,9 +299,8 @@ struct SpotifyPlaylistRow: View {
             Spacer()
 
 
-            Menu {
-
-                Button {
+           Menu {
+    Button {
         Task {
             do {
                 try await FetchManager.shared.preparePlaylist(
@@ -322,17 +321,7 @@ struct SpotifyPlaylistRow: View {
     }
 } label: {
     Image(systemName: "ellipsis")
-
-            } label: {
-
-                Image(
-                    systemName: "ellipsis"
-                )
-                .frame(
-                    width: 32,
-                    height: 32
-                )
-            }
+}
         }
     }
 }
