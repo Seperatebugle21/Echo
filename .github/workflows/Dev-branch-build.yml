@@ -67,8 +67,6 @@ jobs:
       # ============================================
 
       - name: Create IPA Package
-        env:
-          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
 
           rm -rf Payload
@@ -158,17 +156,7 @@ jobs:
             "$INFO_PLIST"
 
 
-          # ============================================
-          # Apify token
-          # ============================================
-
-          /usr/libexec/PlistBuddy \
-            -c "Delete :APIFY_API_TOKEN" \
-            "$INFO_PLIST" 2>/dev/null || true
-
-          /usr/libexec/PlistBuddy \
-            -c "Add :APIFY_API_TOKEN string $APIFY_API_TOKEN" \
-            "$INFO_PLIST"
+        
 
 
           # ============================================
