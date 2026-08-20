@@ -108,6 +108,69 @@ final class SpotifyAPI {
     }
 
 
+
+    func getPlaylistTracks(
+    playlistID: String
+) async throws -> [SpotifyTrack] {
+
+    var tracks: [SpotifyTrack] = []
+
+    var nextURL: URL? = URL(
+        string:
+            "https://api.spotify.com/v1/playlists/\(playlistID)/items?limit=50"
+    )
+
+    while let url = nextURL {
+
+        let data = try await request(url)
+
+        let response =
+            try JSONDecoder().decode(
+                SpotifyPlaylistItemsResponse.self,
+                from: data
+            )
+
+        for item in response.items {
+
+            guard let track = item.track else {
+                continue
+            }
+
+            let spotifyTrack = SpotifyTrack(
+                id: track.id,
+                name: track.name,
+
+                artist:
+                    track.artists
+                        .map(\.name)
+                        .joined(separator: ", "),
+
+                album: track.album.name,
+
+                durationMS:
+                    track.durationMS,
+
+                artworkURL:
+                    track.album.images.first?.url,
+
+                spotifyURL:
+                    track.externalURLs.spotify
+            )
+
+            tracks.append(spotifyTrack)
+        }
+
+        if let next = response.next {
+            nextURL = URL(string: next)
+        } else {
+            nextURL = nil
+        }
+    }
+
+    return tracks
+}
+    
+
     // MARK: - Request
 
     private func request(
