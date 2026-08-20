@@ -91,7 +91,7 @@ final class SpotifyAPI {
                     spotifyURL:
                         playlist.externalURLs.spotify,
                     trackCount:
-                        playlist.tracks.total
+                        playlist.trackCount
                 )
             }
 
