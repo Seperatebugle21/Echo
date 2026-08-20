@@ -37,6 +37,32 @@ final class FetchManager {
     }
 
 
+    func addAuthorizedMatch(
+    track: SpotifyTrack,
+    youtubeResult: YouTubeSearchResult
+) {
+
+    let item = FetchItem(
+        spotifyURL: track.spotifyURL,
+        title: track.name,
+        artist: track.artist,
+        album: track.album,
+        artworkURL: track.artworkURL,
+
+        youtubeURL:
+            youtubeResult.videoURL,
+
+        permissionConfirmed: true
+    )
+
+    items.append(item)
+
+    startIfNeeded()
+}
+
+
+    
+
     // MARK: - Spotify Library Track
 
     func add(_ track: SpotifyTrack) {
@@ -126,49 +152,83 @@ final class FetchManager {
     }
 
 
-    // MARK: - Processing
-
     private func process(
     _ item: FetchItem
 ) async {
 
     item.status = .preparing
 
+
     do {
 
-        let settings =
-            FetchSettings.shared
+        guard let youtubeURL =
+            item.youtubeURL
+        else {
 
-        let audio =
-            try await audioSource.resolveAudio(
-                for: item,
-                quality: settings.quality
+            throw ApifyDownloadError.invalidURL
+        }
+
+
+        // MARK: Apify
+
+        let apifyResult =
+            try await ApifyAudioSource.shared
+                .resolveMP3(
+                    youtubeURL: youtubeURL,
+                    permissionConfirmed:
+                        item.permissionConfirmed
+                )
+
+
+        item.status =
+            .downloading(0)
+
+
+        // MARK: Download generated MP3
+
+        let audioResult =
+            FetchAudioResult(
+                downloadURL:
+                    apifyResult.downloadURL,
+
+                suggestedFileName:
+                    makeMP3Name(
+                        item: item,
+                        apifyName:
+                            apifyResult.fileName
+                    )
             )
 
-        item.status = .downloading(0)
 
-        let fileURL =
+        _ =
             try await FetchDownloadEngine.shared
                 .download(
                     item: item,
-                    result: audio
+                    result: audioResult
                 ) { progress in
 
                     item.status =
                         .downloading(progress)
                 }
 
+
         item.status = .processing
 
-        // Het bestand staat al in Echo/Documents.
-        // Jouw MusicLibraryManager kan dit vervolgens
-        // gewoon als een normale song importeren.
-        MusicLibraryManager.shared
-            .importSong(
-                from: fileURL
-            )
+
+        /*
+         MP3 staat nu in Documents.
+
+         Echo's MusicLibraryManager scant die map.
+        */
+
+        NotificationCenter.default.post(
+            name: .echoFetchCompleted,
+            object: nil
+        )
+
 
         item.status = .completed
+
 
     } catch {
 
@@ -176,7 +236,36 @@ final class FetchManager {
             .failed(
                 error.localizedDescription
             )
+
+        print(
+            "Fetch failed:",
+            error
+        )
     }
+}
+
+    private func makeMP3Name(
+    item: FetchItem,
+    apifyName: String?
+) -> String {
+
+    let illegal =
+        CharacterSet(
+            charactersIn:
+                "/\\:*?\"<>|"
+        )
+
+    let base =
+        "\(item.title) - \(item.artist)"
+
+    let cleaned =
+        base
+            .components(
+                separatedBy: illegal
+            )
+            .joined(separator: "")
+
+    return "\(cleaned).mp3"
 }
 
 
@@ -196,4 +285,12 @@ final class FetchManager {
             return "Spotify Playlist"
         }
     }
+}
+
+extension Notification.Name {
+
+    static let echoFetchCompleted =
+        Notification.Name(
+            "EchoFetchCompleted"
+        )
 }
