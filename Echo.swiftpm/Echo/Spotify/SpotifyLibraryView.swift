@@ -13,17 +13,15 @@ struct SpotifyLibraryView: View {
         List {
 
             Section {
-
-    NavigationLink {
-        SpotifySearchView()
-    } label: {
-
-        Label(
-            "Search Spotify",
-            systemImage: "magnifyingglass"
-        )
-    }
-}
+                NavigationLink {
+                    SpotifySearchView()
+                } label: {
+                    Label(
+                        "Search Spotify",
+                        systemImage: "magnifyingglass"
+                    )
+                }
+            }
 
             // MARK: - Playlists
 
@@ -36,19 +34,17 @@ struct SpotifyLibraryView: View {
 
                 } else {
 
-                   ForEach(playlists) { playlist in
-
-    NavigationLink {
-        SpotifyPlaylistDetailView(
-            playlist: playlist
-        )
-    } label: {
-
-        SpotifyPlaylistRow(
-            playlist: playlist
-        )
-    }
-}
+                    ForEach(playlists) { playlist in
+                        NavigationLink {
+                            SpotifyPlaylistDetailView(
+                                playlist: playlist
+                            )
+                        } label: {
+                            SpotifyPlaylistRow(
+                                playlist: playlist
+                            )
+                        }
+                    }
                 }
             }
 
@@ -65,12 +61,15 @@ struct SpotifyLibraryView: View {
                 } else {
 
                     ForEach(likedSongs) { track in
-
-                        SpotifyTrackRow(
-                             track: track
-                        )
-
-                                    
+                        NavigationLink {
+                            SpotifyFetchButton(
+                                track: track
+                            )
+                        } label: {
+                            SpotifyTrackRow(
+                                track: track
+                            )
+                        }
                     }
                 }
             }
@@ -81,7 +80,6 @@ struct SpotifyLibraryView: View {
             if let errorMessage {
 
                 Section {
-
                     Text(errorMessage)
                         .foregroundStyle(.red)
                         .font(.caption)
@@ -90,18 +88,14 @@ struct SpotifyLibraryView: View {
         }
         .navigationTitle("Spotify")
         .overlay {
-
             if isLoading {
-
                 ProgressView("Loading Spotify…")
             }
         }
         .task {
-
             await loadLibrary()
         }
         .refreshable {
-
             await loadLibrary()
         }
     }
@@ -135,35 +129,35 @@ struct SpotifyLibraryView: View {
 
         } catch let DecodingError.keyNotFound(key, context) {
 
-    errorMessage =
-        "Spotify mist veld '\(key.stringValue)' — \(context.debugDescription)"
+            errorMessage =
+                "Spotify mist veld '\(key.stringValue)' — \(context.debugDescription)"
 
-    print("Spotify decoding keyNotFound:", key.stringValue)
-    print(context)
+            print("Spotify decoding keyNotFound:", key.stringValue)
+            print(context)
 
-} catch let DecodingError.typeMismatch(type, context) {
+        } catch let DecodingError.typeMismatch(type, context) {
 
-    errorMessage =
-        "Spotify typefout bij \(type): \(context.debugDescription)"
+            errorMessage =
+                "Spotify typefout bij \(type): \(context.debugDescription)"
 
-    print("Spotify typeMismatch:", type)
-    print(context)
+            print("Spotify typeMismatch:", type)
+            print(context)
 
-} catch let DecodingError.valueNotFound(type, context) {
+        } catch let DecodingError.valueNotFound(type, context) {
 
-    errorMessage =
-        "Spotify lege waarde bij \(type): \(context.debugDescription)"
+            errorMessage =
+                "Spotify lege waarde bij \(type): \(context.debugDescription)"
 
-    print("Spotify valueNotFound:", type)
-    print(context)
+            print("Spotify valueNotFound:", type)
+            print(context)
 
-} catch {
+        } catch {
 
-    errorMessage =
-        "Spotify error: \(error.localizedDescription)"
+            errorMessage =
+                "Spotify error: \(error.localizedDescription)"
 
-    print("Spotify error:", error)
-}
+            print("Spotify error:", error)
+        }
 
         isLoading = false
     }
@@ -218,25 +212,6 @@ struct SpotifyTrackRow: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-            }
-
-
-            Spacer()
-
-
-            NavigationLink {
-                   SpotifyFetchButton(
-                    track: track
-                    )
-                } label: {
-
-                Image(
-                    systemName: "ellipsis"
-                )
-                .frame(
-                    width: 32,
-                    height: 32
-                )
             }
         }
     }
@@ -296,36 +271,6 @@ struct SpotifyPlaylistRow: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             }
-
-
-            Spacer()
-
-
-            /*
-           Menu {
-   Button {
-    Task {
-        do {
-            try await FetchManager.shared
-                .preparePlaylist(playlist)
-        } catch {
-            print(
-                "Playlist fetch failed:",
-                error
-            )
-        }
-    }
-} label: {
-    Label(
-        "Fetch Playlist",
-        systemImage: "arrow.down.circle.fill"
-    )
-}
-} label: {
-    Image(systemName: "ellipsis")
-}
-            */
-            
         }
     }
 }
