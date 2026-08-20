@@ -25,6 +25,14 @@ struct ContentView: View {
                         systemImage: "music.note.house"
                     )
                 }
+
+            FetchView()
+               .tabItem {
+                   Label(
+                    "Fetch",
+                     systemImage: "arrow.down.circle"
+                  )
+               }
             
             SettingsView()
                 .tabItem {
