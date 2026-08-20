@@ -3,7 +3,7 @@ name: Build Echo IPA (Unsigned)
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "master", "Add-spotify-downloader" ]
+    branches: [ "Add-spotify-downloader" ]
 
 jobs:
   build:
