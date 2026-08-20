@@ -111,11 +111,37 @@ struct SpotifyLibraryView: View {
             likedSongs = loadedSongs
             playlists = loadedPlaylists
 
-        } catch {
+        } catch let DecodingError.keyNotFound(key, context) {
 
-            errorMessage =
-                "Spotify error: \(error.localizedDescription)"
-        }
+    errorMessage =
+        "Spotify mist veld '\(key.stringValue)' — \(context.debugDescription)"
+
+    print("Spotify decoding keyNotFound:", key.stringValue)
+    print(context)
+
+} catch let DecodingError.typeMismatch(type, context) {
+
+    errorMessage =
+        "Spotify typefout bij \(type): \(context.debugDescription)"
+
+    print("Spotify typeMismatch:", type)
+    print(context)
+
+} catch let DecodingError.valueNotFound(type, context) {
+
+    errorMessage =
+        "Spotify lege waarde bij \(type): \(context.debugDescription)"
+
+    print("Spotify valueNotFound:", type)
+    print(context)
+
+} catch {
+
+    errorMessage =
+        "Spotify error: \(error.localizedDescription)"
+
+    print("Spotify error:", error)
+}
 
         isLoading = false
     }
