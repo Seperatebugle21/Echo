@@ -8,7 +8,7 @@ final class YouTubeAPI {
     private init() {}
 
     // Zet hier je YouTube Data API v3 key.
-    private let apiKey = "YOUR_YOUTUBE_API_KEY"
+    private let apiKey = "AIzaSyC4N7M9pA9Um3PZzH6a2l_cMq_1JhQDP44"
 
     func search(
         title: String,
