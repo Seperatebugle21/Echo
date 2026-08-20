@@ -63,17 +63,19 @@ struct YouTubeResultView: View {
             }
         }
         .navigationTitle("Fetch")
-        .sheet(
+      .sheet(
     isPresented: $showAddedConfirmation
 ) {
 
-    AddedToQueueView(
-        track: track
-    )
+    NavigationStack {
+
+        AddedToQueueView(
+            track: track
+        )
+    }
     .presentationDetents([
         .height(260)
     ])
-    .presentationDragIndicator(.visible)
 }
     }
 }
