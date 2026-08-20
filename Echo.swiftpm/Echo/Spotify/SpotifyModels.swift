@@ -117,3 +117,12 @@ struct SpotifyAPIPlaylist: Decodable {
 struct SpotifyPlaylistItemsInfo: Decodable {
     let total: Int
 }
+
+struct SpotifyPlaylistItemsResponse: Decodable {
+    let items: [SpotifyPlaylistItem]
+    let next: String?
+}
+
+struct SpotifyPlaylistItem: Decodable {
+    let track: SpotifyAPITrack?
+}
