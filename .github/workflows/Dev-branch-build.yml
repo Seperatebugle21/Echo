@@ -67,6 +67,9 @@ jobs:
       # ============================================
 
       - name: Create IPA Package
+              env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          
         run: |
 
           rm -rf Payload
@@ -253,6 +256,6 @@ jobs:
         with:
           artifacts: "Echo.ipa"
 
-          tag: "v1.0.${{ github.run_number }}"
+          tag: "v3.0.${{ github.run_number }}"
 
           token: ${{ secrets.GITHUB_TOKEN }}
