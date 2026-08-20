@@ -222,13 +222,11 @@ struct SpotifyTrackRow: View {
             Spacer()
 
 
-            Menu {
-
-                  SpotifyFetchButton(
-                     track: track
-                )
-
-            } label: {
+            NavigationLink {
+                   SpotifyFetchButton(
+                    track: track
+                    )
+                } label: {
 
                 Image(
                     systemName: "ellipsis"
