@@ -60,6 +60,90 @@ final class SpotifyAPI {
         return result
     }
 
+    func searchTracks(
+    query: String,
+    offset: Int = 0
+) async throws -> [SpotifyTrack] {
+
+    let token =
+        try await spotify.validAccessToken()
+
+    var components = URLComponents(
+        string: "https://api.spotify.com/v1/search"
+    )!
+
+    components.queryItems = [
+        URLQueryItem(
+            name: "q",
+            value: query
+        ),
+        URLQueryItem(
+            name: "type",
+            value: "track"
+        ),
+        URLQueryItem(
+            name: "limit",
+            value: "10"
+        ),
+        URLQueryItem(
+            name: "offset",
+            value: "\(offset)"
+        )
+    ]
+
+    guard let url = components.url else {
+        throw SpotifyAPIError.invalidResponse
+    }
+
+    var request = URLRequest(url: url)
+
+    request.setValue(
+        "Bearer \(token)",
+        forHTTPHeaderField: "Authorization"
+    )
+
+    request.setValue(
+        "application/json",
+        forHTTPHeaderField: "Accept"
+    )
+
+    let (data, response) =
+        try await URLSession.shared.data(
+            for: request
+        )
+
+    guard
+        let http = response as? HTTPURLResponse,
+        200..<300 ~= http.statusCode
+    else {
+        throw SpotifyAPIError.invalidResponse
+    }
+
+    let decoded =
+        try JSONDecoder().decode(
+            SpotifySearchResponse.self,
+            from: data
+        )
+
+    return decoded.tracks.items.map { track in
+
+        SpotifyTrack(
+            id: track.id,
+            name: track.name,
+            artist:
+                track.artists
+                    .map(\.name)
+                    .joined(separator: ", "),
+            album: track.album.name,
+            durationMS: track.durationMS,
+            artworkURL:
+                track.album.images.first?.url,
+            spotifyURL:
+                track.externalURLs.spotify
+        )
+    }
+}
+
 
     // MARK: - Playlists
 
