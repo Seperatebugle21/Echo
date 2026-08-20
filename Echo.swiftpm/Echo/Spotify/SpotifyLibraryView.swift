@@ -36,12 +36,19 @@ struct SpotifyLibraryView: View {
 
                 } else {
 
-                    ForEach(playlists) { playlist in
+                   ForEach(playlists) { playlist in
 
-                        SpotifyPlaylistRow(
-                            playlist: playlist
-                        )
-                    }
+    NavigationLink {
+        SpotifyPlaylistDetailView(
+            playlist: playlist
+        )
+    } label: {
+
+        SpotifyPlaylistRow(
+            playlist: playlist
+        )
+    }
+}
                 }
             }
 
@@ -312,6 +319,7 @@ struct SpotifyPlaylistRow: View {
             Spacer()
 
 
+            /*
            Menu {
    Button {
     Task {
@@ -334,6 +342,8 @@ struct SpotifyPlaylistRow: View {
 } label: {
     Image(systemName: "ellipsis")
 }
+            */
+            
         }
     }
 }
