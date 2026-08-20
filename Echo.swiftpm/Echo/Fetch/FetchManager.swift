@@ -186,31 +186,66 @@ final class FetchManager {
 
         // MARK: Download generated MP3
 
-        let audioResult =
-            FetchAudioResult(
-                downloadURL:
-                    apifyResult.downloadURL,
+       let downloadResult =
+    FetchAudioResult(
+        downloadURL:
+            apifyResult.downloadURL,
 
-                suggestedFileName:
-                    makeMP3Name(
-                        item: item,
-                        apifyName:
-                            apifyResult.fileName
-                    )
+        suggestedFileName:
+            makeTemporaryVideoName(
+                item: item
             )
+    )
 
 
-        _ =
-            try await FetchDownloadEngine.shared
-                .download(
-                    item: item,
-                    result: audioResult
-                ) { progress in
+item.status =
+    .downloading(0)
 
-                    item.status =
-                        .downloading(progress)
-                }
 
+let downloadedMP4 =
+    try await FetchDownloadEngine.shared.download(
+        item: item,
+        result: downloadResult
+    ) { progress in
+
+        item.status =
+            .downloading(progress)
+    }
+
+
+// MARK: - MP4 -> M4A
+
+item.status = .processing
+
+
+let finalAudioURL =
+    try await FetchMediaProcessor.shared
+        .convertToM4A(
+            sourceURL: downloadedMP4,
+            item: item
+        )
+
+
+print(
+    "Final Echo audio:",
+    finalAudioURL
+)
+
+
+// Tijdelijke MP4 verwijderen
+
+try? FileManager.default.removeItem(
+    at: downloadedMP4
+)
+
+
+// Library opnieuw synchroniseren
+
+MusicLibraryManager.shared
+    .syncDocumentsFolder()
+
+
+item.status = .completed
 
         item.status = .processing
 
@@ -244,16 +279,13 @@ final class FetchManager {
     }
 }
 
-    private func makeMP3Name(
-    item: FetchItem,
-    apifyName: String?
+    private func makeTemporaryVideoName(
+    item: FetchItem
 ) -> String {
 
-    let illegal =
-        CharacterSet(
-            charactersIn:
-                "/\\:*?\"<>|"
-        )
+    let illegal = CharacterSet(
+        charactersIn: "/\\:*?\"<>|"
+    )
 
     let base =
         "\(item.title) - \(item.artist)"
@@ -265,7 +297,7 @@ final class FetchManager {
             )
             .joined(separator: "")
 
-    return "\(cleaned).mp3"
+    return "\(cleaned)-source.mp4"
 }
 
 
