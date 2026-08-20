@@ -60,27 +60,7 @@ final class FetchManager {
     }
 
 
-    // MARK: - Authorized Spotify Track
-
-    func addAuthorizedSpotifyTrack(
-        _ track: SpotifyTrack
-    ) {
-
-        let item = FetchItem(
-            spotifyURL: track.spotifyURL,
-            title: track.name,
-            artist: track.artist,
-            album: track.album,
-            artworkURL: track.artworkURL,
-            youtubeURL: nil,
-            permissionConfirmed: true
-        )
-
-        items.append(item)
-
-        startIfNeeded()
-    }
-
+   
 
     // MARK: - Playlist
     //
@@ -286,7 +266,7 @@ final class FetchManager {
         }
     }
 
-    func addAuthorizedSpotifyTrack(
+  func addAuthorizedSpotifyTrack(
     _ track: SpotifyTrack
 ) {
 
