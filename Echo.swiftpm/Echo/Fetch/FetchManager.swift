@@ -61,7 +61,7 @@ final class FetchManager {
 }
 
 
-    func preparePlaylist(
+   func preparePlaylist(
     _ playlist: SpotifyPlaylist
 ) async throws {
 
@@ -73,7 +73,54 @@ final class FetchManager {
 
     for track in tracks {
 
-        await prepareTrack(track)
+        await preparePlaylistTrack(track)
+    }
+
+       startIfNeeded()
+}
+
+    private func preparePlaylistTrack(
+    _ track: SpotifyTrack
+) async {
+
+    do {
+
+        let results =
+            try await YouTubeAPI.shared.search(
+                title: track.name,
+                artist: track.artist,
+                maxResults: 1
+            )
+
+        guard let firstResult = results.first else {
+
+            print(
+                "Geen YouTube-resultaat voor:",
+                track.name
+            )
+
+            return
+        }
+
+        let item = FetchItem(
+            spotifyURL: track.spotifyURL,
+            title: track.name,
+            artist: track.artist,
+            album: track.album,
+            artworkURL: track.artworkURL,
+            youtubeURL: firstResult.videoURL,
+            permissionConfirmed: true
+        )
+
+        items.append(item)
+
+    } catch {
+
+        print(
+            "Playlist track voorbereiden mislukt:",
+            track.name,
+            error
+        )
     }
 }
 
