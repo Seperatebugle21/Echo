@@ -25,8 +25,8 @@ enum FetchStatus: Equatable {
         case .completed:
             return "Completed"
 
-        case .failed(let error):
-            return error
+        case .failed(let message):
+            return message
         }
     }
 }
@@ -48,8 +48,8 @@ final class FetchItem: Identifiable {
 
     init(
         spotifyURL: URL,
-        title: String = "Spotify track",
-        artist: String = "Unknown artist",
+        title: String,
+        artist: String,
         album: String? = nil,
         artworkURL: URL? = nil
     ) {
