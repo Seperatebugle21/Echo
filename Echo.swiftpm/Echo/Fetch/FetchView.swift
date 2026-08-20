@@ -6,13 +6,94 @@ struct FetchView: View {
     @State private var settings = FetchSettings.shared
     @State private var spotify = SpotifyManager.shared
 
+    @State private var apifyUsage: ApifyUsageInfo?
+    @State private var apifyUsageLoading = false
+    @State private var apifyUsageError: String?
+
     @State private var spotifyLink = ""
 
     var body: some View {
 
         NavigationStack {
 
+            
+
             List {
+
+                Section("Apify Usage") {
+
+    if let usage = apifyUsage {
+
+        VStack(alignment: .leading, spacing: 10) {
+
+            HStack {
+
+                Text("Usage")
+
+                Spacer()
+
+                Text(
+                    String(
+                        format: "$%.2f / $%.2f",
+                        usage.usedUSD,
+                        usage.maxUSD
+                    )
+                )
+                .foregroundStyle(.secondary)
+            }
+
+            ProgressView(
+                value: usage.usageFraction
+            )
+
+            LabeledContent(
+                "Compute",
+                value: String(
+                    format: "%.3f CU",
+                    usage.actorComputeUnits
+                )
+            )
+
+            LabeledContent(
+                "Data transfer",
+                value: String(
+                    format: "%.3f GB",
+                    usage.externalTransferGB
+                )
+            )
+
+            LabeledContent(
+                "RAM in use",
+                value: String(
+                    format: "%.2f GB",
+                    usage.actorMemoryGB
+                )
+            )
+        }
+        .padding(.vertical, 4)
+
+    } else if apifyUsageLoading {
+
+        HStack {
+            ProgressView()
+
+            Text("Loading usage…")
+                .foregroundStyle(.secondary)
+        }
+
+    } else if let apifyUsageError {
+
+        Text(apifyUsageError)
+            .foregroundStyle(.red)
+            .font(.caption)
+
+        Button("Retry") {
+            Task {
+                await loadApifyUsage()
+            }
+        }
+    }
+}
 
                 // MARK: - Spotify
 
@@ -186,9 +267,34 @@ struct FetchView: View {
                 }
             }
             .navigationTitle("Fetch")
+            .task {
+               await loadApifyUsage()
+            }
         }
     }
 
+
+
+    private func loadApifyUsage() async {
+
+    apifyUsageLoading = true
+    apifyUsageError = nil
+
+    do {
+
+        apifyUsage =
+            try await ApifyUsageAPI.shared
+                .getUsage()
+
+    } catch {
+
+        apifyUsageError =
+            error.localizedDescription
+    }
+
+    apifyUsageLoading = false
+}
+    
 
     // MARK: - Add Spotify Link
 
