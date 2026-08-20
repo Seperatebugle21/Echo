@@ -17,7 +17,22 @@ final class SpotifyManager {
     private var codeVerifier: String?
     private var state: String?
 
-    private init() {}
+    private let accessTokenKey =
+    "echo.spotify.accessToken"
+
+    private let refreshTokenKey =
+    "echo.spotify.refreshToken"
+
+    private let expirationKey =
+    "echo.spotify.expiration"
+
+
+    private(set) var refreshToken: String?
+    private var tokenExpiration: Date?
+    
+    private init() {
+        restoreSession()
+    }
 
     func connect() {
 
@@ -138,6 +153,37 @@ final class SpotifyManager {
             )
         }
     }
+
+    private func restoreSession() {
+
+    accessToken =
+        KeychainHelper.read(
+            accessTokenKey
+        )
+
+    refreshToken =
+        KeychainHelper.read(
+            refreshTokenKey
+        )
+
+    if let expirationString =
+        KeychainHelper.read(
+            expirationKey
+        ),
+       let timestamp =
+        Double(expirationString) {
+
+        tokenExpiration =
+            Date(
+                timeIntervalSince1970:
+                    timestamp
+            )
+    }
+
+    if refreshToken != nil {
+        isConnected = true
+    }
+}
 
     private func exchangeCode(
         _ code: String,
