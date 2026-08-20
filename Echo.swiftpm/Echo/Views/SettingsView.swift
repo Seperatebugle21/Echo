@@ -76,12 +76,11 @@ struct SettingsView: View {
                         .disableAutocorrection(true)
                 }
 
-              Section("Apify") {
+       Section("Apify") {
 
     Picker(
         "Method",
-        selection:
-            $apifySettings.downloadMethod
+        selection: $apifySettings.downloadMethod
     ) {
 
         ForEach(
@@ -93,7 +92,8 @@ struct SettingsView: View {
         }
     }
 
-                  NavigationLink {
+
+    NavigationLink {
 
         ApifyAccountsView()
 
@@ -102,109 +102,25 @@ struct SettingsView: View {
         HStack {
 
             Label(
-
                 "API Accounts",
-
-                systemImage:
-
-                    "person.2"
-
+                systemImage: "person.2"
             )
 
             Spacer()
 
             if let account =
-
-                apifySettings.activeAccount {
+                apifySettings.activeAccount
+            {
 
                 Text(account.name)
+                    .foregroundStyle(.secondary)
 
-                    .foregroundStyle(
+            } else {
 
-                        .secondary
-
-                    )
-
+                Text("None")
+                    .foregroundStyle(.secondary)
             }
-
         }
-
-    }
-
-
-
-    HStack {
-
-        if showApifyToken {
-
-            TextField(
-                "Apify API token",
-                text:
-                    $apifySettings.apiToken
-            )
-            .textInputAutocapitalization(
-                .never
-            )
-            .autocorrectionDisabled()
-
-        } else {
-
-            SecureField(
-                "Apify API token",
-                text:
-                    $apifySettings.apiToken
-            )
-            .textInputAutocapitalization(
-                .never
-            )
-            .autocorrectionDisabled()
-        }
-
-        Button {
-
-            showApifyToken.toggle()
-
-        } label: {
-
-            Image(
-                systemName:
-                    showApifyToken
-                    ? "eye.slash"
-                    : "eye"
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    Button("Save API Token") {
-    apifySettings.saveToken()
-}
-
-    if apifySettings.isConfigured {
-
-        Label(
-            "Apify is configured",
-            systemImage:
-                "checkmark.circle.fill"
-        )
-        .foregroundStyle(.green)
-
-    } else {
-
-        Label(
-            "No Apify API token configured",
-            systemImage:
-                "exclamationmark.triangle"
-        )
-        .foregroundStyle(.secondary)
-    }
-
-    Button(
-        "Remove API Token",
-        role: .destructive
-    ) {
-
-        apifySettings.removeToken()
     }
 }
 
