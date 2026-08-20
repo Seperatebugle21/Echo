@@ -42,6 +42,10 @@ final class FetchItem: Identifiable {
     var artist: String
     var album: String?
 
+    var youtubeURL: URL?
+ 
+    var permissionConfirmed = false
+ 
     var artworkURL: URL?
 
     var status: FetchStatus = .queued
