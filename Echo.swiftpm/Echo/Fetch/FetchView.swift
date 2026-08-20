@@ -136,9 +136,29 @@ struct FetchView: View {
                 }
 
 
+                Section {
+
+    NavigationLink {
+        SpotifySearchView()
+    } label: {
+
+        Label(
+            "Search Spotify",
+            systemImage: "magnifyingglass"
+        )
+    }
+} header: {
+                    Text("Search songs")
+
+                } footer: {
+                    Text(
+                        "You can find every song that's in spotify here."
+                    )
+                }
+
                 // MARK: - Add Link
 
-                Section {
+      /*          Section {
                     HStack(spacing: 12) {
 
                         Image(systemName: "link")
@@ -186,7 +206,7 @@ struct FetchView: View {
                         "Paste a Spotify track, album or playlist link."
                     )
                 }
-
+*/
 
                 // MARK: - Downloads
 
