@@ -10,6 +10,9 @@ final class FetchManager {
 
     private var running = false
 
+    private var audioSource: FetchAudioSource =
+    DirectMP3AudioSource.shared
+
     private init() {}
 
     // MARK: - Raw Spotify URL
@@ -126,65 +129,55 @@ final class FetchManager {
     // MARK: - Processing
 
     private func process(
-        _ item: FetchItem
-    ) async {
+    _ item: FetchItem
+) async {
 
-        item.status = .preparing
+    item.status = .preparing
 
-        /*
-         Hier komt straks de echte Fetch-engine:
+    do {
 
-         Spotify URL
-              ↓
-         metadata
-              ↓
-         match candidate
-              ↓
-         authorized audio source
-              ↓
-         audio processing
-              ↓
-         MP3
-              ↓
-         Echo library
-        */
+        let settings =
+            FetchSettings.shared
 
-        do {
-
-            try await Task.sleep(
-                for: .milliseconds(400)
+        let audio =
+            try await audioSource.resolveAudio(
+                for: item,
+                quality: settings.quality
             )
 
-            item.status = .downloading(0)
+        item.status = .downloading(0)
 
-            for step in 1...20 {
+        let fileURL =
+            try await FetchDownloadEngine.shared
+                .download(
+                    item: item,
+                    result: audio
+                ) { progress in
 
-                try await Task.sleep(
-                    for: .milliseconds(80)
-                )
+                    item.status =
+                        .downloading(progress)
+                }
 
-                item.status =
-                    .downloading(
-                        Double(step) / 20
-                    )
-            }
+        item.status = .processing
 
-            item.status = .processing
-
-            try await Task.sleep(
-                for: .milliseconds(300)
+        // Het bestand staat al in Echo/Documents.
+        // Jouw MusicLibraryManager kan dit vervolgens
+        // gewoon als een normale song importeren.
+        MusicLibraryManager.shared
+            .importSong(
+                from: fileURL
             )
 
-            item.status = .completed
+        item.status = .completed
 
-        } catch {
+    } catch {
 
-            item.status =
-                .failed(
-                    error.localizedDescription
-                )
-        }
+        item.status =
+            .failed(
+                error.localizedDescription
+            )
     }
+}
 
 
     private func defaultTitle(
