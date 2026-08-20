@@ -224,27 +224,9 @@ struct SpotifyTrackRow: View {
 
             Menu {
 
-                Button {
-
-                    fetch.add(track)
-
-                } label: {
-
-                    Label(
-                        "Fetch to Echo",
-                        systemImage:
-                            "arrow.down.circle"
-                    )
-                }
-
-                NavigationLink {
-    YouTubeSearchView(track: track)
-} label: {
-    Label(
-        "Find on YouTube",
-        systemImage: "magnifyingglass"
-    )
-}
+                  SpotifyFetchButton(
+                     track: track
+                )
 
             } label: {
 
