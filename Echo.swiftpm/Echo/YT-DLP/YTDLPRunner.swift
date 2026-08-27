@@ -1,25 +1,31 @@
 import Foundation
+import PythonKit
+import PythonSupport
 import YoutubeDL
 
-// MARK: - Fixed serial executor
-//
-// PythonKit / CPython must stay on one serial execution context.
-// A normal Task or actor is not sufficient on iOS.
+final class YTDLPSerialExecutor:
+    SerialExecutor,
+    @unchecked Sendable {
 
-final class YTDLPSerialExecutor: SerialExecutor, @unchecked Sendable {
+    static let shared =
+        YTDLPSerialExecutor()
 
-    static let shared = YTDLPSerialExecutor()
-
-    private let queue = DispatchQueue(
-        label: "com.echomusic.ytdlp.python",
-        qos: .utility
-    )
+    private let queue =
+        DispatchQueue(
+            label:
+                "com.echomusic.python",
+            qos:
+                .userInitiated
+        )
 
     private init() {}
 
-    func enqueue(_ job: UnownedJob) {
+    func enqueue(
+        _ job: UnownedJob
+    ) {
 
-        let executor = asUnownedSerialExecutor()
+        let executor =
+            asUnownedSerialExecutor()
 
         queue.async {
 
@@ -29,7 +35,8 @@ final class YTDLPSerialExecutor: SerialExecutor, @unchecked Sendable {
         }
     }
 
-    func asUnownedSerialExecutor() -> UnownedSerialExecutor {
+    func asUnownedSerialExecutor()
+        -> UnownedSerialExecutor {
 
         UnownedSerialExecutor(
             ordinary: self
@@ -38,108 +45,243 @@ final class YTDLPSerialExecutor: SerialExecutor, @unchecked Sendable {
 }
 
 
-// MARK: - Python actor
 
 actor YTDLPRunner {
 
-    static let shared = YTDLPRunner()
+    static let shared =
+        YTDLPRunner()
 
-    // Force every actor operation onto our fixed serial executor.
-    nonisolated var unownedExecutor: UnownedSerialExecutor {
+    nonisolated
+    var unownedExecutor:
+        UnownedSerialExecutor {
 
-        YTDLPSerialExecutor.shared
+        YTDLPSerialExecutor
+            .shared
             .asUnownedSerialExecutor()
     }
 
 
-    // Important:
-    // create YoutubeDL ON the Python actor,
-    // not from SwiftUI / MainActor.
+    private var pythonStarted =
+        false
 
-    private var engine: YoutubeDL?
+
+    private var ytdlp:
+        YoutubeDL?
 
 
     private init() {}
 
 
-    // MARK: Result
+    // MARK: - Python only test
 
-    struct Result: Sendable {
+    func startPython()
+        throws
+        -> String {
 
-        let title: String
+        UserDefaults.standard.set(
+            "PYTHON 1 - initialize()",
+            forKey:
+                "ytdlpLastStage"
+        )
 
-        let uploader: String?
 
-        let duration: Double?
+        PythonSupport.initialize()
 
-        let formatCount: Int
 
-        let audioFormatCount: Int
+        UserDefaults.standard.set(
+            "PYTHON 2 - initialize OK",
+            forKey:
+                "ytdlpLastStage"
+        )
 
-        let formatID: String?
 
-        let fileExtension: String?
+        let sys =
+            Python.import("sys")
 
-        let audioCodec: String?
 
-        let bitrate: Double?
+        UserDefaults.standard.set(
+            "PYTHON 3 - sys imported",
+            forKey:
+                "ytdlpLastStage"
+        )
 
-        let directURL: String?
+
+        let version =
+            String(
+                sys.version
+            )
+
+
+        UserDefaults.standard.set(
+            "PYTHON 4 - volledig OK",
+            forKey:
+                "ytdlpLastStage"
+        )
+
+
+        pythonStarted =
+            true
+
+
+        return version
     }
 
 
-    // MARK: Prepare
+    // MARK: - yt-dlp object
 
-    func prepare() async throws {
+    func prepareYTDLP() {
 
-        if engine != nil {
-            return
+        if ytdlp == nil {
+
+            ytdlp =
+                YoutubeDL()
         }
-
-        // The Python files can already have been downloaded
-        // by test 1. Creating the object happens here,
-        // on the Python executor.
-
-        engine = YoutubeDL()
     }
 
 
-    // MARK: Extract
+    // MARK: - Extract
 
     func extract(
-    url: URL
-) async throws -> Result {
+        url: URL
+    ) async throws
+        -> YTDLPResult {
 
-    if engine == nil {
-        try await prepare()
+        if !pythonStarted {
+
+            _ =
+                try startPython()
+        }
+
+
+        if ytdlp == nil {
+
+            prepareYTDLP()
+        }
+
+
+        guard let ytdlp else {
+
+            throw RunnerError
+                .engineUnavailable
+        }
+
+
+        UserDefaults.standard.set(
+            "YTDLP 1 - extractInfo starten",
+            forKey:
+                "ytdlpLastStage"
+        )
+
+
+        let (
+            formats,
+            info
+        ) =
+            try await ytdlp
+                .extractInfo(
+                    url: url
+                )
+
+
+        UserDefaults.standard.set(
+            "YTDLP 2 - extractInfo OK",
+            forKey:
+                "ytdlpLastStage"
+        )
+
+
+        let audioFormats =
+            formats.filter {
+
+                $0.isAudioOnly
+            }
+
+
+        let bestAudio =
+            audioFormats.max {
+
+                ($0.abr ?? 0)
+                <
+                ($1.abr ?? 0)
+            }
+
+
+        return YTDLPResult(
+
+            title:
+                info.title,
+
+            uploader:
+                info.uploader,
+
+            duration:
+                info.duration,
+
+            formatsCount:
+                formats.count,
+
+            audioFormatsCount:
+                audioFormats.count,
+
+            formatID:
+                bestAudio?.format_id,
+
+            ext:
+                bestAudio?.ext,
+
+            codec:
+                bestAudio?.acodec,
+
+            bitrate:
+                bestAudio?.abr,
+
+            directURL:
+                bestAudio?.url
+        )
     }
 
-    guard engine != nil else {
-        throw RunnerError.engineUnavailable
-    }
 
-    throw RunnerError.extractInfoDisabled
-}
+    enum RunnerError:
+        LocalizedError {
 
+        case engineUnavailable
 
-  enum RunnerError: LocalizedError {
+        var errorDescription:
+            String? {
 
-    case engineUnavailable
-    case extractInfoDisabled
+            switch self {
 
-    var errorDescription: String? {
+            case .engineUnavailable:
 
-        switch self {
-
-        case .engineUnavailable:
-            return "YoutubeDL engine kon niet worden aangemaakt."
-
-        case .extractInfoDisabled:
-            return """
-            Python werkt, maar extractInfo() is tijdelijk uitgeschakeld \
-            omdat deze functie op iOS een native crash veroorzaakt.
-            """
+                return
+                    "YoutubeDL engine unavailable"
+            }
         }
     }
 }
+
+
+
+struct YTDLPResult:
+    Sendable {
+
+    let title: String
+
+    let uploader: String?
+
+    let duration: Double?
+
+    let formatsCount: Int
+
+    let audioFormatsCount: Int
+
+    let formatID: String?
+
+    let ext: String?
+
+    let codec: String?
+
+    let bitrate: Double?
+
+    let directURL: String?
 }
