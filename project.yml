@@ -4,6 +4,7 @@ options:
   bundleIdPrefix: com.echomusic
   deploymentTarget:
     iOS: "26.0"
+  createIntermediateGroups: true
 
 settings:
   base:
@@ -21,18 +22,35 @@ targets:
     deploymentTarget: "26.0"
 
     sources:
+      # Neem ALLE Swift/source bestanden van de Playgrounds app mee
       - path: Echo.swiftpm
         excludes:
           - Package.swift
           - ".swiftpm/**"
+          - ".build/**"
+
+    resources:
+      # Assets expliciet meenemen
+      - path: Echo.swiftpm/Echo/Assets.xcassets
+        optional: true
 
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app
         PRODUCT_NAME: Echo
+
         GENERATE_INFOPLIST_FILE: YES
+
+        SWIFT_VERSION: "5.0"
+
         TARGETED_DEVICE_FAMILY: "1,2"
-        SWIFT_EMIT_LOC_STRINGS: YES
+
+        # Geen preview/debug dylib entrypoint gebruiken.
+        ENABLE_PREVIEWS: NO
+        DEBUG_INFORMATION_FORMAT: dwarf
+
+        # Echo gebruikt SwiftUI
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
 
         INFOPLIST_KEY_UIMediaLibraryUsageDescription: "Used to add music from local files or Apple Music to Echo"
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Used to connect to external devices like headphones or speakers"
