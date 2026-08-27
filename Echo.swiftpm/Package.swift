@@ -34,34 +34,42 @@ let package = Package(
             supportedInterfaceOrientations: [
                 .portrait,
                 .portraitUpsideDown(
-                    .when(deviceFamilies: [.pad])
+                    .when(
+                        deviceFamilies: [.pad]
+                    )
                 )
             ],
 
             capabilities: [
+
                 .mediaLibrary(
-                    purposeString: "Used to add music from local files or Apple Music to Echo"
+                    purposeString:
+                        "Used to add music from local files or Apple Music to Echo"
                 ),
 
                 .bluetoothAlways(
-                    purposeString: "Used to connect to external devices like headphones or speakers"
+                    purposeString:
+                        "Used to connect to external devices like headphones or speakers"
                 )
             ]
         )
     ],
 
-  dependencies: [
-    .package(
-        url: "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
-        branch: "echo"
-    )
-],
+    dependencies: [
+
+        .package(
+            url: "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
+            branch: "main"
+        )
+    ],
 
     targets: [
+
         .executableTarget(
             name: "AppModule",
 
             dependencies: [
+
                 .product(
                     name: "YoutubeDL",
                     package: "YoutubeDL-iOS"
@@ -71,6 +79,7 @@ let package = Package(
             path: ".",
 
             swiftSettings: [
+
                 .enableUpcomingFeature(
                     "BareSlashRegexLiterals"
                 )
