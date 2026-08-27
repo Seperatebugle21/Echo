@@ -1,0 +1,45 @@
+name: Echo
+
+options:
+  bundleIdPrefix: com.echomusic
+  deploymentTarget:
+    iOS: "26.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+
+packages:
+  YoutubeDLIOS:
+    url: https://github.com/kewlbear/YoutubeDL-iOS.git
+    from: 0.0.2
+
+targets:
+  Echo:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+
+    sources:
+      - path: Echo.swiftpm
+        excludes:
+          - Package.swift
+          - ".swiftpm/**"
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app
+        PRODUCT_NAME: Echo
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_EMIT_LOC_STRINGS: YES
+
+        INFOPLIST_KEY_UIMediaLibraryUsageDescription: "Used to add music from local files or Apple Music to Echo"
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Used to connect to external devices like headphones or speakers"
+
+    dependencies:
+      - package: YoutubeDLIOS
+        product: YoutubeDL
+
+    scheme:
+      gatherCoverageData: false
