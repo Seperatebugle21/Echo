@@ -33,43 +33,73 @@ let package = Package(
 
             supportedInterfaceOrientations: [
                 .portrait,
-                .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+                .portraitUpsideDown(
+                    .when(deviceFamilies: [.pad])
+                )
             ],
 
             capabilities: [
+
                 .mediaLibrary(
-                    purposeString: "Used to add music from local files or Apple Music to Echo"
+                    purposeString:
+                        "Used to add music from local files or Apple Music to Echo"
                 ),
 
                 .bluetoothAlways(
-                    purposeString: "Used to connect to external devices like headphones or speakers"
+                    purposeString:
+                        "Used to connect to external devices like headphones or speakers"
                 )
             ]
         )
     ],
 
     dependencies: [
+
         .package(
             url: "https://github.com/kewlbear/YoutubeDL-iOS.git",
             from: "0.0.2"
+        ),
+
+        .package(
+            url: "https://github.com/pvieito/PythonKit.git",
+            from: "0.3.1"
+        ),
+
+        .package(
+            url: "https://github.com/kewlbear/Python-iOS.git",
+            from: "0.1.1-b"
         )
     ],
 
     targets: [
+
         .executableTarget(
             name: "AppModule",
 
             dependencies: [
+
                 .product(
                     name: "YoutubeDL",
                     package: "YoutubeDL-iOS"
+                ),
+
+                .product(
+                    name: "PythonKit",
+                    package: "PythonKit"
+                ),
+
+                .product(
+                    name: "PythonSupport",
+                    package: "Python-iOS"
                 )
             ],
 
             path: ".",
 
             swiftSettings: [
-                .enableUpcomingFeature("BareSlashRegexLiterals")
+                .enableUpcomingFeature(
+                    "BareSlashRegexLiterals"
+                )
             ]
         )
     ]
