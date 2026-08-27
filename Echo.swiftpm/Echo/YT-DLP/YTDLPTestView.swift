@@ -324,189 +324,150 @@ struct YTDLPTestView: View {
     // importeert yt_dlp
     // en analyseert de YouTube URL.
 
-    private func testExtractInfo() {
+   private func testExtractInfo() {
 
-        let string =
-            youtubeURL
-                .trimmingCharacters(
-                    in:
-                        .whitespacesAndNewlines
+    let string =
+        youtubeURL
+            .trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
+
+    guard let url =
+        URL(string: string) else {
+
+        status = "Ongeldige URL"
+        return
+    }
+
+    isRunning = true
+    success = false
+
+    status =
+        "Python + yt-dlp starten..."
+
+    details = ""
+
+    lastStage =
+        "TEST 2 gestart"
+
+    Task {
+
+        do {
+
+            await MainActor.run {
+
+                lastStage =
+                    "TEST 2 - Python thread gestart"
+
+                status =
+                    "YouTube wordt geanalyseerd..."
+            }
+
+            let result =
+                try await YTDLPRunner.shared
+                    .extractInfo(
+                        from: url
+                    )
+
+            var text = ""
+
+            text +=
+                "Titel: \(result.title)\n"
+
+            if !result.uploader.isEmpty {
+
+                text +=
+                    "Uploader: \(result.uploader)\n"
+            }
+
+            if let duration =
+                result.duration {
+
+                let total =
+                    Int(duration)
+
+                text += String(
+                    format:
+                        "Duur: %d:%02d\n",
+                    total / 60,
+                    total % 60
                 )
+            }
 
+            text +=
+                "Formats: \(result.formatsCount)\n"
 
-        guard let url =
-            URL(string: string) else {
+            if let formatID =
+                result.formatID {
 
-            status =
-                "Ongeldige URL"
+                text +=
+                    "\nBESTE AUDIO\n"
 
-            details = ""
+                text +=
+                    "Format: \(formatID)\n"
+            }
 
-            return
-        }
+            if let ext =
+                result.ext {
 
+                text +=
+                    "Extensie: \(ext)\n"
+            }
 
-        isRunning = true
-        success = false
+            if let codec =
+                result.audioCodec {
 
-        status =
-            "Python + yt-dlp starten..."
+                text +=
+                    "Codec: \(codec)\n"
+            }
 
-        details = ""
+            if let bitrate =
+                result.bitrate {
 
-        lastStage =
-            "TEST 2 gestart - Python initialiseren"
+                text +=
+                    "Bitrate: \(Int(bitrate)) kbps\n"
+            }
 
+            if let directURL =
+                result.directURL {
 
-        Task {
+                text +=
+                    "\nDirect URL:\n\(directURL)"
+            }
 
-            do {
+            await MainActor.run {
 
-                await MainActor.run {
+                lastStage =
+                    "TEST 2 OK"
 
-                    lastStage =
-                        "TEST 2 - extractInfo wordt uitgevoerd"
+                status =
+                    "yt-dlp werkt."
 
-                    status =
-                        "YouTube wordt geanalyseerd..."
-                }
+                details = text
 
+                success = true
+                isRunning = false
+            }
 
-                let result =
-                    try await ytdlp
-                        .extractInfo(
-                            url: url
-                        )
+        } catch {
 
+            await MainActor.run {
 
-                let formats =
-                    result.0
+                lastStage =
+                    "TEST 2 ERROR"
 
-                let info =
-                    result.1
+                status =
+                    "yt-dlp fout"
 
+                details =
+                    String(
+                        describing: error
+                    )
 
-                let audioFormats =
-                    formats.filter {
-
-                        $0.isAudioOnly
-                    }
-
-
-                let bestAudio =
-                    audioFormats.max {
-
-                        ($0.abr ?? 0)
-                        <
-                        ($1.abr ?? 0)
-                    }
-
-
-                var resultText = ""
-
-                resultText +=
-                    "Titel: \(info.title)\n"
-
-
-                if let uploader =
-                    info.uploader {
-
-                    resultText +=
-                        "Uploader: \(uploader)\n"
-                }
-
-
-                if let duration =
-                    info.duration {
-
-                    let seconds =
-                        Int(duration)
-
-                    let minutes =
-                        seconds / 60
-
-                    let remaining =
-                        seconds % 60
-
-                    resultText +=
-                        String(
-                            format:
-                                "Duur: %d:%02d\n",
-                            minutes,
-                            remaining
-                        )
-                }
-
-
-                resultText +=
-                    "Formats gevonden: \(formats.count)\n"
-
-                resultText +=
-                    "Audio-only formats: \(audioFormats.count)\n"
-
-
-                if let bestAudio {
-
-                    resultText +=
-                        "\nBESTE AUDIO\n"
-
-                    resultText +=
-                        "Format ID: \(bestAudio.format_id)\n"
-
-                    resultText +=
-                        "Extensie: \(bestAudio.ext)\n"
-
-                    resultText +=
-                        "Codec: \(bestAudio.acodec ?? "onbekend")\n"
-
-                    if let abr =
-                        bestAudio.abr {
-
-                        resultText +=
-                            "Bitrate: \(Int(abr)) kbps\n"
-                    }
-
-                    resultText +=
-                        "\nDirecte URL:\n\(bestAudio.url)"
-                }
-
-
-                await MainActor.run {
-
-                    lastStage =
-                        "TEST 2 OK"
-
-                    status =
-                        "yt-dlp werkt op deze iPhone."
-
-                    details =
-                        resultText
-
-                    success = true
-                    isRunning = false
-                }
-
-
-            } catch {
-
-                await MainActor.run {
-
-                    lastStage =
-                        "TEST 2 ERROR"
-
-                    status =
-                        "yt-dlp fout"
-
-                    details =
-                        String(
-                            describing:
-                                error
-                        )
-
-                    success = false
-                    isRunning = false
-                }
+                success = false
+                isRunning = false
             }
         }
     }
+}
 }
