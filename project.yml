@@ -2,13 +2,7 @@ name: Echo
 
 options:
   bundleIdPrefix: com.echomusic
-  deploymentTarget:
-    iOS: "26.0"
   createIntermediateGroups: true
-
-settings:
-  base:
-    SWIFT_VERSION: "5.0"
 
 packages:
   YoutubeDLIOS:
@@ -16,46 +10,43 @@ packages:
     from: 0.0.2
 
 targets:
+
   Echo:
     type: application
     platform: iOS
-    deploymentTarget: "26.0"
+
+    # Tijdelijk 18.0 zodat we eerst met de aanwezige SDK
+    # kunnen bewijzen dat de Xcode build werkt.
+    deploymentTarget: "18.0"
 
     sources:
-      # Neem ALLE Swift/source bestanden van de Playgrounds app mee
-      - path: Echo.swiftpm
-        excludes:
-          - Package.swift
-          - ".swiftpm/**"
-          - ".build/**"
-
-    resources:
-      # Assets expliciet meenemen
-      - path: Echo.swiftpm/Echo/Assets.xcassets
-        optional: true
+      - path: Echo.swiftpm/Echo
+        type: group
 
     settings:
       base:
+
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app
         PRODUCT_NAME: Echo
 
-        GENERATE_INFOPLIST_FILE: YES
-
         SWIFT_VERSION: "5.0"
+
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
 
         TARGETED_DEVICE_FAMILY: "1,2"
 
-        # Geen preview/debug dylib entrypoint gebruiken.
+        GENERATE_INFOPLIST_FILE: YES
+
         ENABLE_PREVIEWS: NO
+
         DEBUG_INFORMATION_FORMAT: dwarf
 
-        # Echo gebruikt SwiftUI
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-
         INFOPLIST_KEY_UIMediaLibraryUsageDescription: "Used to add music from local files or Apple Music to Echo"
+
         INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "Used to connect to external devices like headphones or speakers"
 
     dependencies:
+
       - package: YoutubeDLIOS
         product: YoutubeDL
 
