@@ -12,30 +12,139 @@ jobs:
     runs-on: macos-15
 
     steps:
+
+      # ---------------------------------------------------------
+      # 1. Checkout
+      # ---------------------------------------------------------
+
       - name: Checkout
         uses: actions/checkout@v4
 
+
+      # ---------------------------------------------------------
+      # 2. Select Xcode
+      # ---------------------------------------------------------
+
       - name: Select Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.4.app/Contents/Developer
+          sudo xcode-select \
+            -s /Applications/Xcode_16.4.app/Contents/Developer
+
+          echo "=== Xcode ==="
           xcodebuild -version
+
+          echo ""
+          echo "=== Swift ==="
           swift --version
+
+
+      # ---------------------------------------------------------
+      # 3. Show repository structure
+      # ---------------------------------------------------------
+
+      - name: Show repository structure
+        run: |
+          echo "=== Repository root ==="
+          ls -la
+
+          echo ""
+          echo "=== Echo.swiftpm ==="
+          find Echo.swiftpm \
+            -maxdepth 4 \
+            -type f \
+            | sort
+
+
+      # ---------------------------------------------------------
+      # 4. Make sure project.yml exists
+      # ---------------------------------------------------------
+
+      - name: Check project.yml
+        run: |
+          if [ ! -f "project.yml" ]; then
+            echo "ERROR: project.yml not found"
+            exit 1
+          fi
+
+          echo "project.yml found"
+
+          echo ""
+          cat project.yml
+
+
+      # ---------------------------------------------------------
+      # 5. Install XcodeGen
+      # ---------------------------------------------------------
 
       - name: Install XcodeGen
         run: |
           brew install xcodegen
+
+          echo ""
+          echo "=== XcodeGen version ==="
           xcodegen --version
+
+
+      # ---------------------------------------------------------
+      # 6. Generate Xcode project
+      # ---------------------------------------------------------
 
       - name: Generate Echo Xcode project
         run: |
-          xcodegen generate --spec project.yml
+          xcodegen generate \
+            --spec project.yml
 
-      - name: Show generated project
-        run: |
+          echo ""
+          echo "=== Generated files ==="
           ls -la
+
+
+      # ---------------------------------------------------------
+      # 7. Verify that the @main entry point exists
+      # ---------------------------------------------------------
+
+      - name: Check Echo app entry point
+        run: |
+          echo "=== Searching for @main ==="
+
+          grep -R -n "@main" Echo.swiftpm \
+            --include="*.swift" || true
+
+          echo ""
+          echo "=== All Swift files ==="
+
+          find Echo.swiftpm \
+            -name "*.swift" \
+            -not -path "*/.swiftpm/*" \
+            -not -path "*/.build/*" \
+            -not -name "Package.swift" \
+            | sort
+
+          echo ""
+          echo "=== Swift files inside generated Xcode project ==="
+
+          grep -n "\.swift" \
+            Echo.xcodeproj/project.pbxproj \
+            | head -200 \
+            || true
+
+
+      # ---------------------------------------------------------
+      # 8. Show generated Xcode project
+      # ---------------------------------------------------------
+
+      - name: Inspect Xcode project
+        run: |
+          echo "=== Xcode project ==="
+
           xcodebuild \
             -project Echo.xcodeproj \
             -list
+
+
+      # ---------------------------------------------------------
+      # 9. Resolve YoutubeDL-iOS and its dependencies
+      # ---------------------------------------------------------
 
       - name: Resolve YoutubeDL-iOS
         run: |
@@ -43,6 +152,45 @@ jobs:
             -resolvePackageDependencies \
             -project Echo.xcodeproj \
             -scheme Echo
+
+
+      # ---------------------------------------------------------
+      # 10. Show resolved packages
+      # ---------------------------------------------------------
+
+      - name: Show resolved packages
+        run: |
+          echo "=== Package.resolved ==="
+
+          find . \
+            -name "Package.resolved" \
+            -print \
+            -exec cat {} \; \
+            || true
+
+
+      # ---------------------------------------------------------
+      # 11. Clean previous build
+      # ---------------------------------------------------------
+
+      - name: Clean Echo
+        run: |
+          xcodebuild \
+            -project Echo.xcodeproj \
+            -scheme Echo \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            ENABLE_PREVIEWS=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            clean
+
+
+      # ---------------------------------------------------------
+      # 12. Build Echo
+      # ---------------------------------------------------------
 
       - name: Build Echo
         run: |
@@ -54,5 +202,27 @@ jobs:
             -configuration Debug \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=YES \
+            ENABLE_PREVIEWS=NO \
             CODE_SIGNING_ALLOWED=NO \
             build
+
+
+      # ---------------------------------------------------------
+      # 13. Find resulting Echo.app
+      # ---------------------------------------------------------
+
+      - name: Find Echo build
+        if: success()
+        run: |
+          echo "=== Looking for Echo.app ==="
+
+          find ~/Library/Developer/Xcode/DerivedData \
+            -type d \
+            -name "Echo.app" \
+            -print \
+            || true
+
+          echo ""
+          echo "BUILD SUCCESSFUL"
