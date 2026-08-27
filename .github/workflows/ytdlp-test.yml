@@ -1,180 +1,228 @@
 name: Echo YT-DLP Build Test
 
 on:
+
   push:
     branches:
       - YT-DLP
 
   workflow_dispatch:
 
+
 jobs:
+
   build:
+
     runs-on: macos-15
 
     steps:
 
-      # ---------------------------------------------------------
-      # 1. Checkout
-      # ---------------------------------------------------------
+
+      # =========================================================
+      # CHECKOUT
+      # =========================================================
 
       - name: Checkout
         uses: actions/checkout@v4
 
 
-      # ---------------------------------------------------------
-      # 2. Select Xcode
-      # ---------------------------------------------------------
+      # =========================================================
+      # XCODE
+      # =========================================================
 
       - name: Select Xcode
         run: |
+
           sudo xcode-select \
             -s /Applications/Xcode_16.4.app/Contents/Developer
 
-          echo "=== Xcode ==="
+          echo "===== XCODE ====="
+
           xcodebuild -version
 
           echo ""
-          echo "=== Swift ==="
+
+          echo "===== SWIFT ====="
+
           swift --version
 
 
-      # ---------------------------------------------------------
-      # 3. Show repository structure
-      # ---------------------------------------------------------
+      # =========================================================
+      # SHOW SOURCE STRUCTURE
+      # =========================================================
 
-      - name: Show repository structure
+      - name: Show Echo source structure
         run: |
-          echo "=== Repository root ==="
-          ls -la
 
-          echo ""
-          echo "=== Echo.swiftpm ==="
+          echo "===== ECHO.SWIFTPM ====="
+
           find Echo.swiftpm \
-            -maxdepth 4 \
+            -maxdepth 5 \
             -type f \
             | sort
 
+          echo ""
 
-      # ---------------------------------------------------------
-      # 4. Make sure project.yml exists
-      # ---------------------------------------------------------
+          echo "===== SWIFT FILES ====="
 
-      - name: Check project.yml
+          find Echo.swiftpm \
+            -type f \
+            -name "*.swift" \
+            | sort
+
+
+      # =========================================================
+      # FIND APP ENTRYPOINT
+      # =========================================================
+
+      - name: Find @main
         run: |
-          if [ ! -f "project.yml" ]; then
-            echo "ERROR: project.yml not found"
-            exit 1
-          fi
 
-          echo "project.yml found"
+          echo "===== SEARCHING FOR @main ====="
+
+          grep \
+            -R \
+            -n \
+            "@main" \
+            Echo.swiftpm \
+            --include="*.swift" \
+            || true
 
           echo ""
-          cat project.yml
+
+          echo "===== SEARCHING FOR App PROTOCOL ====="
+
+          grep \
+            -R \
+            -n \
+            ": App" \
+            Echo.swiftpm \
+            --include="*.swift" \
+            || true
 
 
-      # ---------------------------------------------------------
-      # 5. Install XcodeGen
-      # ---------------------------------------------------------
+      # =========================================================
+      # INSTALL XCODEGEN
+      # =========================================================
 
       - name: Install XcodeGen
         run: |
+
           brew install xcodegen
 
           echo ""
-          echo "=== XcodeGen version ==="
+
           xcodegen --version
 
 
-      # ---------------------------------------------------------
-      # 6. Generate Xcode project
-      # ---------------------------------------------------------
+      # =========================================================
+      # GENERATE PROJECT
+      # =========================================================
 
-      - name: Generate Echo Xcode project
+      - name: Generate Xcode project
         run: |
+
           xcodegen generate \
             --spec project.yml
 
           echo ""
-          echo "=== Generated files ==="
-          ls -la
+
+          echo "===== GENERATED PROJECT ====="
+
+          ls -la Echo.xcodeproj
 
 
-      # ---------------------------------------------------------
-      # 7. Verify that the @main entry point exists
-      # ---------------------------------------------------------
+      # =========================================================
+      # CHECK SOURCES IN XCODE PROJECT
+      # =========================================================
 
-      - name: Check Echo app entry point
+      - name: Check generated sources
         run: |
-          echo "=== Searching for @main ==="
 
-          grep -R -n "@main" Echo.swiftpm \
-            --include="*.swift" || true
+          echo "===== SWIFT FILES IN PBXPROJ ====="
 
-          echo ""
-          echo "=== All Swift files ==="
-
-          find Echo.swiftpm \
-            -name "*.swift" \
-            -not -path "*/.swiftpm/*" \
-            -not -path "*/.build/*" \
-            -not -name "Package.swift" \
-            | sort
-
-          echo ""
-          echo "=== Swift files inside generated Xcode project ==="
-
-          grep -n "\.swift" \
+          grep \
+            -n \
+            "\.swift" \
             Echo.xcodeproj/project.pbxproj \
-            | head -200 \
+            | head -300 \
             || true
 
+          echo ""
 
-      # ---------------------------------------------------------
-      # 8. Show generated Xcode project
-      # ---------------------------------------------------------
+          echo "===== SEARCH FOR @MAIN FILE ====="
 
-      - name: Inspect Xcode project
+          MAIN_FILE=$(grep \
+            -R \
+            -l \
+            "@main" \
+            Echo.swiftpm \
+            --include="*.swift" \
+            | head -1)
+
+          echo "Main file: $MAIN_FILE"
+
+          if [ -z "$MAIN_FILE" ]; then
+
+            echo "ERROR: No @main Swift file found."
+
+            exit 1
+
+          fi
+
+          BASENAME=$(basename "$MAIN_FILE")
+
+          echo "Looking for $BASENAME in Xcode project..."
+
+          if ! grep \
+            -q \
+            "$BASENAME" \
+            Echo.xcodeproj/project.pbxproj; then
+
+            echo "ERROR:"
+            echo "$BASENAME is NOT included in Echo.xcodeproj"
+
+            exit 1
+
+          fi
+
+          echo ""
+          echo "SUCCESS:"
+          echo "$BASENAME is included in Echo.xcodeproj"
+
+
+      # =========================================================
+      # PROJECT INFO
+      # =========================================================
+
+      - name: Show Xcode project
         run: |
-          echo "=== Xcode project ==="
 
           xcodebuild \
             -project Echo.xcodeproj \
             -list
 
 
-      # ---------------------------------------------------------
-      # 9. Resolve YoutubeDL-iOS and its dependencies
-      # ---------------------------------------------------------
+      # =========================================================
+      # RESOLVE YOUTUBEDL
+      # =========================================================
 
       - name: Resolve YoutubeDL-iOS
         run: |
+
           xcodebuild \
             -resolvePackageDependencies \
             -project Echo.xcodeproj \
             -scheme Echo
 
 
-      # ---------------------------------------------------------
-      # 10. Show resolved packages
-      # ---------------------------------------------------------
+      # =========================================================
+      # CLEAN
+      # =========================================================
 
-      - name: Show resolved packages
+      - name: Clean
         run: |
-          echo "=== Package.resolved ==="
 
-          find . \
-            -name "Package.resolved" \
-            -print \
-            -exec cat {} \; \
-            || true
-
-
-      # ---------------------------------------------------------
-      # 11. Clean previous build
-      # ---------------------------------------------------------
-
-      - name: Clean Echo
-        run: |
           xcodebuild \
             -project Echo.xcodeproj \
             -scheme Echo \
@@ -188,12 +236,13 @@ jobs:
             clean
 
 
-      # ---------------------------------------------------------
-      # 12. Build Echo
-      # ---------------------------------------------------------
+      # =========================================================
+      # BUILD
+      # =========================================================
 
       - name: Build Echo
         run: |
+
           set -o pipefail
 
           xcodebuild \
@@ -209,20 +258,22 @@ jobs:
             build
 
 
-      # ---------------------------------------------------------
-      # 13. Find resulting Echo.app
-      # ---------------------------------------------------------
+      # =========================================================
+      # RESULT
+      # =========================================================
 
-      - name: Find Echo build
+      - name: Show build result
         if: success()
         run: |
-          echo "=== Looking for Echo.app ==="
 
-          find ~/Library/Developer/Xcode/DerivedData \
-            -type d \
-            -name "Echo.app" \
-            -print \
-            || true
+          echo "====================================="
+          echo "       ECHO BUILD SUCCESSFUL"
+          echo "====================================="
 
           echo ""
-          echo "BUILD SUCCESSFUL"
+
+          find \
+            ~/Library/Developer/Xcode/DerivedData \
+            -type d \
+            -name "Echo.app" \
+            -print
