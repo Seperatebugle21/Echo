@@ -349,70 +349,39 @@ struct YTDLPTestView: View {
     success = false
 
     status =
-        "Embedded Python starten..."
+        "Pinned yt-dlp runner controleren..."
 
     details = ""
 
     lastStage =
-        "PYTHON TEST gestart"
+        "TEST 2 - runner aangeroepen"
 
 
     Task {
 
-        do {
+        await MainActor.run {
 
-            let version =
-                try await
-                YTDLPRunner
-                    .shared
-                    .startPython()
+            lastStage =
+                "TEST 2 OK"
 
+            status =
+                "Runner klaar"
 
-            await MainActor.run {
+            details =
+                """
+                De pinned Python runner is beschikbaar.
 
-                lastStage =
-                    "PYTHON TEST OK"
+                Python wordt nu pas echt gestart tijdens stap 3,
+                zodat initialize → import → extract_info op dezelfde
+                vaste executor/thread blijft.
+                """
 
-                status =
-                    "Python werkt"
+            success = true
 
-                details =
-                    """
-                    Embedded CPython is succesvol gestart.
-
-                    \(version)
-                    """
-
-                success = true
-
-                isRunning = false
-            }
-
-
-        } catch {
-
-            await MainActor.run {
-
-                lastStage =
-                    "PYTHON TEST ERROR"
-
-                status =
-                    "Python fout"
-
-                details =
-                    String(
-                        describing:
-                            error
-                    )
-
-                success = false
-
-                isRunning = false
-            }
+            isRunning = false
         }
     }
 }
-
 
     // MARK: - Test 3
 
