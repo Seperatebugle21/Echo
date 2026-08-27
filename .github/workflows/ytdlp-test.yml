@@ -3,7 +3,7 @@ name: Test YoutubeDL-iOS
 on:
   push:
     branches:
-      - Extra-spotify-downloader
+      - YT-DLP
   workflow_dispatch:
 
 jobs:
