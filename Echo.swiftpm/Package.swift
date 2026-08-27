@@ -50,12 +50,12 @@ let package = Package(
         )
     ],
 
-    dependencies: [
-        .package(
-            url: "https://github.com/kewlbear/YoutubeDL-iOS.git",
-            from: "0.0.2"
-        )
-    ],
+  dependencies: [
+    .package(
+        url: "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
+        branch: "echo"
+    )
+],
 
     targets: [
         .executableTarget(
