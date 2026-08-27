@@ -10,9 +10,11 @@ import AppleProductTypes
 let package = Package(
     name: "Echo",
     defaultLocalization: "en",
+
     platforms: [
         .iOS("26.0")
     ],
+
     products: [
         .iOSApplication(
             name: "Echo",
@@ -20,27 +22,52 @@ let package = Package(
             bundleIdentifier: "com.echomusic.app",
             displayVersion: "1.0",
             bundleVersion: "1",
+
             appIcon: .asset("AppIcon"),
             accentColor: .presetColor(.red),
+
             supportedDeviceFamilies: [
                 .pad,
                 .phone
             ],
+
             supportedInterfaceOrientations: [
                 .portrait,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
+
             capabilities: [
-                
-                .mediaLibrary(purposeString: "Used to add music from local files or Apple Music to Echo"),
-                .bluetoothAlways(purposeString: "Used to connect to external devices like headphones or speakers")
+                .mediaLibrary(
+                    purposeString: "Used to add music from local files or Apple Music to Echo"
+                ),
+
+                .bluetoothAlways(
+                    purposeString: "Used to connect to external devices like headphones or speakers"
+                )
             ]
         )
     ],
+
+    dependencies: [
+        .package(
+            url: "https://github.com/kewlbear/YoutubeDL-iOS.git",
+            from: "0.0.2"
+        )
+    ],
+
     targets: [
         .executableTarget(
             name: "AppModule",
+
+            dependencies: [
+                .product(
+                    name: "YoutubeDL",
+                    package: "YoutubeDL-iOS"
+                )
+            ],
+
             path: ".",
+
             swiftSettings: [
                 .enableUpcomingFeature("BareSlashRegexLiterals")
             ]
