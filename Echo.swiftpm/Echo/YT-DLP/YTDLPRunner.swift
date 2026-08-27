@@ -1,7 +1,8 @@
 import Foundation
-import PythonKit
-import PythonSupport
 import YoutubeDL
+
+
+// MARK: - Python Serial Executor
 
 final class YTDLPSerialExecutor:
     SerialExecutor,
@@ -13,9 +14,9 @@ final class YTDLPSerialExecutor:
     private let queue =
         DispatchQueue(
             label:
-                "com.echomusic.python",
+                "com.echomusic.ytdlp.python",
             qos:
-                .userInitiated
+                .utility
         )
 
     private init() {}
@@ -34,22 +35,19 @@ final class YTDLPSerialExecutor:
             )
         }
     }
-
-    func asUnownedSerialExecutor()
-        -> UnownedSerialExecutor {
-
-        UnownedSerialExecutor(
-            ordinary: self
-        )
-    }
 }
 
 
+// MARK: - YTDLP Runner
 
 actor YTDLPRunner {
 
     static let shared =
         YTDLPRunner()
+
+
+    // Everything inside this actor runs through
+    // our serial Python executor.
 
     nonisolated
     var unownedExecutor:
@@ -61,134 +59,42 @@ actor YTDLPRunner {
     }
 
 
-    private var pythonStarted =
-        false
-
-
-    private var ytdlp:
-        YoutubeDL?
+    private let engine =
+        YoutubeDL()
 
 
     private init() {}
 
 
-    // MARK: - Python only test
-
-    func startPython()
-        throws
-        -> String {
-
-        UserDefaults.standard.set(
-            "PYTHON 1 - initialize()",
-            forKey:
-                "ytdlpLastStage"
-        )
-
-
-        PythonSupport.initialize()
-
-
-        UserDefaults.standard.set(
-            "PYTHON 2 - initialize OK",
-            forKey:
-                "ytdlpLastStage"
-        )
-
-
-        let sys =
-            Python.import("sys")
-
-
-        UserDefaults.standard.set(
-            "PYTHON 3 - sys imported",
-            forKey:
-                "ytdlpLastStage"
-        )
-
-
-        let version =
-            String(
-                sys.version
-            )
-
-
-        UserDefaults.standard.set(
-            "PYTHON 4 - volledig OK",
-            forKey:
-                "ytdlpLastStage"
-        )
-
-
-        pythonStarted =
-            true
-
-
-        return version
-    }
-
-
-    // MARK: - yt-dlp object
-
-    func prepareYTDLP() {
-
-        if ytdlp == nil {
-
-            ytdlp =
-                YoutubeDL()
-        }
-    }
-
-
-    // MARK: - Extract
+    // MARK: - Extraction
 
     func extract(
         url: URL
-    ) async throws
-        -> YTDLPResult {
+    ) throws -> Result {
 
-        if !pythonStarted {
-
-            _ =
-                try startPython()
-        }
-
-
-        if ytdlp == nil {
-
-            prepareYTDLP()
-        }
-
-
-        guard let ytdlp else {
-
-            throw RunnerError
-                .engineUnavailable
-        }
-
-
-        UserDefaults.standard.set(
-            "YTDLP 1 - extractInfo starten",
-            forKey:
-                "ytdlpLastStage"
-        )
-
+        // IMPORTANT:
+        //
+        // This is synchronous.
+        //
+        // There is NO await between:
+        //
+        // Python initialize
+        // -> import yt_dlp
+        // -> YoutubeDL()
+        // -> extract_info()
+        // -> decode result
 
         let (
             formats,
             info
         ) =
-            try await ytdlp
-                .extractInfo(
+            try engine
+                .extractInfoPinned(
                     url: url
                 )
 
 
-        UserDefaults.standard.set(
-            "YTDLP 2 - extractInfo OK",
-            forKey:
-                "ytdlpLastStage"
-        )
-
+        // Audio-only formats
 
         let audioFormats =
             formats.filter {
@@ -196,6 +102,8 @@ actor YTDLPRunner {
                 $0.isAudioOnly
             }
 
+
+        // Highest audio bitrate
 
         let bestAudio =
             audioFormats.max {
@@ -206,13 +114,14 @@ actor YTDLPRunner {
             }
 
 
-        return YTDLPResult(
+        return Result(
 
             title:
                 info.title,
 
             uploader:
-                info.uploader,
+                info.uploader
+                ?? info.channel,
 
             duration:
                 info.duration,
@@ -226,62 +135,48 @@ actor YTDLPRunner {
             formatID:
                 bestAudio?.format_id,
 
-            ext:
+            fileExtension:
                 bestAudio?.ext,
 
-            codec:
+            audioCodec:
                 bestAudio?.acodec,
 
             bitrate:
                 bestAudio?.abr,
 
             directURL:
-                bestAudio?.url
+                bestAudio?.url,
+
+            ytdlpVersion:
+                engine.version
         )
     }
 
 
-    enum RunnerError:
-        LocalizedError {
+    // MARK: - Result
 
-        case engineUnavailable
+    struct Result: Sendable {
 
-        var errorDescription:
-            String? {
+        let title: String
 
-            switch self {
+        let uploader: String?
 
-            case .engineUnavailable:
+        let duration: Double?
 
-                return
-                    "YoutubeDL engine unavailable"
-            }
-        }
+        let formatsCount: Int
+
+        let audioFormatsCount: Int
+
+        let formatID: String?
+
+        let fileExtension: String?
+
+        let audioCodec: String?
+
+        let bitrate: Double?
+
+        let directURL: String?
+
+        let ytdlpVersion: String?
     }
-}
-
-
-
-struct YTDLPResult:
-    Sendable {
-
-    let title: String
-
-    let uploader: String?
-
-    let duration: Double?
-
-    let formatsCount: Int
-
-    let audioFormatsCount: Int
-
-    let formatID: String?
-
-    let ext: String?
-
-    let codec: String?
-
-    let bitrate: Double?
-
-    let directURL: String?
 }
