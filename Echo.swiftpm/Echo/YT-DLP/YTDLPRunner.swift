@@ -107,92 +107,39 @@ actor YTDLPRunner {
     // MARK: Extract
 
     func extract(
-        url: URL
-    ) async throws -> Result {
+    url: URL
+) async throws -> Result {
 
-        if engine == nil {
-
-            try await prepare()
-        }
-
-
-        guard let engine else {
-
-            throw RunnerError.engineUnavailable
-        }
-
-
-        let (
-            formats,
-            info
-        ) = try await engine.extractInfo(
-            url: url
-        )
-
-
-        let audioFormats =
-            formats.filter {
-
-                $0.isAudioOnly
-            }
-
-
-        let bestAudio =
-            audioFormats.max {
-
-                ($0.abr ?? 0)
-                <
-                ($1.abr ?? 0)
-            }
-
-
-        return Result(
-
-            title:
-                info.title,
-
-            uploader:
-                info.uploader,
-
-            duration:
-                info.duration,
-
-            formatCount:
-                formats.count,
-
-            audioFormatCount:
-                audioFormats.count,
-
-            formatID:
-                bestAudio?.format_id,
-
-            fileExtension:
-                bestAudio?.ext,
-
-            audioCodec:
-                bestAudio?.acodec,
-
-            bitrate:
-                bestAudio?.abr,
-
-            directURL:
-                bestAudio?.url
-        )
+    if engine == nil {
+        try await prepare()
     }
 
+    guard engine != nil else {
+        throw RunnerError.engineUnavailable
+    }
 
-    enum RunnerError: LocalizedError {
+    throw RunnerError.extractInfoDisabled
+}
 
-        case engineUnavailable
 
-        var errorDescription: String? {
+  enum RunnerError: LocalizedError {
 
-            switch self {
+    case engineUnavailable
+    case extractInfoDisabled
 
-            case .engineUnavailable:
+    var errorDescription: String? {
 
-                return "YoutubeDL engine kon niet worden aangemaakt."
-            }
+        switch self {
+
+        case .engineUnavailable:
+            return "YoutubeDL engine kon niet worden aangemaakt."
+
+        case .extractInfoDisabled:
+            return """
+            Python werkt, maar extractInfo() is tijdelijk uitgeschakeld \
+            omdat deze functie op iOS een native crash veroorzaakt.
+            """
         }
     }
+}
 }
