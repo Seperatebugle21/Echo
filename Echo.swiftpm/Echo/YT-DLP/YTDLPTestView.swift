@@ -1,27 +1,18 @@
 import SwiftUI
-import YoutubeDL
 import UIKit
+import YoutubeDL
 
 struct YTDLPTestView: View {
 
     @State private var youtubeURL = ""
 
-    @State private var status = "Klaar om te testen"
-    @State private var title = ""
-    @State private var uploader = ""
-    @State private var duration = ""
-    @State private var ytdlpVersion = ""
+    @State private var status = "Klaar"
+    @State private var details = ""
 
-    @State private var audioFormat = ""
-    @State private var audioCodec = ""
-    @State private var audioBitrate = ""
-    @State private var directAudioURL = ""
+    @State private var isRunning = false
 
-    @State private var isLoading = false
-    @State private var succeeded = false
-    @State private var errorMessage = ""
-
-    private let ytdlp = YoutubeDL()
+    @AppStorage("ytdlpLastStage")
+    private var lastStage = "Nog geen test uitgevoerd"
 
     var body: some View {
 
@@ -34,60 +25,68 @@ struct YTDLPTestView: View {
                     spacing: 20
                 ) {
 
-                    // MARK: - Header
+                    Text("yt-dlp Diagnose")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+
+                    Text(
+                        "Deze test controleert stap voor stap waar yt-dlp op de iPhone stopt."
+                    )
+                    .foregroundStyle(.secondary)
+
+
+                    // MARK: Last stage
 
                     VStack(
                         alignment: .leading,
-                        spacing: 6
+                        spacing: 8
                     ) {
 
-                        Text("yt-dlp Test")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-
-                        Text(
-                            "Test of yt-dlp volledig lokaal in Echo kan draaien."
-                        )
-                        .foregroundStyle(.secondary)
-                    }
-
-
-                    // MARK: - URL
-
-                    VStack(
-                        alignment: .leading,
-                        spacing: 10
-                    ) {
-
-                        Text("YouTube URL")
+                        Text("Laatste opgeslagen stap")
                             .font(.headline)
 
-                        TextField(
-                            "https://youtube.com/watch?v=...",
-                            text: $youtubeURL
-                        )
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        .padding(14)
-                        .background(
-                            Color.secondary.opacity(0.12)
-                        )
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 12
-                            )
-                        )
+                        Text(lastStage)
+                            .textSelection(.enabled)
                     }
+                    .padding()
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
+                    .background(
+                        Color.orange.opacity(0.12)
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 14
+                        )
+                    )
 
 
-                    // MARK: - Paste button
+                    // MARK: URL
+
+                    TextField(
+                        "https://youtube.com/watch?v=...",
+                        text: $youtubeURL
+                    )
+                    .keyboardType(.URL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding()
+                    .background(
+                        Color.secondary.opacity(0.1)
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 14
+                        )
+                    )
+
 
                     Button {
 
-                        if let text = UIPasteboard
-                            .general
-                            .string {
+                        if let text =
+                            UIPasteboard.general.string {
 
                             youtubeURL = text
                         }
@@ -96,82 +95,149 @@ struct YTDLPTestView: View {
 
                         Label(
                             "Plak URL",
-                            systemImage: "doc.on.clipboard"
+                            systemImage:
+                                "doc.on.clipboard"
                         )
                         .frame(
                             maxWidth: .infinity
                         )
-                        .padding()
                     }
                     .buttonStyle(.bordered)
 
 
-                    // MARK: - Test button
+                    // MARK: Module download test
 
                     Button {
 
-                        runTest()
+                        testModuleDownload()
 
                     } label: {
 
-                        HStack {
-
-                            if isLoading {
-
-                                ProgressView()
-                                    .tint(.white)
-
-                            } else {
-
-                                Image(
-                                    systemName:
-                                        "play.fill"
-                                )
-                            }
-
-                            Text(
-                                isLoading
-                                    ? "yt-dlp bezig..."
-                                    : "Test yt-dlp"
-                            )
-                        }
+                        Label(
+                            "1. Test yt-dlp bestanden",
+                            systemImage:
+                                "arrow.down.circle"
+                        )
                         .frame(
                             maxWidth: .infinity
                         )
-                        .padding()
                     }
                     .buttonStyle(
                         .borderedProminent
                     )
+                    .disabled(isRunning)
+
+
+                    // MARK: Python test
+
+                    Button {
+
+                        testPython()
+
+                    } label: {
+
+                        Label(
+                            "2. Start Python + yt-dlp",
+                            systemImage:
+                                "terminal"
+                        )
+                        .frame(
+                            maxWidth: .infinity
+                        )
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isRunning)
+
+
+                    // MARK: URL test
+
+                    Button {
+
+                        testURL()
+
+                    } label: {
+
+                        Label(
+                            "3. Analyseer YouTube URL",
+                            systemImage:
+                                "play.circle"
+                        )
+                        .frame(
+                            maxWidth: .infinity
+                        )
+                    }
+                    .buttonStyle(.bordered)
                     .disabled(
-                        isLoading ||
+                        isRunning ||
                         youtubeURL
                             .trimmingCharacters(
-                                in: .whitespacesAndNewlines
+                                in:
+                                    .whitespacesAndNewlines
                             )
                             .isEmpty
                     )
 
 
-                    // MARK: - Status
+                    if isRunning {
 
-                    statusCard
+                        HStack {
 
+                            ProgressView()
 
-                    // MARK: - Result
-
-                    if succeeded {
-
-                        resultCard
+                            Text(status)
+                        }
                     }
 
 
-                    // MARK: - Error
+                    VStack(
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
 
-                    if !errorMessage.isEmpty {
+                        Text("Resultaat")
+                            .font(.headline)
 
-                        errorCard
+                        Text(status)
+
+                        if !details.isEmpty {
+
+                            Divider()
+
+                            Text(details)
+                                .font(.caption)
+                                .textSelection(
+                                    .enabled
+                                )
+                        }
                     }
+                    .padding()
+                    .frame(
+                        maxWidth: .infinity,
+                        alignment: .leading
+                    )
+                    .background(
+                        Color.secondary.opacity(
+                            0.1
+                        )
+                    )
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 14
+                        )
+                    )
+
+
+                    Button(
+                        "Reset diagnose"
+                    ) {
+
+                        lastStage =
+                            "Nog geen test uitgevoerd"
+
+                        status = "Klaar"
+                        details = ""
+                    }
+                    .foregroundStyle(.red)
                 }
                 .padding()
             }
@@ -183,412 +249,239 @@ struct YTDLPTestView: View {
     }
 
 
-    // MARK: - Status card
+    // MARK: - Test 1
+    //
+    // Alleen yt-dlp Python-module downloaden.
+    // Python wordt hier nog NIET uitgevoerd.
 
-    private var statusCard: some View {
+    private func testModuleDownload() {
 
-        VStack(
-            alignment: .leading,
-            spacing: 10
-        ) {
-
-            HStack {
-
-                Image(
-                    systemName:
-                        succeeded
-                        ? "checkmark.circle.fill"
-                        : isLoading
-                        ? "arrow.triangle.2.circlepath"
-                        : "circle"
-                )
-
-                Text("Status")
-                    .font(.headline)
-            }
-
-            Text(status)
-                .font(.body)
-
-            if !ytdlpVersion.isEmpty {
-
-                Divider()
-
-                HStack {
-
-                    Text("yt-dlp")
-
-                    Spacer()
-
-                    Text(ytdlpVersion)
-                        .foregroundStyle(
-                            .secondary
-                        )
-                }
-            }
-        }
-        .padding()
-        .frame(
-            maxWidth: .infinity,
-            alignment: .leading
-        )
-        .background(
-            Color.secondary.opacity(0.1)
-        )
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: 16
-            )
-        )
-    }
-
-
-    // MARK: - Result card
-
-    private var resultCard: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 14
-        ) {
-
-            Label(
-                "yt-dlp werkt",
-                systemImage:
-                    "checkmark.circle.fill"
-            )
-            .font(.title3)
-            .fontWeight(.semibold)
-
-
-            Divider()
-
-
-            resultRow(
-                title: "Titel",
-                value: title
-            )
-
-
-            if !uploader.isEmpty {
-
-                resultRow(
-                    title: "Uploader",
-                    value: uploader
-                )
-            }
-
-
-            if !duration.isEmpty {
-
-                resultRow(
-                    title: "Duur",
-                    value: duration
-                )
-            }
-
-
-            Divider()
-
-
-            Text("Geselecteerde audio")
-                .font(.headline)
-
-
-            resultRow(
-                title: "Format",
-                value: audioFormat
-            )
-
-
-            resultRow(
-                title: "Codec",
-                value: audioCodec
-            )
-
-
-            resultRow(
-                title: "Bitrate",
-                value: audioBitrate
-            )
-
-
-            if !directAudioURL.isEmpty {
-
-                Divider()
-
-                Text("Directe audio URL")
-                    .font(.headline)
-
-                Text(directAudioURL)
-                    .font(.caption)
-                    .foregroundStyle(
-                        .secondary
-                    )
-                    .textSelection(
-                        .enabled
-                    )
-            }
-        }
-        .padding()
-        .frame(
-            maxWidth: .infinity,
-            alignment: .leading
-        )
-        .background(
-            Color.green.opacity(0.12)
-        )
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: 16
-            )
-        )
-    }
-
-
-    // MARK: - Error card
-
-    private var errorCard: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 10
-        ) {
-
-            Label(
-                "Fout",
-                systemImage:
-                    "exclamationmark.triangle.fill"
-            )
-            .font(.headline)
-
-
-            Text(errorMessage)
-                .font(.caption)
-                .textSelection(.enabled)
-        }
-        .padding()
-        .frame(
-            maxWidth: .infinity,
-            alignment: .leading
-        )
-        .background(
-            Color.red.opacity(0.12)
-        )
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: 16
-            )
-        )
-    }
-
-
-    // MARK: - Result row
-
-    private func resultRow(
-        title: String,
-        value: String
-    ) -> some View {
-
-        HStack(
-            alignment: .top
-        ) {
-
-            Text(title)
-                .foregroundStyle(
-                    .secondary
-                )
-
-            Spacer()
-
-            Text(value)
-                .multilineTextAlignment(
-                    .trailing
-                )
-                .textSelection(.enabled)
-        }
-    }
-
-
-    // MARK: - Run yt-dlp
-
-    private func runTest() {
-
-        let string = youtubeURL
-            .trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
-
-
-        guard let url = URL(
-            string: string
-        ) else {
-
-            errorMessage =
-                "De URL is ongeldig."
-
-            return
-        }
-
-
-        isLoading = true
-        succeeded = false
-
-        errorMessage = ""
-
-        title = ""
-        uploader = ""
-        duration = ""
-
-        audioFormat = ""
-        audioCodec = ""
-        audioBitrate = ""
-        directAudioURL = ""
+        isRunning = true
 
         status =
-            "Python en yt-dlp worden gestart..."
+            "yt-dlp bestanden downloaden..."
+
+        details = ""
+
+        lastStage =
+            "TEST 1 GESTART - module downloaden"
 
 
         Task {
 
             do {
 
-                await MainActor.run {
-
-                    status =
-                        "Video wordt geanalyseerd..."
-                }
-
-
-                let (
-                    formats,
-                    info
-                ) = try await ytdlp
-                    .extractInfo(
-                        url: url
-                    )
+                try await YoutubeDL
+                    .downloadPythonModule()
 
 
                 await MainActor.run {
 
+                    lastStage =
+                        "TEST 1 OK - yt-dlp module gedownload"
+
                     status =
-                        "Audioformaten zoeken..."
+                        "Test 1 geslaagd"
+
+                    details =
+                        """
+                        De yt-dlp Python-bestanden kunnen \
+                        worden gedownload en opgeslagen.
+                        """
+
+                    isRunning = false
                 }
 
+            } catch {
 
-                // Alleen echte audio-only streams.
-                let audioFormats =
-                    formats.filter {
+                await MainActor.run {
 
-                        $0.vcodec == "none" &&
-                        $0.acodec != "none"
+                    lastStage =
+                        "TEST 1 ERROR"
 
-                    }
+                    status =
+                        "Test 1 mislukt"
 
-
-                // Kies hoogste audio bitrate.
-                let bestAudio =
-                    audioFormats.max {
-
-                        let bitrate1 =
-                            $0.abr ?? 0
-
-                        let bitrate2 =
-                            $1.abr ?? 0
-
-                        return bitrate1
-                            < bitrate2
-                    }
-
-
-                guard let bestAudio else {
-
-                    throw YTDLPTestError
-                        .noAudioFormat
-                }
-
-
-                let durationText:
-                    String
-
-                if let seconds =
-                    info.duration {
-
-                    let total =
-                        Int(seconds)
-
-                    let minutes =
-                        total / 60
-
-                    let remaining =
-                        total % 60
-
-                    durationText =
+                    details =
                         String(
-                            format:
-                                "%d:%02d",
-                            minutes,
-                            remaining
+                            describing: error
                         )
 
-                } else {
-
-                    durationText = ""
+                    isRunning = false
                 }
+            }
+        }
+    }
 
 
-                let bitrateText:
-                    String
+    // MARK: - Test 2
+    //
+    // Dit is de belangrijke test:
+    // embedded Python initialiseren +
+    // yt_dlp module importeren.
 
-                if let bitrate =
-                    bestAudio.abr {
+    private func testPython() {
 
-                    bitrateText =
-                        "\(Int(bitrate)) kbps"
+        isRunning = true
 
-                } else {
+        status =
+            "Embedded Python starten..."
 
-                    bitrateText =
-                        "Onbekend"
-                }
+        details = ""
+
+        lastStage =
+            "TEST 2 GESTART - Python initialiseren"
+
+
+        Task {
+
+            do {
+
+                lastStage =
+                    "TEST 2 - YtDlp initializer wordt aangeroepen"
+
+                let engine =
+                    try await YoutubeDL.YtDlp()
 
 
                 await MainActor.run {
 
-                    title =
-                        info.title
+                    _ = engine
 
-                    uploader =
-                        info.uploader
-                        ?? info.channel
-                        ?? ""
-
-                    duration =
-                        durationText
-
-                    ytdlpVersion =
-                        ytdlp.version
-                        ?? "onbekend"
-
-                    audioFormat =
-                        "\(bestAudio.format_id) • \(bestAudio.ext)"
-
-                    audioCodec =
-                        bestAudio.acodec
-                        ?? "onbekend"
-
-                    audioBitrate =
-                        bitrateText
-
-                    directAudioURL =
-                        bestAudio.url
+                    lastStage =
+                        "TEST 2 OK - Python + yt-dlp geladen"
 
                     status =
-                        "Succes — yt-dlp draait op deze iPhone."
+                        "Python werkt"
 
-                    succeeded = true
+                    details =
+                        """
+                        Embedded Python is gestart en \
+                        de yt_dlp Python-module kon \
+                        worden geladen.
+                        """
 
-                    isLoading = false
+                    isRunning = false
+                }
+
+            } catch {
+
+                await MainActor.run {
+
+                    lastStage =
+                        "TEST 2 ERROR"
+
+                    status =
+                        "Python test mislukt"
+
+                    details =
+                        String(
+                            describing: error
+                        )
+
+                    isRunning = false
+                }
+            }
+        }
+    }
+
+
+    // MARK: - Test 3
+    //
+    // Gebruik dezelfde globale yt_dlp(argv:)
+    // route als het voorbeeldproject van de maker.
+
+    private func testURL() {
+
+        let string =
+            youtubeURL
+                .trimmingCharacters(
+                    in:
+                        .whitespacesAndNewlines
+                )
+
+
+        guard let url =
+            URL(string: string) else {
+
+            status =
+                "Ongeldige URL"
+
+            return
+        }
+
+
+        isRunning = true
+
+        status =
+            "YouTube URL analyseren..."
+
+        details = ""
+
+        lastStage =
+            "TEST 3 GESTART - yt-dlp command"
+
+
+        Task {
+
+            do {
+
+                var logLines: [String] = []
+
+
+                lastStage =
+                    "TEST 3 - yt_dlp() wordt uitgevoerd"
+
+
+                try await yt_dlp(
+
+                    argv: [
+
+                        "--skip-download",
+
+                        "--no-playlist",
+
+                        "--no-check-certificates",
+
+                        "--verbose",
+
+                        url.absoluteString
+                    ],
+
+                    progress: nil,
+
+                    log: { level, message in
+
+                        let line =
+                            "[\(level)] \(message)"
+
+                        logLines.append(
+                            line
+                        )
+
+                    },
+
+                    makeTranscodeProgressBlock:
+                        nil
+                )
+
+
+                await MainActor.run {
+
+                    lastStage =
+                        "TEST 3 OK - YouTube verwerkt"
+
+                    status =
+                        "yt-dlp werkt"
+
+                    details =
+                        logLines
+                            .suffix(40)
+                            .joined(
+                                separator: "\n"
+                            )
+
+                    isRunning = false
                 }
 
 
@@ -596,44 +489,30 @@ struct YTDLPTestView: View {
 
                 await MainActor.run {
 
+                    lastStage =
+                        "TEST 3 ERROR"
+
                     status =
-                        "Test mislukt"
+                        "YouTube test mislukt"
 
-                    succeeded = false
+                    let logs =
+                        logLines
+                            .suffix(40)
+                            .joined(
+                                separator: "\n"
+                            )
 
-                    isLoading = false
+                    details =
+                        """
+                        \(String(describing: error))
 
-                    errorMessage =
-                        String(
-                            describing:
-                                error
-                        )
+                        ---- LOG ----
+                        \(logs)
+                        """
+
+                    isRunning = false
                 }
             }
-        }
-    }
-}
-
-
-// MARK: - Errors
-
-private enum YTDLPTestError:
-    LocalizedError {
-
-    case noAudioFormat
-
-    var errorDescription:
-        String? {
-
-        switch self {
-
-        case .noAudioFormat:
-
-            return """
-            yt-dlp heeft de video gevonden, \
-            maar er werd geen bruikbaar \
-            audio-only formaat gevonden.
-            """
         }
     }
 }
