@@ -345,57 +345,73 @@ struct YTDLPTestView: View {
 
     private func testPythonEngine() {
 
-        isRunning = true
-        success = false
+    isRunning = true
+    success = false
 
-        status =
-            "Python executor starten..."
+    status =
+        "Embedded Python starten..."
 
-        details = ""
+    details = ""
 
-        lastStage =
-            "TEST 2 - serial executor aangeroepen"
+    lastStage =
+        "PYTHON TEST gestart"
 
 
-        Task {
+    Task {
 
-            do {
+        do {
 
+            let version =
                 try await
-                    YTDLPRunner
+                YTDLPRunner
                     .shared
-                    .prepare()
+                    .startPython()
 
 
-                await MainActor.run {
+            await MainActor.run {
 
-                    lastStage =
-                        "TEST 2 OK"
+                lastStage =
+                    "PYTHON TEST OK"
 
-                    status =
-                        "Python runner klaar"
+                status =
+                    "Python werkt"
 
-                    details =
-                        """
-                        YoutubeDL engine is aangemaakt \
-                        op de vaste Python serial executor.
-                        """
+                details =
+                    """
+                    Embedded CPython is succesvol gestart.
 
-                    success = true
+                    \(version)
+                    """
 
-                    isRunning = false
-                }
+                success = true
+
+                isRunning = false
+            }
 
 
-            } catch {
+        } catch {
 
-                showError(
-                    stage: "TEST 2 ERROR",
-                    error: error
-                )
+            await MainActor.run {
+
+                lastStage =
+                    "PYTHON TEST ERROR"
+
+                status =
+                    "Python fout"
+
+                details =
+                    String(
+                        describing:
+                            error
+                    )
+
+                success = false
+
+                isRunning = false
             }
         }
     }
+}
 
 
     // MARK: - Test 3
