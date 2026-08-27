@@ -1,279 +1,247 @@
-name: Echo YT-DLP Build Test
+name: Build Echo IPA (Unsigned)
 
 on:
+  workflow_dispatch:
 
   push:
     branches:
+      
       - YT-DLP
-
-  workflow_dispatch:
 
 
 jobs:
-
   build:
 
-    runs-on: macos-15
+    runs-on: macos-latest
+
+    permissions:
+      contents: write
+
 
     steps:
 
+      # ============================================
+      # 1. Repository ophalen
+      # ============================================
 
-      # =========================================================
-      # CHECKOUT
-      # =========================================================
-
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
 
-      # =========================================================
-      # XCODE
-      # =========================================================
+      # ============================================
+      # 2. SwiftPM project bouwen
+      # ============================================
 
-      - name: Select Xcode
+      - name: Build SwiftPM
         run: |
 
-          sudo xcode-select \
-            -s /Applications/Xcode_16.4.app/Contents/Developer
+          # Zoek automatisch de map waar Package.swift staat
+          PACKAGE_DIR=$(find . -name "Package.swift" -exec dirname {} \; | head -n 1)
 
-          echo "===== XCODE ====="
+          echo "Gevonden Package map: $PACKAGE_DIR"
 
-          xcodebuild -version
-
-          echo ""
-
-          echo "===== SWIFT ====="
-
-          swift --version
-
-
-      # =========================================================
-      # SHOW SOURCE STRUCTURE
-      # =========================================================
-
-      - name: Show Echo source structure
-        run: |
-
-          echo "===== ECHO.SWIFTPM ====="
-
-          find Echo.swiftpm \
-            -maxdepth 5 \
-            -type f \
-            | sort
-
-          echo ""
-
-          echo "===== SWIFT FILES ====="
-
-          find Echo.swiftpm \
-            -type f \
-            -name "*.swift" \
-            | sort
-
-
-      # =========================================================
-      # FIND APP ENTRYPOINT
-      # =========================================================
-
-      - name: Find @main
-        run: |
-
-          echo "===== SEARCHING FOR @main ====="
-
-          grep \
-            -R \
-            -n \
-            "@main" \
-            Echo.swiftpm \
-            --include="*.swift" \
-            || true
-
-          echo ""
-
-          echo "===== SEARCHING FOR App PROTOCOL ====="
-
-          grep \
-            -R \
-            -n \
-            ": App" \
-            Echo.swiftpm \
-            --include="*.swift" \
-            || true
-
-
-      # =========================================================
-      # INSTALL XCODEGEN
-      # =========================================================
-
-      - name: Install XcodeGen
-        run: |
-
-          brew install xcodegen
-
-          echo ""
-
-          xcodegen --version
-
-
-      # =========================================================
-      # GENERATE PROJECT
-      # =========================================================
-
-      - name: Generate Xcode project
-        run: |
-
-          xcodegen generate \
-            --spec project.yml
-
-          echo ""
-
-          echo "===== GENERATED PROJECT ====="
-
-          ls -la Echo.xcodeproj
-
-
-      # =========================================================
-      # CHECK SOURCES IN XCODE PROJECT
-      # =========================================================
-
-      - name: Check generated sources
-        run: |
-
-          echo "===== SWIFT FILES IN PBXPROJ ====="
-
-          grep \
-            -n \
-            "\.swift" \
-            Echo.xcodeproj/project.pbxproj \
-            | head -300 \
-            || true
-
-          echo ""
-
-          echo "===== SEARCH FOR @MAIN FILE ====="
-
-          MAIN_FILE=$(grep \
-            -R \
-            -l \
-            "@main" \
-            Echo.swiftpm \
-            --include="*.swift" \
-            | head -1)
-
-          echo "Main file: $MAIN_FILE"
-
-          if [ -z "$MAIN_FILE" ]; then
-
-            echo "ERROR: No @main Swift file found."
-
+          if [ -z "$PACKAGE_DIR" ]; then
+            echo "Geen Package.swift gevonden."
             exit 1
-
           fi
 
-          BASENAME=$(basename "$MAIN_FILE")
+          cd "$PACKAGE_DIR"
 
-          echo "Looking for $BASENAME in Xcode project..."
+          # Build-map aanmaken
+          mkdir -p ../build
 
-          if ! grep \
-            -q \
-            "$BASENAME" \
-            Echo.xcodeproj/project.pbxproj; then
+          # Archive bouwen zonder codesigning
+          xcodebuild archive \
+            -scheme Echo \
+            -destination 'generic/platform=iOS' \
+            -archivePath ../build/Echo.xcarchive \
+            -derivedDataPath ../build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
 
-            echo "ERROR:"
-            echo "$BASENAME is NOT included in Echo.xcodeproj"
 
-            exit 1
+      # ============================================
+      # 3. IPA maken + Info.plist aanpassen
+      # ============================================
 
+      - name: Create IPA Package
+
+          
+        run: |
+
+          rm -rf Payload
+          mkdir -p Payload
+
+          # Zoek de gebouwde .app
+          BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
+            -maxdepth 1 \
+            -name "*.app" \
+            | head -n 1)
+
+          # Fallback voor eventueel .swiftpm output
+          if [ -z "$BUILT_APP" ]; then
+            BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
+              -maxdepth 1 \
+              -name "*.swiftpm" \
+              | head -n 1)
           fi
 
+          echo "Gebouwde app gevonden op:"
+          echo "$BUILT_APP"
+
+          if [ -z "$BUILT_APP" ]; then
+            echo "Geen gebouwde Echo app gevonden."
+            exit 1
+          fi
+
+          # Kopieer app naar Payload
+          cp -R "$BUILT_APP" Payload/
+
+          # Zoek de gekopieerde app
+          APP_PATH=$(find Payload \
+            -maxdepth 1 \
+            \( -name "*.app" -o -name "*.swiftpm" \) \
+            | head -n 1)
+
+          echo "App in Payload:"
+          echo "$APP_PATH"
+
+          if [ -z "$APP_PATH" ]; then
+            echo "App niet gevonden in Payload."
+            exit 1
+          fi
+
+          INFO_PLIST="$APP_PATH/Info.plist"
+
+          if [ ! -f "$INFO_PLIST" ]; then
+            echo "Info.plist niet gevonden op:"
+            echo "$INFO_PLIST"
+            exit 1
+          fi
+
+
+          # ============================================
+          # 3A. Background Audio
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :UIBackgroundModes" \
+            "$INFO_PLIST" 2>/dev/null || true
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes array" \
+            "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes:0 string audio" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # 3B. Files-app toegang
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIFileSharingEnabled bool true" \
+            "$INFO_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy \
+            -c "Set :UIFileSharingEnabled true" \
+            "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :LSSupportsOpeningDocumentsInPlace bool true" \
+            "$INFO_PLIST" 2>/dev/null || \
+          /usr/libexec/PlistBuddy \
+            -c "Set :LSSupportsOpeningDocumentsInPlace true" \
+            "$INFO_PLIST"
+
+
+        
+
+
+          # ============================================
+          # 3C. Spotify callback URL scheme
+          #
+          # echo-spotify-login://callback
+          # ============================================
+
+          # Verwijder bestaande CFBundleURLTypes
+          # zodat we zeker geen oude configuratie houden
+          /usr/libexec/PlistBuddy \
+            -c "Delete :CFBundleURLTypes" \
+            "$INFO_PLIST" 2>/dev/null || true
+
+          # Root array
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes array" \
+            "$INFO_PLIST"
+
+          # Eerste URL type
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0 dict" \
+            "$INFO_PLIST"
+
+          # Naam
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLName string echo.spotify.login" \
+            "$INFO_PLIST"
+
+          # Schemes array
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
+            "$INFO_PLIST"
+
+          # Echo Spotify URL scheme
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string echo-spotify-login" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # 3D. Debug / controle
+          # ============================================
+
           echo ""
-          echo "SUCCESS:"
-          echo "$BASENAME is included in Echo.xcodeproj"
-
-
-      # =========================================================
-      # PROJECT INFO
-      # =========================================================
-
-      - name: Show Xcode project
-        run: |
-
-          xcodebuild \
-            -project Echo.xcodeproj \
-            -list
-
-
-      # =========================================================
-      # RESOLVE YOUTUBEDL
-      # =========================================================
-
-      - name: Resolve YoutubeDL-iOS
-        run: |
-
-          xcodebuild \
-            -resolvePackageDependencies \
-            -project Echo.xcodeproj \
-            -scheme Echo
-
-
-      # =========================================================
-      # CLEAN
-      # =========================================================
-
-      - name: Clean
-        run: |
-
-          xcodebuild \
-            -project Echo.xcodeproj \
-            -scheme Echo \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
-            ARCHS=arm64 \
-            ONLY_ACTIVE_ARCH=YES \
-            ENABLE_PREVIEWS=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            clean
-
-
-      # =========================================================
-      # BUILD
-      # =========================================================
-
-      - name: Build Echo
-        run: |
-
-          set -o pipefail
-
-          xcodebuild \
-            -project Echo.xcodeproj \
-            -scheme Echo \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
-            ARCHS=arm64 \
-            ONLY_ACTIVE_ARCH=YES \
-            ENABLE_PREVIEWS=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-
-
-      # =========================================================
-      # RESULT
-      # =========================================================
-
-      - name: Show build result
-        if: success()
-        run: |
-
-          echo "====================================="
-          echo "       ECHO BUILD SUCCESSFUL"
-          echo "====================================="
-
+          echo "================================"
+          echo " FINAL INFO.PLIST"
+          echo "================================"
           echo ""
 
-          find \
-            ~/Library/Developer/Xcode/DerivedData \
-            -type d \
-            -name "Echo.app" \
-            -print
+          /usr/libexec/PlistBuddy \
+            -c "Print" \
+            "$INFO_PLIST"
+
+          echo ""
+          echo "================================"
+          echo " URL TYPES"
+          echo "================================"
+          echo ""
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :CFBundleURLTypes" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # 3E. IPA maken
+          # ============================================
+
+          rm -f Echo.ipa
+
+          zip -r Echo.ipa Payload
+
+
+      # ============================================
+      # 4. IPA als GitHub Artifact opslaan
+      # ============================================
+
+      - name: Save IPA to Artifacts
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: Echo-Release-IPA
+          path: Echo.ipa
+
+
+    
