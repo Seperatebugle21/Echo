@@ -416,162 +416,191 @@ struct YTDLPTestView: View {
 
     // MARK: - Test 3
 
-    private func extractURL() {
+   private func extractURL() {
 
-        let value =
-            youtubeURL
-                .trimmingCharacters(
-                    in:
-                        .whitespacesAndNewlines
-                )
-
-
-        guard let url =
-            URL(string: value) else {
-
-            status =
-                "Ongeldige URL"
-
-            return
-        }
+    let value =
+        youtubeURL
+            .trimmingCharacters(
+                in:
+                    .whitespacesAndNewlines
+            )
 
 
-        isRunning = true
-        success = false
-
-        details = ""
+    guard let url =
+        URL(string: value) else {
 
         status =
-            "yt-dlp analyseert YouTube..."
+            "Ongeldige URL"
 
-        lastStage =
-            "TEST 3 - extract gestart"
+        return
+    }
 
 
-        Task {
+    isRunning = true
+    success = false
 
-            do {
+    status =
+        "yt-dlp wordt gestart..."
 
-                let result =
-                    try await
-                    YTDLPRunner
+    details = ""
+
+    lastStage =
+        "TEST 3 - pinned extraction gestart"
+
+
+    Task {
+
+        do {
+
+            let result =
+                try await
+                YTDLPRunner
                     .shared
                     .extract(
                         url: url
                     )
 
 
-                var text = ""
+            var text = ""
+
+
+            // MARK: yt-dlp
+
+            if let version =
+                result.ytdlpVersion {
 
                 text +=
-                    "Titel: \(result.title)\n"
+                    "yt-dlp: \(version)\n\n"
+            }
 
 
-                if let uploader =
-                    result.uploader {
+            // MARK: Metadata
 
-                    text +=
-                        "Uploader: \(uploader)\n"
-                }
+            text +=
+                "Titel: \(result.title)\n"
 
 
-                if let duration =
-                    result.duration {
-
-                    let total =
-                        Int(duration)
-
-                    text +=
-                        String(
-                            format:
-                                "Duur: %d:%02d\n",
-                            total / 60,
-                            total % 60
-                        )
-                }
-
+            if let uploader =
+                result.uploader {
 
                 text +=
-                    "Formats: \(result.formatCount)\n"
+                    "Uploader: \(uploader)\n"
+            }
+
+
+            if let duration =
+                result.duration {
+
+                let total =
+                    Int(duration)
 
                 text +=
-                    "Audio-only: \(result.audioFormatCount)\n"
+                    String(
+                        format:
+                            "Duur: %d:%02d\n",
+                        total / 60,
+                        total % 60
+                    )
+            }
 
 
-                if let formatID =
-                    result.formatID {
+            // MARK: Formats
 
-                    text +=
-                        "\nBESTE AUDIO\n"
+            text +=
+                "\nFormats: \(result.formatsCount)"
 
-                    text +=
-                        "Format ID: \(formatID)\n"
-                }
+            text +=
+                "\nAudio-only: \(result.audioFormatsCount)\n"
 
 
-                if let ext =
-                    result.fileExtension {
+            // MARK: Best audio
 
-                    text +=
-                        "Extensie: \(ext)\n"
-                }
+            if let formatID =
+                result.formatID {
 
+                text +=
+                    "\nBESTE AUDIO\n"
 
-                if let codec =
-                    result.audioCodec {
-
-                    text +=
-                        "Codec: \(codec)\n"
-                }
+                text +=
+                    "Format ID: \(formatID)\n"
+            }
 
 
-                if let bitrate =
-                    result.bitrate {
+            if let ext =
+                result.fileExtension {
 
-                    text +=
-                        "Bitrate: \(Int(bitrate)) kbps\n"
-                }
-
-
-                if let directURL =
-                    result.directURL {
-
-                    text +=
-                        "\nDirect audio URL:\n"
-
-                    text +=
-                        directURL
-                }
+                text +=
+                    "Extensie: \(ext)\n"
+            }
 
 
-                await MainActor.run {
+            if let codec =
+                result.audioCodec {
 
-                    lastStage =
-                        "TEST 3 OK"
-
-                    status =
-                        "yt-dlp werkt"
-
-                    details =
-                        text
-
-                    success = true
-
-                    isRunning = false
-                }
+                text +=
+                    "Codec: \(codec)\n"
+            }
 
 
-            } catch {
+            if let bitrate =
+                result.bitrate {
 
-                showError(
-                    stage:
-                        "TEST 3 ERROR",
-                    error:
-                        error
-                )
+                text +=
+                    "Bitrate: \(Int(bitrate)) kbps\n"
+            }
+
+
+            if let directURL =
+                result.directURL {
+
+                text +=
+                    "\nDIRECT AUDIO URL\n"
+
+                text +=
+                    directURL
+            }
+
+
+            await MainActor.run {
+
+                lastStage =
+                    "TEST 3 OK"
+
+                status =
+                    "yt-dlp werkt!"
+
+                details =
+                    text
+
+                success = true
+
+                isRunning = false
+            }
+
+
+        } catch {
+
+            await MainActor.run {
+
+                lastStage =
+                    "TEST 3 ERROR"
+
+                status =
+                    "yt-dlp fout"
+
+                details =
+                    String(
+                        describing:
+                            error
+                    )
+
+                success = false
+
+                isRunning = false
             }
         }
     }
+}
 
 
     // MARK: - Error
