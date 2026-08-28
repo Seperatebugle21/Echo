@@ -164,9 +164,8 @@ final class FetchManager {
                         )
 
 
-                guard
-                    let firstResult =
-                        results.first
+                guard let firstResult =
+                    results.first
                 else {
 
                     print(
@@ -509,6 +508,12 @@ final class FetchManager {
             .preparing
 
 
+        UserDefaults.standard.set(
+            "FETCH 1 - preparing",
+            forKey: "fetchLastStage"
+        )
+
+
         do {
 
             let method =
@@ -535,6 +540,11 @@ final class FetchManager {
             )
 
             print(
+                "Album:",
+                item.album ?? "nil"
+            )
+
+            print(
                 "Method:",
                 method.title
             )
@@ -544,6 +554,10 @@ final class FetchManager {
             )
 
 
+            // =====================================
+            // Resolve source
+            // =====================================
+
             switch method {
 
             // =====================================
@@ -552,9 +566,8 @@ final class FetchManager {
 
             case .youtube:
 
-                guard
-                    let youtubeURL =
-                        item.youtubeURL
+                guard let youtubeURL =
+                    item.youtubeURL
                 else {
 
                     throw
@@ -585,8 +598,7 @@ final class FetchManager {
 
                         suggestedFileName:
                             makeTemporaryApifyName(
-                                item:
-                                    item
+                                item: item
                             )
                     )
 
@@ -601,14 +613,19 @@ final class FetchManager {
                     try await
                     YTDLPAudioSource.shared
                         .resolve(
-                            item:
-                                item
+                            item: item
                         )
             }
 
 
+            UserDefaults.standard.set(
+                "FETCH 2 - source resolved",
+                forKey: "fetchLastStage"
+            )
+
+
             // =====================================
-            // Download source
+            // Download
             // =====================================
 
             item.status =
@@ -627,6 +644,7 @@ final class FetchManager {
 
                         result:
                             downloadResult
+
                     ) {
 
                         progress in
@@ -639,6 +657,12 @@ final class FetchManager {
                     }
 
 
+            UserDefaults.standard.set(
+                "FETCH 3 - source downloaded",
+                forKey: "fetchLastStage"
+            )
+
+
             print(
                 "Source downloaded:",
                 downloadedFile.path
@@ -646,7 +670,7 @@ final class FetchManager {
 
 
             // =====================================
-            // Source -> FINAL MP3
+            // FINAL MP3
             // =====================================
 
             item.status =
@@ -670,6 +694,12 @@ final class FetchManager {
                     )
 
 
+            UserDefaults.standard.set(
+                "FETCH 4 - MP3 generated",
+                forKey: "fetchLastStage"
+            )
+
+
             let finalMP3URL =
                 processedAudio
                     .fileURL
@@ -682,7 +712,7 @@ final class FetchManager {
 
 
             // =====================================
-            // Delete temporary downloaded source
+            // Remove temporary source
             // =====================================
 
             if downloadedFile !=
@@ -706,23 +736,58 @@ final class FetchManager {
             }
 
 
+            UserDefaults.standard.set(
+                "FETCH 5 - source cleaned",
+                forKey: "fetchLastStage"
+            )
+
+
             // =====================================
-            // Notify Music Library
+            // DIRECTLY ADD TO ECHO LIBRARY
+            //
+            // Do NOT rescan AVAsset metadata.
+            //
+            // Spotify metadata is authoritative.
             // =====================================
 
-            NotificationCenter.default
-                .post(
+            MusicLibraryManager.shared
+                .addProcessedFetch(
 
-                    name:
-                        .echoFetchCompleted,
+                    fileURL:
+                        processedAudio.fileURL,
 
-                    object:
-                        nil
+                    title:
+                        processedAudio.title,
+
+                    artist:
+                        processedAudio.artist,
+
+                    album:
+                        processedAudio.album,
+
+                    coverData:
+                        processedAudio.artworkData
                 )
 
 
+            UserDefaults.standard.set(
+                "FETCH 6 - library updated",
+                forKey: "fetchLastStage"
+            )
+
+
+            // =====================================
+            // Complete
+            // =====================================
+
             item.status =
                 .completed
+
+
+            UserDefaults.standard.set(
+                "FETCH 7 - COMPLETE",
+                forKey: "fetchLastStage"
+            )
 
 
             print(
@@ -738,6 +803,34 @@ final class FetchManager {
             )
 
             print(
+                "Metadata:"
+            )
+
+            print(
+                "Title:",
+                processedAudio.title
+            )
+
+            print(
+                "Artist:",
+                processedAudio.artist
+            )
+
+            print(
+                "Album:",
+                processedAudio.album
+                ?? "nil"
+            )
+
+            print(
+                "Artwork:",
+                processedAudio.artworkData?
+                    .count
+                ?? 0,
+                "bytes"
+            )
+
+            print(
                 "===================================="
             )
 
@@ -748,6 +841,12 @@ final class FetchManager {
                 .failed(
                     error.localizedDescription
                 )
+
+
+            UserDefaults.standard.set(
+                "FETCH FAILED - \(error.localizedDescription)",
+                forKey: "fetchLastStage"
+            )
 
 
             print(
@@ -797,8 +896,7 @@ final class FetchManager {
                         illegal
                 )
                 .joined(
-                    separator:
-                        ""
+                    separator: ""
                 )
 
 
@@ -816,29 +914,13 @@ final class FetchManager {
         switch type {
 
         case .track:
-
             return "Spotify Track"
 
-
         case .album:
-
             return "Spotify Album"
 
-
         case .playlist:
-
             return "Spotify Playlist"
         }
     }
-}
-
-
-// MARK: - Notifications
-
-extension Notification.Name {
-
-    static let echoFetchCompleted =
-        Notification.Name(
-            "EchoFetchCompleted"
-        )
 }
