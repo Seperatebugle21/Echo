@@ -3,6 +3,7 @@
 import PackageDescription
 import AppleProductTypes
 
+
 let package = Package(
 
     name: "Echo",
@@ -71,47 +72,58 @@ let package = Package(
         )
     ],
 
+
+    // MARK: - Packages
+
     dependencies: [
 
-        // MARK: YoutubeDL-iOS
+        // =========================================
+        // YoutubeDL-iOS
+        // =========================================
 
         .package(
             url:
                 "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
+
             branch:
                 "main"
         ),
 
 
-        // MARK: PythonKit
-        //
-        // Exact dezelfde versie als FreeTube.
+        // =========================================
+        // PythonKit
+        // =========================================
 
         .package(
             url:
                 "https://github.com/pvieito/PythonKit.git",
+
             exact:
                 "0.5.1"
         ),
 
 
-        // MARK: Python-iOS
-        //
-        // Expliciete dependency.
-        //
-        // Hiermee zorgen we ervoor dat de Python binary targets
-        // én PythonSupport resource bundle rechtstreeks onderdeel
-        // worden van Echo's app dependency graph.
+        // =========================================
+        // Python-iOS
+        // =========================================
 
         .package(
             url:
                 "https://github.com/kewlbear/Python-iOS.git",
+
             exact:
                 "0.1.1-b20230423-090254"
         )
     ],
 
+
+    // MARK: - Targets
+
     targets: [
+
+        // =========================================
+        // Echo
+        // =========================================
 
         .executableTarget(
 
@@ -123,6 +135,7 @@ let package = Package(
                 .product(
                     name:
                         "YoutubeDL",
+
                     package:
                         "YoutubeDL-iOS"
                 ),
@@ -130,23 +143,34 @@ let package = Package(
                 .product(
                     name:
                         "PythonKit",
+
                     package:
                         "PythonKit"
                 ),
 
-                // IMPORTANT:
-                //
-                // Product heet "Python-iOS".
-                //
-                // "PythonSupport" is GEEN product.
-                // Dat was een fout in een eerdere poging.
-
                 .product(
                     name:
                         "Python-iOS",
+
                     package:
                         "Python-iOS"
-                )
+                ),
+
+
+                // IMPORTANT:
+                //
+                // Dit is ALLEEN libmp3lame.
+                //
+                // Geen:
+                // - fftools
+                // - ffmpeg
+                // - ffprobe
+                // - avcodec
+                //
+                // Daardoor krijgen we niet opnieuw
+                // de duplicate symbols van eerder.
+
+                "mp3lame"
             ],
 
             path:
@@ -158,19 +182,34 @@ let package = Package(
                     "BareSlashRegexLiterals"
                 ),
 
-                // FreeTube draait zijn Release app-target
-                // eveneens zonder Swift optimalisatie.
-
                 .unsafeFlags(
                     [
                         "-Onone"
                     ],
+
                     .when(
                         configuration:
                             .release
                     )
                 )
             ]
+        ),
+
+
+        // =========================================
+        // Standalone LAME binary
+        // =========================================
+
+        .binaryTarget(
+
+            name:
+                "mp3lame",
+
+            url:
+                "https://github.com/kewlbear/FFmpeg-iOS-Lame/releases/download/v0.0.6-b20230416-184420/mp3lame.zip",
+
+            checksum:
+                "c7b3ef1a5a5e8d8690389a1ae0b7c43368e90647590767fdede5d18a23e3bd22"
         )
     ]
 )
