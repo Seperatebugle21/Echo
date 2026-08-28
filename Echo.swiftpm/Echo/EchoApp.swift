@@ -99,20 +99,35 @@ struct EchoApp: App {
 
         // MARK: - Scene Phase
 
-        .onChange(
-            of:
-                scenePhase
-        ) { _, newPhase in
+      .onChange(
+    of:
+        scenePhase
+) { _, newPhase in
 
-            if newPhase ==
-                .active {
+    if newPhase ==
+        .active {
 
-                library
-                    .syncDocumentsFolder()
-            }
+        library
+            .syncDocumentsFolder()
+
+
+        // Een background download kan klaar zijn
+        // terwijl de telefoon gelockt was.
+        //
+        // Nu mag de normale Fetch pipeline
+        // verdergaan naar LAME.
+
+        FetchDownloadEngine.shared
+            .resumeLiveCompletedTransfers()
+
+
+        Task {
+
+            await FetchManager.shared
+                .restoreBackgroundDownloads()
         }
     }
-
+}
 
     // MARK: - Appearance
 
