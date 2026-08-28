@@ -2,18 +2,19 @@ import Foundation
 import AVFoundation
 import CoreMedia
 import AudioToolbox
+import UIKit
 import CLame
 
 
 enum FetchProcessingError: LocalizedError {
 
-    case unsupportedInput
     case noAudioTrack
     case cannotCreateReader
     case cannotAddReaderOutput
     case readerFailed(String)
 
     case cannotCreateMP3
+    case cannotMoveFinalMP3(String)
 
     case lameInitializationFailed
     case lameConfigurationFailed(String)
@@ -23,9 +24,6 @@ enum FetchProcessingError: LocalizedError {
     var errorDescription: String? {
 
         switch self {
-
-        case .unsupportedInput:
-            return "Dit audioformaat kan niet verwerkt worden."
 
         case .noAudioTrack:
             return "Het gedownloade bestand bevat geen audiotrack."
@@ -40,7 +38,10 @@ enum FetchProcessingError: LocalizedError {
             return "Audio decoderen is mislukt: \(message)"
 
         case .cannotCreateMP3:
-            return "Echo kon het MP3-bestand niet aanmaken."
+            return "Echo kon het tijdelijke MP3-bestand niet aanmaken."
+
+        case .cannotMoveFinalMP3(let message):
+            return "De afgewerkte MP3 kon niet naar de library worden verplaatst: \(message)"
 
         case .lameInitializationFailed:
             return "De MP3-encoder kon niet gestart worden."
@@ -54,6 +55,28 @@ enum FetchProcessingError: LocalizedError {
     }
 }
 
+
+// MARK: - Background Processing Snapshot
+
+private struct FetchMP3Snapshot: Sendable {
+
+    let sourceURL: URL
+
+    let temporaryMP3URL: URL
+
+    let bitrate: Int
+
+    let title: String
+
+    let artist: String
+
+    let album: String?
+
+    let artworkData: Data?
+}
+
+
+// MARK: - Processor
 
 @MainActor
 final class FetchAudioProcessor {
@@ -73,15 +96,18 @@ final class FetchAudioProcessor {
         quality: FetchQuality
     ) async throws -> FetchProcessedAudio {
 
-        UserDefaults.standard.set(
-            "MP3 1 - processing started",
-            forKey: "fetchLastStage"
+        Self.setStage(
+            "MP3 1 - start"
         )
 
 
         let fileManager =
             FileManager.default
 
+
+        // =========================================
+        // Final Documents destination
+        // =========================================
 
         let documents =
             fileManager.urls(
@@ -90,70 +116,168 @@ final class FetchAudioProcessor {
             )[0]
 
 
-        let fileName =
+        let finalFileName =
             safeFileName(
                 "\(item.title) - \(item.artist).mp3"
             )
 
 
-        let outputURL =
+        let finalURL =
             uniqueURL(
                 directory: documents,
-                filename: fileName
+                filename: finalFileName
             )
+
+
+        // =========================================
+        // IMPORTANT:
+        //
+        // We do NOT create the MP3 in Documents yet.
+        //
+        // Otherwise MusicLibraryManager can see and
+        // import a half-written MP3.
+        // =========================================
+
+        let temporaryDirectory =
+            fileManager
+                .temporaryDirectory
+                .appendingPathComponent(
+                    "EchoMP3Processing",
+                    isDirectory: true
+                )
+
+
+        try fileManager.createDirectory(
+            at: temporaryDirectory,
+            withIntermediateDirectories: true
+        )
+
+
+        let temporaryMP3URL =
+            temporaryDirectory
+                .appendingPathComponent(
+                    "\(UUID().uuidString).mp3"
+                )
 
 
         // =========================================
         // Artwork
         // =========================================
 
-        let artworkData: Data?
+        let originalArtworkData: Data?
 
 
         if FetchSettings.shared.embedArtwork {
 
-            artworkData =
+            originalArtworkData =
                 await downloadArtwork(
                     item.artworkURL
                 )
 
         } else {
 
-            artworkData =
+            originalArtworkData =
                 nil
         }
 
 
-        UserDefaults.standard.set(
-            "MP3 2 - artwork ready",
-            forKey: "fetchLastStage"
+        // LAME's automatic ID3 handling does not like
+        // very large embedded tags.
+        //
+        // Compress the Spotify artwork to a reasonable
+        // size before giving it to LAME.
+
+        let id3ArtworkData =
+            prepareArtworkForID3(
+                originalArtworkData
+            )
+
+
+        print(
+            "Original artwork:",
+            originalArtworkData?.count ?? 0,
+            "bytes"
+        )
+
+
+        print(
+            "ID3 artwork:",
+            id3ArtworkData?.count ?? 0,
+            "bytes"
+        )
+
+
+        Self.setStage(
+            "MP3 2 - metadata prepared"
         )
 
 
         // =========================================
-        // Decode + encode
+        // Snapshot
+        //
+        // Do NOT send FetchItem to Task.detached.
+        // FetchItem is Observable/reference state.
+        //
+        // Copy only immutable Sendable values.
+        // =========================================
+
+        let snapshot =
+            FetchMP3Snapshot(
+
+                sourceURL:
+                    sourceURL,
+
+                temporaryMP3URL:
+                    temporaryMP3URL,
+
+                bitrate:
+                    quality.rawValue,
+
+                title:
+                    item.title,
+
+                artist:
+                    item.artist,
+
+                album:
+                    item.album,
+
+                artworkData:
+                    id3ArtworkData
+            )
+
+
+        // =========================================
+        // BACKGROUND ENCODING
+        //
+        // This is the crucial difference.
+        //
+        // AVAssetReader + LAME no longer run on
+        // MainActor / main UI thread.
         // =========================================
 
         do {
 
-            try await encodeDirectlyToMP3(
-                sourceURL: sourceURL,
-                outputURL: outputURL,
-                bitrate: quality.rawValue,
-                item: item,
-                artworkData: artworkData
-            )
+            try await Task.detached(
+                priority: .utility
+            ) {
+
+                try await Self
+                    .encodeInBackground(
+                        snapshot
+                    )
+
+            }.value
 
         } catch {
 
             try? fileManager.removeItem(
-                at: outputURL
+                at: temporaryMP3URL
             )
 
 
-            UserDefaults.standard.set(
-                "MP3 FAILED - \(error.localizedDescription)",
-                forKey: "fetchLastStage"
+            Self.setStage(
+                "MP3 FAILED - \(error.localizedDescription)"
             )
 
 
@@ -161,68 +285,180 @@ final class FetchAudioProcessor {
         }
 
 
-        UserDefaults.standard.set(
-            "MP3 10 - complete",
-            forKey: "fetchLastStage"
+        Self.setStage(
+            "MP3 8 - background encoding complete"
+        )
+
+
+        // =========================================
+        // Verify temporary file
+        // =========================================
+
+        guard fileManager.fileExists(
+            atPath: temporaryMP3URL.path
+        ) else {
+
+            throw FetchProcessingError
+                .cannotCreateMP3
+        }
+
+
+        let attributes =
+            try fileManager.attributesOfItem(
+                atPath:
+                    temporaryMP3URL.path
+            )
+
+
+        let fileSize =
+            attributes[
+                .size
+            ] as? NSNumber
+
+
+        print(
+            "Finished temporary MP3:",
+            fileSize?.int64Value ?? 0,
+            "bytes"
+        )
+
+
+        // =========================================
+        // FINAL MOVE
+        //
+        // Only NOW does the MP3 appear in Documents.
+        //
+        // At this point:
+        // - decoding finished
+        // - LAME flushed
+        // - file synchronized
+        // - ID3 configured
+        // =========================================
+
+        do {
+
+            try fileManager.moveItem(
+                at:
+                    temporaryMP3URL,
+
+                to:
+                    finalURL
+            )
+
+        } catch {
+
+            try? fileManager.removeItem(
+                at:
+                    temporaryMP3URL
+            )
+
+
+            throw FetchProcessingError
+                .cannotMoveFinalMP3(
+                    error.localizedDescription
+                )
+        }
+
+
+        Self.setStage(
+            "MP3 9 - moved to Documents"
         )
 
 
         print(
             "Final MP3:",
-            outputURL.path
+            finalURL.path
         )
 
 
+        // =========================================
+        // Return the ORIGINAL artwork to Echo.
+        //
+        // Echo itself can use the full Spotify image.
+        //
+        // Only the embedded ID3 artwork was compressed.
+        // =========================================
+
         return FetchProcessedAudio(
-            fileURL: outputURL,
-            title: item.title,
-            artist: item.artist,
-            album: item.album,
-            artworkData: artworkData
+
+            fileURL:
+                finalURL,
+
+            title:
+                item.title,
+
+            artist:
+                item.artist,
+
+            album:
+                item.album,
+
+            artworkData:
+                originalArtworkData
         )
     }
 
 
-    // MARK: - Decode + Encode
+    // MARK: - Background Encoding
 
-    private func encodeDirectlyToMP3(
-        sourceURL: URL,
-        outputURL: URL,
-        bitrate: Int,
-        item: FetchItem,
-        artworkData: Data?
+    private nonisolated static func encodeInBackground(
+        _ snapshot: FetchMP3Snapshot
     ) async throws {
 
-        UserDefaults.standard.set(
-            "MP3 3 - opening source",
-            forKey: "fetchLastStage"
+        setStage(
+            "MP3 3 - background task started"
         )
 
 
         print(
-            "Opening audio source:",
-            sourceURL.path
+            "Background MP3 encoding started"
+        )
+
+
+        print(
+            "Source:",
+            snapshot.sourceURL.path
+        )
+
+
+        print(
+            "Title:",
+            snapshot.title
+        )
+
+
+        print(
+            "Artist:",
+            snapshot.artist
+        )
+
+
+        print(
+            "Album:",
+            snapshot.album ?? "nil"
         )
 
 
         // =========================================
-        // Asset
+        // Source Asset
         // =========================================
 
         let asset =
             AVURLAsset(
-                url: sourceURL
+                url:
+                    snapshot.sourceURL
             )
 
 
-        let audioTracks =
+        let tracks =
             try await asset.loadTracks(
-                withMediaType: .audio
+                withMediaType:
+                    .audio
             )
 
 
         guard let audioTrack =
-            audioTracks.first
+            tracks.first
         else {
 
             throw FetchProcessingError
@@ -230,14 +466,13 @@ final class FetchAudioProcessor {
         }
 
 
-        UserDefaults.standard.set(
-            "MP3 4 - audio track loaded",
-            forKey: "fetchLastStage"
+        setStage(
+            "MP3 4 - audio track loaded"
         )
 
 
         // =========================================
-        // Reader
+        // AVAssetReader
         // =========================================
 
         let reader: AVAssetReader
@@ -247,7 +482,8 @@ final class FetchAudioProcessor {
 
             reader =
                 try AVAssetReader(
-                    asset: asset
+                    asset:
+                        asset
                 )
 
         } catch {
@@ -257,47 +493,47 @@ final class FetchAudioProcessor {
         }
 
 
-        // =========================================
-        // PCM output
+        // Decode directly into exactly what LAME wants:
         //
-        // LAME krijgt altijd:
-        //
-        // 44100 Hz
+        // 44.1 kHz
         // stereo
-        // Int16
-        // little endian
-        // interleaved
-        // =========================================
+        // signed 16-bit
+        // interleaved PCM
 
-        let pcmSettings: [String: Any] = [
+        let pcmSettings:
+            [String: Any] = [
 
-            AVFormatIDKey:
-                kAudioFormatLinearPCM,
+                AVFormatIDKey:
+                    kAudioFormatLinearPCM,
 
-            AVSampleRateKey:
-                44_100,
+                AVSampleRateKey:
+                    44_100,
 
-            AVNumberOfChannelsKey:
-                2,
+                AVNumberOfChannelsKey:
+                    2,
 
-            AVLinearPCMBitDepthKey:
-                16,
+                AVLinearPCMBitDepthKey:
+                    16,
 
-            AVLinearPCMIsFloatKey:
-                false,
+                AVLinearPCMIsFloatKey:
+                    false,
 
-            AVLinearPCMIsBigEndianKey:
-                false,
+                AVLinearPCMIsBigEndianKey:
+                    false,
 
-            AVLinearPCMIsNonInterleaved:
-                false
-        ]
+                AVLinearPCMIsNonInterleaved:
+                    false
+            ]
 
 
         let readerOutput =
             AVAssetReaderTrackOutput(
-                track: audioTrack,
-                outputSettings: pcmSettings
+
+                track:
+                    audioTrack,
+
+                outputSettings:
+                    pcmSettings
             )
 
 
@@ -320,7 +556,7 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // LAME init
+        // LAME initialization
         // =========================================
 
         guard let lame =
@@ -342,24 +578,29 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // ID3
+        // ID3 metadata BEFORE lame_init_params
         // =========================================
 
         configureMetadata(
-            lame: lame,
-            item: item,
-            artworkData: artworkData
-        )
+            lame:
+                lame,
 
+            title:
+                snapshot.title,
 
-        UserDefaults.standard.set(
-            "MP3 5 - metadata configured",
-            forKey: "fetchLastStage"
+            artist:
+                snapshot.artist,
+
+            album:
+                snapshot.album,
+
+            artworkData:
+                snapshot.artworkData
         )
 
 
         // =========================================
-        // LAME settings
+        // LAME configuration
         // =========================================
 
         guard
@@ -393,7 +634,9 @@ final class FetchAudioProcessor {
         guard
             lame_set_brate(
                 lame,
-                Int32(bitrate)
+                Int32(
+                    snapshot.bitrate
+                )
             ) >= 0
         else {
 
@@ -433,19 +676,43 @@ final class FetchAudioProcessor {
         }
 
 
-        UserDefaults.standard.set(
-            "MP3 6 - LAME ready",
-            forKey: "fetchLastStage"
+        setStage(
+            "MP3 5 - LAME initialized"
         )
 
 
         // =========================================
-        // Create MP3
+        // Temporary output
         // =========================================
 
-        guard FileManager.default.createFile(
-            atPath: outputURL.path,
-            contents: nil
+        let manager =
+            FileManager.default
+
+
+        if manager.fileExists(
+            atPath:
+                snapshot
+                    .temporaryMP3URL
+                    .path
+        ) {
+
+            try manager.removeItem(
+                at:
+                    snapshot
+                        .temporaryMP3URL
+            )
+        }
+
+
+        guard manager.createFile(
+
+            atPath:
+                snapshot
+                    .temporaryMP3URL
+                    .path,
+
+            contents:
+                nil
         ) else {
 
             throw FetchProcessingError
@@ -455,64 +722,61 @@ final class FetchAudioProcessor {
 
         let outputFile =
             try FileHandle(
-                forWritingTo: outputURL
+                forWritingTo:
+                    snapshot
+                        .temporaryMP3URL
             )
 
 
         defer {
 
-            try? outputFile.close()
+            try? outputFile
+                .close()
         }
 
 
         // =========================================
-        // Start reader
+        // Start reading
         // =========================================
 
         guard reader.startReading() else {
 
             throw FetchProcessingError
                 .readerFailed(
+
                     reader.error?
                         .localizedDescription
+
                     ??
                     "AVAssetReader kon niet starten."
                 )
         }
 
 
-        UserDefaults.standard.set(
-            "MP3 7 - encoding audio",
-            forKey: "fetchLastStage"
+        setStage(
+            "MP3 6 - encoding"
         )
 
 
-        print(
-            "PCM decoder started"
-        )
-
-
-        // =========================================
-        // IMPORTANT:
-        //
-        // autoreleasepool per sample buffer.
-        //
-        // Anders kunnen CoreMedia/AVFoundation
-        // objects tijdens een heel lied blijven
-        // opstapelen in memory.
-        // =========================================
-
-        var processedBuffers =
+        var bufferCounter =
             0
 
 
-        while reader.status == .reading {
+        // =========================================
+        // PCM -> MP3
+        //
+        // Each AVFoundation/CoreMedia object gets
+        // its own autoreleasepool.
+        // =========================================
 
-            var loopError:
+        while reader.status ==
+            .reading {
+
+            var processingError:
                 Error?
 
 
-            let gotBuffer: Bool =
+            let receivedBuffer: Bool =
                 autoreleasepool {
 
                     guard let sampleBuffer =
@@ -528,13 +792,17 @@ final class FetchAudioProcessor {
 
                         try encodeSampleBuffer(
                             sampleBuffer,
-                            lame: lame,
-                            outputFile: outputFile
+
+                            lame:
+                                lame,
+
+                            outputFile:
+                                outputFile
                         )
 
                     } catch {
 
-                        loopError =
+                        processingError =
                             error
                     }
 
@@ -543,39 +811,36 @@ final class FetchAudioProcessor {
                 }
 
 
-            if let loopError {
+            if let processingError {
 
                 reader.cancelReading()
 
-                throw loopError
+                throw processingError
             }
 
 
-            if !gotBuffer {
+            if !receivedBuffer {
 
                 break
             }
 
 
-            processedBuffers +=
+            bufferCounter +=
                 1
 
 
-            // Niet iedere buffer naar UserDefaults schrijven.
-            // Alleen af en toe voor diagnostics.
+            if bufferCounter % 500 ==
+                0 {
 
-            if processedBuffers % 250 == 0 {
-
-                UserDefaults.standard.set(
-                    "MP3 7 - encoding \(processedBuffers)",
-                    forKey: "fetchLastStage"
+                setStage(
+                    "MP3 6 - encoding buffer \(bufferCounter)"
                 )
             }
         }
 
 
         // =========================================
-        // Reader result
+        // Reader state
         // =========================================
 
         switch reader.status {
@@ -591,8 +856,10 @@ final class FetchAudioProcessor {
 
             throw FetchProcessingError
                 .readerFailed(
+
                     reader.error?
                         .localizedDescription
+
                     ??
                     "Onbekende decoderfout."
                 )
@@ -612,9 +879,8 @@ final class FetchAudioProcessor {
         }
 
 
-        UserDefaults.standard.set(
-            "MP3 8 - flushing LAME",
-            forKey: "fetchLastStage"
+        setStage(
+            "MP3 7 - flushing"
         )
 
 
@@ -624,8 +890,11 @@ final class FetchAudioProcessor {
 
         var flushBuffer =
             [UInt8](
-                repeating: 0,
-                count: 7200
+                repeating:
+                    0,
+
+                count:
+                    7200
             )
 
 
@@ -637,7 +906,8 @@ final class FetchAudioProcessor {
 
 
                     guard let destination =
-                        buffer.baseAddress
+                        buffer
+                            .baseAddress
                     else {
 
                         return -1
@@ -645,8 +915,11 @@ final class FetchAudioProcessor {
 
 
                     return lame_encode_flush(
+
                         lame,
+
                         destination,
+
                         Int32(
                             buffer.count
                         )
@@ -654,7 +927,9 @@ final class FetchAudioProcessor {
                 }
 
 
-        guard flushed >= 0 else {
+        guard flushed >=
+            0
+        else {
 
             throw FetchProcessingError
                 .lameEncodingFailed(
@@ -663,40 +938,38 @@ final class FetchAudioProcessor {
         }
 
 
-        if flushed > 0 {
+        if flushed >
+            0 {
 
             try outputFile.write(
+
                 contentsOf:
                     Data(
                         flushBuffer[
-                            0..<Int(flushed)
+                            0..<Int(
+                                flushed
+                            )
                         ]
                     )
             )
         }
 
 
-        // Zorg dat alles echt naar disk geschreven is
-        // voordat de library het bestand ziet.
+        // Flush FileHandle buffers to disk.
 
-        try outputFile.synchronize()
-
-
-        UserDefaults.standard.set(
-            "MP3 9 - file synchronized",
-            forKey: "fetchLastStage"
-        )
+        try outputFile
+            .synchronize()
 
 
         print(
-            "LAME encoding completed"
+            "Background MP3 encoding finished"
         )
     }
 
 
-    // MARK: - Encode PCM
+    // MARK: - PCM Buffer -> LAME
 
-    private func encodeSampleBuffer(
+    private nonisolated static func encodeSampleBuffer(
         _ sampleBuffer: CMSampleBuffer,
         lame: OpaquePointer,
         outputFile: FileHandle
@@ -721,7 +994,9 @@ final class FetchAudioProcessor {
             )
 
 
-        guard sampleCount > 0 else {
+        guard sampleCount >
+            0
+        else {
 
             return
         }
@@ -735,19 +1010,29 @@ final class FetchAudioProcessor {
             UnsafeMutablePointer<Int8>?
 
 
-        let pointerStatus =
+        let result =
             CMBlockBufferGetDataPointer(
+
                 dataBuffer,
-                atOffset: 0,
-                lengthAtOffsetOut: nil,
-                totalLengthOut: &totalLength,
-                dataPointerOut: &rawPointer
+
+                atOffset:
+                    0,
+
+                lengthAtOffsetOut:
+                    nil,
+
+                totalLengthOut:
+                    &totalLength,
+
+                dataPointerOut:
+                    &rawPointer
             )
 
 
         guard
-            pointerStatus ==
+            result ==
                 kCMBlockBufferNoErr,
+
             let rawPointer
         else {
 
@@ -758,25 +1043,42 @@ final class FetchAudioProcessor {
         }
 
 
-        // =========================================
-        // 16-bit interleaved stereo:
-        //
-        // L R L R L R ...
-        // =========================================
+        let requiredBytes =
+            sampleCount
+            *
+            2
+            *
+            MemoryLayout<Int16>.size
+
+
+        guard totalLength >=
+            requiredBytes
+        else {
+
+            throw FetchProcessingError
+                .readerFailed(
+                    "PCM-buffer heeft een onverwachte grootte."
+                )
+        }
+
 
         let pcm =
             UnsafeRawPointer(
                 rawPointer
             )
             .assumingMemoryBound(
-                to: Int16.self
+                to:
+                    Int16.self
             )
 
 
         let mp3BufferSize =
             Int(
-                1.25 *
-                Double(sampleCount)
+                1.25
+                *
+                Double(
+                    sampleCount
+                )
             )
             +
             7200
@@ -784,8 +1086,11 @@ final class FetchAudioProcessor {
 
         var mp3Buffer =
             [UInt8](
-                repeating: 0,
-                count: mp3BufferSize
+                repeating:
+                    0,
+
+                count:
+                    mp3BufferSize
             )
 
 
@@ -805,18 +1110,30 @@ final class FetchAudioProcessor {
 
 
                     return lame_encode_buffer_interleaved(
+
                         lame,
+
                         UnsafeMutablePointer(
-                            mutating: pcm
+                            mutating:
+                                pcm
                         ),
-                        Int32(sampleCount),
+
+                        Int32(
+                            sampleCount
+                        ),
+
                         destination,
-                        Int32(buffer.count)
+
+                        Int32(
+                            buffer.count
+                        )
                     )
                 }
 
 
-        guard encoded >= 0 else {
+        guard encoded >=
+            0
+        else {
 
             throw FetchProcessingError
                 .lameEncodingFailed(
@@ -825,47 +1142,48 @@ final class FetchAudioProcessor {
         }
 
 
-        if encoded > 0 {
-
-            try outputFile.write(
-                contentsOf:
-                    Data(
-                        mp3Buffer[
-                            0..<Int(encoded)
-                        ]
-                    )
-            )
-        }
-    }
-
-
-    // MARK: - ID3 Metadata
-
-    private func configureMetadata(
-        lame: OpaquePointer,
-        item: FetchItem,
-        artworkData: Data?
-    ) {
-
-        let settings =
-            FetchSettings.shared
-
-
-        guard
-            settings.embedMetadata ||
-            settings.embedArtwork
+        guard encoded >
+            0
         else {
 
             return
         }
 
 
-        // Force ID3v2
+        try outputFile.write(
+
+            contentsOf:
+                Data(
+                    mp3Buffer[
+                        0..<Int(
+                            encoded
+                        )
+                    ]
+                )
+        )
+    }
+
+
+    // MARK: - ID3
+
+    private nonisolated static func configureMetadata(
+        lame: OpaquePointer,
+        title: String,
+        artist: String,
+        album: String?,
+        artworkData: Data?
+    ) {
+
+        // Reset ID3 structure.
 
         id3tag_init(
             lame
         )
 
+
+        // Force ID3v2.
+        //
+        // Album artwork requires ID3v2.
 
         id3tag_add_v2(
             lame
@@ -873,60 +1191,71 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // Spotify text metadata
+        // Title
         // =========================================
 
-        if settings.embedMetadata {
+        title.withCString {
 
-            item.title.withCString {
+            pointer in
 
-                id3tag_set_title(
+
+            id3tag_set_title(
+                lame,
+                pointer
+            )
+        }
+
+
+        // =========================================
+        // Artist
+        // =========================================
+
+        artist.withCString {
+
+            pointer in
+
+
+            id3tag_set_artist(
+                lame,
+                pointer
+            )
+        }
+
+
+        // =========================================
+        // Album
+        // =========================================
+
+        if let album,
+           !album.isEmpty {
+
+            album.withCString {
+
+                pointer in
+
+
+                id3tag_set_album(
                     lame,
-                    $0
+                    pointer
                 )
-            }
-
-
-            item.artist.withCString {
-
-                id3tag_set_artist(
-                    lame,
-                    $0
-                )
-            }
-
-
-            if let album =
-                item.album,
-               !album.isEmpty {
-
-                album.withCString {
-
-                    id3tag_set_album(
-                        lame,
-                        $0
-                    )
-                }
             }
         }
 
 
         // =========================================
-        // Spotify artwork
+        // Artwork
         // =========================================
 
-        if
-            settings.embedArtwork,
-            let artworkData,
-            !artworkData.isEmpty {
+        if let artworkData,
+           !artworkData.isEmpty {
 
             artworkData.withUnsafeBytes {
 
-                rawBuffer in
+                bytes in
 
 
-                guard let address =
-                    rawBuffer.baseAddress
+                guard let baseAddress =
+                    bytes.baseAddress
                 else {
 
                     return
@@ -934,32 +1263,64 @@ final class FetchAudioProcessor {
 
 
                 let pointer =
-                    address.assumingMemoryBound(
-                        to: CChar.self
-                    )
+                    baseAddress
+                        .assumingMemoryBound(
+                            to:
+                                CChar.self
+                        )
 
 
-                let result =
+                let artworkResult =
                     id3tag_set_albumart(
+
                         lame,
+
                         pointer,
+
                         artworkData.count
                     )
 
 
-                if result != 0 {
-
-                    print(
-                        "Album artwork tag failed:",
-                        result
-                    )
-                }
+                print(
+                    "ID3 artwork result:",
+                    artworkResult
+                )
             }
         }
+
+
+        print(
+            "ID3 configured:"
+        )
+
+
+        print(
+            "Title:",
+            title
+        )
+
+
+        print(
+            "Artist:",
+            artist
+        )
+
+
+        print(
+            "Album:",
+            album ?? "nil"
+        )
+
+
+        print(
+            "Artwork:",
+            artworkData?.count ?? 0,
+            "bytes"
+        )
     }
 
 
-    // MARK: - Artwork
+    // MARK: - Download Artwork
 
     private func downloadArtwork(
         _ url: URL?
@@ -973,16 +1334,24 @@ final class FetchAudioProcessor {
 
         do {
 
-            let (data, response) =
-                try await URLSession.shared.data(
-                    from: url
-                )
+            let (
+                data,
+                response
+            ) =
+                try await
+                URLSession.shared
+                    .data(
+                        from:
+                            url
+                    )
 
 
             guard
                 let http =
-                    response as?
-                    HTTPURLResponse,
+                    response
+                        as?
+                        HTTPURLResponse,
+
                 200..<300 ~=
                     http.statusCode
             else {
@@ -1006,6 +1375,189 @@ final class FetchAudioProcessor {
     }
 
 
+    // MARK: - Prepare Artwork For ID3
+
+    private func prepareArtworkForID3(
+        _ data: Data?
+    ) -> Data? {
+
+        guard let data,
+              !data.isEmpty
+        else {
+
+            return nil
+        }
+
+
+        // Already small enough.
+
+        if data.count <=
+            24_000 {
+
+            return data
+        }
+
+
+        guard let originalImage =
+            UIImage(
+                data:
+                    data
+            )
+        else {
+
+            return nil
+        }
+
+
+        // Try progressively smaller covers.
+
+        let sizes:
+            [CGFloat] = [
+
+                300,
+                240,
+                200,
+                160
+            ]
+
+
+        let qualities:
+            [CGFloat] = [
+
+                0.75,
+                0.60,
+                0.50,
+                0.40,
+                0.30
+            ]
+
+
+        for size in sizes {
+
+            let scaledImage =
+                resizeArtwork(
+
+                    originalImage,
+
+                    maxDimension:
+                        size
+                )
+
+
+            for quality in qualities {
+
+                guard let jpeg =
+                    scaledImage
+                        .jpegData(
+                            compressionQuality:
+                                quality
+                        )
+                else {
+
+                    continue
+                }
+
+
+                if jpeg.count <=
+                    24_000 {
+
+                    return jpeg
+                }
+            }
+        }
+
+
+        // If the cover still cannot fit safely,
+        // preserve title/artist/album instead of
+        // risking the whole ID3 tag.
+
+        print(
+            "Artwork too large for safe LAME ID3 embedding; skipping embedded cover."
+        )
+
+
+        return nil
+    }
+
+
+    // MARK: - Resize Artwork
+
+    private func resizeArtwork(
+        _ image: UIImage,
+        maxDimension: CGFloat
+    ) -> UIImage {
+
+        let width =
+            image.size.width
+
+
+        let height =
+            image.size.height
+
+
+        let largest =
+            max(
+                width,
+                height
+            )
+
+
+        guard largest >
+            maxDimension
+        else {
+
+            return image
+        }
+
+
+        let scale =
+            maxDimension
+            /
+            largest
+
+
+        let newSize =
+            CGSize(
+
+                width:
+                    width
+                    *
+                    scale,
+
+                height:
+                    height
+                    *
+                    scale
+            )
+
+
+        let renderer =
+            UIGraphicsImageRenderer(
+                size:
+                    newSize
+            )
+
+
+        return renderer.image {
+
+            _ in
+
+
+            image.draw(
+
+                in:
+                    CGRect(
+                        origin:
+                            .zero,
+
+                        size:
+                            newSize
+                    )
+            )
+        }
+    }
+
+
     // MARK: - Filename
 
     private func safeFileName(
@@ -1021,10 +1573,12 @@ final class FetchAudioProcessor {
 
         return string
             .components(
-                separatedBy: illegal
+                separatedBy:
+                    illegal
             )
             .joined(
-                separator: ""
+                separator:
+                    ""
             )
             .trimmingCharacters(
                 in:
@@ -1032,6 +1586,8 @@ final class FetchAudioProcessor {
             )
     }
 
+
+    // MARK: - Unique URL
 
     private func uniqueURL(
         directory: URL,
@@ -1049,9 +1605,11 @@ final class FetchAudioProcessor {
                 )
 
 
-        if !manager.fileExists(
-            atPath: original.path
-        ) {
+        guard manager.fileExists(
+            atPath:
+                original.path
+        )
+        else {
 
             return original
         }
@@ -1064,7 +1622,8 @@ final class FetchAudioProcessor {
 
 
         let ext =
-            original.pathExtension
+            original
+                .pathExtension
 
 
         var index =
@@ -1081,14 +1640,35 @@ final class FetchAudioProcessor {
 
 
             if !manager.fileExists(
-                atPath: candidate.path
+                atPath:
+                    candidate.path
             ) {
 
                 return candidate
             }
 
 
-            index += 1
+            index +=
+                1
         }
+    }
+
+
+    // MARK: - Diagnostic Stage
+
+    private nonisolated static func setStage(
+        _ stage: String
+    ) {
+
+        UserDefaults.standard
+            .set(
+                stage,
+                forKey:
+                    "fetchLastStage"
+            )
+
+
+        UserDefaults.standard
+            .synchronize()
     }
 }
