@@ -1072,16 +1072,22 @@ final class FetchAudioProcessor {
             )
 
 
-        let mp3BufferSize =
-            Int(
-                1.25
-                *
-                Double(
-                    sampleCount
-                )
-            )
-            +
-            7200
+        let calculatedMP3BufferSize =
+    Int(
+        1.25 *
+        Double(sampleCount)
+    )
+    +
+    7200
+
+
+
+
+let mp3BufferSize =
+    max(
+        calculatedMP3BufferSize,
+        128 * 1024
+    )
 
 
         var mp3Buffer =
