@@ -1,28 +1,21 @@
 #ifndef CLAME_H
 #define CLAME_H
 
-
 #include <stddef.h>
 #include <stdint.h>
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-// ================================================
-// LAME opaque encoder
-// ================================================
+// MARK: - LAME opaque encoder
 
 typedef struct lame_global_struct lame_global_flags;
-
 typedef lame_global_flags *lame_t;
 
 
-// ================================================
-// Encoder lifecycle
-// ================================================
+// MARK: - Encoder lifecycle
 
 lame_t lame_init(void);
 
@@ -31,9 +24,7 @@ int lame_close(
 );
 
 
-// ================================================
-// Encoder configuration
-// ================================================
+// MARK: - Encoder configuration
 
 int lame_set_in_samplerate(
     lame_t gfp,
@@ -60,9 +51,7 @@ int lame_init_params(
 );
 
 
-// ================================================
-// Encoding
-// ================================================
+// MARK: - Encoding
 
 int lame_encode_buffer_interleaved(
     lame_t gfp,
@@ -72,7 +61,6 @@ int lame_encode_buffer_interleaved(
     int mp3buf_size
 );
 
-
 int lame_encode_flush(
     lame_t gfp,
     unsigned char *mp3buf,
@@ -80,37 +68,30 @@ int lame_encode_flush(
 );
 
 
-// ================================================
-// ID3 metadata
-// ================================================
+// MARK: - ID3 metadata
 
 void id3tag_init(
     lame_t gfp
 );
 
-
 void id3tag_add_v2(
     lame_t gfp
 );
-
 
 void id3tag_set_title(
     lame_t gfp,
     const char *title
 );
 
-
 void id3tag_set_artist(
     lame_t gfp,
     const char *artist
 );
 
-
 void id3tag_set_album(
     lame_t gfp,
     const char *album
 );
-
 
 int id3tag_set_albumart(
     lame_t gfp,
@@ -122,6 +103,5 @@ int id3tag_set_albumart(
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif
