@@ -19,7 +19,7 @@ struct ContentView: View {
                     )
                 }
             
-   /*         PlaylistsView()
+            PlaylistsView()
                 .tabItem {
                     Label(
                         LocalizedStringKey("tab_playlists"),
@@ -27,15 +27,16 @@ struct ContentView: View {
                     )
                 }
 
-            */
+            
 
-            YTDLPTestView()
+   /*         YTDLPTestView()
     .tabItem {
         Label(
             "yt-dlp",
             systemImage: "arrow.down.circle"
         )
     }
+            */
 
             FetchView()
                .tabItem {
