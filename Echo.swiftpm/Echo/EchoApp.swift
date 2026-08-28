@@ -3,6 +3,11 @@ import SwiftUI
 @main
 struct EchoApp: App {
 
+    @UIApplicationDelegateAdaptor(
+    EchoAppDelegate.self
+    )
+    private var appDelegate
+
     @AppStorage("selectedLanguage")
     private var selectedLanguage: String = "en"
 
