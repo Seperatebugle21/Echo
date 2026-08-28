@@ -27,6 +27,12 @@ struct FetchView: View {
     @State private var apifyUsageError:
         String?
 
+    @State private var fetchNavigationID =
+    UUID()
+
+    @State private var showDownloadsFromTrack =
+    false
+
 
     var body: some View {
 
@@ -126,6 +132,83 @@ struct FetchView: View {
                 }
             }
         }
+        .id(
+
+    fetchNavigationID
+
+)
+
+.onReceive(
+
+    NotificationCenter.default.publisher(
+
+        for:
+
+            .echoOpenFetchDownloads
+
+    )
+
+) { _ in
+
+    // Destroy the current Spotify
+
+    // navigation path and return Fetch to root.
+
+    fetchNavigationID =
+
+        UUID()
+
+    // Then open Downloads over Fetch root.
+
+    DispatchQueue.main.async {
+
+        showDownloadsFromTrack =
+
+            true
+
+    }
+
+}
+
+.sheet(
+
+    isPresented:
+
+        $showDownloadsFromTrack
+
+) {
+
+    NavigationStack {
+
+        FetchQueueView()
+
+            .toolbar {
+
+                ToolbarItem(
+
+                    placement:
+
+                        .topBarTrailing
+
+                ) {
+
+                    Button(
+
+                        "Done"
+
+                    ) {
+
+                        showDownloadsFromTrack =
+
+                            false
+
+                    }
+
+                }
+
+            }
+
+    }
     }
 
 
