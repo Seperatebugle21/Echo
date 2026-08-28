@@ -1,16 +1,188 @@
 import Foundation
 
 
+// MARK: - Download Delegate
+
+private final class FetchURLSessionDownloadDelegate:
+    NSObject,
+    URLSessionDownloadDelegate {
+
+    var progressHandler:
+        (@Sendable (Double) -> Void)?
+
+    var continuation:
+        CheckedContinuation<
+            (URL, URLResponse),
+            Error
+        >?
+
+    private var downloadedURL:
+        URL?
+
+    private var response:
+        URLResponse?
+
+
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didWriteData bytesWritten: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ) {
+
+        guard totalBytesExpectedToWrite >
+                0
+        else {
+            return
+        }
+
+
+        let progress =
+            Double(
+                totalBytesWritten
+            )
+            /
+            Double(
+                totalBytesExpectedToWrite
+            )
+
+
+        progressHandler?(
+            min(
+                max(progress, 0),
+                1
+            )
+        )
+    }
+
+
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didFinishDownloadingTo location: URL
+    ) {
+
+        do {
+
+            // URLSession's supplied location is temporary.
+            // Copy it somewhere we control before the delegate
+            // method finishes.
+
+            let temporary =
+                FileManager.default
+                    .temporaryDirectory
+                    .appendingPathComponent(
+                        "\(UUID().uuidString).download"
+                    )
+
+
+            if FileManager.default
+                .fileExists(
+                    atPath:
+                        temporary.path
+                ) {
+
+                try FileManager.default
+                    .removeItem(
+                        at:
+                            temporary
+                    )
+            }
+
+
+            try FileManager.default
+                .copyItem(
+                    at:
+                        location,
+                    to:
+                        temporary
+                )
+
+
+            downloadedURL =
+                temporary
+
+            response =
+                downloadTask.response
+
+        } catch {
+
+            continuation?
+                .resume(
+                    throwing:
+                        error
+                )
+
+            continuation =
+                nil
+        }
+    }
+
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didCompleteWithError error: Error?
+    ) {
+
+        guard let continuation else {
+            return
+        }
+
+
+        self.continuation =
+            nil
+
+
+        if let error {
+
+            continuation.resume(
+                throwing:
+                    error
+            )
+
+            return
+        }
+
+
+        guard
+            let downloadedURL,
+            let response
+        else {
+
+            continuation.resume(
+                throwing:
+                    FetchAudioSourceError
+                        .invalidResponse
+            )
+
+            return
+        }
+
+
+        continuation.resume(
+            returning:
+                (
+                    downloadedURL,
+                    response
+                )
+        )
+    }
+}
+
+
+// MARK: - Download Engine
+
 @MainActor
 final class FetchDownloadEngine {
 
     static let shared =
         FetchDownloadEngine()
 
+
     private init() {}
 
-
-    // MARK: - Download
 
     func download(
         item: FetchItem,
@@ -29,15 +201,52 @@ final class FetchDownloadEngine {
 
 
         request.timeoutInterval =
-            120
+            180
 
 
-        // Googlevideo URLs kunnen tijdelijk zijn.
-        // Daarom downloaden we ze onmiddellijk.
+        let delegate =
+            FetchURLSessionDownloadDelegate()
 
-        await progress(
-            0.05
-        )
+
+        delegate.progressHandler = {
+            value in
+
+            Task {
+                @MainActor in
+
+                progress(
+                    value
+                )
+            }
+        }
+
+
+        let configuration =
+            URLSessionConfiguration
+                .default
+
+
+        configuration.timeoutIntervalForRequest =
+            180
+
+        configuration.timeoutIntervalForResource =
+            600
+
+
+        let session =
+            URLSession(
+                configuration:
+                    configuration,
+                delegate:
+                    delegate,
+                delegateQueue:
+                    nil
+            )
+
+
+        defer {
+            session.finishTasksAndInvalidate()
+        }
 
 
         let (
@@ -45,64 +254,92 @@ final class FetchDownloadEngine {
             response
         ) =
             try await
-            URLSession.shared.download(
-                for:
-                    request
-            )
+            withCheckedThrowingContinuation {
+                continuation in
+
+
+                delegate.continuation =
+                    continuation
+
+
+                let task =
+                    session.downloadTask(
+                        with:
+                            request
+                    )
+
+
+                task.resume()
+            }
 
 
         guard let httpResponse =
-            response as? HTTPURLResponse
+            response
+                as?
+                HTTPURLResponse
         else {
+
+            try? FileManager.default
+                .removeItem(
+                    at:
+                        temporaryURL
+                )
 
             throw FetchAudioSourceError
                 .invalidResponse
         }
 
 
-        guard
-            200..<300 ~=
-            httpResponse.statusCode
-        else {
-
-            print(
-                "Download HTTP error:",
+        guard 200..<300 ~=
                 httpResponse.statusCode
-            )
+        else {
+
+            try? FileManager.default
+                .removeItem(
+                    at:
+                        temporaryURL
+                )
+
 
             throw FetchAudioSourceError
                 .invalidResponse
         }
-
-
-        await progress(
-            0.8
-        )
 
 
         let fileManager =
             FileManager.default
 
 
-        let documents =
-            fileManager.urls(
-                for:
-                    .documentDirectory,
+        // Source files are temporary processing files.
+        // Don't put them in Documents, otherwise the
+        // library can discover them.
 
-                in:
-                    .userDomainMask
-            )[0]
+        let temporaryDirectory =
+            fileManager
+                .temporaryDirectory
+                .appendingPathComponent(
+                    "EchoFetchSources",
+                    isDirectory:
+                        true
+                )
+
+
+        try fileManager
+            .createDirectory(
+                at:
+                    temporaryDirectory,
+                withIntermediateDirectories:
+                    true
+            )
 
 
         let fileName =
             makeFileName(
                 item:
                     item,
-
                 suggested:
                     result
                         .suggestedFileName,
-
                 response:
                     httpResponse
             )
@@ -111,30 +348,29 @@ final class FetchDownloadEngine {
         let destination =
             uniqueDestination(
                 directory:
-                    documents,
-
+                    temporaryDirectory,
                 fileName:
                     fileName
             )
 
 
+        try fileManager
+            .moveItem(
+                at:
+                    temporaryURL,
+                to:
+                    destination
+            )
+
+
+        progress(
+            1
+        )
+
+
         print(
-            "Moving downloaded source to:",
+            "Downloaded source:",
             destination.path
-        )
-
-
-        try fileManager.moveItem(
-            at:
-                temporaryURL,
-
-            to:
-                destination
-        )
-
-
-        await progress(
-            1.0
         )
 
 
@@ -149,10 +385,6 @@ final class FetchDownloadEngine {
         suggested: String?,
         response: HTTPURLResponse
     ) -> String {
-
-        // =========================================
-        // 1. Use source-provided filename
-        // =========================================
 
         if let suggested {
 
@@ -172,9 +404,6 @@ final class FetchDownloadEngine {
                     )
 
 
-                // Als er al een echte extensie is:
-                // gewoon behouden.
-
                 if !URL(
                     fileURLWithPath:
                         sanitized
@@ -185,9 +414,6 @@ final class FetchDownloadEngine {
                     return sanitized
                 }
 
-
-                // Geen extensie?
-                // Probeer Content-Type.
 
                 if let ext =
                     extensionFromResponse(
@@ -204,10 +430,6 @@ final class FetchDownloadEngine {
             }
         }
 
-
-        // =========================================
-        // 2. Fallback
-        // =========================================
 
         let base =
             sanitize(
@@ -230,7 +452,7 @@ final class FetchDownloadEngine {
     }
 
 
-    // MARK: - Content Type
+    // MARK: - MIME
 
     private func extensionFromResponse(
         _ response: HTTPURLResponse
@@ -247,31 +469,44 @@ final class FetchDownloadEngine {
 
         switch mime {
 
-        case "audio/webm":
+        case "audio/webm",
+             "video/webm":
+
             return "webm"
 
-        case "video/webm":
-            return "webm"
 
         case "audio/mp4":
+
             return "m4a"
 
+
         case "video/mp4":
+
             return "mp4"
 
+
         case "audio/mpeg":
+
             return "mp3"
 
+
         case "audio/ogg":
+
             return "ogg"
 
+
         case "audio/opus":
+
             return "opus"
 
+
         case "audio/aac":
+
             return "aac"
 
+
         default:
+
             return nil
         }
     }
@@ -296,7 +531,8 @@ final class FetchDownloadEngine {
                     illegal
             )
             .joined(
-                separator: ""
+                separator:
+                    ""
             )
             .trimmingCharacters(
                 in:
@@ -305,14 +541,12 @@ final class FetchDownloadEngine {
     }
 
 
-    // MARK: - Unique destination
-
     private func uniqueDestination(
         directory: URL,
         fileName: String
     ) -> URL {
 
-        let fileManager =
+        let manager =
             FileManager.default
 
 
@@ -323,18 +557,16 @@ final class FetchDownloadEngine {
                 )
 
 
-        guard
-            fileManager.fileExists(
-                atPath:
-                    original.path
-            )
-        else {
+        if !manager.fileExists(
+            atPath:
+                original.path
+        ) {
 
             return original
         }
 
 
-        let url =
+        let fileURL =
             URL(
                 fileURLWithPath:
                     fileName
@@ -342,13 +574,13 @@ final class FetchDownloadEngine {
 
 
         let name =
-            url
+            fileURL
                 .deletingPathExtension()
                 .lastPathComponent
 
 
         let ext =
-            url
+            fileURL
                 .pathExtension
 
 
@@ -358,20 +590,12 @@ final class FetchDownloadEngine {
 
         while true {
 
-            let candidateName:
-                String
-
-
-            if ext.isEmpty {
-
-                candidateName =
-                    "\(name) \(number)"
-
-            } else {
-
-                candidateName =
-                    "\(name) \(number).\(ext)"
-            }
+            let candidateName =
+                ext.isEmpty
+                ?
+                "\(name) \(number)"
+                :
+                "\(name) \(number).\(ext)"
 
 
             let candidate =
@@ -381,7 +605,7 @@ final class FetchDownloadEngine {
                     )
 
 
-            if !fileManager.fileExists(
+            if !manager.fileExists(
                 atPath:
                     candidate.path
             ) {
@@ -390,7 +614,8 @@ final class FetchDownloadEngine {
             }
 
 
-            number += 1
+            number +=
+                1
         }
     }
 }
