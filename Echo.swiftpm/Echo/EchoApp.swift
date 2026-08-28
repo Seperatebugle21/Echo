@@ -1,29 +1,38 @@
 import SwiftUI
 
+
 @main
 struct EchoApp: App {
 
     @UIApplicationDelegateAdaptor(
-    EchoAppDelegate.self
+        EchoAppDelegate.self
     )
     private var appDelegate
 
-    @AppStorage("selectedLanguage")
-    private var selectedLanguage: String = "en"
 
-    @AppStorage("appearanceMode")
-    private var appearanceMode = "system"
+    @AppStorage(
+        "selectedLanguage"
+    )
+    private var selectedLanguage:
+        String = "en"
 
-    @Environment(\.scenePhase)
+
+    @AppStorage(
+        "appearanceMode"
+    )
+    private var appearanceMode =
+        "system"
+
+
+    @Environment(
+        \.scenePhase
+    )
     private var scenePhase
 
 
-    // BELANGRIJK:
-    // FetchManager gebruikt MusicLibraryManager.shared.
-    // De UI moet exact dezelfde instance gebruiken.
-
     @State private var library =
         MusicLibraryManager.shared
+
 
     @State private var audioPlayer =
         AudioPlayerManager.shared
@@ -34,6 +43,8 @@ struct EchoApp: App {
         WindowGroup {
 
             ContentView()
+
+                // MARK: - Language
 
                 .environment(
                     \.locale,
@@ -47,6 +58,9 @@ struct EchoApp: App {
                     selectedLanguage
                 )
 
+
+                // MARK: - Shared Managers
+
                 .environment(
                     library
                 )
@@ -55,9 +69,25 @@ struct EchoApp: App {
                     audioPlayer
                 )
 
+
+                // MARK: - Appearance
+
                 .preferredColorScheme(
                     colorScheme
                 )
+
+
+                // MARK: - Prepare Background Fetch
+
+                .task {
+
+                    FetchDownloadEngine.shared
+                        .prepare()
+
+
+                    await FetchManager.shared
+                        .restoreBackgroundDownloads()
+                }
 
 
                 // MARK: - Spotify Callback
@@ -68,7 +98,8 @@ struct EchoApp: App {
 
                         await SpotifyManager.shared
                             .handleCallback(
-                                url: url
+                                url:
+                                    url
                             )
                     }
                 }
@@ -85,12 +116,6 @@ struct EchoApp: App {
                         )
                 ) { _ in
 
-                    // Normaal staat het nummer al direct
-                    // in MusicLibraryManager.shared.
-                    //
-                    // De sync blijft als extra safeguard
-                    // voor bestanden in Documents.
-
                     library
                         .syncDocumentsFolder()
                 }
@@ -99,39 +124,45 @@ struct EchoApp: App {
 
         // MARK: - Scene Phase
 
-      .onChange(
-    of:
-        scenePhase
-) { _, newPhase in
+        .onChange(
+            of:
+                scenePhase
+        ) { _, newPhase in
 
-    if newPhase ==
-        .active {
+            if newPhase ==
+                .active {
 
-        library
-            .syncDocumentsFolder()
+                // Refresh files that may have been
+                // completed in the background.
 
-
-        // Een background download kan klaar zijn
-        // terwijl de telefoon gelockt was.
-        //
-        // Nu mag de normale Fetch pipeline
-        // verdergaan naar LAME.
-
-        FetchDownloadEngine.shared
-            .resumeLiveCompletedTransfers()
+                library
+                    .syncDocumentsFolder()
 
 
-        Task {
+                // If a background URLSession transfer
+                // finished while Echo was suspended,
+                // resume the existing async pipeline.
 
-            await FetchManager.shared
-                .restoreBackgroundDownloads()
+                FetchDownloadEngine.shared
+                    .resumeLiveCompletedTransfers()
+
+
+                // Also recover transfers after a full
+                // app relaunch.
+
+                Task {
+
+                    await FetchManager.shared
+                        .restoreBackgroundDownloads()
+                }
+            }
         }
     }
-}
+
 
     // MARK: - Appearance
 
-    var colorScheme:
+    private var colorScheme:
         ColorScheme? {
 
         switch appearanceMode {
