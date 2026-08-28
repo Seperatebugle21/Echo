@@ -8,37 +8,81 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
+
     name: "Echo",
+
     defaultLocalization: "en",
 
+
+    // MARK: - Platforms
+
     platforms: [
+
         .iOS("26.0")
     ],
 
-    products: [
-        .iOSApplication(
-            name: "Echo",
-            targets: ["AppModule"],
-            bundleIdentifier: "com.echomusic.app",
-            displayVersion: "1.0",
-            bundleVersion: "1",
 
-            appIcon: .asset("AppIcon"),
-            accentColor: .presetColor(.red),
+    // MARK: - Products
+
+    products: [
+
+        .iOSApplication(
+
+            name: "Echo",
+
+            targets: [
+                "AppModule"
+            ],
+
+            bundleIdentifier:
+                "com.echomusic.app",
+
+            displayVersion:
+                "1.0",
+
+            bundleVersion:
+                "1",
+
+
+            // MARK: App appearance
+
+            appIcon:
+                .asset(
+                    "AppIcon"
+                ),
+
+            accentColor:
+                .presetColor(
+                    .red
+                ),
+
+
+            // MARK: Devices
 
             supportedDeviceFamilies: [
+
                 .pad,
                 .phone
             ],
 
+
+            // MARK: Orientations
+
             supportedInterfaceOrientations: [
+
                 .portrait,
+
                 .portraitUpsideDown(
                     .when(
-                        deviceFamilies: [.pad]
+                        deviceFamilies: [
+                            .pad
+                        ]
                     )
                 )
             ],
+
+
+            // MARK: Capabilities
 
             capabilities: [
 
@@ -55,41 +99,108 @@ let package = Package(
         )
     ],
 
-    dependencies: [
-    .package(
-        url: "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
-        branch: "main"
-    ),
 
-    .package(
-        url: "https://github.com/pvieito/PythonKit.git",
-        from: "0.3.1"
-    )
-],
+    // MARK: - Dependencies
+
+    dependencies: [
+
+        // ---------------------------------------------------------
+        // Our fork of YoutubeDL-iOS
+        // ---------------------------------------------------------
+
+        .package(
+            url:
+                "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
+
+            branch:
+                "main"
+        ),
+
+
+        // ---------------------------------------------------------
+        // PythonKit
+        //
+        // Echo needs direct access because YTDLPRunner converts
+        // Python yt-dlp results to native Swift values.
+        // ---------------------------------------------------------
+
+        .package(
+            url:
+                "https://github.com/pvieito/PythonKit.git",
+
+            from:
+                "0.3.1"
+        )
+    ],
+
+
+    // MARK: - Targets
 
     targets: [
 
         .executableTarget(
-            name: "AppModule",
+
+            name:
+                "AppModule",
+
+
+            // MARK: Dependencies
 
             dependencies: [
-    .product(
-        name: "YoutubeDL",
-        package: "YoutubeDL-iOS"
-    ),
 
-    .product(
-        name: "PythonKit",
-        package: "PythonKit"
-    )
-],
+                .product(
+                    name:
+                        "YoutubeDL",
 
-            path: ".",
+                    package:
+                        "YoutubeDL-iOS"
+                ),
+
+                .product(
+                    name:
+                        "PythonKit",
+
+                    package:
+                        "PythonKit"
+                )
+            ],
+
+
+            // Swift Playgrounds application source root
+
+            path:
+                ".",
+
+
+            // MARK: Swift compiler settings
 
             swiftSettings: [
 
+                // Existing Echo setting
+
                 .enableUpcomingFeature(
                     "BareSlashRegexLiterals"
+                ),
+
+
+                // -------------------------------------------------
+                // IMPORTANT FOR PYTHON / PYTHONKIT
+                //
+                // FreeTube explicitly disables Swift optimization
+                // for its Release application target.
+                //
+                // Echo is archived as Release by GitHub Actions,
+                // so force -Onone here as well.
+                // -------------------------------------------------
+
+                .unsafeFlags(
+                    [
+                        "-Onone"
+                    ],
+                    .when(
+                        configuration:
+                            .release
+                    )
                 )
             ]
         )
