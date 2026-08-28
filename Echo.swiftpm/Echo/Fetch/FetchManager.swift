@@ -16,8 +16,52 @@ final class FetchManager {
     private var running =
         false
 
+    private var restoredBackgroundIDs:
+    Set<UUID> = []
 
-    private init() {}
+    private var backgroundRecoveryRunning =
+        false
+
+
+private init() {
+
+    FetchDownloadEngine.shared
+        .progressObserver = {
+            [weak self]
+            id,
+            progress in
+
+
+            Task {
+                @MainActor in
+
+                self?
+                    .updateRestoredBackgroundProgress(
+                        id:
+                            id,
+                        progress:
+                            progress
+                    )
+            }
+        }
+
+
+    FetchDownloadEngine.shared
+        .completionObserver = {
+            [weak self]
+            record in
+
+
+            Task {
+                @MainActor in
+
+                self?
+                    .backgroundTransferFinished(
+                        record
+                    )
+            }
+        }
+}
 
 
     // MARK: - Spotify URL
@@ -587,11 +631,10 @@ final class FetchManager {
             if downloadedFile !=
                 processedAudio.fileURL {
 
-                try? FileManager.default
-                    .removeItem(
-                        at:
-                            downloadedFile
-                    )
+              FetchDownloadEngine.shared
+    .markSourceConsumed(
+        downloadedFile
+    )
             }
 
 
@@ -715,4 +758,453 @@ final class FetchManager {
             return "Spotify Playlist"
         }
     }
+
+    // MARK: - Background Recovery
+
+func restoreBackgroundDownloads()
+    async {
+
+    guard !backgroundRecoveryRunning else {
+        return
+    }
+
+
+    backgroundRecoveryRunning =
+        true
+
+
+    defer {
+
+        backgroundRecoveryRunning =
+            false
+    }
+
+
+    let records =
+        FetchDownloadEngine.shared
+            .recoveryRecords()
+
+
+    for record in records {
+
+        if restoredBackgroundIDs
+            .contains(
+                record.id
+            ) {
+
+            continue
+        }
+
+
+        guard let item =
+            makeRecoveredItem(
+                from:
+                    record
+            )
+        else {
+
+            continue
+        }
+
+
+        restoredBackgroundIDs.insert(
+            record.id
+        )
+
+
+        items.append(
+            item
+        )
+
+
+        if let error =
+            record.errorMessage {
+
+            item.status =
+                .failed(
+                    error
+                )
+
+            continue
+        }
+
+
+        if
+            record.completed,
+            let path =
+                record.localFilePath {
+
+            let source =
+                URL(
+                    fileURLWithPath:
+                        path
+                )
+
+
+            guard FileManager.default
+                .fileExists(
+                    atPath:
+                        source.path
+                )
+            else {
+
+                item.status =
+                    .failed(
+                        "Downloaded source file is missing."
+                    )
+
+                continue
+            }
+
+
+            item.status =
+                .processing(
+                    0.60
+                )
+
+
+            await processRecoveredSource(
+                source,
+                item:
+                    item,
+                recordID:
+                    record.id
+            )
+
+        } else {
+
+            // Transfer still exists in iOS'
+            // background download service.
+
+            item.status =
+                .downloading(
+                    0.10
+                )
+        }
+    }
+}
+
+
+private func updateRestoredBackgroundProgress(
+    id: UUID,
+    progress: Double
+) {
+
+    guard
+        let record =
+            FetchDownloadEngine.shared
+                .recoveryRecords()
+                .first(
+                    where: {
+
+                        $0.id ==
+                            id
+                    }
+                )
+    else {
+
+        return
+    }
+
+
+    guard
+        let item =
+            findRecoveredItem(
+                record:
+                    record
+            )
+    else {
+
+        return
+    }
+
+
+    let overall =
+        0.10
+        +
+        (
+            progress
+            *
+            0.50
+        )
+
+
+    item.status =
+        .downloading(
+            overall
+        )
+}
+
+
+private func backgroundTransferFinished(
+    _ record: BackgroundFetchRecord
+) {
+
+    guard UIApplication.shared
+        .applicationState ==
+        .active
+    else {
+
+        return
+    }
+
+
+    guard
+        let path =
+            record.localFilePath
+    else {
+
+        return
+    }
+
+
+    let source =
+        URL(
+            fileURLWithPath:
+                path
+        )
+
+
+    let item:
+
+        FetchItem
+
+
+    if let existing =
+        findRecoveredItem(
+            record:
+                record
+        ) {
+
+        item =
+            existing
+
+    } else {
+
+        guard let created =
+            makeRecoveredItem(
+                from:
+                    record
+            )
+        else {
+
+            return
+        }
+
+
+        restoredBackgroundIDs.insert(
+            record.id
+        )
+
+
+        items.append(
+            created
+        )
+
+
+        item =
+            created
+    }
+
+
+    item.status =
+        .processing(
+            0.60
+        )
+
+
+    Task {
+
+        await processRecoveredSource(
+            source,
+            item:
+                item,
+            recordID:
+                record.id
+        )
+    }
+}
+
+
+private func processRecoveredSource(
+    _ sourceURL: URL,
+    item: FetchItem,
+    recordID: UUID
+) async {
+
+    do {
+
+        let processed =
+            try await
+            FetchAudioProcessor.shared
+                .process(
+                    sourceURL:
+                        sourceURL,
+                    item:
+                        item,
+                    quality:
+                        FetchSettings.shared
+                            .quality
+                ) {
+                    progress in
+
+
+                    item.status =
+                        .processing(
+                            0.60
+                            +
+                            (
+                                progress
+                                *
+                                0.35
+                            )
+                        )
+                }
+
+
+        item.status =
+            .processing(
+                0.96
+            )
+
+
+        MusicLibraryManager.shared
+            .addProcessedFetch(
+                fileURL:
+                    processed.fileURL,
+                title:
+                    processed.title,
+                artist:
+                    processed.artist,
+                album:
+                    processed.album,
+                coverData:
+                    processed.artworkData
+            )
+
+
+        item.status =
+            .processing(
+                0.99
+            )
+
+
+        FetchDownloadEngine.shared
+            .markRecordConsumed(
+                id:
+                    recordID
+            )
+
+
+        item.status =
+            .completed
+
+
+        NotificationCenter.default
+            .post(
+                name:
+                    .echoFetchCompleted,
+                object:
+                    nil
+            )
+
+
+    } catch {
+
+        item.status =
+            .failed(
+                error.localizedDescription
+            )
+    }
+}
+
+
+private func makeRecoveredItem(
+    from record: BackgroundFetchRecord
+) -> FetchItem? {
+
+    guard let spotifyURL =
+        URL(
+            string:
+                record.spotifyURL
+        )
+    else {
+
+        return nil
+    }
+
+
+    let artworkURL:
+        URL?
+
+
+    if let string =
+        record.artworkURL {
+
+        artworkURL =
+            URL(
+                string:
+                    string
+            )
+
+    } else {
+
+        artworkURL =
+            nil
+    }
+
+
+    let youtubeURL:
+        URL?
+
+
+    if let string =
+        record.youtubeURL {
+
+        youtubeURL =
+            URL(
+                string:
+                    string
+            )
+
+    } else {
+
+        youtubeURL =
+            nil
+    }
+
+
+    return FetchItem(
+        spotifyURL:
+            spotifyURL,
+        title:
+            record.title,
+        artist:
+            record.artist,
+        album:
+            record.album,
+        artworkURL:
+            artworkURL,
+        youtubeURL:
+            youtubeURL,
+        permissionConfirmed:
+            record.permissionConfirmed
+    )
+}
+
+
+private func findRecoveredItem(
+    record: BackgroundFetchRecord
+) -> FetchItem? {
+
+    items.first {
+
+        $0.spotifyURL.absoluteString ==
+            record.spotifyURL
+        &&
+        $0.title ==
+            record.title
+    }
+}
+    
 }
