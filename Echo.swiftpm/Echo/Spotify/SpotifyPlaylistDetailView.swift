@@ -11,6 +11,9 @@ struct SpotifyPlaylistDetailView: View {
 
     @State private var searchText = ""
 
+    @State private var selectedTrack:
+    SpotifyTrack?
+
     var filteredTracks: [SpotifyTrack] {
 
         guard !searchText.isEmpty else {
@@ -81,19 +84,24 @@ struct SpotifyPlaylistDetailView: View {
               
                                      
                                      
-                NavigationLink {
+           ForEach(filteredTracks) { track in
 
-                SpotifyFetchButton(
-                 track: track
-               ) 
+    Button {
 
-                } label: {
+        selectedTrack =
+            track
 
-                    SpotifyPlaylistTrackRow(
-                        track: track
-                    )
-                }
-            }
+    } label: {
+
+        SpotifyPlaylistTrackRow(
+            track:
+                track
+        )
+    }
+    .buttonStyle(
+        .plain
+    )
+}
         }
         .navigationTitle(
             playlist.name
@@ -110,6 +118,44 @@ struct SpotifyPlaylistDetailView: View {
             await loadTracks()
         }
     }
+        .sheet(
+    item:
+        $selectedTrack
+) {
+    track in
+
+
+    SpotifyTrackDetailView(
+
+        track:
+            track,
+
+        onClose: {
+
+            selectedTrack =
+                nil
+        },
+
+        onViewDownloads: {
+
+            selectedTrack =
+                nil
+
+
+            DispatchQueue.main.async {
+
+                NotificationCenter
+                    .default
+                    .post(
+                        name:
+                            .echoOpenFetchDownloads,
+                        object:
+                            nil
+                    )
+            }
+        }
+    )
+}
 
 
     @MainActor
