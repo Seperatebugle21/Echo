@@ -550,6 +550,22 @@ private struct DownloadStartedSheet: View {
             }
 
 
+            Label(
+    "Keep Echo open until the download is complete.",
+    systemImage:
+        "iphone"
+)
+.font(
+    .caption
+)
+.foregroundStyle(
+    .secondary
+)
+.multilineTextAlignment(
+    .center
+)
+
+
             if let progress =
                 item?
                     .status
