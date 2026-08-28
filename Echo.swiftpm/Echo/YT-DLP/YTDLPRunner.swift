@@ -9,10 +9,16 @@ final class YTDLPPythonSerialExecutor:
     SerialExecutor,
     @unchecked Sendable {
 
-    private let queue = DispatchQueue(
-        label: "com.echomusic.python",
-        qos: .utility
-    )
+    private let queue =
+        DispatchQueue(
+
+            label:
+                "com.echomusic.python",
+
+            qos:
+                .utility
+        )
+
 
     func enqueue(
         _ job: UnownedJob
@@ -21,19 +27,23 @@ final class YTDLPPythonSerialExecutor:
         let executor =
             asUnownedSerialExecutor()
 
+
         queue.async {
 
             job.runSynchronously(
-                on: executor
+                on:
+                    executor
             )
         }
     }
+
 
     func asUnownedSerialExecutor()
         -> UnownedSerialExecutor {
 
         UnownedSerialExecutor(
-            ordinary: self
+            ordinary:
+                self
         )
     }
 }
@@ -47,10 +57,9 @@ actor YTDLPRunner {
         YTDLPRunner()
 
 
-    // MARK: - Executor
-
     private nonisolated let executor =
         YTDLPPythonSerialExecutor()
+
 
     nonisolated
     var unownedExecutor:
@@ -61,12 +70,14 @@ actor YTDLPRunner {
     }
 
 
-    // MARK: - Queue
-
     private typealias Job =
-        @Sendable () async -> Void
+        @Sendable
+        () async -> Void
 
-    private var queue: [Job] = []
+
+    private var queue:
+        [Job] = []
+
 
     private var isRunning =
         false
@@ -88,48 +99,43 @@ actor YTDLPRunner {
             )
 
 
-            // -----------------------------------------------------
-            // YtDlp initialization
-            //
-            // IMPORTANT:
-            // Do NOT call PythonSupport.initialize() ourselves.
-            //
-            // YtDlp() initializes the embedded Python environment.
-            // -----------------------------------------------------
+            // =====================================
+            // Initialize YtDlp / Python
+            // =====================================
 
             Self.stage(
                 "PYTHON 2 - before YtDlp()"
             )
 
+
             let _ =
-                try await YtDlp()
+                try await
+                YtDlp()
+
 
             Self.stage(
                 "PYTHON 3 - YtDlp ready"
             )
 
 
-            // -----------------------------------------------------
-            // Import yt-dlp
-            // -----------------------------------------------------
-
-            Self.stage(
-                "PYTHON 4 - before import yt_dlp"
-            )
+            // =====================================
+            // Import module
+            // =====================================
 
             let module =
                 try Python.attemptImport(
                     "yt_dlp"
                 )
 
+
             Self.stage(
                 "PYTHON 5 - yt_dlp imported"
             )
 
 
-            // -----------------------------------------------------
+            // =====================================
             // Options
-            // -----------------------------------------------------
+            // =====================================
 
             var options =
                 PythonObject(
@@ -139,41 +145,41 @@ actor YTDLPRunner {
                 )
 
 
-            // Single video only
-
-            options["noplaylist"] =
+            options[
+                "noplaylist"
+            ] =
                 true
 
 
-            // Certificate handling
-
-            options["nocheckcertificate"] =
+            options[
+                "nocheckcertificate"
+            ] =
                 true
 
 
-            // Keep Python output quiet for now
-
-            options["quiet"] =
-                true
-
-            options["no_warnings"] =
+            options[
+                "quiet"
+            ] =
                 true
 
 
-            // Prevent endless network waits
+            options[
+                "no_warnings"
+            ] =
+                true
 
-            options["socket_timeout"] =
+
+            options[
+                "socket_timeout"
+            ] =
                 30.0
 
 
-            // IMPORTANT:
-            //
-            // Do not allow yt-dlp to attempt to spawn a normal
-            // ffmpeg subprocess on iOS.
-            //
-            // We will handle audio conversion ourselves later.
+            // Do not spawn ffmpeg subprocess.
 
-            options["ffmpeg_location"] =
+            options[
+                "ffmpeg_location"
+            ] =
                 PythonObject(
                     "/dev/null/no-ffmpeg"
                 )
@@ -184,74 +190,75 @@ actor YTDLPRunner {
             )
 
 
-            // -----------------------------------------------------
-            // Create Python yt_dlp.YoutubeDL
-            // -----------------------------------------------------
-
-            Self.stage(
-                "PYTHON 7 - before YoutubeDL()"
-            )
+            // =====================================
+            // YoutubeDL object
+            // =====================================
 
             let ydl =
                 module.YoutubeDL(
                     options
                 )
 
+
             Self.stage(
                 "PYTHON 8 - YoutubeDL ready"
             )
 
 
-            // -----------------------------------------------------
-            // extract_info
-            // -----------------------------------------------------
-
-            Self.stage(
-                "PYTHON 9 - before extract_info"
-            )
+            // =====================================
+            // Extract
+            // =====================================
 
             let info =
                 try ydl
                     .extract_info
                     .throwing
                     .dynamicallyCall(
+
                         withArguments: [
-                            url.absoluteString,
+
+                            url
+                                .absoluteString,
+
                             false
                         ]
                     )
+
 
             Self.stage(
                 "PYTHON 10 - extract_info returned"
             )
 
 
-            // -----------------------------------------------------
+            // =====================================
             // Metadata
-            //
-            // IMPORTANT:
-            // Convert every PythonObject to a native Swift type
-            // while we're still inside this Python job.
-            // -----------------------------------------------------
+            // =====================================
 
             let title =
                 info
-                    .checking["title"]
+                    .checking[
+                        "title"
+                    ]
                     .flatMap(
                         String.init
                     )
-                ?? "Onbekend"
+                ??
+                "Onbekend"
 
 
             let uploader =
                 info
-                    .checking["uploader"]
+                    .checking[
+                        "uploader"
+                    ]
                     .flatMap(
                         String.init
                     )
                 ??
                 info
-                    .checking["channel"]
+                    .checking[
+                        "channel"
+                    ]
                     .flatMap(
                         String.init
                     )
@@ -259,23 +266,21 @@ actor YTDLPRunner {
 
             let duration =
                 info
-                    .checking["duration"]
+                    .checking[
+                        "duration"
+                    ]
                     .flatMap(
                         Double.init
                     )
 
 
-            Self.stage(
-                "PYTHON 11 - metadata converted"
-            )
-
-
-            // -----------------------------------------------------
+            // =====================================
             // Formats
-            // -----------------------------------------------------
+            // =====================================
 
             var formatCount =
                 0
+
 
             var audioCount =
                 0
@@ -284,21 +289,32 @@ actor YTDLPRunner {
             var bestFormatID:
                 String?
 
+
             var bestURL:
                 String?
+
 
             var bestExtension:
                 String?
 
+
             var bestCodec:
                 String?
+
 
             var bestBitrate:
                 Double?
 
 
+            var bestCompatibilityScore =
+                -1
+
+
             if let formatsObject =
-                info.checking["formats"] {
+                info
+                    .checking[
+                        "formats"
+                    ] {
 
                 let formats:
                     [PythonObject] =
@@ -311,141 +327,216 @@ actor YTDLPRunner {
                     formats.count
 
 
-                for format in formats {
-
-                    // ---------------------------------------------
-                    // Format ID
-                    // ---------------------------------------------
+                for format
+                    in formats {
 
                     let formatID =
                         format
-                            .checking["format_id"]
+                            .checking[
+                                "format_id"
+                            ]
                             .flatMap(
                                 String.init
                             )
 
-
-                    // ---------------------------------------------
-                    // Direct media URL
-                    // ---------------------------------------------
 
                     let directURL =
                         format
-                            .checking["url"]
+                            .checking[
+                                "url"
+                            ]
                             .flatMap(
                                 String.init
                             )
 
-
-                    // ---------------------------------------------
-                    // File extension
-                    // ---------------------------------------------
 
                     let extensionName =
                         format
-                            .checking["ext"]
+                            .checking[
+                                "ext"
+                            ]
                             .flatMap(
                                 String.init
-                            )
+                            )?
+                            .lowercased()
 
 
-                    // ---------------------------------------------
-                    // Audio codec
-                    // ---------------------------------------------
-
-                    let audioCodecRaw =
+                    let audioCodec =
                         format
-                            .checking["acodec"]
+                            .checking[
+                                "acodec"
+                            ]
                             .flatMap(
                                 String.init
                             )
-                        ?? ""
+                        ??
+                        ""
 
 
-                    // ---------------------------------------------
-                    // Video codec
-                    // ---------------------------------------------
-
-                    let videoCodecRaw =
+                    let videoCodec =
                         format
-                            .checking["vcodec"]
+                            .checking[
+                                "vcodec"
+                            ]
                             .flatMap(
                                 String.init
                             )
-                        ?? ""
+                        ??
+                        ""
 
-
-                    // ---------------------------------------------
-                    // Audio bitrate
-                    // ---------------------------------------------
 
                     let bitrate =
                         format
-                            .checking["abr"]
+                            .checking[
+                                "abr"
+                            ]
                             .flatMap(
                                 Double.init
                             )
 
 
-                    // ---------------------------------------------
-                    // Determine audio/video
-                    // ---------------------------------------------
-
                     let hasAudio =
-                        !audioCodecRaw.isEmpty
+                        !audioCodec
+                            .isEmpty
                         &&
-                        audioCodecRaw != "none"
+                        audioCodec !=
+                        "none"
 
 
                     let hasVideo =
-                        !videoCodecRaw.isEmpty
+                        !videoCodec
+                            .isEmpty
                         &&
-                        videoCodecRaw != "none"
+                        videoCodec !=
+                        "none"
 
-
-                    // We only want audio-only formats.
 
                     guard
                         hasAudio,
-                        !hasVideo
+                        !hasVideo,
+                        directURL != nil
                     else {
 
                         continue
                     }
 
 
-                    audioCount += 1
+                    audioCount +=
+                        1
 
 
-                    // ---------------------------------------------
-                    // Pick highest bitrate
-                    // ---------------------------------------------
+                    // =================================
+                    // iOS source compatibility
+                    //
+                    // Prefer:
+                    //
+                    // m4a / AAC
+                    //
+                    // over:
+                    //
+                    // webm / Opus
+                    //
+                    // because AVFoundation then has
+                    // to decode it into PCM for LAME.
+                    // =================================
+
+                    let compatibilityScore:
+                        Int
+
+
+                    switch extensionName {
+
+                    case "m4a",
+                         "mp4":
+
+                        compatibilityScore =
+                            3
+
+
+                    case "aac":
+
+                        compatibilityScore =
+                            2
+
+
+                    case "webm",
+                         "opus",
+                         "ogg":
+
+                        compatibilityScore =
+                            1
+
+
+                    default:
+
+                        compatibilityScore =
+                            0
+                    }
+
 
                     let currentBitrate =
-                        bitrate ?? 0
+                        bitrate ??
+                        0
+
 
                     let previousBitrate =
-                        bestBitrate ?? -1
+                        bestBitrate ??
+                        -1
 
 
-                    if currentBitrate
-                        >
-                        previousBitrate {
+                    let shouldReplace:
 
-                        bestBitrate =
-                            bitrate
+                        Bool
+
+
+                    if compatibilityScore >
+                        bestCompatibilityScore {
+
+                        shouldReplace =
+                            true
+
+
+                    } else if
+                        compatibilityScore ==
+                            bestCompatibilityScore,
+                        currentBitrate >
+                            previousBitrate {
+
+                        shouldReplace =
+                            true
+
+
+                    } else {
+
+                        shouldReplace =
+                            false
+                    }
+
+
+                    if shouldReplace {
+
+                        bestCompatibilityScore =
+                            compatibilityScore
+
 
                         bestFormatID =
                             formatID
 
+
                         bestURL =
                             directURL
+
 
                         bestExtension =
                             extensionName
 
+
                         bestCodec =
-                            audioCodecRaw
+                            audioCodec
+
+
+                        bestBitrate =
+                            bitrate
                     }
                 }
             }
@@ -456,9 +547,14 @@ actor YTDLPRunner {
             )
 
 
-            // -----------------------------------------------------
-            // yt-dlp version
-            // -----------------------------------------------------
+            guard bestURL !=
+                    nil
+            else {
+
+                throw YTDLPRunnerError
+                    .noAudioFormat
+            }
+
 
             let version =
                 String(
@@ -466,7 +562,8 @@ actor YTDLPRunner {
                         .version
                         .__version__
                 )
-                ?? "unknown"
+                ??
+                "unknown"
 
 
             Self.stage(
@@ -474,13 +571,8 @@ actor YTDLPRunner {
             )
 
 
-            // -----------------------------------------------------
-            // Return ONLY native Swift values.
-            //
-            // No PythonObject leaves this closure.
-            // -----------------------------------------------------
-
             return Result(
+
                 title:
                     title,
 
@@ -518,9 +610,11 @@ actor YTDLPRunner {
     }
 
 
-    // MARK: - Run Isolated
+    // MARK: - Run isolated
 
-    func runIsolated<T: Sendable>(
+    func runIsolated<
+        T: Sendable
+    >(
         _ work:
             @Sendable
             @escaping
@@ -544,13 +638,16 @@ actor YTDLPRunner {
                     do {
 
                         let result =
-                            try await work()
+                            try await
+                            work()
+
 
                         continuation
                             .resume(
                                 returning:
                                     result
                             )
+
 
                     } catch {
 
@@ -570,7 +667,8 @@ actor YTDLPRunner {
 
                 Task {
 
-                    await self.pump()
+                    await self
+                        .pump()
                 }
             }
     }
@@ -579,7 +677,8 @@ actor YTDLPRunner {
     // MARK: - Pump
 
     @_optimize(none)
-    private func pump() async {
+    private func pump()
+        async {
 
         guard !isRunning else {
 
@@ -598,17 +697,13 @@ actor YTDLPRunner {
         }
 
 
-        while !queue.isEmpty {
+        while !queue
+            .isEmpty {
 
             let job =
-                queue.removeFirst()
+                queue
+                    .removeFirst()
 
-
-            // Run the complete Python operation detached
-            // from the caller / MainActor.
-            //
-            // We wait for it to COMPLETELY finish before
-            // allowing the next Python job to start.
 
             let task =
                 Task.detached(
@@ -626,18 +721,21 @@ actor YTDLPRunner {
     }
 
 
-    // MARK: - Persistent Diagnostics
+    // MARK: - Diagnostics
 
     nonisolated
     private static func stage(
         _ value: String
     ) {
 
-        UserDefaults.standard.set(
-            value,
-            forKey:
-                "ytdlpLastStage"
-        )
+        UserDefaults.standard
+            .set(
+                value,
+
+                forKey:
+                    "ytdlpLastStage"
+            )
+
 
         UserDefaults.standard
             .synchronize()
@@ -681,5 +779,26 @@ actor YTDLPRunner {
 
         let ytdlpVersion:
             String
+    }
+}
+
+
+// MARK: - Errors
+
+enum YTDLPRunnerError:
+    LocalizedError {
+
+    case noAudioFormat
+
+
+    var errorDescription:
+        String? {
+
+        switch self {
+
+        case .noAudioFormat:
+
+            return "yt-dlp vond geen bruikbare audio-only stream."
+        }
     }
 }
