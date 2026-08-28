@@ -7,4 +7,10 @@ extension Notification.Name {
         Notification.Name(
             "EchoFetchCompleted"
         )
+
+
+    static let echoOpenFetchDownloads =
+        Notification.Name(
+            "EchoOpenFetchDownloads"
+        )
 }
