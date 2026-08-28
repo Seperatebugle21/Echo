@@ -49,7 +49,27 @@ jobs:
           # Build-map aanmaken
           mkdir -p ../build
 
+          echo ""
+          echo "========================================"
+          echo " BUILDING ECHO"
+          echo "========================================"
+          echo ""
+
           # Archive bouwen zonder codesigning
+          #
+          # Belangrijk voor PythonKit/Python-iOS:
+          # - export_dynamic:
+          #   CPython-symbolen zichtbaar maken voor dlsym(RTLD_DEFAULT, ...)
+          #
+          # - all_load:
+          #   statisch gelinkte objecten niet weggooien
+          #
+          # - DEAD_CODE_STRIPPING=NO:
+          #   voorkom dat Py_* symbolen verdwijnen
+          #
+          # - stripping uitschakelen:
+          #   behoud runtime symbolen in de uiteindelijke executable
+
           xcodebuild archive \
             -scheme Echo \
             -destination 'generic/platform=iOS' \
@@ -57,38 +77,104 @@ jobs:
             -derivedDataPath ../build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGN_IDENTITY="" \
+            'OTHER_LDFLAGS=$(inherited) -Xlinker -export_dynamic -all_load' \
+            DEAD_CODE_STRIPPING=NO \
+            COPY_PHASE_STRIP=NO \
+            STRIP_INSTALLED_PRODUCT=NO
 
 
       # ============================================
-      # 2B. Controleer ingebouwde Python runtime
+      # 2B. Controleer embedded Python runtime
       # ============================================
 
       - name: Verify embedded Python runtime
         run: |
 
+          echo ""
           echo "========================================"
           echo " CHECKING PYTHON RUNTIME"
           echo "========================================"
+          echo ""
 
           APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
             -maxdepth 1 \
             -name "*.app" \
             | head -n 1)
 
+
+          # Fallback voor Swift Playgrounds project
+
           if [ -z "$APP_PATH" ]; then
-            echo "Echo.app niet gevonden."
+
+            APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
+              -maxdepth 1 \
+              -name "*.swiftpm" \
+              | head -n 1)
+          fi
+
+
+          if [ -z "$APP_PATH" ]; then
+
+            echo "ERROR: Echo.app niet gevonden."
+
             exit 1
           fi
 
-          echo ""
+
           echo "App:"
           echo "$APP_PATH"
+
+
+          # ============================================
+          # Info.plist / executable bepalen
+          # ============================================
+
+          INFO_PLIST="$APP_PATH/Info.plist"
+
+
+          if [ ! -f "$INFO_PLIST" ]; then
+
+            echo "ERROR: Info.plist niet gevonden."
+            echo "$INFO_PLIST"
+
+            exit 1
+          fi
+
+
+          EXECUTABLE_NAME=$(
+            /usr/libexec/PlistBuddy \
+              -c "Print :CFBundleExecutable" \
+              "$INFO_PLIST"
+          )
+
+
+          EXECUTABLE="$APP_PATH/$EXECUTABLE_NAME"
+
+
+          echo ""
+          echo "Executable:"
+          echo "$EXECUTABLE"
+
+
+          if [ ! -f "$EXECUTABLE" ]; then
+
+            echo "ERROR: executable niet gevonden."
+
+            exit 1
+          fi
+
+
+          # ============================================
+          # Resource bundles
+          # ============================================
 
           echo ""
           echo "========================================"
           echo " RESOURCE BUNDLES"
           echo "========================================"
+          echo ""
+
 
           find "$APP_PATH" \
             -type d \
@@ -96,10 +182,16 @@ jobs:
             -print || true
 
 
+          # ============================================
+          # Python-gerelateerde bestanden
+          # ============================================
+
           echo ""
           echo "========================================"
           echo " PYTHON-GERELATEERDE BESTANDEN"
           echo "========================================"
+          echo ""
+
 
           find "$APP_PATH" \
             \( \
@@ -114,10 +206,16 @@ jobs:
             -print || true
 
 
+          # ============================================
+          # Python stdlib
+          # ============================================
+
           echo ""
           echo "========================================"
           echo " PYTHON STDLIB"
           echo "========================================"
+          echo ""
+
 
           find "$APP_PATH" \
             \( \
@@ -144,10 +242,10 @@ jobs:
             echo " ERROR"
             echo "========================================"
             echo ""
+
             echo "Python stdlib/resource bundle ontbreekt."
             echo ""
-            echo "De app is gebouwd, maar de embedded Python runtime"
-            echo "lijkt niet correct in Echo.app te zitten."
+            echo "De app bevat de embedded Python runtime niet correct."
             echo ""
 
             exit 1
@@ -155,23 +253,130 @@ jobs:
 
 
           echo ""
-          echo "========================================"
-          echo " PYTHON RUNTIME GEVONDEN"
-          echo "========================================"
-          echo ""
-
+          echo "Python stdlib gevonden:"
           echo "$PYTHON_RESOURCE"
 
 
+          # ============================================
+          # CPython symbols controleren
+          # ============================================
+
           echo ""
           echo "========================================"
-          echo " APP INHOUD"
+          echo " CPYTHON SYMBOLS"
           echo "========================================"
           echo ""
 
+
+          echo "--- Py_Initialize ---"
+
+          xcrun nm -gU "$EXECUTABLE" \
+            | grep "_Py_Initialize" \
+            || true
+
+
+          echo ""
+          echo "--- Py_IsInitialized ---"
+
+          xcrun nm -gU "$EXECUTABLE" \
+            | grep "_Py_IsInitialized" \
+            || true
+
+
+          echo ""
+          echo "--- PyUnicode_FromString ---"
+
+          xcrun nm -gU "$EXECUTABLE" \
+            | grep "_PyUnicode_FromString" \
+            || true
+
+
+          echo ""
+          echo "--- PyObject_GetAttrString ---"
+
+          xcrun nm -gU "$EXECUTABLE" \
+            | grep "_PyObject_GetAttrString" \
+            || true
+
+
+          echo ""
+          echo "--- Py_DecRef ---"
+
+          xcrun nm -gU "$EXECUTABLE" \
+            | grep "_Py_DecRef" \
+            || true
+
+
+          # ============================================
+          # Strict symbol check
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " STRICT SYMBOL CHECK"
+          echo "========================================"
+          echo ""
+
+
+          check_symbol() {
+
+            SYMBOL="$1"
+
+
+            if xcrun nm -gU "$EXECUTABLE" \
+              | grep -q "$SYMBOL"; then
+
+              echo "OK: $SYMBOL"
+
+            else
+
+              echo "MISSING: $SYMBOL"
+
+              exit 1
+            fi
+          }
+
+
+          check_symbol "_Py_Initialize"
+
+          check_symbol "_Py_IsInitialized"
+
+          check_symbol "_PyUnicode_FromString"
+
+          check_symbol "_PyObject_GetAttrString"
+
+          check_symbol "_Py_DecRef"
+
+
+          echo ""
+          echo "========================================"
+          echo " PYTHON LINKING OK"
+          echo "========================================"
+          echo ""
+
+          echo "Python stdlib gevonden:"
+          echo "$PYTHON_RESOURCE"
+
+          echo ""
+
+          echo "Essentiële CPython-symbolen zijn zichtbaar."
+
+
+          # ============================================
+          # Laat appstructuur zien
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " APP STRUCTURE"
+          echo "========================================"
+          echo ""
+
+
           find "$APP_PATH" \
             -maxdepth 3 \
-            -print | sort
+            -print \
+            | sort
 
 
       # ============================================
@@ -182,11 +387,12 @@ jobs:
         run: |
 
           rm -rf Payload
+
           mkdir -p Payload
 
 
           # ============================================
-          # Zoek de gebouwde .app
+          # Zoek de gebouwde app
           # ============================================
 
           BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
@@ -220,19 +426,23 @@ jobs:
 
 
           # ============================================
-          # Kopieer app naar Payload
+          # Kopieer naar Payload
           # ============================================
 
           cp -R "$BUILT_APP" Payload/
 
 
           # ============================================
-          # Zoek gekopieerde app
+          # Zoek app in Payload
           # ============================================
 
           APP_PATH=$(find Payload \
             -maxdepth 1 \
-            \( -name "*.app" -o -name "*.swiftpm" \) \
+            \( \
+              -name "*.app" \
+              -o \
+              -name "*.swiftpm" \
+            \) \
             | head -n 1)
 
 
@@ -271,7 +481,8 @@ jobs:
 
           /usr/libexec/PlistBuddy \
             -c "Delete :UIBackgroundModes" \
-            "$INFO_PLIST" 2>/dev/null || true
+            "$INFO_PLIST" \
+            2>/dev/null || true
 
 
           /usr/libexec/PlistBuddy \
@@ -290,7 +501,8 @@ jobs:
 
           /usr/libexec/PlistBuddy \
             -c "Add :UIFileSharingEnabled bool true" \
-            "$INFO_PLIST" 2>/dev/null || \
+            "$INFO_PLIST" \
+            2>/dev/null || \
           /usr/libexec/PlistBuddy \
             -c "Set :UIFileSharingEnabled true" \
             "$INFO_PLIST"
@@ -298,7 +510,8 @@ jobs:
 
           /usr/libexec/PlistBuddy \
             -c "Add :LSSupportsOpeningDocumentsInPlace bool true" \
-            "$INFO_PLIST" 2>/dev/null || \
+            "$INFO_PLIST" \
+            2>/dev/null || \
           /usr/libexec/PlistBuddy \
             -c "Set :LSSupportsOpeningDocumentsInPlace true" \
             "$INFO_PLIST"
@@ -312,7 +525,8 @@ jobs:
 
           /usr/libexec/PlistBuddy \
             -c "Delete :CFBundleURLTypes" \
-            "$INFO_PLIST" 2>/dev/null || true
+            "$INFO_PLIST" \
+            2>/dev/null || true
 
 
           /usr/libexec/PlistBuddy \
@@ -367,6 +581,10 @@ jobs:
             -c "Print :CFBundleURLTypes" \
             "$INFO_PLIST"
 
+
+          # ============================================
+          # Controle Python in uiteindelijke Payload
+          # ============================================
 
           echo ""
           echo "================================"
