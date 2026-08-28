@@ -73,51 +73,30 @@ let package = Package(
     ],
 
 
-    // MARK: - Packages
-
     dependencies: [
-
-        // =========================================
-        // YoutubeDL-iOS
-        // =========================================
 
         .package(
             url:
                 "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
-
             branch:
                 "main"
         ),
 
-
-        // =========================================
-        // PythonKit
-        // =========================================
-
         .package(
             url:
                 "https://github.com/pvieito/PythonKit.git",
-
             exact:
                 "0.5.1"
         ),
 
-
-        // =========================================
-        // Python-iOS
-        // =========================================
-
         .package(
             url:
                 "https://github.com/kewlbear/Python-iOS.git",
-
             exact:
                 "0.1.1-b20230423-090254"
         )
     ],
 
-
-    // MARK: - Targets
 
     targets: [
 
@@ -135,7 +114,6 @@ let package = Package(
                 .product(
                     name:
                         "YoutubeDL",
-
                     package:
                         "YoutubeDL-iOS"
                 ),
@@ -143,7 +121,6 @@ let package = Package(
                 .product(
                     name:
                         "PythonKit",
-
                     package:
                         "PythonKit"
                 ),
@@ -151,30 +128,19 @@ let package = Package(
                 .product(
                     name:
                         "Python-iOS",
-
                     package:
                         "Python-iOS"
                 ),
 
-
-                // IMPORTANT:
-                //
-                // Dit is ALLEEN libmp3lame.
-                //
-                // Geen:
-                // - fftools
-                // - ffmpeg
-                // - ffprobe
-                // - avcodec
-                //
-                // Daardoor krijgen we niet opnieuw
-                // de duplicate symbols van eerder.
-
-                "mp3lame"
+                "CLame"
             ],
 
             path:
                 ".",
+
+            exclude: [
+                "CLame"
+            ],
 
             swiftSettings: [
 
@@ -186,7 +152,6 @@ let package = Package(
                     [
                         "-Onone"
                     ],
-
                     .when(
                         configuration:
                             .release
@@ -197,7 +162,28 @@ let package = Package(
 
 
         // =========================================
-        // Standalone LAME binary
+        // Swift-importable LAME wrapper
+        // =========================================
+
+        .target(
+
+            name:
+                "CLame",
+
+            dependencies: [
+                "mp3lame"
+            ],
+
+            path:
+                "CLame",
+
+            publicHeadersPath:
+                "include"
+        ),
+
+
+        // =========================================
+        // Standalone libmp3lame
         // =========================================
 
         .binaryTarget(
