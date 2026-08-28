@@ -11,6 +11,67 @@ struct FetchQueueView: View {
 
         List {
 
+            // MARK: - Keep App Open Warning
+
+            Section {
+
+                HStack(
+                    alignment:
+                        .top,
+                    spacing:
+                        12
+                ) {
+
+                    Image(
+                        systemName:
+                            "exclamationmark.triangle.fill"
+                    )
+                    .font(
+                        .title3
+                    )
+                    .foregroundStyle(
+                        .orange
+                    )
+
+
+                    VStack(
+                        alignment:
+                            .leading,
+                        spacing:
+                            4
+                    ) {
+
+                        Text(
+                            "Keep Echo Open"
+                        )
+                        .font(
+                            .subheadline
+                                .weight(
+                                    .semibold
+                                )
+                        )
+
+
+                        Text(
+                            "Keep Echo open while downloading. Downloads may pause or fail if the app is closed or your iPhone is locked."
+                        )
+                        .font(
+                            .caption
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+                    }
+                }
+                .padding(
+                    .vertical,
+                    4
+                )
+            }
+
+
+            // MARK: - Downloads
+
             if manager.items.isEmpty {
 
                 ContentUnavailableView(
@@ -19,7 +80,7 @@ struct FetchQueueView: View {
                         "arrow.down.circle",
                     description:
                         Text(
-                            "Add a Spotify track, album or playlist."
+                            "Songs you download will appear here."
                         )
                 )
 
@@ -27,16 +88,14 @@ struct FetchQueueView: View {
 
                 ForEach(
                     manager.items
-                ) {
-                    item in
+                ) { item in
 
                     FetchItemRow(
                         item:
                             item
                     )
                 }
-                .onDelete {
-                    offsets in
+                .onDelete { offsets in
 
                     for index in offsets {
 
@@ -49,9 +108,11 @@ struct FetchQueueView: View {
                 }
             }
         }
+
         .navigationTitle(
             "Downloads"
         )
+
         .toolbar {
 
             if !manager.items.isEmpty {
@@ -68,6 +129,8 @@ struct FetchQueueView: View {
     }
 }
 
+
+// MARK: - Download Row
 
 struct FetchItemRow: View {
 
@@ -142,8 +205,7 @@ struct FetchItemRow: View {
             AsyncImage(
                 url:
                     artworkURL
-            ) {
-                image in
+            ) { image in
 
                 image
                     .resizable()
@@ -217,7 +279,9 @@ struct FetchItemRow: View {
             )
 
 
-        case .preparing(let progress):
+        case .preparing(
+            let progress
+        ):
 
             activeProgress(
                 title:
@@ -227,7 +291,9 @@ struct FetchItemRow: View {
             )
 
 
-        case .downloading(let progress):
+        case .downloading(
+            let progress
+        ):
 
             activeProgress(
                 title:
@@ -237,7 +303,9 @@ struct FetchItemRow: View {
             )
 
 
-        case .processing(let progress):
+        case .processing(
+            let progress
+        ):
 
             activeProgress(
                 title:
@@ -262,30 +330,65 @@ struct FetchItemRow: View {
             )
 
 
-        case .failed(let message):
+        case .failed(
+            let message
+        ):
 
-            Text(
-                message
-            )
-            .font(
-                .caption
-            )
-            .foregroundStyle(
-                .red
-            )
-            .lineLimit(
-                2
-            )
+            VStack(
+                alignment:
+                    .leading,
+                spacing:
+                    2
+            ) {
+
+                Label(
+                    "Download Failed",
+                    systemImage:
+                        "exclamationmark.circle.fill"
+                )
+                .font(
+                    .caption
+                )
+                .foregroundStyle(
+                    .red
+                )
+
+
+                Text(
+                    message
+                )
+                .font(
+                    .caption2
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+                .lineLimit(
+                    2
+                )
+            }
         }
     }
 
+
+    // MARK: - Active Progress
 
     private func activeProgress(
         title: String,
         progress: Double
     ) -> some View {
 
-        VStack(
+        let safeProgress =
+            min(
+                max(
+                    progress,
+                    0
+                ),
+                1
+            )
+
+
+        return VStack(
             alignment:
                 .leading,
             spacing:
@@ -303,7 +406,7 @@ struct FetchItemRow: View {
 
 
                 Text(
-                    "\(Int(progress * 100))%"
+                    "\(Int(safeProgress * 100))%"
                 )
                 .monospacedDigit()
             }
@@ -317,7 +420,7 @@ struct FetchItemRow: View {
 
             ProgressView(
                 value:
-                    progress
+                    safeProgress
             )
         }
     }
