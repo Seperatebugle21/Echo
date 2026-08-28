@@ -60,7 +60,7 @@ jobs:
 
 
       # ============================================
-      # 2B. Zoek specifiek libpython3
+      # 2B. Zoek specifiek iOS arm64 libpython
       # ============================================
 
       - name: Locate Python library
@@ -72,75 +72,76 @@ jobs:
           echo "========================================"
           echo ""
 
-          echo "Beschikbare libpython3.xcframework bestanden:"
-          echo ""
-
-          find build/DerivedData \
-            -path "*libpython3.xcframework*" \
-            -print || true
-
-
-          echo ""
-          echo "========================================"
-          echo " SEARCHING IOS ARM64 PYTHON BINARY"
-          echo "========================================"
-          echo ""
-
-
-          PYTHON_BIN=$(find build/DerivedData \
-            -path "*libpython3.xcframework*" \
-            -type f \
-            -name "libpython3" \
-            | grep "ios-arm64" \
+          PYTHON_XCFRAMEWORK=$(find build/DerivedData \
+            -type d \
+            -path "*libpython3.xcframework" \
             | head -n 1)
 
-
-          # Fallback indien mapnaam anders is
-          if [ -z "$PYTHON_BIN" ]; then
-
-            echo "ios-arm64 slice niet rechtstreeks gevonden."
-            echo "Fallback zoeken..."
-
-            PYTHON_BIN=$(find build/DerivedData \
-              -path "*libpython3.xcframework*" \
-              -type f \
-              -name "libpython3" \
-              | head -n 1)
+          if [ -z "$PYTHON_XCFRAMEWORK" ]; then
+            echo "ERROR: libpython3.xcframework niet gevonden."
+            exit 1
           fi
 
+          echo "XCFramework:"
+          echo "$PYTHON_XCFRAMEWORK"
 
           echo ""
-          echo "Python binary:"
-          echo "$PYTHON_BIN"
+          echo "========================================"
+          echo " SEARCHING DEVICE ARM64 SLICE"
+          echo "========================================"
+          echo ""
 
+          PYTHON_BIN=$(find "$PYTHON_XCFRAMEWORK/ios-arm64" \
+            -maxdepth 1 \
+            -type f \
+            \( -name "libpython*.a" -o -name "libpython*" \) \
+            | head -n 1)
 
           if [ -z "$PYTHON_BIN" ]; then
 
+            echo "ERROR: iOS arm64 libpython binary niet gevonden."
             echo ""
-            echo "ERROR: libpython3 binary niet gevonden."
+            echo "Inhoud ios-arm64:"
             echo ""
+
+            find "$PYTHON_XCFRAMEWORK/ios-arm64" \
+              -maxdepth 2 \
+              -print || true
 
             exit 1
           fi
 
+          echo ""
+          echo "Python device binary:"
+          echo "$PYTHON_BIN"
 
           if [ ! -f "$PYTHON_BIN" ]; then
-
-            echo ""
-            echo "ERROR: gevonden Python-pad is geen bestand."
-            echo "$PYTHON_BIN"
-            echo ""
-
+            echo "ERROR: gevonden Python-pad bestaat niet."
             exit 1
           fi
 
+          echo ""
+          echo "========================================"
+          echo " PYTHON BINARY INFO"
+          echo "========================================"
+          echo ""
+
+          lipo -info "$PYTHON_BIN" || true
+
+          echo ""
+          echo "Py_Initialize in archive:"
+          nm -g "$PYTHON_BIN" \
+            | grep "_Py_Initialize" \
+            | head -n 10 || true
+
+          echo ""
+          echo "Py_IsInitialized in archive:"
+          nm -g "$PYTHON_BIN" \
+            | grep "_Py_IsInitialized" \
+            | head -n 10 || true
 
           echo ""
           echo "Python binary gevonden."
-          echo ""
-
-
-          # Beschikbaar maken voor volgende GitHub Action steps
 
           echo "PYTHON_BIN=$PYTHON_BIN" >> "$GITHUB_ENV"
 
@@ -157,12 +158,9 @@ jobs:
           echo "Gevonden Package map: $PACKAGE_DIR"
 
           if [ -z "$PACKAGE_DIR" ]; then
-
             echo "Geen Package.swift gevonden."
-
             exit 1
           fi
-
 
           echo ""
           echo "========================================"
@@ -172,28 +170,20 @@ jobs:
 
           echo "$PYTHON_BIN"
 
-
           if [ -z "$PYTHON_BIN" ]; then
-
-            echo "ERROR: PYTHON_BIN environment variable ontbreekt."
-
+            echo "ERROR: PYTHON_BIN ontbreekt."
             exit 1
           fi
-
 
           if [ ! -f "$PYTHON_BIN" ]; then
-
             echo "ERROR: libpython3 bestaat niet op:"
             echo "$PYTHON_BIN"
-
             exit 1
           fi
-
 
           cd "$PACKAGE_DIR"
 
           mkdir -p ../build
-
 
           echo ""
           echo "========================================"
@@ -201,22 +191,15 @@ jobs:
           echo "========================================"
           echo ""
 
-
-          # ============================================
-          # Belangrijk:
+          # Geen -all_load:
+          # dat forceert ook FFmpeg/ffprobe objectfiles
+          # en veroorzaakt duplicate symbols.
           #
-          # GEEN -all_load
+          # Alleen libpython wordt force-loaded.
           #
-          # -all_load forceert namelijk ook alle FFmpeg
-          # objectfiles en veroorzaakt duplicate symbols.
-          #
-          # We forceren alleen libpython3 met -force_load.
-          #
-          # export_dynamic is nodig omdat PythonKit
-          # CPython-symbolen opzoekt via:
-          #
-          # dlsym(RTLD_DEFAULT, ...)
-          # ============================================
+          # export_dynamic zorgt ervoor dat PythonKit
+          # de Py_* symbolen via dlsym(RTLD_DEFAULT, ...)
+          # kan vinden.
 
           xcodebuild archive \
             -scheme Echo \
@@ -233,7 +216,7 @@ jobs:
 
 
       # ============================================
-      # 2D. Controleer Python runtime
+      # 2D. Controleer embedded Python runtime
       # ============================================
 
       - name: Verify embedded Python runtime
@@ -245,14 +228,10 @@ jobs:
           echo "========================================"
           echo ""
 
-
           APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
             -maxdepth 1 \
             -name "*.app" \
             | head -n 1)
-
-
-          # Fallback voor Swift Playgrounds output
 
           if [ -z "$APP_PATH" ]; then
 
@@ -262,39 +241,28 @@ jobs:
               | head -n 1)
           fi
 
-
           if [ -z "$APP_PATH" ]; then
-
             echo "ERROR: Echo.app niet gevonden."
-
             exit 1
           fi
-
 
           echo "App:"
           echo "$APP_PATH"
 
 
           # ============================================
-          # Info.plist
+          # Info.plist / executable bepalen
           # ============================================
 
           INFO_PLIST="$APP_PATH/Info.plist"
 
-
           if [ ! -f "$INFO_PLIST" ]; then
 
-            echo ""
             echo "ERROR: Info.plist niet gevonden:"
             echo "$INFO_PLIST"
 
             exit 1
           fi
-
-
-          # ============================================
-          # Executable zoeken
-          # ============================================
 
           EXECUTABLE_NAME=$(
             /usr/libexec/PlistBuddy \
@@ -302,20 +270,14 @@ jobs:
               "$INFO_PLIST"
           )
 
-
           EXECUTABLE="$APP_PATH/$EXECUTABLE_NAME"
-
 
           echo ""
           echo "Executable:"
           echo "$EXECUTABLE"
 
-
           if [ ! -f "$EXECUTABLE" ]; then
-
-            echo ""
             echo "ERROR: executable niet gevonden."
-
             exit 1
           fi
 
@@ -329,7 +291,6 @@ jobs:
           echo " RESOURCE BUNDLES"
           echo "========================================"
           echo ""
-
 
           find "$APP_PATH" \
             -type d \
@@ -346,7 +307,6 @@ jobs:
           echo " PYTHON-GERELATEERDE BESTANDEN"
           echo "========================================"
           echo ""
-
 
           find "$APP_PATH" \
             \( \
@@ -371,7 +331,6 @@ jobs:
           echo "========================================"
           echo ""
 
-
           find "$APP_PATH" \
             \( \
               -name "python310.zip" \
@@ -380,7 +339,6 @@ jobs:
             \) \
             -print || true
 
-
           PYTHON_RESOURCE=$(find "$APP_PATH" \
             \( \
               -name "python310.zip" \
@@ -388,7 +346,6 @@ jobs:
               -path "*python3.10*" \
             \) \
             | head -n 1)
-
 
           if [ -z "$PYTHON_RESOURCE" ]; then
 
@@ -399,11 +356,9 @@ jobs:
             echo ""
 
             echo "Python stdlib/resource bundle ontbreekt."
-            echo ""
 
             exit 1
           fi
-
 
           echo ""
           echo "Python stdlib gevonden:"
@@ -420,13 +375,11 @@ jobs:
           echo "========================================"
           echo ""
 
-
           echo "--- Py_Initialize ---"
 
           xcrun nm -gU "$EXECUTABLE" \
             | grep "_Py_Initialize" \
             || true
-
 
           echo ""
           echo "--- Py_IsInitialized ---"
@@ -435,7 +388,6 @@ jobs:
             | grep "_Py_IsInitialized" \
             || true
 
-
           echo ""
           echo "--- PyUnicode_FromString ---"
 
@@ -443,14 +395,12 @@ jobs:
             | grep "_PyUnicode_FromString" \
             || true
 
-
           echo ""
           echo "--- PyObject_GetAttrString ---"
 
           xcrun nm -gU "$EXECUTABLE" \
             | grep "_PyObject_GetAttrString" \
             || true
-
 
           echo ""
           echo "--- Py_DecRef ---"
@@ -470,7 +420,6 @@ jobs:
           echo "========================================"
           echo ""
 
-
           check_symbol() {
 
             SYMBOL="$1"
@@ -488,15 +437,10 @@ jobs:
             fi
           }
 
-
           check_symbol "_Py_Initialize"
-
           check_symbol "_Py_IsInitialized"
-
           check_symbol "_PyUnicode_FromString"
-
           check_symbol "_PyObject_GetAttrString"
-
           check_symbol "_Py_DecRef"
 
 
@@ -522,7 +466,6 @@ jobs:
         run: |
 
           rm -rf Payload
-
           mkdir -p Payload
 
 
@@ -535,7 +478,6 @@ jobs:
             -name "*.app" \
             | head -n 1)
 
-
           if [ -z "$BUILT_APP" ]; then
 
             BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
@@ -544,26 +486,21 @@ jobs:
               | head -n 1)
           fi
 
-
           echo ""
           echo "Gebouwde app:"
           echo "$BUILT_APP"
 
-
           if [ -z "$BUILT_APP" ]; then
-
             echo "Geen gebouwde Echo app gevonden."
-
             exit 1
           fi
 
 
           # ============================================
-          # Kopieer naar Payload
+          # Kopieer app naar Payload
           # ============================================
 
           cp -R "$BUILT_APP" Payload/
-
 
           APP_PATH=$(find Payload \
             -maxdepth 1 \
@@ -574,28 +511,25 @@ jobs:
             \) \
             | head -n 1)
 
-
           echo ""
           echo "App in Payload:"
           echo "$APP_PATH"
 
-
           if [ -z "$APP_PATH" ]; then
-
             echo "App niet gevonden in Payload."
-
             exit 1
           fi
 
 
+          # ============================================
+          # Info.plist
+          # ============================================
+
           INFO_PLIST="$APP_PATH/Info.plist"
 
-
           if [ ! -f "$INFO_PLIST" ]; then
-
             echo "Info.plist niet gevonden:"
             echo "$INFO_PLIST"
-
             exit 1
           fi
 
@@ -609,11 +543,9 @@ jobs:
             "$INFO_PLIST" \
             2>/dev/null || true
 
-
           /usr/libexec/PlistBuddy \
             -c "Add :UIBackgroundModes array" \
             "$INFO_PLIST"
-
 
           /usr/libexec/PlistBuddy \
             -c "Add :UIBackgroundModes:0 string audio" \
@@ -631,7 +563,6 @@ jobs:
           /usr/libexec/PlistBuddy \
             -c "Set :UIFileSharingEnabled true" \
             "$INFO_PLIST"
-
 
           /usr/libexec/PlistBuddy \
             -c "Add :LSSupportsOpeningDocumentsInPlace bool true" \
@@ -653,26 +584,21 @@ jobs:
             "$INFO_PLIST" \
             2>/dev/null || true
 
-
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes array" \
             "$INFO_PLIST"
-
 
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0 dict" \
             "$INFO_PLIST"
 
-
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLName string echo.spotify.login" \
             "$INFO_PLIST"
 
-
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
             "$INFO_PLIST"
-
 
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string echo-spotify-login" \
@@ -689,11 +615,9 @@ jobs:
           echo "========================================"
           echo ""
 
-
           /usr/libexec/PlistBuddy \
             -c "Print" \
             "$INFO_PLIST"
-
 
           echo ""
           echo "========================================"
@@ -701,14 +625,13 @@ jobs:
           echo "========================================"
           echo ""
 
-
           /usr/libexec/PlistBuddy \
             -c "Print :CFBundleURLTypes" \
             "$INFO_PLIST"
 
 
           # ============================================
-          # Python controle in Payload
+          # Python controle in uiteindelijke Payload
           # ============================================
 
           echo ""
@@ -716,7 +639,6 @@ jobs:
           echo " PYTHON FILES IN PAYLOAD"
           echo "========================================"
           echo ""
-
 
           find "$APP_PATH" \
             \( \
