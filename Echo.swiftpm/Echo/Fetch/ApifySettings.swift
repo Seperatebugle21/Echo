@@ -7,8 +7,8 @@ enum ApifyDownloadMethod:
     CaseIterable,
     Identifiable {
 
-    case youtube
     case spotify
+    case youtube
 
 
     var id: String {
@@ -20,11 +20,11 @@ enum ApifyDownloadMethod:
 
         switch self {
 
-        case .youtube:
-            return "Apify"
-
         case .spotify:
             return "yt-dlp"
+
+        case .youtube:
+            return "Apify"
         }
     }
 }
@@ -159,7 +159,7 @@ final class ApifySettings {
         } else {
 
             downloadMethod =
-                .youtube
+                .spotify
         }
 
 
