@@ -3,17 +3,16 @@ import PythonKit
 import YoutubeDL
 
 
-// MARK: - Python serial executor
+// MARK: - Python Serial Executor
 
 final class YTDLPPythonSerialExecutor:
     SerialExecutor,
     @unchecked Sendable {
 
-    private let queue =
-        DispatchQueue(
-            label: "com.echomusic.python",
-            qos: .utility
-        )
+    private let queue = DispatchQueue(
+        label: "com.echomusic.python",
+        qos: .utility
+    )
 
     func enqueue(
         _ job: UnownedJob
@@ -40,7 +39,7 @@ final class YTDLPPythonSerialExecutor:
 }
 
 
-// MARK: - Python Runner
+// MARK: - YTDLP Runner
 
 actor YTDLPRunner {
 
@@ -48,7 +47,7 @@ actor YTDLPRunner {
         YTDLPRunner()
 
 
-    // MARK: Executor
+    // MARK: - Executor
 
     private nonisolated let executor =
         YTDLPPythonSerialExecutor()
@@ -62,7 +61,7 @@ actor YTDLPRunner {
     }
 
 
-    // MARK: Queue
+    // MARK: - Queue
 
     private typealias Job =
         @Sendable () async -> Void
@@ -76,7 +75,7 @@ actor YTDLPRunner {
     private init() {}
 
 
-    // MARK: - Public extract
+    // MARK: - Extract
 
     func extract(
         url: URL
@@ -90,12 +89,12 @@ actor YTDLPRunner {
 
 
             // -----------------------------------------------------
-            // IMPORTANT
+            // YtDlp initialization
             //
-            // Do NOT call PythonSupport.initialize().
+            // IMPORTANT:
+            // Do NOT call PythonSupport.initialize() ourselves.
             //
-            // YtDlp() does the initialization internally,
-            // exactly like FreeTube.
+            // YtDlp() initializes the embedded Python environment.
             // -----------------------------------------------------
 
             Self.stage(
@@ -111,11 +110,7 @@ actor YTDLPRunner {
 
 
             // -----------------------------------------------------
-            // First PythonKit access
-            //
-            // This is the point that crashed before.
-            // But now it happens inside the same queued Python job
-            // after YtDlp initialized the runtime.
+            // Import yt-dlp
             // -----------------------------------------------------
 
             Self.stage(
@@ -133,7 +128,7 @@ actor YTDLPRunner {
 
 
             // -----------------------------------------------------
-            // yt-dlp options
+            // Options
             // -----------------------------------------------------
 
             var options =
@@ -144,11 +139,19 @@ actor YTDLPRunner {
                 )
 
 
+            // Single video only
+
             options["noplaylist"] =
                 true
 
+
+            // Certificate handling
+
             options["nocheckcertificate"] =
                 true
+
+
+            // Keep Python output quiet for now
 
             options["quiet"] =
                 true
@@ -156,14 +159,19 @@ actor YTDLPRunner {
             options["no_warnings"] =
                 true
 
+
+            // Prevent endless network waits
+
             options["socket_timeout"] =
                 30.0
 
 
-            // Critical on iOS:
+            // IMPORTANT:
             //
-            // Don't let yt-dlp try to start a real ffmpeg
-            // subprocess during its format probe.
+            // Do not allow yt-dlp to attempt to spawn a normal
+            // ffmpeg subprocess on iOS.
+            //
+            // We will handle audio conversion ourselves later.
 
             options["ffmpeg_location"] =
                 PythonObject(
@@ -177,7 +185,7 @@ actor YTDLPRunner {
 
 
             // -----------------------------------------------------
-            // Create yt_dlp.YoutubeDL
+            // Create Python yt_dlp.YoutubeDL
             // -----------------------------------------------------
 
             Self.stage(
@@ -219,13 +227,11 @@ actor YTDLPRunner {
 
 
             // -----------------------------------------------------
+            // Metadata
+            //
             // IMPORTANT:
-            //
-            // Every PythonObject must be converted HERE.
-            //
-            // Never return PythonObject outside the Python job.
-            //
-            // FreeTube explicitly does the same thing.
+            // Convert every PythonObject to a native Swift type
+            // while we're still inside this Python job.
             // -----------------------------------------------------
 
             let title =
@@ -300,11 +306,16 @@ actor YTDLPRunner {
                         formatsObject
                     )
 
+
                 formatCount =
                     formats.count
 
 
                 for format in formats {
+
+                    // ---------------------------------------------
+                    // Format ID
+                    // ---------------------------------------------
 
                     let formatID =
                         format
@@ -314,6 +325,10 @@ actor YTDLPRunner {
                             )
 
 
+                    // ---------------------------------------------
+                    // Direct media URL
+                    // ---------------------------------------------
+
                     let directURL =
                         format
                             .checking["url"]
@@ -322,6 +337,10 @@ actor YTDLPRunner {
                             )
 
 
+                    // ---------------------------------------------
+                    // File extension
+                    // ---------------------------------------------
+
                     let extensionName =
                         format
                             .checking["ext"]
@@ -329,6 +348,10 @@ actor YTDLPRunner {
                                 String.init
                             )
 
+
+                    // ---------------------------------------------
+                    // Audio codec
+                    // ---------------------------------------------
 
                     let audioCodecRaw =
                         format
@@ -339,6 +362,10 @@ actor YTDLPRunner {
                         ?? ""
 
 
+                    // ---------------------------------------------
+                    // Video codec
+                    // ---------------------------------------------
+
                     let videoCodecRaw =
                         format
                             .checking["vcodec"]
@@ -348,6 +375,10 @@ actor YTDLPRunner {
                         ?? ""
 
 
+                    // ---------------------------------------------
+                    // Audio bitrate
+                    // ---------------------------------------------
+
                     let bitrate =
                         format
                             .checking["abr"]
@@ -355,6 +386,10 @@ actor YTDLPRunner {
                                 Double.init
                             )
 
+
+                    // ---------------------------------------------
+                    // Determine audio/video
+                    // ---------------------------------------------
 
                     let hasAudio =
                         !audioCodecRaw.isEmpty
@@ -368,7 +403,7 @@ actor YTDLPRunner {
                         videoCodecRaw != "none"
 
 
-                    // audio-only
+                    // We only want audio-only formats.
 
                     guard
                         hasAudio,
@@ -381,6 +416,10 @@ actor YTDLPRunner {
 
                     audioCount += 1
 
+
+                    // ---------------------------------------------
+                    // Pick highest bitrate
+                    // ---------------------------------------------
 
                     let currentBitrate =
                         bitrate ?? 0
@@ -417,18 +456,29 @@ actor YTDLPRunner {
             )
 
 
+            // -----------------------------------------------------
+            // yt-dlp version
+            // -----------------------------------------------------
+
             let version =
                 String(
                     module
                         .version
                         .__version__
                 )
+                ?? "unknown"
 
 
             Self.stage(
                 "PYTHON 13 - COMPLETE"
             )
 
+
+            // -----------------------------------------------------
+            // Return ONLY native Swift values.
+            //
+            // No PythonObject leaves this closure.
+            // -----------------------------------------------------
 
             return Result(
                 title:
@@ -468,7 +518,7 @@ actor YTDLPRunner {
     }
 
 
-    // MARK: - Isolated Python job
+    // MARK: - Run Isolated
 
     func runIsolated<T: Sendable>(
         _ work:
@@ -554,10 +604,11 @@ actor YTDLPRunner {
                 queue.removeFirst()
 
 
-            // Exact FreeTube principle:
+            // Run the complete Python operation detached
+            // from the caller / MainActor.
             //
-            // Python job is detached from caller/main actor
-            // and all jobs execute strictly one-by-one.
+            // We wait for it to COMPLETELY finish before
+            // allowing the next Python job to start.
 
             let task =
                 Task.detached(
@@ -575,7 +626,7 @@ actor YTDLPRunner {
     }
 
 
-    // MARK: - Persistent diagnostics
+    // MARK: - Persistent Diagnostics
 
     nonisolated
     private static func stage(
