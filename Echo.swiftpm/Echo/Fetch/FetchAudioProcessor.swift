@@ -73,13 +73,15 @@ final class FetchAudioProcessor {
         quality: FetchQuality
     ) async throws -> FetchProcessedAudio {
 
+        UserDefaults.standard.set(
+            "MP3 1 - processing started",
+            forKey: "fetchLastStage"
+        )
+
+
         let fileManager =
             FileManager.default
 
-
-        // =========================================
-        // Final destination
-        // =========================================
 
         let documents =
             fileManager.urls(
@@ -122,8 +124,14 @@ final class FetchAudioProcessor {
         }
 
 
+        UserDefaults.standard.set(
+            "MP3 2 - artwork ready",
+            forKey: "fetchLastStage"
+        )
+
+
         // =========================================
-        // Source -> PCM -> LAME -> MP3
+        // Decode + encode
         // =========================================
 
         do {
@@ -142,8 +150,21 @@ final class FetchAudioProcessor {
                 at: outputURL
             )
 
+
+            UserDefaults.standard.set(
+                "MP3 FAILED - \(error.localizedDescription)",
+                forKey: "fetchLastStage"
+            )
+
+
             throw error
         }
+
+
+        UserDefaults.standard.set(
+            "MP3 10 - complete",
+            forKey: "fetchLastStage"
+        )
 
 
         print(
@@ -162,7 +183,7 @@ final class FetchAudioProcessor {
     }
 
 
-    // MARK: - Direct Decode + Encode
+    // MARK: - Decode + Encode
 
     private func encodeDirectlyToMP3(
         sourceURL: URL,
@@ -171,6 +192,12 @@ final class FetchAudioProcessor {
         item: FetchItem,
         artworkData: Data?
     ) async throws {
+
+        UserDefaults.standard.set(
+            "MP3 3 - opening source",
+            forKey: "fetchLastStage"
+        )
+
 
         print(
             "Opening audio source:",
@@ -203,17 +230,14 @@ final class FetchAudioProcessor {
         }
 
 
+        UserDefaults.standard.set(
+            "MP3 4 - audio track loaded",
+            forKey: "fetchLastStage"
+        )
+
+
         // =========================================
-        // AVAssetReader
-        //
-        // Decode compressed AAC/M4A directly into:
-        //
-        // - 44.1 kHz
-        // - stereo
-        // - signed 16-bit
-        // - interleaved
-        //
-        // Exactly what LAME wants.
+        // Reader
         // =========================================
 
         let reader: AVAssetReader
@@ -232,6 +256,18 @@ final class FetchAudioProcessor {
                 .cannotCreateReader
         }
 
+
+        // =========================================
+        // PCM output
+        //
+        // LAME krijgt altijd:
+        //
+        // 44100 Hz
+        // stereo
+        // Int16
+        // little endian
+        // interleaved
+        // =========================================
 
         let pcmSettings: [String: Any] = [
 
@@ -284,7 +320,7 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // LAME
+        // LAME init
         // =========================================
 
         guard let lame =
@@ -305,10 +341,20 @@ final class FetchAudioProcessor {
         }
 
 
+        // =========================================
+        // ID3
+        // =========================================
+
         configureMetadata(
             lame: lame,
             item: item,
             artworkData: artworkData
+        )
+
+
+        UserDefaults.standard.set(
+            "MP3 5 - metadata configured",
+            forKey: "fetchLastStage"
         )
 
 
@@ -387,6 +433,12 @@ final class FetchAudioProcessor {
         }
 
 
+        UserDefaults.standard.set(
+            "MP3 6 - LAME ready",
+            forKey: "fetchLastStage"
+        )
+
+
         // =========================================
         // Create MP3
         // =========================================
@@ -414,7 +466,7 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // Start decoder
+        // Start reader
         // =========================================
 
         guard reader.startReading() else {
@@ -423,9 +475,16 @@ final class FetchAudioProcessor {
                 .readerFailed(
                     reader.error?
                         .localizedDescription
-                    ?? "AVAssetReader kon niet starten."
+                    ??
+                    "AVAssetReader kon niet starten."
                 )
         }
+
+
+        UserDefaults.standard.set(
+            "MP3 7 - encoding audio",
+            forKey: "fetchLastStage"
+        )
 
 
         print(
@@ -434,24 +493,84 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // Read PCM sample buffers
+        // IMPORTANT:
+        //
+        // autoreleasepool per sample buffer.
+        //
+        // Anders kunnen CoreMedia/AVFoundation
+        // objects tijdens een heel lied blijven
+        // opstapelen in memory.
         // =========================================
+
+        var processedBuffers =
+            0
+
 
         while reader.status == .reading {
 
-            guard let sampleBuffer =
-                readerOutput.copyNextSampleBuffer()
-            else {
+            var loopError:
+                Error?
+
+
+            let gotBuffer: Bool =
+                autoreleasepool {
+
+                    guard let sampleBuffer =
+                        readerOutput
+                            .copyNextSampleBuffer()
+                    else {
+
+                        return false
+                    }
+
+
+                    do {
+
+                        try encodeSampleBuffer(
+                            sampleBuffer,
+                            lame: lame,
+                            outputFile: outputFile
+                        )
+
+                    } catch {
+
+                        loopError =
+                            error
+                    }
+
+
+                    return true
+                }
+
+
+            if let loopError {
+
+                reader.cancelReading()
+
+                throw loopError
+            }
+
+
+            if !gotBuffer {
 
                 break
             }
 
 
-            try encodeSampleBuffer(
-                sampleBuffer,
-                lame: lame,
-                outputFile: outputFile
-            )
+            processedBuffers +=
+                1
+
+
+            // Niet iedere buffer naar UserDefaults schrijven.
+            // Alleen af en toe voor diagnostics.
+
+            if processedBuffers % 250 == 0 {
+
+                UserDefaults.standard.set(
+                    "MP3 7 - encoding \(processedBuffers)",
+                    forKey: "fetchLastStage"
+                )
+            }
         }
 
 
@@ -474,7 +593,8 @@ final class FetchAudioProcessor {
                 .readerFailed(
                     reader.error?
                         .localizedDescription
-                    ?? "Onbekende decoderfout."
+                    ??
+                    "Onbekende decoderfout."
                 )
 
 
@@ -492,6 +612,12 @@ final class FetchAudioProcessor {
         }
 
 
+        UserDefaults.standard.set(
+            "MP3 8 - flushing LAME",
+            forKey: "fetchLastStage"
+        )
+
+
         // =========================================
         // Flush LAME
         // =========================================
@@ -504,25 +630,28 @@ final class FetchAudioProcessor {
 
 
         let flushed =
-            flushBuffer.withUnsafeMutableBufferPointer {
+            flushBuffer
+                .withUnsafeMutableBufferPointer {
 
-                buffer -> Int32 in
+                    buffer -> Int32 in
 
 
-                guard let destination =
-                    buffer.baseAddress
-                else {
+                    guard let destination =
+                        buffer.baseAddress
+                    else {
 
-                    return -1
+                        return -1
+                    }
+
+
+                    return lame_encode_flush(
+                        lame,
+                        destination,
+                        Int32(
+                            buffer.count
+                        )
+                    )
                 }
-
-
-                return lame_encode_flush(
-                    lame,
-                    destination,
-                    Int32(buffer.count)
-                )
-            }
 
 
         guard flushed >= 0 else {
@@ -536,18 +665,27 @@ final class FetchAudioProcessor {
 
         if flushed > 0 {
 
-            let data =
-                Data(
-                    flushBuffer[
-                        0..<Int(flushed)
-                    ]
-                )
-
-
             try outputFile.write(
-                contentsOf: data
+                contentsOf:
+                    Data(
+                        flushBuffer[
+                            0..<Int(flushed)
+                        ]
+                    )
             )
         }
+
+
+        // Zorg dat alles echt naar disk geschreven is
+        // voordat de library het bestand ziet.
+
+        try outputFile.synchronize()
+
+
+        UserDefaults.standard.set(
+            "MP3 9 - file synchronized",
+            forKey: "fetchLastStage"
+        )
 
 
         print(
@@ -556,7 +694,7 @@ final class FetchAudioProcessor {
     }
 
 
-    // MARK: - Encode PCM Sample Buffer
+    // MARK: - Encode PCM
 
     private func encodeSampleBuffer(
         _ sampleBuffer: CMSampleBuffer,
@@ -621,12 +759,9 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // Stereo Int16 interleaved:
+        // 16-bit interleaved stereo:
         //
         // L R L R L R ...
-        //
-        // CMSampleBufferGetNumSamples gives
-        // number of PCM frames.
         // =========================================
 
         let pcm =
@@ -692,16 +827,13 @@ final class FetchAudioProcessor {
 
         if encoded > 0 {
 
-            let data =
-                Data(
-                    mp3Buffer[
-                        0..<Int(encoded)
-                    ]
-                )
-
-
             try outputFile.write(
-                contentsOf: data
+                contentsOf:
+                    Data(
+                        mp3Buffer[
+                            0..<Int(encoded)
+                        ]
+                    )
             )
         }
     }
@@ -728,6 +860,8 @@ final class FetchAudioProcessor {
         }
 
 
+        // Force ID3v2
+
         id3tag_init(
             lame
         )
@@ -739,7 +873,7 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // Spotify metadata
+        // Spotify text metadata
         // =========================================
 
         if settings.embedMetadata {
@@ -763,7 +897,8 @@ final class FetchAudioProcessor {
 
 
             if let album =
-                item.album {
+                item.album,
+               !album.isEmpty {
 
                 album.withCString {
 
@@ -777,7 +912,7 @@ final class FetchAudioProcessor {
 
 
         // =========================================
-        // Spotify cover
+        // Spotify artwork
         // =========================================
 
         if
@@ -839,16 +974,15 @@ final class FetchAudioProcessor {
         do {
 
             let (data, response) =
-                try await
-                URLSession.shared.data(
+                try await URLSession.shared.data(
                     from: url
                 )
 
 
             guard
                 let http =
-                    response
-                        as? HTTPURLResponse,
+                    response as?
+                    HTTPURLResponse,
                 200..<300 ~=
                     http.statusCode
             else {
@@ -858,7 +992,6 @@ final class FetchAudioProcessor {
 
 
             return data
-
 
         } catch {
 
@@ -894,7 +1027,8 @@ final class FetchAudioProcessor {
                 separator: ""
             )
             .trimmingCharacters(
-                in: .whitespacesAndNewlines
+                in:
+                    .whitespacesAndNewlines
             )
     }
 
