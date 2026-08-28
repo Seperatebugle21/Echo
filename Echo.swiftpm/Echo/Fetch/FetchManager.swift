@@ -769,6 +769,11 @@ final class FetchManager {
                         processedAudio.artworkData
                 )
 
+            NotificationCenter.default.post(
+    name: .echoFetchCompleted,
+    object: nil
+)
+            
 
             UserDefaults.standard.set(
                 "FETCH 6 - library updated",
