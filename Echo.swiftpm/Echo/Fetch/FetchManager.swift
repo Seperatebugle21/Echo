@@ -39,6 +39,7 @@ final class FetchManager {
 
         let item =
             FetchItem(
+
                 spotifyURL:
                     reference.url,
 
@@ -65,15 +66,13 @@ final class FetchManager {
     // MARK: - Authorized YouTube Match
 
     func addAuthorizedMatch(
-        track:
-            SpotifyTrack,
-
-        youtubeResult:
-            YouTubeSearchResult
+        track: SpotifyTrack,
+        youtubeResult: YouTubeSearchResult
     ) {
 
         let item =
             FetchItem(
+
                 spotifyURL:
                     track.spotifyURL,
 
@@ -109,8 +108,7 @@ final class FetchManager {
     // MARK: - Playlist
 
     func preparePlaylist(
-        _ playlist:
-            SpotifyPlaylist
+        _ playlist: SpotifyPlaylist
     ) async throws {
 
         let tracks =
@@ -122,8 +120,7 @@ final class FetchManager {
                 )
 
 
-        for track
-            in tracks {
+        for track in tracks {
 
             await preparePlaylistTrack(
                 track
@@ -136,8 +133,7 @@ final class FetchManager {
 
 
     private func preparePlaylistTrack(
-        _ track:
-            SpotifyTrack
+        _ track: SpotifyTrack
     ) async {
 
         do {
@@ -154,16 +150,18 @@ final class FetchManager {
 
                 let results =
                     try await
-                    YouTubeAPI.shared.search(
-                        title:
-                            track.name,
+                    YouTubeAPI.shared
+                        .search(
 
-                        artist:
-                            track.artist,
+                            title:
+                                track.name,
 
-                        maxResults:
-                            1
-                    )
+                            artist:
+                                track.artist,
+
+                            maxResults:
+                                1
+                        )
 
 
                 guard
@@ -176,12 +174,14 @@ final class FetchManager {
                         track.name
                     )
 
+
                     return
                 }
 
 
                 let item =
                     FetchItem(
+
                         spotifyURL:
                             track.spotifyURL,
 
@@ -216,14 +216,9 @@ final class FetchManager {
 
             case .spotify:
 
-                // yt-dlp zoekt de YouTube match
-                // tijdens process().
-                //
-                // Hierdoor hoeft de playlist niet
-                // alle matches vooraf op te halen.
-
                 let item =
                     FetchItem(
+
                         spotifyURL:
                             track.spotifyURL,
 
@@ -264,71 +259,15 @@ final class FetchManager {
     }
 
 
-    // MARK: - Prepare Track
-
-    private func prepareTrack(
-        _ track:
-            SpotifyTrack
-    ) async {
-
-        do {
-
-            let results =
-                try await
-                YouTubeAPI.shared.search(
-                    title:
-                        track.name,
-
-                    artist:
-                        track.artist,
-
-                    maxResults:
-                        1
-                )
-
-
-            guard
-                let firstResult =
-                    results.first
-            else {
-
-                print(
-                    "Geen match gevonden:",
-                    track.name
-                )
-
-                return
-            }
-
-
-            print(
-                "Match:",
-                track.name,
-                "→",
-                firstResult.title
-            )
-
-
-        } catch {
-
-            print(
-                "YouTube zoeken mislukt:",
-                track.name,
-                error
-            )
-        }
-    }
-
-
-    // MARK: - Spotify Library Track
+    // MARK: - Add Track
 
     func add(
-        _ track:
-            SpotifyTrack
+        _ track: SpotifyTrack
     ) {
 
         let item =
             FetchItem(
+
                 spotifyURL:
                     track.spotifyURL,
 
@@ -355,15 +294,15 @@ final class FetchManager {
     }
 
 
-    // MARK: - Spotify Playlist
+    // MARK: - Add Playlist
 
     func add(
-        _ playlist:
-            SpotifyPlaylist
+        _ playlist: SpotifyPlaylist
     ) {
 
         let item =
             FetchItem(
+
                 spotifyURL:
                     playlist.spotifyURL,
 
@@ -390,19 +329,18 @@ final class FetchManager {
     // MARK: - Authorized Spotify Track
 
     func addAuthorizedSpotifyTrack(
-        _ track:
-            SpotifyTrack
+        _ track: SpotifyTrack
     ) {
 
         print(
             "Adding track to yt-dlp queue:",
-            track.name,
-            track.spotifyURL
+            track.name
         )
 
 
         let item =
             FetchItem(
+
                 spotifyURL:
                     track.spotifyURL,
 
@@ -431,12 +369,6 @@ final class FetchManager {
         )
 
 
-        print(
-            "Fetch queue count:",
-            items.count
-        )
-
-
         startIfNeeded()
     }
 
@@ -444,8 +376,7 @@ final class FetchManager {
     // MARK: - Remove
 
     func remove(
-        _ item:
-            FetchItem
+        _ item: FetchItem
     ) {
 
         items.removeAll {
@@ -477,10 +408,6 @@ final class FetchManager {
 
         guard !running else {
 
-            print(
-                "Fetch queue already running"
-            )
-
             return
         }
 
@@ -489,11 +416,8 @@ final class FetchManager {
             items.contains(
                 where: {
 
-                    item in
-
-
                     if case .queued =
-                        item.status {
+                        $0.status {
 
                         return true
                     }
@@ -503,10 +427,6 @@ final class FetchManager {
                 }
             )
         else {
-
-            print(
-                "No queued Fetch items"
-            )
 
             return
         }
@@ -529,11 +449,8 @@ final class FetchManager {
                 items.contains(
                     where: {
 
-                        item in
-
-
                         if case .queued =
-                            item.status {
+                            $0.status {
 
                             return true
                         }
@@ -559,11 +476,8 @@ final class FetchManager {
                     items.first(
                         where: {
 
-                            item in
-
-
                             if case .queued =
-                                item.status {
+                                $0.status {
 
                                 return true
                             }
@@ -588,8 +502,7 @@ final class FetchManager {
     // MARK: - Process
 
     private func process(
-        _ item:
-            FetchItem
+        _ item: FetchItem
     ) async {
 
         item.status =
@@ -608,11 +521,11 @@ final class FetchManager {
 
 
             print(
-                "======================================"
+                "===================================="
             )
 
             print(
-                "Processing:",
+                "FETCH:",
                 item.title
             )
 
@@ -627,35 +540,14 @@ final class FetchManager {
             )
 
             print(
-                "Spotify URL:",
-                item.spotifyURL
+                "===================================="
             )
 
-            print(
-                "YouTube URL:",
-                item.youtubeURL?
-                    .absoluteString ??
-                "AUTO"
-            )
-
-            print(
-                "Permission:",
-                item.permissionConfirmed
-            )
-
-            print(
-                "======================================"
-            )
-
-
-            // MARK: - Resolve source
 
             switch method {
 
             // =====================================
             // APIFY
-            //
-            // Bestaande methode blijft hetzelfde.
             // =====================================
 
             case .youtube:
@@ -671,10 +563,11 @@ final class FetchManager {
                 }
 
 
-                let apifyResult =
+                let result =
                     try await
                     ApifyAudioSource.shared
                         .resolveMP3(
+
                             youtubeURL:
                                 youtubeURL,
 
@@ -686,9 +579,9 @@ final class FetchManager {
 
                 downloadResult =
                     FetchAudioResult(
+
                         downloadURL:
-                            apifyResult
-                                .downloadURL,
+                            result.downloadURL,
 
                         suggestedFileName:
                             makeTemporaryApifyName(
@@ -699,27 +592,10 @@ final class FetchManager {
 
 
             // =====================================
-            // YT-DLP
-            //
-            // Volledig lokaal:
-            //
-            // Spotify metadata
-            //      ↓
-            // YouTube Search
-            //      ↓
-            // embedded Python
-            //      ↓
-            // yt-dlp
-            //      ↓
-            // beste audio-only URL
+            // EMBEDDED YT-DLP
             // =====================================
 
             case .spotify:
-
-                print(
-                    "Resolving through embedded yt-dlp..."
-                )
-
 
                 downloadResult =
                     try await
@@ -731,7 +607,9 @@ final class FetchManager {
             }
 
 
-            // MARK: - Download
+            // =====================================
+            // Download source
+            // =====================================
 
             item.status =
                 .downloading(
@@ -743,6 +621,7 @@ final class FetchManager {
                 try await
                 FetchDownloadEngine.shared
                     .download(
+
                         item:
                             item,
 
@@ -761,57 +640,53 @@ final class FetchManager {
 
 
             print(
-                "Downloaded source:",
+                "Source downloaded:",
                 downloadedFile.path
             )
 
 
-            // MARK: - Processing
+            // =====================================
+            // Source -> FINAL MP3
+            // =====================================
 
             item.status =
                 .processing
 
 
-            print(
-                "Converting source to M4A..."
-            )
-
-
-            /*
-             Spotify metadata remains authoritative:
-
-             title    = Spotify title
-             artist   = Spotify artist
-             album    = Spotify album
-             artwork  = Spotify artwork
-
-             yt-dlp is only used to resolve
-             the audio stream.
-             */
-
-
-            let finalAudioURL =
+            let processedAudio =
                 try await
-                FetchMediaProcessor.shared
-                    .convertToM4A(
+                FetchAudioProcessor.shared
+                    .process(
+
                         sourceURL:
                             downloadedFile,
 
                         item:
-                            item
+                            item,
+
+                        quality:
+                            FetchSettings.shared
+                                .quality
                     )
 
 
+            let finalMP3URL =
+                processedAudio
+                    .fileURL
+
+
             print(
-                "Final Echo audio:",
-                finalAudioURL.path
+                "Final MP3:",
+                finalMP3URL.path
             )
 
 
-            // MARK: - Remove source
+            // =====================================
+            // Delete temporary downloaded source
+            // =====================================
 
             if downloadedFile !=
-                finalAudioURL {
+                finalMP3URL {
 
                 do {
 
@@ -821,26 +696,23 @@ final class FetchManager {
                                 downloadedFile
                         )
 
-
-                    print(
-                        "Temporary source removed."
-                    )
-
-
                 } catch {
 
                     print(
-                        "Could not remove temporary source:",
+                        "Could not remove source:",
                         error
                     )
                 }
             }
 
 
-            // MARK: - Refresh library
+            // =====================================
+            // Notify Music Library
+            // =====================================
 
             NotificationCenter.default
                 .post(
+
                     name:
                         .echoFetchCompleted,
 
@@ -854,16 +726,19 @@ final class FetchManager {
 
 
             print(
-                "======================================"
+                "===================================="
             )
 
             print(
-                "Fetch completed:",
-                item.title
+                "MP3 FETCH COMPLETE"
             )
 
             print(
-                "======================================"
+                finalMP3URL.lastPathComponent
+            )
+
+            print(
+                "===================================="
             )
 
 
@@ -871,37 +746,37 @@ final class FetchManager {
 
             item.status =
                 .failed(
-                    error
-                        .localizedDescription
+                    error.localizedDescription
                 )
 
 
             print(
-                "======================================"
+                "===================================="
             )
 
             print(
-                "Fetch failed:",
+                "FETCH FAILED"
+            )
+
+            print(
                 item.title
             )
 
             print(
-                "Error:",
                 error
             )
 
             print(
-                "======================================"
+                "===================================="
             )
         }
     }
 
 
-    // MARK: - Temporary Apify Name
+    // MARK: - Apify temp filename
 
     private func makeTemporaryApifyName(
-        item:
-            FetchItem
+        item: FetchItem
     ) -> String {
 
         let illegal =
@@ -935,19 +810,23 @@ final class FetchManager {
     // MARK: - Default Title
 
     private func defaultTitle(
-        for type:
-            SpotifyContentType
+        for type: SpotifyContentType
     ) -> String {
 
         switch type {
 
         case .track:
+
             return "Spotify Track"
 
+
         case .album:
+
             return "Spotify Album"
 
+
         case .playlist:
+
             return "Spotify Playlist"
         }
     }
