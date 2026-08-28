@@ -1,21 +1,30 @@
 import Foundation
 import Observation
 
-enum ApifyDownloadMethod: String, CaseIterable, Identifiable {
+
+enum ApifyDownloadMethod:
+    String,
+    CaseIterable,
+    Identifiable {
+
     case youtube
     case spotify
+
 
     var id: String {
         rawValue
     }
 
+
     var title: String {
+
         switch self {
+
         case .youtube:
-            return "YouTube"
+            return "Apify"
 
         case .spotify:
-            return "Spotify"
+            return "yt-dlp"
         }
     }
 }
@@ -25,73 +34,100 @@ enum ApifyDownloadMethod: String, CaseIterable, Identifiable {
 @Observable
 final class ApifySettings {
 
-    static let shared = ApifySettings()
+    static let shared =
+        ApifySettings()
+
 
     private let accountsKey =
         "echo.apify.accounts"
 
+
     private let activeAccountKey =
         "echo.apify.activeAccount"
+
 
     private let methodKey =
         "echo.apify.downloadMethod"
 
 
-    var accounts: [ApifyAccount] = []
+    var accounts:
+        [ApifyAccount] = []
 
-    var activeAccountID: UUID? {
+
+    var activeAccountID:
+        UUID? {
+
         didSet {
+
             if let activeAccountID {
 
                 UserDefaults.standard.set(
-                    activeAccountID.uuidString,
-                    forKey: activeAccountKey
+                    activeAccountID
+                        .uuidString,
+
+                    forKey:
+                        activeAccountKey
                 )
 
             } else {
 
-                UserDefaults.standard.removeObject(
-                    forKey: activeAccountKey
-                )
+                UserDefaults.standard
+                    .removeObject(
+                        forKey:
+                            activeAccountKey
+                    )
             }
         }
     }
 
 
-    var downloadMethod: ApifyDownloadMethod {
+    var downloadMethod:
+        ApifyDownloadMethod {
+
         didSet {
 
             UserDefaults.standard.set(
-                downloadMethod.rawValue,
-                forKey: methodKey
+                downloadMethod
+                    .rawValue,
+
+                forKey:
+                    methodKey
             )
         }
     }
 
 
-    var activeAccount: ApifyAccount? {
+    var activeAccount:
+        ApifyAccount? {
 
         guard let activeAccountID else {
             return nil
         }
 
+
         return accounts.first {
-            $0.id == activeAccountID
+            $0.id ==
+            activeAccountID
         }
     }
 
 
-    var apiToken: String {
+    var apiToken:
+        String {
 
-        activeAccount?.token ?? ""
+        activeAccount?
+            .token ??
+        ""
     }
 
 
-    var isConfigured: Bool {
+    var isConfigured:
+        Bool {
 
         !apiToken
             .trimmingCharacters(
-                in: .whitespacesAndNewlines
+                in:
+                    .whitespacesAndNewlines
             )
             .isEmpty
     }
@@ -99,81 +135,123 @@ final class ApifySettings {
 
     private init() {
 
+        // =========================================
         // Method
+        // =========================================
 
         if
             let savedMethod =
                 UserDefaults.standard.string(
-                    forKey: methodKey
+                    forKey:
+                        methodKey
                 ),
+
             let method =
                 ApifyDownloadMethod(
-                    rawValue: savedMethod
+                    rawValue:
+                        savedMethod
                 )
         {
-            downloadMethod = method
+
+            downloadMethod =
+                method
+
         } else {
-            downloadMethod = .youtube
+
+            downloadMethod =
+                .youtube
         }
 
 
-        // Accounts metadata
+        // =========================================
+        // Accounts
+        // =========================================
 
         if
             let data =
                 UserDefaults.standard.data(
-                    forKey: accountsKey
+                    forKey:
+                        accountsKey
                 ),
+
             let savedAccounts =
-                try? JSONDecoder().decode(
-                    [ApifyStoredAccount].self,
-                    from: data
-                )
+                try? JSONDecoder()
+                    .decode(
+                        [ApifyStoredAccount].self,
+
+                        from:
+                            data
+                    )
         {
 
             accounts =
-                savedAccounts.compactMap {
-                    stored in
+                savedAccounts
+                    .compactMap {
 
-                    guard
-                        let token =
-                            KeychainHelper.read(
-                                tokenKey(
-                                    for: stored.id
+                        stored in
+
+
+                        guard
+                            let token =
+                                KeychainHelper.read(
+                                    tokenKey(
+                                        for:
+                                            stored.id
+                                    )
                                 )
-                            )
-                    else {
-                        return nil
-                    }
+                        else {
 
-                    return ApifyAccount(
-                        id: stored.id,
-                        name: stored.name,
-                        token: token
-                    )
-                }
+                            return nil
+                        }
+
+
+                        return ApifyAccount(
+                            id:
+                                stored.id,
+
+                            name:
+                                stored.name,
+
+                            token:
+                                token
+                        )
+                    }
         }
 
 
-        // Active
+        // =========================================
+        // Active account
+        // =========================================
 
         if
             let string =
                 UserDefaults.standard.string(
-                    forKey: activeAccountKey
+                    forKey:
+                        activeAccountKey
                 ),
+
             let id =
-                UUID(uuidString: string),
+                UUID(
+                    uuidString:
+                        string
+                ),
+
             accounts.contains(
-                where: { $0.id == id }
+                where: {
+                    $0.id == id
+                }
             )
         {
-            activeAccountID = id
+
+            activeAccountID =
+                id
 
         } else {
 
             activeAccountID =
-                accounts.first?.id
+                accounts
+                    .first?
+                    .id
         }
     }
 
@@ -186,37 +264,54 @@ final class ApifySettings {
     ) {
 
         let cleanToken =
-            token.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
+            token
+                .trimmingCharacters(
+                    in:
+                        .whitespacesAndNewlines
+                )
+
 
         guard !cleanToken.isEmpty else {
             return
         }
 
+
         let account =
             ApifyAccount(
+
                 name:
                     name.isEmpty
                     ? "Apify Account"
                     : name,
 
-                token: cleanToken
+                token:
+                    cleanToken
             )
 
-        accounts.append(account)
+
+        accounts.append(
+            account
+        )
+
 
         KeychainHelper.save(
             cleanToken,
-            for: tokenKey(
-                for: account.id
-            )
+
+            for:
+                tokenKey(
+                    for:
+                        account.id
+                )
         )
+
 
         saveAccounts()
 
+
         if activeAccountID == nil {
-            activeAccountID = account.id
+
+            activeAccountID =
+                account.id
         }
     }
 
@@ -224,7 +319,8 @@ final class ApifySettings {
     // MARK: - Select
 
     func setActive(
-        _ account: ApifyAccount
+        _ account:
+            ApifyAccount
     ) {
 
         activeAccountID =
@@ -235,27 +331,33 @@ final class ApifySettings {
     // MARK: - Remove
 
     func removeAccount(
-        _ account: ApifyAccount
+        _ account:
+            ApifyAccount
     ) {
 
         KeychainHelper.delete(
             tokenKey(
-                for: account.id
+                for:
+                    account.id
             )
         )
 
+
         accounts.removeAll {
-            $0.id == account.id
+            $0.id ==
+            account.id
         }
 
-        if
-            activeAccountID ==
-            account.id
-        {
+
+        if activeAccountID ==
+            account.id {
 
             activeAccountID =
-                accounts.first?.id
+                accounts
+                    .first?
+                    .id
         }
+
 
         saveAccounts()
     }
@@ -267,30 +369,41 @@ final class ApifySettings {
 
         let stored =
             accounts.map {
+
                 ApifyStoredAccount(
-                    id: $0.id,
-                    name: $0.name
+                    id:
+                        $0.id,
+
+                    name:
+                        $0.name
                 )
             }
 
+
         guard
             let data =
-                try? JSONEncoder().encode(
-                    stored
-                )
+                try? JSONEncoder()
+                    .encode(
+                        stored
+                    )
         else {
+
             return
         }
 
+
         UserDefaults.standard.set(
             data,
-            forKey: accountsKey
+
+            forKey:
+                accountsKey
         )
     }
 
 
     private func tokenKey(
-        for id: UUID
+        for id:
+            UUID
     ) -> String {
 
         "echo.apify.account.\(id.uuidString)"
@@ -301,6 +414,9 @@ final class ApifySettings {
 private struct ApifyStoredAccount:
     Codable {
 
-    let id: UUID
-    let name: String
+    let id:
+        UUID
+
+    let name:
+        String
 }
