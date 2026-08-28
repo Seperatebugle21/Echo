@@ -60,7 +60,7 @@ jobs:
 
 
       # ============================================
-      # 2B. Zoek specifiek iOS arm64 libpython
+      # 2B. Zoek iOS arm64 libpython
       # ============================================
 
       - name: Locate Python library
@@ -102,8 +102,8 @@ jobs:
           if [ -z "$PYTHON_BIN" ]; then
 
             echo "ERROR: iOS arm64 libpython binary niet gevonden."
-            echo ""
 
+            echo ""
             echo "Inhoud ios-arm64:"
             echo ""
 
@@ -126,10 +126,6 @@ jobs:
           fi
 
 
-          # ============================================
-          # Architecture controleren
-          # ============================================
-
           echo ""
           echo "========================================"
           echo " PYTHON BINARY INFO"
@@ -139,24 +135,25 @@ jobs:
           lipo -info "$PYTHON_BIN" || true
 
 
-          # ============================================
-          # Controleer symbolen IN libpython zelf
-          # ============================================
-
           echo ""
           echo "Py_Initialize in archive:"
+
           nm -g "$PYTHON_BIN" \
             | grep "_Py_Initialize" \
             | head -n 10 || true
 
+
           echo ""
           echo "Py_IsInitialized in archive:"
+
           nm -g "$PYTHON_BIN" \
             | grep "_Py_IsInitialized" \
             | head -n 10 || true
 
+
           echo ""
           echo "PyUnicode_FromString in archive:"
+
           nm -g "$PYTHON_BIN" \
             | grep "_PyUnicode_FromString" \
             | head -n 10 || true
@@ -170,9 +167,6 @@ jobs:
 
           echo "$PYTHON_BIN"
 
-
-          # Absoluut pad beschikbaar maken
-          # voor volgende GitHub Actions steps
 
           echo "PYTHON_BIN=$PYTHON_BIN" >> "$GITHUB_ENV"
 
@@ -218,13 +212,6 @@ jobs:
           fi
 
 
-          # Extra bevestiging vóór cd
-          echo ""
-          echo "Python binary bestaat vóór build."
-
-          ls -lh "$PYTHON_BIN"
-
-
           cd "$PACKAGE_DIR"
 
           mkdir -p ../build
@@ -236,24 +223,6 @@ jobs:
           echo "========================================"
           echo ""
 
-
-          # ============================================
-          #
-          # GEEN -all_load
-          #
-          # -all_load veroorzaakte duplicate symbols
-          # uit ffmpeg.o en ffprobe.o.
-          #
-          # Daarom:
-          #
-          # -force_load alleen op libpython3.10.a
-          #
-          # -export_dynamic zodat PythonKit
-          # Py_* symbolen kan vinden via:
-          #
-          # dlsym(RTLD_DEFAULT, ...)
-          #
-          # ============================================
 
           xcodebuild archive \
             -scheme Echo \
@@ -270,7 +239,7 @@ jobs:
 
 
       # ============================================
-      # 2D. Controleer embedded Python runtime
+      # 2D. Controleer Python runtime
       # ============================================
 
       - name: Verify embedded Python runtime
@@ -313,10 +282,6 @@ jobs:
           echo "$APP_PATH"
 
 
-          # ============================================
-          # Info.plist
-          # ============================================
-
           INFO_PLIST="$APP_PATH/Info.plist"
 
 
@@ -328,10 +293,6 @@ jobs:
             exit 1
           fi
 
-
-          # ============================================
-          # Executable bepalen
-          # ============================================
 
           EXECUTABLE_NAME=$(
             /usr/libexec/PlistBuddy \
@@ -357,24 +318,7 @@ jobs:
 
 
           # ============================================
-          # Resource bundles
-          # ============================================
-
-          echo ""
-          echo "========================================"
-          echo " RESOURCE BUNDLES"
-          echo "========================================"
-          echo ""
-
-
-          find "$APP_PATH" \
-            -type d \
-            -name "*.bundle" \
-            -print || true
-
-
-          # ============================================
-          # PythonSupport bundle expliciet zoeken
+          # PythonSupport bundle
           # ============================================
 
           echo ""
@@ -434,12 +378,7 @@ jobs:
           if [ -z "$PYTHON_RESOURCE" ]; then
 
             echo ""
-            echo "========================================"
-            echo " ERROR"
-            echo "========================================"
-            echo ""
-
-            echo "Python stdlib/resource bundle ontbreekt."
+            echo "ERROR: Python stdlib/resource bundle ontbreekt."
 
             exit 1
           fi
@@ -451,7 +390,7 @@ jobs:
 
 
           # ============================================
-          # CPython-symbolen in finale executable
+          # CPython-symbolen
           # ============================================
 
           echo ""
@@ -499,10 +438,6 @@ jobs:
             | grep "_Py_DecRef" \
             || true
 
-
-          # ============================================
-          # Strict symbol check
-          # ============================================
 
           echo ""
           echo "========================================"
@@ -554,13 +489,9 @@ jobs:
           echo "Python stdlib:"
           echo "$PYTHON_RESOURCE"
 
-          echo ""
-
-          echo "Essentiële CPython-symbolen zijn aanwezig."
-
 
       # ============================================
-      # 3. IPA maken + Info.plist aanpassen
+      # 3. IPA maken
       # ============================================
 
       - name: Create IPA Package
@@ -570,10 +501,6 @@ jobs:
 
           mkdir -p Payload
 
-
-          # ============================================
-          # Gebouwde app zoeken
-          # ============================================
 
           BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
             -maxdepth 1 \
@@ -602,10 +529,6 @@ jobs:
             exit 1
           fi
 
-
-          # ============================================
-          # Kopieer app naar Payload
-          # ============================================
 
           cp -R "$BUILT_APP" Payload/
 
@@ -646,7 +569,7 @@ jobs:
 
 
           # ============================================
-          # 3A. Background Audio
+          # Background Audio
           # ============================================
 
           /usr/libexec/PlistBuddy \
@@ -666,7 +589,7 @@ jobs:
 
 
           # ============================================
-          # 3B. Files-app toegang
+          # Files app
           # ============================================
 
           /usr/libexec/PlistBuddy \
@@ -688,9 +611,7 @@ jobs:
 
 
           # ============================================
-          # 3C. Spotify callback URL scheme
-          #
-          # echo-spotify-login://callback
+          # Spotify callback
           # ============================================
 
           /usr/libexec/PlistBuddy \
@@ -724,10 +645,6 @@ jobs:
             "$INFO_PLIST"
 
 
-          # ============================================
-          # 3D. Debug Info.plist
-          # ============================================
-
           echo ""
           echo "========================================"
           echo " FINAL INFO.PLIST"
@@ -739,22 +656,6 @@ jobs:
             -c "Print" \
             "$INFO_PLIST"
 
-
-          echo ""
-          echo "========================================"
-          echo " URL TYPES"
-          echo "========================================"
-          echo ""
-
-
-          /usr/libexec/PlistBuddy \
-            -c "Print :CFBundleURLTypes" \
-            "$INFO_PLIST"
-
-
-          # ============================================
-          # Python controle in uiteindelijke Payload
-          # ============================================
 
           echo ""
           echo "========================================"
@@ -771,10 +672,6 @@ jobs:
             \) \
             -print || true
 
-
-          # ============================================
-          # 3E. IPA maken
-          # ============================================
 
           rm -f Echo.ipa
 
