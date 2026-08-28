@@ -101,7 +101,7 @@ let package = Package(
     targets: [
 
         // =========================================
-        // Echo
+        // Echo app
         // =========================================
 
         .executableTarget(
@@ -162,7 +162,7 @@ let package = Package(
 
 
         // =========================================
-        // Swift-importable LAME wrapper
+        // C module exposing LAME to Swift
         // =========================================
 
         .target(
@@ -183,7 +183,7 @@ let package = Package(
 
 
         // =========================================
-        // Standalone libmp3lame
+        // Standalone LAME binary
         // =========================================
 
         .binaryTarget(
