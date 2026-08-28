@@ -138,8 +138,16 @@ let package = Package(
             path:
                 ".",
 
+            // BELANGRIJK:
+            //
+            // De echte map heet "Clame",
+            // niet "CLame".
+            //
+            // Daardoor wordt de C-code nu echt
+            // uitgesloten van AppModule.
+
             exclude: [
-                "CLame"
+                "Clame"
             ],
 
             swiftSettings: [
@@ -162,7 +170,7 @@ let package = Package(
 
 
         // =========================================
-        // C module exposing LAME to Swift
+        // C wrapper target
         // =========================================
 
         .target(
@@ -174,8 +182,10 @@ let package = Package(
                 "mp3lame"
             ],
 
+            // De map in GitHub heet echt "Clame".
+
             path:
-                "CLame",
+                "Clame",
 
             publicHeadersPath:
                 "include"
@@ -183,7 +193,7 @@ let package = Package(
 
 
         // =========================================
-        // Standalone LAME binary
+        // Standalone libmp3lame
         // =========================================
 
         .binaryTarget(
