@@ -1,38 +1,57 @@
 import SwiftUI
 
+
 struct SpotifyPlaylistDetailView: View {
 
-    let playlist: SpotifyPlaylist
+    let playlist:
+        SpotifyPlaylist
 
-    @State private var tracks: [SpotifyTrack] = []
 
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+    @State private var tracks:
+        [SpotifyTrack] = []
 
-    @State private var searchText = ""
+    @State private var isLoading =
+        false
+
+    @State private var errorMessage:
+        String?
+
+    @State private var searchText =
+        ""
 
     @State private var selectedTrack:
-    SpotifyTrack?
+        SpotifyTrack?
 
-    var filteredTracks: [SpotifyTrack] {
+
+    var filteredTracks:
+        [SpotifyTrack] {
 
         guard !searchText.isEmpty else {
+
             return tracks
         }
 
+
         return tracks.filter { track in
 
-            track.name.localizedCaseInsensitiveContains(
-                searchText
-            )
+            track.name
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
+
             ||
-            track.artist.localizedCaseInsensitiveContains(
-                searchText
-            )
+
+            track.artist
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
+
             ||
-            track.album.localizedCaseInsensitiveContains(
-                searchText
-            )
+
+            track.album
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
         }
     }
 
@@ -40,6 +59,8 @@ struct SpotifyPlaylistDetailView: View {
     var body: some View {
 
         List {
+
+            // MARK: - Loading
 
             if isLoading {
 
@@ -54,15 +75,23 @@ struct SpotifyPlaylistDetailView: View {
             }
 
 
+            // MARK: - Error
+
             if let errorMessage {
 
                 Section {
 
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
+                    Text(
+                        errorMessage
+                    )
+                    .foregroundStyle(
+                        .red
+                    )
                 }
             }
 
+
+            // MARK: - Empty
 
             if !isLoading &&
                 errorMessage == nil &&
@@ -70,7 +99,8 @@ struct SpotifyPlaylistDetailView: View {
 
                 ContentUnavailableView(
                     "No Songs",
-                    systemImage: "music.note.list",
+                    systemImage:
+                        "music.note.list",
                     description:
                         Text(
                             "No songs were found in this playlist."
@@ -79,99 +109,118 @@ struct SpotifyPlaylistDetailView: View {
             }
 
 
-            ForEach(filteredTracks) { track in
+            // MARK: - Tracks
 
-              
-                                     
-                                     
-           ForEach(filteredTracks) { track in
+            ForEach(
+                filteredTracks
+            ) { track in
 
-    Button {
+                Button {
 
-        selectedTrack =
-            track
+                    selectedTrack =
+                        track
 
-    } label: {
+                } label: {
 
-        SpotifyPlaylistTrackRow(
-            track:
-                track
-        )
-    }
-    .buttonStyle(
-        .plain
-    )
-}
+                    SpotifyPlaylistTrackRow(
+                        track:
+                            track
+                    )
+                }
+                .buttonStyle(
+                    .plain
+                )
+            }
         }
+
         .navigationTitle(
             playlist.name
         )
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(
-            text: $searchText,
-            prompt: "Search in playlist"
+
+        .navigationBarTitleDisplayMode(
+            .inline
         )
+
+        .searchable(
+            text:
+                $searchText,
+            prompt:
+                "Search in playlist"
+        )
+
         .task {
+
             await loadTracks()
         }
+
         .refreshable {
+
             await loadTracks()
+        }
+
+        .sheet(
+            item:
+                $selectedTrack
+        ) { track in
+
+            SpotifyTrackDetailView(
+
+                track:
+                    track,
+
+                onClose: {
+
+                    selectedTrack =
+                        nil
+                },
+
+                onViewDownloads: {
+
+                    selectedTrack =
+                        nil
+
+
+                    DispatchQueue.main.async {
+
+                        NotificationCenter
+                            .default
+                            .post(
+                                name:
+                                    .echoOpenFetchDownloads,
+                                object:
+                                    nil
+                            )
+                    }
+                }
+            )
         }
     }
-        .sheet(
-    item:
-        $selectedTrack
-) {
-    track in
 
 
-    SpotifyTrackDetailView(
-
-        track:
-            track,
-
-        onClose: {
-
-            selectedTrack =
-                nil
-        },
-
-        onViewDownloads: {
-
-            selectedTrack =
-                nil
-
-
-            DispatchQueue.main.async {
-
-                NotificationCenter
-                    .default
-                    .post(
-                        name:
-                            .echoOpenFetchDownloads,
-                        object:
-                            nil
-                    )
-            }
-        }
-    )
-}
-
+    // MARK: - Load Tracks
 
     @MainActor
-    private func loadTracks() async {
+    private func loadTracks()
+        async {
 
         guard !isLoading else {
+
             return
         }
 
-        isLoading = true
-        errorMessage = nil
+
+        isLoading =
+            true
+
+        errorMessage =
+            nil
+
 
         do {
 
             tracks =
-                try await SpotifyAPI.shared
+                try await
+                SpotifyAPI.shared
                     .getPlaylistTracks(
                         playlistID:
                             playlist.id
@@ -182,6 +231,7 @@ struct SpotifyPlaylistDetailView: View {
             errorMessage =
                 error.localizedDescription
 
+
             print(
                 "Failed loading playlist:",
                 playlist.name,
@@ -189,22 +239,31 @@ struct SpotifyPlaylistDetailView: View {
             )
         }
 
-        isLoading = false
+
+        isLoading =
+            false
     }
 }
 
 
+// MARK: - Track Row
 
 struct SpotifyPlaylistTrackRow: View {
 
-    let track: SpotifyTrack
+    let track:
+        SpotifyTrack
+
 
     var body: some View {
 
-        HStack(spacing: 12) {
+        HStack(
+            spacing:
+                12
+        ) {
 
             AsyncImage(
-                url: track.artworkURL
+                url:
+                    track.artworkURL
             ) { image in
 
                 image
@@ -214,10 +273,13 @@ struct SpotifyPlaylistTrackRow: View {
             } placeholder: {
 
                 RoundedRectangle(
-                    cornerRadius: 7
+                    cornerRadius:
+                        7
                 )
                 .fill(
-                    .secondary.opacity(0.15)
+                    .secondary.opacity(
+                        0.15
+                    )
                 )
                 .overlay {
 
@@ -231,39 +293,82 @@ struct SpotifyPlaylistTrackRow: View {
                 }
             }
             .frame(
-                width: 50,
-                height: 50
+                width:
+                    50,
+                height:
+                    50
             )
             .clipShape(
                 RoundedRectangle(
-                    cornerRadius: 7
+                    cornerRadius:
+                        7
                 )
             )
 
 
             VStack(
-                alignment: .leading,
-                spacing: 3
+                alignment:
+                    .leading,
+                spacing:
+                    3
             ) {
 
-                Text(track.name)
-                    .font(.headline)
-                    .lineLimit(1)
+                Text(
+                    track.name
+                )
+                .font(
+                    .headline
+                )
+                .foregroundStyle(
+                    .primary
+                )
+                .lineLimit(
+                    1
+                )
 
-                Text(track.artist)
-                    .font(.subheadline)
-                    .foregroundStyle(
-                        .secondary
-                    )
-                    .lineLimit(1)
 
-                Text(track.album)
-                    .font(.caption)
-                    .foregroundStyle(
-                        .secondary
-                    )
-                    .lineLimit(1)
+                Text(
+                    track.artist
+                )
+                .font(
+                    .subheadline
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+                .lineLimit(
+                    1
+                )
+
+
+                Text(
+                    track.album
+                )
+                .font(
+                    .caption
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+                .lineLimit(
+                    1
+                )
             }
+
+
+            Spacer()
+
+
+            Image(
+                systemName:
+                    "chevron.right"
+            )
+            .font(
+                .caption
+            )
+            .foregroundStyle(
+                .tertiary
+            )
         }
     }
 }
