@@ -26,31 +26,31 @@ enum FetchProcessingError: LocalizedError {
         switch self {
 
         case .noAudioTrack:
-            return "Het gedownloade bestand bevat geen audiotrack."
+            return "The downloaded file does not contain an audio track."
 
         case .cannotCreateReader:
-            return "Echo kon de audiodecoder niet starten."
+            return "Echo could not start the audio decoder."
 
         case .cannotAddReaderOutput:
-            return "Echo kon de PCM-audio-uitvoer niet instellen."
+            return "Echo could not configure the PCM audio output."
 
         case .readerFailed(let message):
-            return "Audio decoderen is mislukt: \(message)"
+            return "Audio decoding failed: \(message)"
 
         case .cannotCreateMP3:
-            return "Echo kon het tijdelijke MP3-bestand niet aanmaken."
+            return "Echo could not create the temporary MP3 file."
 
         case .cannotMoveFinalMP3(let message):
-            return "De afgewerkte MP3 kon niet naar de library worden verplaatst: \(message)"
+            return "The finished MP3 could not be moved to the library: \(message)"
 
         case .lameInitializationFailed:
-            return "De MP3-encoder kon niet gestart worden."
+            return "The MP3 encoder could not be started."
 
         case .lameConfigurationFailed(let setting):
-            return "De MP3-encoder kon '\(setting)' niet instellen."
+            return "The MP3 encoder could not configure '\(setting)'."
 
         case .lameEncodingFailed(let code):
-            return "MP3 encoding is mislukt. LAME code: \(code)"
+            return "MP3 encoding failed. LAME code: \(code)"
         }
     }
 }
@@ -138,9 +138,7 @@ final class FetchAudioProcessor {
             )
 
 
-        // =========================================
-        // Temporary MP3
-        // =========================================
+        // MARK: Temporary MP3
 
         let temporaryDirectory =
             manager
@@ -168,9 +166,7 @@ final class FetchAudioProcessor {
                 )
 
 
-        // =========================================
-        // Artwork
-        // =========================================
+        // MARK: Artwork
 
         let originalArtwork:
             Data?
@@ -221,12 +217,9 @@ final class FetchAudioProcessor {
             )
 
 
-        // =========================================
-        // Background encoding progress bridge
-        // =========================================
-
         let progressBridge:
-            @Sendable (Double) -> Void = {
+            @Sendable
+            (Double) -> Void = {
                 value in
 
 
@@ -242,9 +235,12 @@ final class FetchAudioProcessor {
 
         do {
 
+            // Higher priority than before.
+            // Encoding is user-visible work.
+
             try await Task.detached(
                 priority:
-                    .utility
+                    .userInitiated
             ) {
 
                 try await Self
@@ -273,9 +269,8 @@ final class FetchAudioProcessor {
         )
 
 
-        // =========================================
-        // Only reveal completed file to Documents
-        // =========================================
+        // Only expose a fully finished MP3
+        // in Documents.
 
         do {
 
@@ -443,9 +438,7 @@ final class FetchAudioProcessor {
         )
 
 
-        // =========================================
-        // LAME
-        // =========================================
+        // MARK: LAME
 
         guard let lame =
             lame_init()
@@ -517,9 +510,15 @@ final class FetchAudioProcessor {
         }
 
 
+        // 0 = slowest/best algorithm.
+        // 9 = fastest.
+        //
+        // 5 is considerably faster than 2 while
+        // maintaining very good output quality.
+
         guard lame_set_quality(
             lame,
-            2
+            5
         ) >= 0 else {
 
             throw FetchProcessingError
@@ -535,9 +534,7 @@ final class FetchAudioProcessor {
             )
 
 
-        guard initResult >=
-                0
-        else {
+        guard initResult >= 0 else {
 
             throw FetchProcessingError
                 .lameEncodingFailed(
@@ -546,9 +543,7 @@ final class FetchAudioProcessor {
         }
 
 
-        // =========================================
-        // Output
-        // =========================================
+        // MARK: Output
 
         let manager =
             FileManager.default
@@ -606,7 +601,7 @@ final class FetchAudioProcessor {
                     reader.error?
                         .localizedDescription
                     ??
-                    "AVAssetReader kon niet starten."
+                    "AVAssetReader could not start."
                 )
         }
 
@@ -620,9 +615,20 @@ final class FetchAudioProcessor {
             0.15
 
 
-        // =========================================
-        // Actual encoding
-        // =========================================
+        // Reuse one MP3 buffer for the entire
+        // song instead of allocating 128 KB
+        // for every sample buffer.
+
+        var reusableMP3Buffer =
+            [UInt8](
+                repeating:
+                    0,
+                count:
+                    128 * 1024
+            )
+
+
+        // MARK: Actual Encoding
 
         while reader.status ==
             .reading {
@@ -668,7 +674,9 @@ final class FetchAudioProcessor {
                             lame:
                                 lame,
                             outputFile:
-                                output
+                                output,
+                            mp3Buffer:
+                                &reusableMP3Buffer
                         )
 
                     } catch {
@@ -691,12 +699,14 @@ final class FetchAudioProcessor {
 
 
             if !received {
+
                 break
             }
 
 
-            if let timestampSeconds,
-               timestampSeconds.isFinite {
+            if
+                let timestampSeconds,
+                timestampSeconds.isFinite {
 
                 let songProgress =
                     min(
@@ -710,9 +720,6 @@ final class FetchAudioProcessor {
                     )
 
 
-                // Leave last 10% of local processing
-                // for flush/move.
-
                 let value =
                     0.15
                     +
@@ -723,14 +730,16 @@ final class FetchAudioProcessor {
                     )
 
 
-                // Prevent excessive UI updates.
+                // Reduce main-thread/UI traffic.
+                // 1% updates are plenty for the UI.
 
                 if value -
                     lastReported >=
-                    0.005 {
+                    0.01 {
 
                     lastReported =
                         value
+
 
                     progress(
                         value
@@ -743,7 +752,9 @@ final class FetchAudioProcessor {
         switch reader.status {
 
         case .completed:
+
             break
+
 
         case .failed:
 
@@ -752,17 +763,20 @@ final class FetchAudioProcessor {
                     reader.error?
                         .localizedDescription
                     ??
-                    "Onbekende decoderfout."
+                    "Unknown decoder error."
                 )
+
 
         case .cancelled:
 
             throw FetchProcessingError
                 .readerFailed(
-                    "Audio-decoding werd geannuleerd."
+                    "Audio decoding was cancelled."
                 )
 
+
         default:
+
             break
         }
 
@@ -772,9 +786,7 @@ final class FetchAudioProcessor {
         )
 
 
-        // =========================================
-        // Flush
-        // =========================================
+        // MARK: Flush
 
         var flushBuffer =
             [UInt8](
@@ -809,9 +821,7 @@ final class FetchAudioProcessor {
                 }
 
 
-        guard flushed >=
-                0
-        else {
+        guard flushed >= 0 else {
 
             throw FetchProcessingError
                 .lameEncodingFailed(
@@ -820,19 +830,37 @@ final class FetchAudioProcessor {
         }
 
 
-        if flushed >
-            0 {
+        if flushed > 0 {
 
-            try output.write(
-                contentsOf:
-                    Data(
-                        flushBuffer[
-                            0..<Int(
-                                flushed
-                            )
-                        ]
+            try flushBuffer
+                .withUnsafeBytes {
+                    bytes in
+
+
+                    guard let base =
+                        bytes.baseAddress
+                    else {
+
+                        return
+                    }
+
+
+                    let data =
+                        Data(
+                            bytes:
+                                base,
+                            count:
+                                Int(
+                                    flushed
+                                )
+                        )
+
+
+                    try output.write(
+                        contentsOf:
+                            data
                     )
-            )
+                }
         }
 
 
@@ -851,7 +879,8 @@ final class FetchAudioProcessor {
     private nonisolated static func encodeSampleBuffer(
         _ sampleBuffer: CMSampleBuffer,
         lame: OpaquePointer,
-        outputFile: FileHandle
+        outputFile: FileHandle,
+        mp3Buffer: inout [UInt8]
     ) throws {
 
         guard let dataBuffer =
@@ -862,7 +891,7 @@ final class FetchAudioProcessor {
 
             throw FetchProcessingError
                 .readerFailed(
-                    "PCM-buffer bevat geen data."
+                    "PCM buffer contains no data."
                 )
         }
 
@@ -873,9 +902,8 @@ final class FetchAudioProcessor {
             )
 
 
-        guard samples >
-                0
-        else {
+        guard samples > 0 else {
+
             return
         }
 
@@ -910,7 +938,7 @@ final class FetchAudioProcessor {
 
             throw FetchProcessingError
                 .readerFailed(
-                    "PCM-buffer kon niet gelezen worden."
+                    "PCM buffer could not be read."
                 )
         }
 
@@ -928,35 +956,36 @@ final class FetchAudioProcessor {
         let calculatedSize =
             Int(
                 1.25 *
-                Double(samples)
+                Double(
+                    samples
+                )
             )
             +
             7200
 
 
-        // IMPORTANT:
-        // ID3v2 + artwork can be emitted with the first
-        // LAME packet. 128 KB prevents code -1 caused
-        // by an undersized output buffer.
-
-        let outputBufferSize =
+        let requiredSize =
             max(
                 calculatedSize,
                 128 * 1024
             )
 
 
-        var mp3 =
-            [UInt8](
-                repeating:
-                    0,
-                count:
-                    outputBufferSize
-            )
+        if mp3Buffer.count <
+            requiredSize {
+
+            mp3Buffer =
+                [UInt8](
+                    repeating:
+                        0,
+                    count:
+                        requiredSize
+                )
+        }
 
 
         let encoded =
-            mp3
+            mp3Buffer
                 .withUnsafeMutableBufferPointer {
                     buffer -> Int32 in
 
@@ -986,9 +1015,7 @@ final class FetchAudioProcessor {
                 }
 
 
-        guard encoded >=
-                0
-        else {
+        guard encoded >= 0 else {
 
             throw FetchProcessingError
                 .lameEncodingFailed(
@@ -997,19 +1024,37 @@ final class FetchAudioProcessor {
         }
 
 
-        if encoded >
-            0 {
+        if encoded > 0 {
 
-            try outputFile.write(
-                contentsOf:
-                    Data(
-                        mp3[
-                            0..<Int(
-                                encoded
-                            )
-                        ]
+            try mp3Buffer
+                .withUnsafeBytes {
+                    bytes in
+
+
+                    guard let base =
+                        bytes.baseAddress
+                    else {
+
+                        return
+                    }
+
+
+                    let data =
+                        Data(
+                            bytes:
+                                base,
+                            count:
+                                Int(
+                                    encoded
+                                )
+                        )
+
+
+                    try outputFile.write(
+                        contentsOf:
+                            data
                     )
-            )
+                }
         }
     }
 
@@ -1052,8 +1097,9 @@ final class FetchAudioProcessor {
         }
 
 
-        if let album,
-           !album.isEmpty {
+        if
+            let album,
+            !album.isEmpty {
 
             album.withCString {
 
@@ -1065,8 +1111,9 @@ final class FetchAudioProcessor {
         }
 
 
-        if let artworkData,
-           !artworkData.isEmpty {
+        if
+            let artworkData,
+            !artworkData.isEmpty {
 
             artworkData
                 .withUnsafeBytes {
@@ -1076,6 +1123,7 @@ final class FetchAudioProcessor {
                     guard let address =
                         bytes.baseAddress
                     else {
+
                         return
                     }
 
@@ -1112,6 +1160,7 @@ final class FetchAudioProcessor {
     ) async -> Data? {
 
         guard let url else {
+
             return nil
         }
 
@@ -1164,8 +1213,9 @@ final class FetchAudioProcessor {
         _ data: Data?
     ) -> Data? {
 
-        guard let data,
-              !data.isEmpty
+        guard
+            let data,
+            !data.isEmpty
         else {
 
             return nil
@@ -1191,8 +1241,8 @@ final class FetchAudioProcessor {
 
 
         let sizes:
-            [CGFloat] =
-            [
+            [CGFloat] = [
+
                 300,
                 240,
                 200,
@@ -1201,8 +1251,8 @@ final class FetchAudioProcessor {
 
 
         let qualities:
-            [CGFloat] =
-            [
+            [CGFloat] = [
+
                 0.75,
                 0.60,
                 0.50,
