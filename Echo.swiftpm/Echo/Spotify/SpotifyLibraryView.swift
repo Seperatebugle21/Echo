@@ -1,47 +1,83 @@
 import SwiftUI
 
+
 struct SpotifyLibraryView: View {
 
-    @State private var likedSongs: [SpotifyTrack] = []
-    @State private var playlists: [SpotifyPlaylist] = []
+    @State private var likedSongs:
+        [SpotifyTrack] = []
 
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+    @State private var playlists:
+        [SpotifyPlaylist] = []
+
+
+    @State private var isLoading =
+        false
+
+    @State private var errorMessage:
+        String?
+
+
+    @State private var selectedTrack:
+        SpotifyTrack?
+
 
     var body: some View {
 
         List {
 
             Section {
+
                 NavigationLink {
+
                     SpotifySearchView()
+
                 } label: {
+
                     Label(
                         "Search Spotify",
-                        systemImage: "magnifyingglass"
+                        systemImage:
+                            "magnifyingglass"
                     )
                 }
             }
 
+
             // MARK: - Playlists
 
-            Section("Playlists") {
+            Section(
+                "Playlists"
+            ) {
 
-                if playlists.isEmpty && !isLoading {
+                if playlists.isEmpty &&
+                    !isLoading {
 
-                    Text("No playlists")
-                        .foregroundStyle(.secondary)
+                    Text(
+                        "No playlists"
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
 
                 } else {
 
-                    ForEach(playlists) { playlist in
+                    ForEach(
+                        playlists
+                    ) {
+                        playlist in
+
+
                         NavigationLink {
+
                             SpotifyPlaylistDetailView(
-                                playlist: playlist
+                                playlist:
+                                    playlist
                             )
+
                         } label: {
+
                             SpotifyPlaylistRow(
-                                playlist: playlist
+                                playlist:
+                                    playlist
                             )
                         }
                     }
@@ -51,133 +87,202 @@ struct SpotifyLibraryView: View {
 
             // MARK: - Liked Songs
 
-            Section("Liked Songs") {
+            Section(
+                "Liked Songs"
+            ) {
 
-                if likedSongs.isEmpty && !isLoading {
+                if likedSongs.isEmpty &&
+                    !isLoading {
 
-                    Text("No liked songs")
-                        .foregroundStyle(.secondary)
+                    Text(
+                        "No liked songs"
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
 
                 } else {
 
-                    ForEach(likedSongs) { track in
-                        NavigationLink {
-                            SpotifyFetchButton(
-                                track: track
-                            )
+                    ForEach(
+                        likedSongs
+                    ) {
+                        track in
+
+
+                        Button {
+
+                            selectedTrack =
+                                track
+
                         } label: {
+
                             SpotifyTrackRow(
-                                track: track
+                                track:
+                                    track
                             )
                         }
+                        .buttonStyle(
+                            .plain
+                        )
                     }
                 }
             }
 
 
-            // MARK: - Error
-
             if let errorMessage {
 
                 Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                        .font(.caption)
+
+                    Text(
+                        errorMessage
+                    )
+                    .foregroundStyle(
+                        .red
+                    )
+                    .font(
+                        .caption
+                    )
                 }
             }
         }
-        .navigationTitle("Spotify")
+
+        .navigationTitle(
+            "Spotify"
+        )
+
         .overlay {
+
             if isLoading {
-                ProgressView("Loading Spotify…")
+
+                ProgressView(
+                    "Loading Spotify…"
+                )
             }
         }
+
         .task {
+
             await loadLibrary()
         }
+
         .refreshable {
+
             await loadLibrary()
+        }
+
+        .sheet(
+            item:
+                $selectedTrack
+        ) {
+            track in
+
+
+            SpotifyTrackDetailView(
+
+                track:
+                    track,
+
+                onClose: {
+
+                    selectedTrack =
+                        nil
+                },
+
+                onViewDownloads: {
+
+                    selectedTrack =
+                        nil
+
+
+                    DispatchQueue.main.async {
+
+                        NotificationCenter
+                            .default
+                            .post(
+                                name:
+                                    .echoOpenFetchDownloads,
+                                object:
+                                    nil
+                            )
+                    }
+                }
+            )
         }
     }
 
 
-    // MARK: - Load
+    private func loadLibrary()
+        async {
 
-    private func loadLibrary() async {
+        isLoading =
+            true
 
-        isLoading = true
-        errorMessage = nil
+        errorMessage =
+            nil
+
 
         do {
 
             async let songs =
-                SpotifyAPI.shared.getLikedSongs()
+                SpotifyAPI.shared
+                    .getLikedSongs()
+
 
             async let userPlaylists =
-                SpotifyAPI.shared.getPlaylists()
+                SpotifyAPI.shared
+                    .getPlaylists()
+
 
             let (
                 loadedSongs,
                 loadedPlaylists
-            ) = try await (
-                songs,
-                userPlaylists
-            )
+            ) =
+                try await (
+                    songs,
+                    userPlaylists
+                )
 
-            likedSongs = loadedSongs
-            playlists = loadedPlaylists
 
-        } catch let DecodingError.keyNotFound(key, context) {
+            likedSongs =
+                loadedSongs
 
-            errorMessage =
-                "Spotify mist veld '\(key.stringValue)' — \(context.debugDescription)"
+            playlists =
+                loadedPlaylists
 
-            print("Spotify decoding keyNotFound:", key.stringValue)
-            print(context)
-
-        } catch let DecodingError.typeMismatch(type, context) {
-
-            errorMessage =
-                "Spotify typefout bij \(type): \(context.debugDescription)"
-
-            print("Spotify typeMismatch:", type)
-            print(context)
-
-        } catch let DecodingError.valueNotFound(type, context) {
-
-            errorMessage =
-                "Spotify lege waarde bij \(type): \(context.debugDescription)"
-
-            print("Spotify valueNotFound:", type)
-            print(context)
 
         } catch {
 
             errorMessage =
                 "Spotify error: \(error.localizedDescription)"
-
-            print("Spotify error:", error)
         }
 
-        isLoading = false
+
+        isLoading =
+            false
     }
 }
 
 
+// MARK: - Track Row
+
 struct SpotifyTrackRow: View {
 
-    let track: SpotifyTrack
+    let track:
+        SpotifyTrack
 
-    @State private var fetch =
-        FetchManager.shared
 
     var body: some View {
 
-        HStack(spacing: 12) {
+        HStack(
+            spacing:
+                12
+        ) {
 
             AsyncImage(
-                url: track.artworkURL
-            ) { image in
+                url:
+                    track.artworkURL
+            ) {
+                image in
 
                 image
                     .resizable()
@@ -185,53 +290,116 @@ struct SpotifyTrackRow: View {
 
             } placeholder: {
 
-                Image(systemName: "music.note")
-                    .foregroundStyle(.secondary)
+                Image(
+                    systemName:
+                        "music.note"
+                )
+                .foregroundStyle(
+                    .secondary
+                )
             }
             .frame(
-                width: 52,
-                height: 52
+                width:
+                    52,
+                height:
+                    52
             )
             .clipShape(
                 RoundedRectangle(
-                    cornerRadius: 8
+                    cornerRadius:
+                        8
                 )
             )
 
 
             VStack(
-                alignment: .leading,
-                spacing: 3
+                alignment:
+                    .leading,
+                spacing:
+                    3
             ) {
 
-                Text(track.name)
-                    .font(.headline)
-                    .lineLimit(1)
+                Text(
+                    track.name
+                )
+                .font(
+                    .headline
+                )
+                .foregroundStyle(
+                    .primary
+                )
+                .lineLimit(
+                    1
+                )
 
-                Text(track.artist)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+
+                Text(
+                    track.artist
+                )
+                .font(
+                    .subheadline
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+                .lineLimit(
+                    1
+                )
+
+
+                Text(
+                    track.album
+                )
+                .font(
+                    .caption
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+                .lineLimit(
+                    1
+                )
             }
+
+
+            Spacer()
+
+
+            Image(
+                systemName:
+                    "chevron.right"
+            )
+            .font(
+                .caption
+            )
+            .foregroundStyle(
+                .tertiary
+            )
         }
     }
 }
 
 
+// MARK: - Playlist Row
+
 struct SpotifyPlaylistRow: View {
 
-    let playlist: SpotifyPlaylist
+    let playlist:
+        SpotifyPlaylist
 
-    @State private var fetch =
-        FetchManager.shared
 
     var body: some View {
 
-        HStack(spacing: 12) {
+        HStack(
+            spacing:
+                12
+        ) {
 
             AsyncImage(
-                url: playlist.artworkURL
-            ) { image in
+                url:
+                    playlist.artworkURL
+            ) {
+                image in
 
                 image
                     .resizable()
@@ -243,33 +411,51 @@ struct SpotifyPlaylistRow: View {
                     systemName:
                         "music.note.list"
                 )
-                .foregroundStyle(.secondary)
+                .foregroundStyle(
+                    .secondary
+                )
             }
             .frame(
-                width: 52,
-                height: 52
+                width:
+                    52,
+                height:
+                    52
             )
             .clipShape(
                 RoundedRectangle(
-                    cornerRadius: 8
+                    cornerRadius:
+                        8
                 )
             )
 
 
             VStack(
-                alignment: .leading,
-                spacing: 3
+                alignment:
+                    .leading,
+                spacing:
+                    3
             ) {
 
-                Text(playlist.name)
-                    .font(.headline)
-                    .lineLimit(1)
+                Text(
+                    playlist.name
+                )
+                .font(
+                    .headline
+                )
+                .lineLimit(
+                    1
+                )
+
 
                 Text(
                     "\(playlist.trackCount) songs"
                 )
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(
+                    .subheadline
+                )
+                .foregroundStyle(
+                    .secondary
+                )
             }
         }
     }
