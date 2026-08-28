@@ -61,6 +61,74 @@ jobs:
             CODE_SIGN_IDENTITY=""
 
 
+
+
+            - name: Verify embedded Python runtime
+  run: |
+    echo "========================================"
+    echo " CHECKING PYTHON RUNTIME"
+    echo "========================================"
+
+    APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
+      -maxdepth 1 \
+      -name "*.app" \
+      | head -n 1)
+
+    if [ -z "$APP_PATH" ]; then
+      echo "Echo.app niet gevonden"
+      exit 1
+    fi
+
+    echo "App:"
+    echo "$APP_PATH"
+
+    echo ""
+    echo "Alle resource bundles:"
+    find "$APP_PATH" -type d -name "*.bundle" -print
+
+    echo ""
+    echo "Python-gerelateerde bestanden:"
+    find "$APP_PATH" \
+      \( \
+        -iname "*python*" \
+        -o \
+        -iname "*libssl*" \
+        -o \
+        -iname "*libcrypto*" \
+        -o \
+        -iname "*libffi*" \
+      \) \
+      -print
+
+    echo ""
+    echo "Zoeken naar Python stdlib:"
+    find "$APP_PATH" \
+      \( \
+        -name "python310.zip" \
+        -o \
+        -path "*python3.10*" \
+      \) \
+      -print
+
+    PYTHON_RESOURCE=$(find "$APP_PATH" \
+      \( \
+        -name "python310.zip" \
+        -o \
+        -path "*python3.10*" \
+      \) \
+      | head -n 1)
+
+    if [ -z "$PYTHON_RESOURCE" ]; then
+      echo ""
+      echo "ERROR: Python stdlib/resource bundle ontbreekt."
+      exit 1
+    fi
+
+    echo ""
+    echo "Python runtime resources gevonden:"
+    echo "$PYTHON_RESOURCE"
+
+
       # ============================================
       # 3. IPA maken + Info.plist aanpassen
       # ============================================
