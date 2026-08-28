@@ -76,49 +76,69 @@ struct SettingsView: View {
                         .disableAutocorrection(true)
                 }
 
-       Section("Apify") {
+       Section("Fetch") {
 
     Picker(
-        "Method",
-        selection: $apifySettings.downloadMethod
+        "Download Method",
+        selection:
+            $apifySettings.downloadMethod
     ) {
 
         ForEach(
             ApifyDownloadMethod.allCases
         ) { method in
 
-            Text(method.title)
-                .tag(method)
+            Text(
+                method.title
+            )
+            .tag(
+                method
+            )
         }
     }
 
 
-    NavigationLink {
+    // Alleen relevant bij Apify
+    if apifySettings.downloadMethod ==
+        .youtube {
 
-        ApifyAccountsView()
+        NavigationLink {
 
-    } label: {
+            ApifyAccountsView()
 
-        HStack {
+        } label: {
 
-            Label(
-                "API Accounts",
-                systemImage: "person.2"
-            )
+            HStack {
 
-            Spacer()
+                Label(
+                    "Apify Accounts",
+                    systemImage:
+                        "person.2"
+                )
 
-            if let account =
-                apifySettings.activeAccount
-            {
 
-                Text(account.name)
-                    .foregroundStyle(.secondary)
+                Spacer()
 
-            } else {
 
-                Text("None")
-                    .foregroundStyle(.secondary)
+                if let account =
+                    apifySettings.activeAccount {
+
+                    Text(
+                        account.name
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+
+                } else {
+
+                    Text(
+                        "None"
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
             }
         }
     }
