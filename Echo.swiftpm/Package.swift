@@ -56,12 +56,16 @@ let package = Package(
     ],
 
     dependencies: [
+    .package(
+        url: "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
+        branch: "main"
+    ),
 
-        .package(
-            url: "https://github.com/Seperatebugle21/YoutubeDL-iOS.git",
-            branch: "main"
-        )
-    ],
+    .package(
+        url: "https://github.com/pvieito/PythonKit.git",
+        from: "0.3.1"
+    )
+],
 
     targets: [
 
@@ -69,12 +73,16 @@ let package = Package(
             name: "AppModule",
 
             dependencies: [
+    .product(
+        name: "YoutubeDL",
+        package: "YoutubeDL-iOS"
+    ),
 
-                .product(
-                    name: "YoutubeDL",
-                    package: "YoutubeDL-iOS"
-                )
-            ],
+    .product(
+        name: "PythonKit",
+        package: "PythonKit"
+    )
+],
 
             path: ".",
 
