@@ -5,7 +5,6 @@ on:
 
   push:
     branches:
-      
       - YT-DLP
 
 
@@ -61,72 +60,118 @@ jobs:
             CODE_SIGN_IDENTITY=""
 
 
+      # ============================================
+      # 2B. Controleer ingebouwde Python runtime
+      # ============================================
+
+      - name: Verify embedded Python runtime
+        run: |
+
+          echo "========================================"
+          echo " CHECKING PYTHON RUNTIME"
+          echo "========================================"
+
+          APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
+            -maxdepth 1 \
+            -name "*.app" \
+            | head -n 1)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "Echo.app niet gevonden."
+            exit 1
+          fi
+
+          echo ""
+          echo "App:"
+          echo "$APP_PATH"
+
+          echo ""
+          echo "========================================"
+          echo " RESOURCE BUNDLES"
+          echo "========================================"
+
+          find "$APP_PATH" \
+            -type d \
+            -name "*.bundle" \
+            -print || true
 
 
-            - name: Verify embedded Python runtime
-  run: |
-    echo "========================================"
-    echo " CHECKING PYTHON RUNTIME"
-    echo "========================================"
+          echo ""
+          echo "========================================"
+          echo " PYTHON-GERELATEERDE BESTANDEN"
+          echo "========================================"
 
-    APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
-      -maxdepth 1 \
-      -name "*.app" \
-      | head -n 1)
+          find "$APP_PATH" \
+            \( \
+              -iname "*python*" \
+              -o \
+              -iname "*libssl*" \
+              -o \
+              -iname "*libcrypto*" \
+              -o \
+              -iname "*libffi*" \
+            \) \
+            -print || true
 
-    if [ -z "$APP_PATH" ]; then
-      echo "Echo.app niet gevonden"
-      exit 1
-    fi
 
-    echo "App:"
-    echo "$APP_PATH"
+          echo ""
+          echo "========================================"
+          echo " PYTHON STDLIB"
+          echo "========================================"
 
-    echo ""
-    echo "Alle resource bundles:"
-    find "$APP_PATH" -type d -name "*.bundle" -print
+          find "$APP_PATH" \
+            \( \
+              -name "python310.zip" \
+              -o \
+              -path "*python3.10*" \
+            \) \
+            -print || true
 
-    echo ""
-    echo "Python-gerelateerde bestanden:"
-    find "$APP_PATH" \
-      \( \
-        -iname "*python*" \
-        -o \
-        -iname "*libssl*" \
-        -o \
-        -iname "*libcrypto*" \
-        -o \
-        -iname "*libffi*" \
-      \) \
-      -print
 
-    echo ""
-    echo "Zoeken naar Python stdlib:"
-    find "$APP_PATH" \
-      \( \
-        -name "python310.zip" \
-        -o \
-        -path "*python3.10*" \
-      \) \
-      -print
+          PYTHON_RESOURCE=$(find "$APP_PATH" \
+            \( \
+              -name "python310.zip" \
+              -o \
+              -path "*python3.10*" \
+            \) \
+            | head -n 1)
 
-    PYTHON_RESOURCE=$(find "$APP_PATH" \
-      \( \
-        -name "python310.zip" \
-        -o \
-        -path "*python3.10*" \
-      \) \
-      | head -n 1)
 
-    if [ -z "$PYTHON_RESOURCE" ]; then
-      echo ""
-      echo "ERROR: Python stdlib/resource bundle ontbreekt."
-      exit 1
-    fi
+          if [ -z "$PYTHON_RESOURCE" ]; then
 
-    echo ""
-    echo "Python runtime resources gevonden:"
-    echo "$PYTHON_RESOURCE"
+            echo ""
+            echo "========================================"
+            echo " ERROR"
+            echo "========================================"
+            echo ""
+            echo "Python stdlib/resource bundle ontbreekt."
+            echo ""
+            echo "De app is gebouwd, maar de embedded Python runtime"
+            echo "lijkt niet correct in Echo.app te zitten."
+            echo ""
+
+            exit 1
+          fi
+
+
+          echo ""
+          echo "========================================"
+          echo " PYTHON RUNTIME GEVONDEN"
+          echo "========================================"
+          echo ""
+
+          echo "$PYTHON_RESOURCE"
+
+
+          echo ""
+          echo "========================================"
+          echo " APP INHOUD"
+          echo "========================================"
+          echo ""
+
+          find "$APP_PATH" \
+            -maxdepth 3 \
+            -print | sort
 
 
       # ============================================
@@ -134,57 +179,88 @@ jobs:
       # ============================================
 
       - name: Create IPA Package
-
-          
         run: |
 
           rm -rf Payload
           mkdir -p Payload
 
+
+          # ============================================
           # Zoek de gebouwde .app
+          # ============================================
+
           BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
             -maxdepth 1 \
             -name "*.app" \
             | head -n 1)
 
+
           # Fallback voor eventueel .swiftpm output
+
           if [ -z "$BUILT_APP" ]; then
+
             BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
               -maxdepth 1 \
               -name "*.swiftpm" \
               | head -n 1)
           fi
 
+
+          echo ""
           echo "Gebouwde app gevonden op:"
           echo "$BUILT_APP"
 
+
           if [ -z "$BUILT_APP" ]; then
+
             echo "Geen gebouwde Echo app gevonden."
+
             exit 1
           fi
 
+
+          # ============================================
           # Kopieer app naar Payload
+          # ============================================
+
           cp -R "$BUILT_APP" Payload/
 
-          # Zoek de gekopieerde app
+
+          # ============================================
+          # Zoek gekopieerde app
+          # ============================================
+
           APP_PATH=$(find Payload \
             -maxdepth 1 \
             \( -name "*.app" -o -name "*.swiftpm" \) \
             | head -n 1)
 
+
+          echo ""
           echo "App in Payload:"
           echo "$APP_PATH"
 
+
           if [ -z "$APP_PATH" ]; then
+
             echo "App niet gevonden in Payload."
+
             exit 1
           fi
 
+
+          # ============================================
+          # Info.plist
+          # ============================================
+
           INFO_PLIST="$APP_PATH/Info.plist"
 
+
           if [ ! -f "$INFO_PLIST" ]; then
+
             echo "Info.plist niet gevonden op:"
             echo "$INFO_PLIST"
+
             exit 1
           fi
 
@@ -197,9 +273,11 @@ jobs:
             -c "Delete :UIBackgroundModes" \
             "$INFO_PLIST" 2>/dev/null || true
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :UIBackgroundModes array" \
             "$INFO_PLIST"
+
 
           /usr/libexec/PlistBuddy \
             -c "Add :UIBackgroundModes:0 string audio" \
@@ -217,6 +295,7 @@ jobs:
             -c "Set :UIFileSharingEnabled true" \
             "$INFO_PLIST"
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :LSSupportsOpeningDocumentsInPlace bool true" \
             "$INFO_PLIST" 2>/dev/null || \
@@ -225,42 +304,37 @@ jobs:
             "$INFO_PLIST"
 
 
-        
-
-
           # ============================================
           # 3C. Spotify callback URL scheme
           #
           # echo-spotify-login://callback
           # ============================================
 
-          # Verwijder bestaande CFBundleURLTypes
-          # zodat we zeker geen oude configuratie houden
           /usr/libexec/PlistBuddy \
             -c "Delete :CFBundleURLTypes" \
             "$INFO_PLIST" 2>/dev/null || true
 
-          # Root array
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes array" \
             "$INFO_PLIST"
 
-          # Eerste URL type
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0 dict" \
             "$INFO_PLIST"
 
-          # Naam
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLName string echo.spotify.login" \
             "$INFO_PLIST"
 
-          # Schemes array
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
             "$INFO_PLIST"
 
-          # Echo Spotify URL scheme
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string echo-spotify-login" \
             "$INFO_PLIST"
@@ -276,9 +350,11 @@ jobs:
           echo "================================"
           echo ""
 
+
           /usr/libexec/PlistBuddy \
             -c "Print" \
             "$INFO_PLIST"
+
 
           echo ""
           echo "================================"
@@ -286,9 +362,26 @@ jobs:
           echo "================================"
           echo ""
 
+
           /usr/libexec/PlistBuddy \
             -c "Print :CFBundleURLTypes" \
             "$INFO_PLIST"
+
+
+          echo ""
+          echo "================================"
+          echo " PYTHON FILES IN PAYLOAD"
+          echo "================================"
+          echo ""
+
+
+          find "$APP_PATH" \
+            \( \
+              -iname "*python*" \
+              -o \
+              -name "*.bundle" \
+            \) \
+            -print || true
 
 
           # ============================================
@@ -310,6 +403,3 @@ jobs:
         with:
           name: Echo-Release-IPA
           path: Echo.ipa
-
-
-    
