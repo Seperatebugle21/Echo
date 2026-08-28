@@ -27,11 +27,14 @@ struct FetchView: View {
     @State private var apifyUsageError:
         String?
 
+
+    // MARK: - Navigation
+
     @State private var fetchNavigationID =
-    UUID()
+        UUID()
 
     @State private var showDownloadsFromTrack =
-    false
+        false
 
 
     var body: some View {
@@ -40,25 +43,10 @@ struct FetchView: View {
 
             List {
 
-                // =====================================
-                // METHOD
-                // =====================================
-
                 methodSection
-
-
-                // =====================================
-                // SPOTIFY
-                // =====================================
 
                 spotifySection
 
-
-                // =====================================
-                // APIFY
-                //
-                // Only visible when Apify is selected.
-                // =====================================
 
                 if apifySettings.downloadMethod ==
                     .youtube {
@@ -67,29 +55,17 @@ struct FetchView: View {
                 }
 
 
-                // =====================================
-                // DOWNLOADS
-                // =====================================
-
                 downloadsSection
-
-
-                // =====================================
-                // OUTPUT
-                // =====================================
 
                 outputSection
 
-
-                // =====================================
-                // RECENT
-                // =====================================
 
                 if !manager.items.isEmpty {
 
                     recentSection
                 }
             }
+
             .navigationTitle(
                 "Fetch"
             )
@@ -102,10 +78,7 @@ struct FetchView: View {
             .onChange(
                 of:
                     apifySettings.downloadMethod
-            ) {
-                _,
-                newMethod in
-
+            ) { _, newMethod in
 
                 Task {
 
@@ -115,10 +88,6 @@ struct FetchView: View {
                         await loadApifyUsage()
 
                     } else {
-
-                        // Don't keep irrelevant
-                        // Apify state around while
-                        // using yt-dlp.
 
                         apifyUsage =
                             nil
@@ -132,83 +101,68 @@ struct FetchView: View {
                 }
             }
         }
+
+        // Rebuild entire Fetch navigation when
+        // View Downloads is opened from a song.
+
         .id(
+            fetchNavigationID
+        )
 
-    fetchNavigationID
+        .onReceive(
+            NotificationCenter.default
+                .publisher(
+                    for:
+                        .echoOpenFetchDownloads
+                )
+        ) { _ in
 
-)
+            fetchNavigationID =
+                UUID()
 
-.onReceive(
 
-    NotificationCenter.default.publisher(
+            DispatchQueue.main.async {
 
-        for:
-
-            .echoOpenFetchDownloads
-
-    )
-
-) { _ in
-
-    // Destroy the current Spotify
-
-    // navigation path and return Fetch to root.
-
-    fetchNavigationID =
-
-        UUID()
-
-    // Then open Downloads over Fetch root.
-
-    DispatchQueue.main.async {
-
-        showDownloadsFromTrack =
-
-            true
-
-    }
-
-}
-
-.sheet(
-
-    isPresented:
-
-        $showDownloadsFromTrack
-
-) {
-
-    NavigationStack {
-
-        FetchQueueView()
-
-            .toolbar {
-
-                ToolbarItem(
-
-                    placement:
-
-                        .topBarTrailing
-
-                ) {
-
-                    Button(
-
-                        "Done"
-
-                    ) {
-
-                        showDownloadsFromTrack =
-
-                            false
-
-                    }
-
-                }
-
+                showDownloadsFromTrack =
+                    true
             }
+        }
 
-    }
+        .sheet(
+            isPresented:
+                $showDownloadsFromTrack
+        ) {
+
+            NavigationStack {
+
+                FetchQueueView()
+
+                    .navigationTitle(
+                        "Downloads"
+                    )
+
+                    .navigationBarTitleDisplayMode(
+                        .inline
+                    )
+
+                    .toolbar {
+
+                        ToolbarItem(
+                            placement:
+                                .topBarTrailing
+                        ) {
+
+                            Button(
+                                "Done"
+                            ) {
+
+                                showDownloadsFromTrack =
+                                    false
+                            }
+                        }
+                    }
+            }
+        }
     }
 
 
@@ -227,9 +181,7 @@ struct FetchView: View {
 
                 ForEach(
                     ApifyDownloadMethod.allCases
-                ) {
-                    method in
-
+                ) { method in
 
                     Text(
                         method.title
@@ -320,10 +272,6 @@ struct FetchView: View {
 
             if spotify.isConnected {
 
-                // =================================
-                // Connected state
-                // =================================
-
                 HStack {
 
                     Label(
@@ -376,10 +324,6 @@ struct FetchView: View {
                 }
 
             } else {
-
-                // =================================
-                // Disconnected state
-                // =================================
 
                 VStack(
                     alignment:
@@ -470,6 +414,7 @@ struct FetchView: View {
             Text(
                 "Spotify"
             )
+
         } footer: {
 
             if spotify.isConnected {
@@ -489,10 +434,6 @@ struct FetchView: View {
         some View {
 
         Section {
-
-            // =====================================
-            // Account
-            // =====================================
 
             NavigationLink {
 
@@ -538,10 +479,6 @@ struct FetchView: View {
             }
 
 
-            // =====================================
-            // Usage
-            // =====================================
-
             if !apifySettings.isConfigured {
 
                 Label(
@@ -555,6 +492,7 @@ struct FetchView: View {
                 .foregroundStyle(
                     .secondary
                 )
+
 
             } else if apifyUsageLoading {
 
@@ -793,9 +731,7 @@ struct FetchView: View {
 
                 ForEach(
                     FetchQuality.allCases
-                ) {
-                    quality in
-
+                ) { quality in
 
                     Text(
                         quality.title
@@ -862,9 +798,7 @@ struct FetchView: View {
                             4
                         )
                 )
-            ) {
-                item in
-
+            ) { item in
 
                 FetchItemRow(
                     item:
@@ -903,9 +837,7 @@ struct FetchView: View {
         Int {
 
         manager.items
-            .filter {
-                item in
-
+            .filter { item in
 
                 switch item.status {
 
@@ -933,12 +865,9 @@ struct FetchView: View {
         switch apifySettings.downloadMethod {
 
         case .youtube:
-
             return "cloud"
 
-
         case .spotify:
-
             return "terminal"
         }
     }
