@@ -36,6 +36,9 @@ struct FetchView: View {
     @State private var showDownloadsFromTrack =
         false
 
+    @State private var showURLInput =
+        false
+
 
     var body: some View {
 
@@ -55,12 +58,16 @@ struct FetchView: View {
 
                 musicSearchSection
 
+                FetchURLInlineSection()
+
 
                 if apifySettings.downloadMethod ==
                     .youtube {
 
                     apifySection
                 }
+
+                
 
 
                 downloadsSection
@@ -77,6 +84,31 @@ struct FetchView: View {
             .navigationTitle(
                 "Fetch"
             )
+
+            .toolbar {
+
+    ToolbarItem(
+        placement:
+            .topBarTrailing
+    ) {
+
+        Button {
+
+            showURLInput =
+                true
+
+        } label: {
+
+            Image(
+                systemName:
+                    "link"
+            )
+        }
+        .accessibilityLabel(
+            "Fetch URL"
+        )
+    }
+}
 
             .task {
 
@@ -173,6 +205,14 @@ struct FetchView: View {
                     }
             }
         }
+
+        .sheet(
+    isPresented:
+        $showURLInput
+) {
+
+    FetchURLInputSheet()
+}
     }
 
 
