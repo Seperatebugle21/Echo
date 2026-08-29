@@ -81,8 +81,30 @@ final class FetchDownloadEngine:
 
     // Six simultaneous byte ranges.
 
-    private let parallelChunkCount =
-        6
+    private var parallelChunkCount: Int {
+
+    let stored =
+        UserDefaults.standard
+            .integer(
+                forKey:
+                    "developerMaxDownloadChunks"
+            )
+
+
+    if stored <= 0 {
+
+        return 6
+    }
+
+
+    return min(
+        max(
+            stored,
+            1
+        ),
+        16
+    )
+}
 
 
     // Tiny files don't benefit much.
