@@ -827,7 +827,7 @@ if items.contains(
 
             item.status =
                 .preparing(
-                    0.06
+                    0.70
                 )
 
 
@@ -849,12 +849,12 @@ if items.contains(
 
 
                         let overall =
-                            0.06
+                            0.70
                             +
                             (
                                 localProgress
                                 *
-                                0.88
+                                0.20
                             )
 
 
@@ -867,7 +867,7 @@ if items.contains(
 
             item.status =
                 .processing(
-                    0.94
+                    0.90
                 )
 
 
@@ -906,7 +906,7 @@ if items.contains(
                                 (
                                     localProgress
                                     *
-                                    0.05
+                                    0.09
                                 )
 
 
@@ -950,7 +950,7 @@ if items.contains(
 
             item.status =
                 .processing(
-                    0.992
+                    0.99
                 )
 
 
@@ -975,7 +975,7 @@ if items.contains(
 
             item.status =
                 .processing(
-                    0.998
+                    0.999
                 )
 
 
