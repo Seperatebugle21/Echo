@@ -406,32 +406,90 @@ final class FetchManager {
 
     // MARK: - Remove
 
-    func remove(
-        _ item: FetchItem
-    ) {
+func remove(
+    _ item: FetchItem
+) {
 
-        items.removeAll {
+    switch item.status {
 
-            $0.id ==
-                item.id
-        }
+    case .failed,
+         .completed:
+
+        FetchDownloadEngine.shared
+            .removeRecords(
+                spotifyURL:
+                    item.spotifyURL,
+                title:
+                    item.title
+            )
+
+
+    default:
+
+        break
     }
 
 
-    func clearCompleted() {
+    items.removeAll {
 
-        items.removeAll {
+        $0.id ==
+            item.id
+    }
+}
 
-            if case .completed =
-                $0.status {
+
+  func clearCompleted() {
+
+    let removableItems =
+        items.filter {
+            item in
+
+
+            switch item.status {
+
+            case .completed,
+                 .failed:
 
                 return true
-            }
 
+
+            default:
+
+                return false
+            }
+        }
+
+
+    for item in removableItems {
+
+        FetchDownloadEngine.shared
+            .removeRecords(
+                spotifyURL:
+                    item.spotifyURL,
+                title:
+                    item.title
+            )
+    }
+
+
+    items.removeAll {
+        item in
+
+
+        switch item.status {
+
+        case .completed,
+             .failed:
+
+            return true
+
+
+        default:
 
             return false
         }
     }
+}
 
 
     // MARK: - Queue
