@@ -272,42 +272,37 @@ final class FetchManager {
 
         // Don't add exactly the same Spotify track twice
         // when it is already waiting or being processed.
+if items.contains(
+    where: { item in
 
-        if items.contains(
-            where: {
-
-                $0.spotifyURL ==
-                    track.spotifyURL
-
-                &&
-
-                {
-                    switch $0.status {
-
-                    case .queued,
-                         .preparing,
-                         .downloading,
-                         .processing:
-
-                        return true
-
-
-                    case .completed,
-                         .failed:
-
-                        return false
-                    }
-                }()
-            }
-        ) {
-
-            print(
-                "Playlist track already in Fetch:",
-                track.name
-            )
-
-            return
+        guard item.spotifyURL == track.spotifyURL else {
+            return false
         }
+
+        switch item.status {
+
+        case .queued,
+             .preparing,
+             .downloading,
+             .processing:
+
+            return true
+
+        case .completed,
+             .failed:
+
+            return false
+        }
+    }
+) {
+
+    print(
+        "Playlist track already in Fetch:",
+        track.name
+    )
+
+    return
+}
 
 
         do {
