@@ -61,7 +61,8 @@ enum SpotifyPublicURLResult {
 
 // MARK: - Resolver
 
-final class SpotifyPublicURLResolver {
+final class SpotifyPublicURLResolver:
+    @unchecked Sendable {
 
     static let shared =
         SpotifyPublicURLResolver()
@@ -88,6 +89,7 @@ final class SpotifyPublicURLResolver {
                         reference.id
                 )
 
+
             return
                 .track(
                     track
@@ -104,6 +106,7 @@ final class SpotifyPublicURLResolver {
                     originalURL:
                         reference.url
                 )
+
 
             return
                 .playlist(
@@ -169,11 +172,15 @@ final class SpotifyPublicURLResolver {
 
         let playlistName =
             string(
-                entity["name"]
+                entity[
+                    "name"
+                ]
             )
             ??
             string(
-                entity["title"]
+                entity[
+                    "title"
+                ]
             )
             ??
             "Spotify Playlist"
@@ -187,7 +194,9 @@ final class SpotifyPublicURLResolver {
 
 
         guard let rawTrackList =
-            entity["trackList"]
+            entity[
+                "trackList"
+            ]
                 as?
                 [Any]
         else {
@@ -197,7 +206,11 @@ final class SpotifyPublicURLResolver {
         }
 
 
-        var tracks:
+        // =====================================
+        // Initial Track Metadata
+        // =====================================
+
+        var baseTracks:
             [SpotifyTrack] =
             []
 
@@ -228,18 +241,42 @@ final class SpotifyPublicURLResolver {
             }
 
 
-            tracks.append(
+            baseTracks.append(
                 track
             )
         }
 
 
-        guard !tracks.isEmpty else {
+        guard !baseTracks.isEmpty else {
 
             throw SpotifyPublicURLResolverError
                 .emptyPlaylist
         }
 
+
+        // =====================================
+        // Per-track artwork
+        //
+        // Spotify's playlist embed normally does
+        // not include individual album artwork.
+        //
+        // Fetch each track embed separately.
+        //
+        // We process batches of four so a playlist
+        // does not fire dozens of requests at once.
+        // =====================================
+
+        let tracks =
+            await enrichTracks(
+                baseTracks,
+                fallbackArtwork:
+                    playlistArtwork
+            )
+
+
+        // =====================================
+        // Playlist Object
+        // =====================================
 
         let playlist =
             SpotifyPlaylist(
@@ -264,6 +301,299 @@ final class SpotifyPublicURLResolver {
         return (
             playlist,
             tracks
+        )
+    }
+
+
+    // MARK: - Enrich Playlist Tracks
+
+    private func enrichTracks(
+        _ tracks:
+            [SpotifyTrack],
+        fallbackArtwork:
+            URL?
+    ) async -> [SpotifyTrack] {
+
+        guard !tracks.isEmpty else {
+
+            return []
+        }
+
+
+        let batchSize =
+            4
+
+
+        var result =
+            tracks
+
+
+        var startIndex =
+            0
+
+
+        while startIndex <
+            tracks.count {
+
+            let endIndex =
+                min(
+                    startIndex + batchSize,
+                    tracks.count
+                )
+
+
+            let indexes =
+                Array(
+                    startIndex..<endIndex
+                )
+
+
+            let enriched =
+                await withTaskGroup(
+                    of:
+                        TrackArtworkResult.self
+                ) {
+                    group in
+
+
+                    for index
+                        in indexes {
+
+                        let track =
+                            tracks[
+                                index
+                            ]
+
+
+                        group.addTask {
+                            [self] in
+
+
+                            let metadata =
+                                await fetchTrackMetadataSafely(
+                                    id:
+                                        track.id
+                                )
+
+
+                            return TrackArtworkResult(
+
+                                index:
+                                    index,
+
+                                artworkURL:
+                                    metadata?
+                                        .artworkURL,
+
+                                album:
+                                    metadata?
+                                        .album
+                            )
+                        }
+                    }
+
+
+                    var values:
+                        [TrackArtworkResult] =
+                        []
+
+
+                    for await value
+                        in group {
+
+                        values.append(
+                            value
+                        )
+                    }
+
+
+                    return values
+                }
+
+
+            for item
+                in enriched {
+
+                let old =
+                    result[
+                        item.index
+                    ]
+
+
+                let artwork =
+                    item.artworkURL
+                    ??
+                    old.artworkURL
+                    ??
+                    fallbackArtwork
+
+
+                let album:
+                    String
+
+
+                if let fetchedAlbum =
+                    item.album,
+                   !fetchedAlbum.isEmpty,
+                   fetchedAlbum !=
+                    "Spotify" {
+
+                    album =
+                        fetchedAlbum
+
+                } else {
+
+                    album =
+                        old.album
+                }
+
+
+                result[
+                    item.index
+                ] =
+                    SpotifyTrack(
+
+                        id:
+                            old.id,
+
+                        name:
+                            old.name,
+
+                        artist:
+                            old.artist,
+
+                        album:
+                            album,
+
+                        durationMS:
+                            old.durationMS,
+
+                        artworkURL:
+                            artwork,
+
+                        spotifyURL:
+                            old.spotifyURL
+                    )
+            }
+
+
+            startIndex =
+                endIndex
+        }
+
+
+        return result
+    }
+
+
+    // MARK: - Safe Track Metadata
+
+    private func fetchTrackMetadataSafely(
+        id: String
+    ) async
+        -> PublicTrackMetadata? {
+
+        do {
+
+            return
+                try await
+                fetchTrackMetadata(
+                    id:
+                        id
+                )
+
+        } catch {
+
+            print(
+                "Spotify track metadata fallback failed:",
+                id,
+                error
+            )
+
+
+            return nil
+        }
+    }
+
+
+    // MARK: - Track Metadata
+
+    private func fetchTrackMetadata(
+        id: String
+    ) async throws
+        -> PublicTrackMetadata {
+
+        guard let embedURL =
+            URL(
+                string:
+                    "https://open.spotify.com/embed/track/\(id)"
+            )
+        else {
+
+            throw SpotifyPublicURLResolverError
+                .invalidURL
+        }
+
+
+        let json =
+            try await
+            fetchEmbedJSON(
+                url:
+                    embedURL
+            )
+
+
+        guard let entity =
+            extractEntity(
+                from:
+                    json
+            )
+        else {
+
+            throw SpotifyPublicURLResolverError
+                .metadataNotFound
+        }
+
+
+        let artwork =
+            artworkURL(
+                from:
+                    entity
+            )
+
+
+        let album:
+            String?
+
+
+        if let albumDictionary =
+            entity[
+                "album"
+            ]
+                as?
+                [String: Any] {
+
+            album =
+                string(
+                    albumDictionary[
+                        "name"
+                    ]
+                )
+
+        } else {
+
+            album =
+                nil
+        }
+
+
+        return PublicTrackMetadata(
+
+            artworkURL:
+                artwork,
+
+            album:
+                album
         )
     }
 
@@ -309,11 +639,15 @@ final class SpotifyPublicURLResolver {
 
         let title =
             string(
-                entity["title"]
+                entity[
+                    "title"
+                ]
             )
             ??
             string(
-                entity["name"]
+                entity[
+                    "name"
+                ]
             )
             ??
             "Unknown Track"
@@ -328,7 +662,9 @@ final class SpotifyPublicURLResolver {
 
         let duration =
             integer(
-                entity["duration"]
+                entity[
+                    "duration"
+                ]
             )
             ??
             0
@@ -346,12 +682,16 @@ final class SpotifyPublicURLResolver {
 
 
         if let albumDictionary =
-            entity["album"]
+            entity[
+                "album"
+            ]
                 as?
                 [String: Any],
            let albumName =
             string(
-                albumDictionary["name"]
+                albumDictionary[
+                    "name"
+                ]
             ) {
 
             album =
@@ -465,13 +805,16 @@ final class SpotifyPublicURLResolver {
         switch http.statusCode {
 
         case 200..<300:
+
             break
+
 
         case 401,
              403:
 
             throw SpotifyPublicURLResolverError
                 .accessDenied
+
 
         default:
 
@@ -612,10 +955,6 @@ final class SpotifyPublicURLResolver {
             [String: Any]
     ) -> [String: Any]? {
 
-        // Spotify currently uses one of these paths.
-        // Sunnify also checks multiple paths because Spotify
-        // A/B tests its embed structure.
-
         let paths:
             [[String]] =
             [
@@ -659,9 +998,6 @@ final class SpotifyPublicURLResolver {
         }
 
 
-        // Fallback:
-        // recursively locate a dictionary containing trackList.
-
         return
             deepFindEntity(
                 in:
@@ -669,6 +1005,8 @@ final class SpotifyPublicURLResolver {
             )
     }
 
+
+    // MARK: - Dictionary Path
 
     private func dictionary(
         at path: [String],
@@ -714,6 +1052,8 @@ final class SpotifyPublicURLResolver {
             [String: Any]
     }
 
+
+    // MARK: - Deep Find
 
     private func deepFindEntity(
         in value: Any,
@@ -980,6 +1320,7 @@ final class SpotifyPublicURLResolver {
                 artists.compactMap {
                     artist in
 
+
                     string(
                         artist[
                             "name"
@@ -990,10 +1331,11 @@ final class SpotifyPublicURLResolver {
 
             if !names.isEmpty {
 
-                return names.joined(
-                    separator:
-                        ", "
-                )
+                return
+                    names.joined(
+                        separator:
+                            ", "
+                    )
             }
         }
 
@@ -1010,6 +1352,10 @@ final class SpotifyPublicURLResolver {
             [String: Any]
     ) -> URL? {
 
+        // =====================================
+        // coverArt.sources
+        // =====================================
+
         if let coverArt =
             dictionary[
                 "coverArt"
@@ -1022,28 +1368,32 @@ final class SpotifyPublicURLResolver {
                 "sources"
             ]
                 as?
-                [[String: Any]],
+                [[String: Any]] {
 
-           let value =
-            sources
-                .last
-                .flatMap({
+            for source
+                in sources.reversed() {
+
+                if let value =
                     string(
-                        $0[
+                        source[
                             "url"
                         ]
-                    )
-                }),
+                    ),
+                   let url =
+                    URL(
+                        string:
+                            value
+                    ) {
 
-           let url =
-            URL(
-                string:
-                    value
-            ) {
-
-            return url
+                    return url
+                }
+            }
         }
 
+
+        // =====================================
+        // visualIdentity.image
+        // =====================================
 
         if let visualIdentity =
             dictionary[
@@ -1057,19 +1407,71 @@ final class SpotifyPublicURLResolver {
                 "image"
             ]
                 as?
-                [[String: Any]],
+                [[String: Any]] {
 
-           let value =
-            images
-                .last
-                .flatMap({
+            for image
+                in images.reversed() {
+
+                if let value =
                     string(
-                        $0[
+                        image[
                             "url"
                         ]
-                    )
-                }),
+                    ),
+                   let url =
+                    URL(
+                        string:
+                            value
+                    ) {
 
+                    return url
+                }
+            }
+        }
+
+
+        // =====================================
+        // images
+        // =====================================
+
+        if let images =
+            dictionary[
+                "images"
+            ]
+                as?
+                [[String: Any]] {
+
+            for image
+                in images.reversed() {
+
+                if let value =
+                    string(
+                        image[
+                            "url"
+                        ]
+                    ),
+                   let url =
+                    URL(
+                        string:
+                            value
+                    ) {
+
+                    return url
+                }
+            }
+        }
+
+
+        // =====================================
+        // thumbnail
+        // =====================================
+
+        if let value =
+            string(
+                dictionary[
+                    "thumbnail"
+                ]
+            ),
            let url =
             URL(
                 string:
@@ -1138,4 +1540,31 @@ final class SpotifyPublicURLResolver {
 
         return nil
     }
+}
+
+
+// MARK: - Internal Metadata
+
+private struct PublicTrackMetadata:
+    Sendable {
+
+    let artworkURL:
+        URL?
+
+    let album:
+        String?
+}
+
+
+private struct TrackArtworkResult:
+    Sendable {
+
+    let index:
+        Int
+
+    let artworkURL:
+        URL?
+
+    let album:
+        String?
 }
