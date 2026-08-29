@@ -448,83 +448,50 @@ struct FetchView: View {
     // MARK: - Music Search
 
     private var musicSearchSection:
-        some View {
+    some View {
 
-        Section {
+    Section {
 
-            NavigationLink {
+        NavigationLink {
 
-                MusicBrainzSearchView()
+            MusicBrainzSearchView()
 
-            } label: {
+        } label: {
 
-                HStack(
-                    spacing:
-                        12
-                ) {
-
-                    Image(
-                        systemName:
-                            "magnifyingglass.circle.fill"
-                    )
-                    .font(
-                        .title3
-                    )
-                   .foregroundStyle(
-    Color.accentColor
-) 
-                    .frame(
-                        width:
-                            30
-                    )
-
-
-                    VStack(
-                        alignment:
-                            .leading,
-                        spacing:
-                            2
-                    ) {
-
-                        Text(
-                            "Search Music"
-                        )
-                        .font(
-                            .headline
-                        )
-
-
-                        Text(
-                            "No Spotify account required"
-                        )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-                    }
-                }
-                .padding(
-                    .vertical,
-                    3
-                )
-            }
-
-        } header: {
-
-            Text(
-                "Music"
-            )
-
-        } footer: {
-
-            Text(
-                "Search the MusicBrainz catalog without signing in. Downloads still use your selected Echo download method."
+            Label(
+                "Search MusicBrainz",
+                systemImage:
+                    "music.note.list"
             )
         }
-    }
 
+
+        NavigationLink {
+
+            YouTubeMusicSearchView()
+
+        } label: {
+
+            Label(
+                "Search YouTube Music",
+                systemImage:
+                    "play.rectangle.fill"
+            )
+        }
+
+    } header: {
+
+        Text(
+            "Music"
+        )
+
+    } footer: {
+
+        Text(
+            "Search MusicBrainz or YouTube without requiring a Spotify account."
+        )
+    }
+}
 
     // MARK: - Apify
 
