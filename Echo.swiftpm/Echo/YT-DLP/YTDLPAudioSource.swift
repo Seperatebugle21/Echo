@@ -1,28 +1,42 @@
 import Foundation
 
 
-enum YTDLPAudioSourceError: LocalizedError {
+enum YTDLPAudioSourceError:
+    LocalizedError {
 
     case permissionRequired
     case noYouTubeMatch
     case noDirectAudioURL
     case invalidDirectAudioURL
 
-    var errorDescription: String? {
+
+    var errorDescription:
+        String? {
 
         switch self {
 
         case .permissionRequired:
-            return "Bevestig eerst dat je toestemming hebt om deze audio te downloaden."
+
+            return
+                "Bevestig eerst dat je toestemming hebt om deze audio te downloaden."
+
 
         case .noYouTubeMatch:
-            return "Echo kon geen overeenkomende YouTube-video vinden."
+
+            return
+                "Echo kon geen overeenkomende YouTube-video vinden."
+
 
         case .noDirectAudioURL:
-            return "yt-dlp kon geen directe audiostream vinden."
+
+            return
+                "yt-dlp kon geen directe audiostream vinden."
+
 
         case .invalidDirectAudioURL:
-            return "yt-dlp gaf een ongeldige audio-URL terug."
+
+            return
+                "yt-dlp gaf een ongeldige audio-URL terug."
         }
     }
 }
@@ -34,6 +48,7 @@ final class YTDLPAudioSource {
     static let shared =
         YTDLPAudioSource()
 
+
     private init() {}
 
 
@@ -41,20 +56,33 @@ final class YTDLPAudioSource {
 
     func resolve(
         item: FetchItem
-    ) async throws -> FetchAudioResult {
+    ) async throws
+        -> FetchAudioResult {
 
-        guard item.permissionConfirmed else {
+        guard
+            item.permissionConfirmed
+        else {
 
-            throw YTDLPAudioSourceError
-                .permissionRequired
+            throw
+                YTDLPAudioSourceError
+                    .permissionRequired
         }
 
 
         // =========================================
         // 1. Resolve YouTube URL
+        //
+        // Direct URL:
+        // use it immediately.
+        //
+        // No URL:
+        // search with embedded yt-dlp.
+        //
+        // NO YouTube Data API is used here.
         // =========================================
 
-        let youtubeURL: URL
+        let youtubeURL:
+            URL
 
 
         if let existing =
@@ -63,32 +91,36 @@ final class YTDLPAudioSource {
             youtubeURL =
                 existing
 
+
+            print(
+                "yt-dlp direct YouTube URL:",
+                youtubeURL.absoluteString
+            )
+
+
         } else {
 
             print(
-                "yt-dlp: searching YouTube for:",
+                "yt-dlp: searching YouTube without API:"
+            )
+
+            print(
                 item.title,
                 "-",
                 item.artist
             )
 
 
-            let results =
+            let result =
                 try await
-                YouTubeAPI.shared.search(
-                    title: item.title,
-                    artist: item.artist,
-                    maxResults: 1
-                )
+                YTDLPRunner.shared
+                    .search(
+                        title:
+                            item.title,
 
-
-            guard let result =
-                results.first
-            else {
-
-                throw YTDLPAudioSourceError
-                    .noYouTubeMatch
-            }
+                        artist:
+                            item.artist
+                    )
 
 
             youtubeURL =
@@ -96,9 +128,18 @@ final class YTDLPAudioSource {
 
 
             print(
-                "yt-dlp YouTube match:",
+                "yt-dlp search match:",
                 result.title
             )
+
+
+            print(
+                "yt-dlp search uploader:",
+                result.uploader
+                ??
+                "Unknown"
+            )
+
 
             print(
                 "yt-dlp YouTube URL:",
@@ -118,9 +159,11 @@ final class YTDLPAudioSource {
 
         let extracted =
             try await
-            YTDLPRunner.shared.extract(
-                url: youtubeURL
-            )
+            YTDLPRunner.shared
+                .extract(
+                    url:
+                        youtubeURL
+                )
 
 
         print(
@@ -128,29 +171,42 @@ final class YTDLPAudioSource {
             extracted.ytdlpVersion
         )
 
+
         print(
             "yt-dlp title:",
             extracted.title
         )
 
+
         print(
             "yt-dlp uploader:",
-            extracted.uploader ?? "Unknown"
+            extracted.uploader
+            ??
+            "Unknown"
         )
+
 
         print(
             "yt-dlp format:",
-            extracted.formatID ?? "Unknown"
+            extracted.formatID
+            ??
+            "Unknown"
         )
+
 
         print(
             "yt-dlp codec:",
-            extracted.audioCodec ?? "Unknown"
+            extracted.audioCodec
+            ??
+            "Unknown"
         )
+
 
         print(
             "yt-dlp bitrate:",
-            extracted.bitrate ?? 0
+            extracted.bitrate
+            ??
+            0
         )
 
 
@@ -158,25 +214,29 @@ final class YTDLPAudioSource {
         // 3. Direct stream URL
         // =========================================
 
-        guard let directURLString =
-            extracted.directURL,
-              !directURLString.isEmpty
+        guard
+            let directURLString =
+                extracted.directURL,
+            !directURLString.isEmpty
         else {
 
-            throw YTDLPAudioSourceError
-                .noDirectAudioURL
+            throw
+                YTDLPAudioSourceError
+                    .noDirectAudioURL
         }
 
 
-        guard let directURL =
-            URL(
-                string:
-                    directURLString
-            )
+        guard
+            let directURL =
+                URL(
+                    string:
+                        directURLString
+                )
         else {
 
-            throw YTDLPAudioSourceError
-                .invalidDirectAudioURL
+            throw
+                YTDLPAudioSourceError
+                    .invalidDirectAudioURL
         }
 
 
@@ -205,19 +265,22 @@ final class YTDLPAudioSource {
             directURL.absoluteString
         )
 
+
         print(
             "yt-dlp temporary filename:",
             fileName
         )
 
 
-        return FetchAudioResult(
-            downloadURL:
-                directURL,
+        return
+            FetchAudioResult(
 
-            suggestedFileName:
-                fileName
-        )
+                downloadURL:
+                    directURL,
+
+                suggestedFileName:
+                    fileName
+            )
     }
 
 
@@ -228,6 +291,7 @@ final class YTDLPAudioSource {
     ) -> String {
 
         guard let value else {
+
             return "bin"
         }
 
@@ -241,7 +305,10 @@ final class YTDLPAudioSource {
                 )
 
 
-        guard !cleaned.isEmpty else {
+        guard
+            !cleaned.isEmpty
+        else {
+
             return "bin"
         }
 
@@ -249,27 +316,42 @@ final class YTDLPAudioSource {
         switch cleaned {
 
         case "webm":
+
             return "webm"
 
+
         case "m4a":
+
             return "m4a"
 
+
         case "mp4":
+
             return "mp4"
 
+
         case "mp3":
+
             return "mp3"
 
+
         case "ogg":
+
             return "ogg"
 
+
         case "opus":
+
             return "opus"
 
+
         case "aac":
+
             return "aac"
 
+
         default:
+
             return cleaned
         }
     }
@@ -300,7 +382,8 @@ final class YTDLPAudioSource {
                         illegal
                 )
                 .joined(
-                    separator: ""
+                    separator:
+                        ""
                 )
                 .trimmingCharacters(
                     in:
