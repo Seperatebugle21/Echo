@@ -219,7 +219,7 @@ final class FetchManager {
     }
 
 
-    // MARK: - Playlist
+    // MARK: - Playlist From Spotify
 
     func preparePlaylist(
         _ playlist: SpotifyPlaylist
@@ -234,6 +234,24 @@ final class FetchManager {
                 )
 
 
+        await preparePlaylistTracks(
+            tracks
+        )
+    }
+
+
+    // MARK: - Already Loaded Playlist Tracks
+
+    func preparePlaylistTracks(
+        _ tracks: [SpotifyTrack]
+    ) async {
+
+        guard !tracks.isEmpty else {
+
+            return
+        }
+
+
         for track in tracks {
 
             await preparePlaylistTrack(
@@ -246,15 +264,59 @@ final class FetchManager {
     }
 
 
+    // MARK: - Prepare Individual Playlist Track
+
     private func preparePlaylistTrack(
         _ track: SpotifyTrack
     ) async {
+
+        // Don't add exactly the same Spotify track twice
+        // when it is already waiting or being processed.
+
+        if items.contains(
+            where: {
+
+                $0.spotifyURL ==
+                    track.spotifyURL
+
+                &&
+
+                {
+                    switch $0.status {
+
+                    case .queued,
+                         .preparing,
+                         .downloading,
+                         .processing:
+
+                        return true
+
+
+                    case .completed,
+                         .failed:
+
+                        return false
+                    }
+                }()
+            }
+        ) {
+
+            print(
+                "Playlist track already in Fetch:",
+                track.name
+            )
+
+            return
+        }
+
 
         do {
 
             switch
                 ApifySettings.shared
                     .downloadMethod {
+
+            // MARK: Apify
 
             case .youtube:
 
@@ -277,6 +339,11 @@ final class FetchManager {
                     results.first
 
                 else {
+
+                    print(
+                        "No YouTube result for playlist track:",
+                        track.name
+                    )
 
                     return
                 }
@@ -307,6 +374,8 @@ final class FetchManager {
                     )
                 )
 
+
+            // MARK: yt-dlp
 
             case .spotify:
 
@@ -604,31 +673,18 @@ final class FetchManager {
     }
 
 
-    // MARK: - Parallel Queue
+    // MARK: - Sequential Queue
 
     private func processQueue()
         async {
 
-        async let worker1:
-            Void =
-            processQueueWorker()
-
-
-        async let worker2:
-            Void =
-            processQueueWorker()
-
-
-        _ =
-            await (
-                worker1,
-                worker2
-            )
-    }
-
-
-    private func processQueueWorker()
-        async {
+        // Intentionally ONE worker.
+        //
+        // Song 1 completely finishes
+        // before Song 2 starts.
+        //
+        // The HTTP downloader may still use
+        // multiple chunks INSIDE one song.
 
         while let next =
             claimNextQueuedItem() {
@@ -772,7 +828,7 @@ final class FetchManager {
             }
 
 
-            // Ready to start the actual file transfer.
+            // Ready to start actual transfer.
 
             item.status =
                 .preparing(
@@ -783,9 +839,6 @@ final class FetchManager {
             // MARK: - HTTP Download
             //
             // 6% → 94%
-            //
-            // 88 percentage points are reserved
-            // for the actual network transfer.
 
             let downloadedFile =
                 try await
@@ -816,8 +869,6 @@ final class FetchManager {
                             )
                     }
 
-
-            // Network transfer completed.
 
             item.status =
                 .processing(
@@ -853,8 +904,6 @@ final class FetchManager {
                         ) {
                             localProgress in
 
-
-                            // Encoding uses 94 → 99%.
 
                             let overall =
                                 0.94
@@ -1036,9 +1085,6 @@ final class FetchManager {
     func restoreBackgroundDownloads()
         async {
 
-        // Do not start CPU-heavy LAME encoding
-        // during a background launch/wake.
-
         guard UIApplication.shared
             .applicationState ==
             .active
@@ -1150,9 +1196,6 @@ final class FetchManager {
                 }
 
 
-                // Network transfer was already completed,
-                // therefore jump directly to 94%.
-
                 item.status =
                     .processing(
                         0.94
@@ -1217,9 +1260,6 @@ final class FetchManager {
             return
         }
 
-
-        // Restored/background transfer:
-        // 6% → 94%.
 
         let overall =
             0.06
@@ -1343,9 +1383,6 @@ final class FetchManager {
     ) async {
 
         do {
-
-            // Prevent the same recovered source
-            // from being processed if it disappeared.
 
             guard FileManager.default
                 .fileExists(
