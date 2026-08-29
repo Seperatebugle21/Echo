@@ -324,6 +324,20 @@ final class FetchManager {
     }
 
 
+
+    func addPreparedItem(
+    _ item: FetchItem
+) {
+
+    items.append(
+        item
+    )
+
+
+    startIfNeeded()
+}
+    
+
     // MARK: - Add Track
 
     func add(
