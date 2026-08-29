@@ -996,7 +996,7 @@ struct FetchView: View {
                 }
             }
 
-
+/*
             Toggle(
                 isOn:
                     $fetchSettings.embedMetadata
@@ -1008,7 +1008,7 @@ struct FetchView: View {
                         "text.badge.checkmark"
                 )
             }
-
+*/
 
             Toggle(
                 isOn:
