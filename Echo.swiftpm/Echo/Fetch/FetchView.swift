@@ -54,9 +54,12 @@ struct FetchView: View {
                 spotifySection
 
 
-                // New login-free search source
+                // Login-free search sources
 
                 musicSearchSection
+
+
+                // Inline URL downloader
 
                 FetchURLInlineSection()
 
@@ -66,8 +69,6 @@ struct FetchView: View {
 
                     apifySection
                 }
-
-                
 
 
                 downloadsSection
@@ -87,28 +88,28 @@ struct FetchView: View {
 
             .toolbar {
 
-    ToolbarItem(
-        placement:
-            .topBarTrailing
-    ) {
+                ToolbarItem(
+                    placement:
+                        .topBarTrailing
+                ) {
 
-        Button {
+                    Button {
 
-            showURLInput =
-                true
+                        showURLInput =
+                            true
 
-        } label: {
+                    } label: {
 
-            Image(
-                systemName:
-                    "link"
-            )
-        }
-        .accessibilityLabel(
-            "Fetch URL"
-        )
-    }
-}
+                        Image(
+                            systemName:
+                                "link"
+                        )
+                    }
+                    .accessibilityLabel(
+                        "Fetch URL"
+                    )
+                }
+            }
 
             .task {
 
@@ -170,6 +171,8 @@ struct FetchView: View {
             }
         }
 
+        // MARK: Downloads Sheet
+
         .sheet(
             isPresented:
                 $showDownloadsFromTrack
@@ -206,13 +209,20 @@ struct FetchView: View {
             }
         }
 
-        .sheet(
-    isPresented:
-        $showURLInput
-) {
+        // MARK: URL Sheet
+        //
+        // Only ONE sheet.
+        //
+        // FetchURLInputSheet pushes the preview
+        // using navigationDestination.
 
-    FetchURLInputSheet()
-}
+        .sheet(
+            isPresented:
+                $showURLInput
+        ) {
+
+            FetchURLInputSheet()
+        }
     }
 
 
@@ -488,50 +498,51 @@ struct FetchView: View {
     // MARK: - Music Search
 
     private var musicSearchSection:
-    some View {
+        some View {
 
-    Section {
+        Section {
 
-        NavigationLink {
+            NavigationLink {
 
-            MusicBrainzSearchView()
+                MusicBrainzSearchView()
 
-        } label: {
+            } label: {
 
-            Label(
-                "Search MusicBrainz",
-                systemImage:
-                    "music.note.list"
+                Label(
+                    "Search MusicBrainz",
+                    systemImage:
+                        "music.note.list"
+                )
+            }
+
+
+            NavigationLink {
+
+                YouTubeMusicSearchView()
+
+            } label: {
+
+                Label(
+                    "Search YouTube Music",
+                    systemImage:
+                        "play.rectangle.fill"
+                )
+            }
+
+        } header: {
+
+            Text(
+                "Music"
+            )
+
+        } footer: {
+
+            Text(
+                "Search MusicBrainz or YouTube without requiring a Spotify account."
             )
         }
-
-
-        NavigationLink {
-
-            YouTubeMusicSearchView()
-
-        } label: {
-
-            Label(
-                "Search YouTube Music",
-                systemImage:
-                    "play.rectangle.fill"
-            )
-        }
-
-    } header: {
-
-        Text(
-            "Music"
-        )
-
-    } footer: {
-
-        Text(
-            "Search MusicBrainz or YouTube without requiring a Spotify account."
-        )
     }
-}
+
 
     // MARK: - Apify
 
