@@ -149,10 +149,13 @@ struct FetchURLInlineSection:
         ) {
             content in
 
-            FetchURLPreviewView(
-                content:
-                    content
-            )
+            NavigationStack {
+
+                FetchURLPreviewView(
+                    content:
+                        content
+                )
+            }
         }
 
         .alert(
@@ -226,19 +229,29 @@ struct FetchURLInlineSection:
                         )
 
 
+                // First let the loading UI settle.
+                isResolving =
+                    false
+
+
+                // Give SwiftUI one update cycle before
+                // presenting the preview sheet.
+                await Task.yield()
+
+
                 resolved =
                     result
 
 
             } catch {
 
+                isResolving =
+                    false
+
+
                 errorMessage =
                     error.localizedDescription
             }
-
-
-            isResolving =
-                false
         }
     }
 
@@ -313,6 +326,29 @@ struct FetchURLInputSheet:
                         )
 
 
+                        if !urlText.isEmpty {
+
+                            Button {
+
+                                urlText =
+                                    ""
+
+                            } label: {
+
+                                Image(
+                                    systemName:
+                                        "xmark.circle.fill"
+                                )
+                                .foregroundStyle(
+                                    .secondary
+                                )
+                            }
+                            .buttonStyle(
+                                .plain
+                            )
+                        }
+
+
                         Button {
 
                             paste()
@@ -324,6 +360,9 @@ struct FetchURLInputSheet:
                                     "doc.on.clipboard"
                             )
                         }
+                        .buttonStyle(
+                            .plain
+                        )
                     }
 
 
@@ -411,18 +450,42 @@ struct FetchURLInputSheet:
                     }
                 }
             }
-        }
 
-        .sheet(
-            item:
-                $resolved
-        ) {
-            content in
+            // MARK: Preview Navigation
+            //
+            // Important:
+            // This replaces the old nested .sheet(item:).
+            //
+            // The URL input stays inside its existing sheet
+            // and the preview is pushed in this NavigationStack.
 
-            FetchURLPreviewView(
-                content:
-                    content
-            )
+            .navigationDestination(
+                isPresented:
+                    Binding(
+                        get: {
+
+                            resolved != nil
+                        },
+                        set: {
+                            isPresented in
+
+                            if !isPresented {
+
+                                resolved =
+                                    nil
+                            }
+                        }
+                    )
+            ) {
+
+                if let resolved {
+
+                    FetchURLPreviewView(
+                        content:
+                            resolved
+                    )
+                }
+            }
         }
 
         .alert(
@@ -488,7 +551,7 @@ struct FetchURLInputSheet:
 
             do {
 
-                resolved =
+                let result =
                     try await
                     FetchURLResolver.shared
                         .resolve(
@@ -496,15 +559,29 @@ struct FetchURLInputSheet:
                         )
 
 
+                // Finish changing the form first.
+                isResolving =
+                    false
+
+
+                // Avoid navigation/presentation in the
+                // same SwiftUI transaction.
+                await Task.yield()
+
+
+                resolved =
+                    result
+
+
             } catch {
+
+                isResolving =
+                    false
+
 
                 errorMessage =
                     error.localizedDescription
             }
-
-
-            isResolving =
-                false
         }
     }
 
@@ -561,153 +638,149 @@ struct FetchURLPreviewView:
 
     var body: some View {
 
-        NavigationStack {
+        ScrollView {
 
-            ScrollView {
+            VStack(
+                spacing:
+                    20
+            ) {
+
+                artwork
+
 
                 VStack(
                     spacing:
-                        20
+                        5
                 ) {
 
-                    artwork
+                    Text(
+                        content.title
+                    )
+                    .font(
+                        .title2
+                            .bold()
+                    )
+                    .multilineTextAlignment(
+                        .center
+                    )
 
 
-                    VStack(
+                    Text(
+                        subtitle
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                    .multilineTextAlignment(
+                        .center
+                    )
+
+
+                    HStack(
                         spacing:
                             5
                     ) {
 
-                        Text(
-                            content.title
-                        )
-                        .font(
-                            .title2
-                                .bold()
-                        )
-                        .multilineTextAlignment(
-                            .center
+                        Image(
+                            systemName:
+                                sourceIcon
                         )
 
 
                         Text(
-                            subtitle
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-                        .multilineTextAlignment(
-                            .center
-                        )
-
-
-                        HStack(
-                            spacing:
-                                5
-                        ) {
-
-                            Image(
-                                systemName:
-                                    sourceIcon
-                            )
-
-
-                            Text(
-                                content
-                                    .sourceTitle
-                            )
-                        }
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-                        .padding(
-                            .top,
-                            2
+                            content
+                                .sourceTitle
                         )
                     }
-
-
-                    if content.isPlaylist {
-
-                        playlistTracks
-                    }
-
-
-                    Button {
-
-                        startDownload()
-
-                    } label: {
-
-                        HStack {
-
-                            Spacer()
-
-
-                            if isStarting {
-
-                                ProgressView()
-                                    .tint(
-                                        .white
-                                    )
-
-
-                            } else {
-
-                                Label(
-                                    downloadButtonTitle,
-                                    systemImage:
-                                        "arrow.down.circle.fill"
-                                )
-                            }
-
-
-                            Spacer()
-                        }
-                    }
-                    .buttonStyle(
-                        .borderedProminent
+                    .font(
+                        .caption
                     )
-                    .controlSize(
-                        .large
+                    .foregroundStyle(
+                        .secondary
                     )
-                    .disabled(
-                        isStarting
+                    .padding(
+                        .top,
+                        2
                     )
                 }
-                .padding(
-                    20
+
+
+                if content.isPlaylist {
+
+                    playlistTracks
+                }
+
+
+                Button {
+
+                    startDownload()
+
+                } label: {
+
+                    HStack {
+
+                        Spacer()
+
+
+                        if isStarting {
+
+                            ProgressView()
+                                .tint(
+                                    .white
+                                )
+
+                        } else {
+
+                            Label(
+                                downloadButtonTitle,
+                                systemImage:
+                                    "arrow.down.circle.fill"
+                            )
+                        }
+
+
+                        Spacer()
+                    }
+                }
+                .buttonStyle(
+                    .borderedProminent
+                )
+                .controlSize(
+                    .large
+                )
+                .disabled(
+                    isStarting
                 )
             }
-
-            .navigationTitle(
-                content.isPlaylist
-                ?
-                "Playlist"
-                :
-                "Song"
+            .padding(
+                20
             )
+        }
 
-            .navigationBarTitleDisplayMode(
-                .inline
-            )
+        .navigationTitle(
+            content.isPlaylist
+            ?
+            "Playlist"
+            :
+            "Song"
+        )
 
-            .toolbar {
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
 
-                ToolbarItem(
-                    placement:
-                        .topBarTrailing
+        .toolbar {
+
+            ToolbarItem(
+                placement:
+                    .topBarTrailing
+            ) {
+
+                Button(
+                    "Done"
                 ) {
 
-                    Button(
-                        "Done"
-                    ) {
-
-                        dismiss()
-                    }
+                    dismiss()
                 }
             }
         }
