@@ -3,11 +3,10 @@ import AVFoundation
 import MediaPlayer
 import AVFAudio
 import UIKit
+import Intents
 
 
-enum RepeatMode:
-    Equatable {
-
+enum RepeatMode: Equatable {
     case off
     case all
     case one
@@ -37,7 +36,6 @@ class AudioPlayerManager:
 
 
     enum PlaybackDirection {
-
         case next
         case previous
         case fade
@@ -143,12 +141,9 @@ class AudioPlayerManager:
 
         guard shuffleEnabled !=
                 enabled
-
         else {
-
             return
         }
-
 
         toggleShuffle()
     }
@@ -164,6 +159,116 @@ class AudioPlayerManager:
 
 
     // ========================================================
+    // MARK: - Siri Playback Donation
+    // ========================================================
+
+    func donatePlaybackToSiri(
+        song: Song
+    ) {
+
+        var artwork:
+            INImage? =
+            nil
+
+
+        if let data =
+            song.coverData {
+
+            artwork =
+                INImage(
+                    imageData:
+                        data
+                )
+        }
+
+
+        let mediaItem =
+            INMediaItem(
+                identifier:
+                    song.id.uuidString,
+
+                title:
+                    song.title,
+
+                type:
+                    .song,
+
+                artwork:
+                    artwork,
+
+                artist:
+                    song.artist
+            )
+
+
+        let intent =
+            INPlayMediaIntent(
+                mediaItems:
+                    [
+                        mediaItem
+                    ],
+
+                mediaContainer:
+                    nil,
+
+                playShuffled:
+                    nil,
+
+                playbackRepeatMode:
+                    .unknown,
+
+                resumePlayback:
+                    nil,
+
+                playbackQueueLocation:
+                    .unknown,
+
+                playbackSpeed:
+                    nil,
+
+                mediaSearch:
+                    nil
+            )
+
+
+        let interaction =
+            INInteraction(
+                intent:
+                    intent,
+
+                response:
+                    nil
+            )
+
+
+        interaction.identifier =
+            "echo.play.\(song.id.uuidString)"
+
+
+        interaction.donate {
+            error in
+
+
+            if let error {
+
+                print(
+                    "Siri playback donation mislukt:",
+                    error.localizedDescription
+                )
+
+
+            } else {
+
+                print(
+                    "Siri playback donation opgeslagen:",
+                    song.title
+                )
+            }
+        }
+    }
+
+
+    // ========================================================
     // MARK: - Now Playing
     // ========================================================
 
@@ -175,9 +280,7 @@ class AudioPlayerManager:
 
             let player =
                 player
-
         else {
-
             return
         }
 
@@ -379,9 +482,7 @@ class AudioPlayerManager:
                     let event =
                         event as?
                         MPChangePlaybackPositionCommandEvent
-
                 else {
-
                     return .commandFailed
                 }
 
@@ -415,7 +516,6 @@ class AudioPlayerManager:
             self.queue =
                 queue
 
-
             self.originalQueue =
                 queue
         }
@@ -425,7 +525,6 @@ class AudioPlayerManager:
             self.queue
                 .firstIndex(
                     where: {
-
                         $0.id ==
                             song.id
                     }
@@ -516,6 +615,18 @@ class AudioPlayerManager:
 
             startTimer()
 
+
+            // --------------------------------------------
+            // Tell Siri that Echo played this song.
+            // Helps Siri learn Echo as a music app.
+            // --------------------------------------------
+
+            donatePlaybackToSiri(
+                song:
+                    song
+            )
+
+
             fillQueue(
                 from:
                     queue
@@ -545,7 +656,6 @@ class AudioPlayerManager:
                 .songs
                 .first(
                     where: {
-
                         $0.id ==
                             song.id
                     }
@@ -568,12 +678,6 @@ class AudioPlayerManager:
 
                 lyricsNeedsInternet =
                     false
-
-
-                print(
-                    "Opgeslagen lyrics geladen voor:",
-                    song.title
-                )
 
 
                 return
@@ -627,12 +731,6 @@ class AudioPlayerManager:
                         )
 
 
-                    print(
-                        "Nieuwe lyrics opgeslagen voor:",
-                        song.title
-                    )
-
-
                 } else {
 
                     self.currentLyrics =
@@ -645,12 +743,6 @@ class AudioPlayerManager:
 
                     self.lyricsNeedsInternet =
                         true
-
-
-                    print(
-                        "Geen opgeslagen lyrics en ophalen mislukt voor:",
-                        song.title
-                    )
                 }
             }
         }
@@ -816,6 +908,12 @@ class AudioPlayerManager:
             updateNowPlaying()
 
 
+            donatePlaybackToSiri(
+                song:
+                    song
+            )
+
+
         } else {
 
             playSongAtIndex()
@@ -888,15 +986,12 @@ class AudioPlayerManager:
                         currentSong?.id
                 }
             )
-
         else {
-
             return
         }
 
 
         queue.removeAll {
-
             $0.id ==
                 song.id
         }
@@ -921,9 +1016,7 @@ class AudioPlayerManager:
             .contains(
                 currentIndex
             )
-
         else {
-
             return
         }
 
@@ -963,7 +1056,6 @@ class AudioPlayerManager:
     ) {
 
         guard let currentSong else {
-
             return
         }
 
@@ -972,7 +1064,6 @@ class AudioPlayerManager:
             queue
                 .drop(
                     while: {
-
                         $0.id !=
                             currentSong.id
                     }
@@ -1000,7 +1091,6 @@ class AudioPlayerManager:
                     !queue.contains(
                         where: {
                             queuedSong in
-
 
                             queuedSong.id ==
                                 song.id
@@ -1038,9 +1128,7 @@ class AudioPlayerManager:
                 for:
                     song
             )
-
         else {
-
             return
         }
 
@@ -1101,6 +1189,12 @@ class AudioPlayerManager:
         startTimer()
 
         updateNowPlaying()
+
+
+        donatePlaybackToSiri(
+            song:
+                song
+        )
     }
 
 
@@ -1114,7 +1208,6 @@ class AudioPlayerManager:
 
         if !queue.contains(
             where: {
-
                 $0.id ==
                     song.id
             }
@@ -1134,14 +1227,11 @@ class AudioPlayerManager:
         guard let index =
             queue.firstIndex(
                 where: {
-
                     $0.id ==
                         song.id
                 }
             )
-
         else {
-
             return
         }
 
@@ -1201,7 +1291,6 @@ class AudioPlayerManager:
                     &&
                     !queue.contains(
                         where: {
-
                             $0.id ==
                                 song.id
                         }
@@ -1209,7 +1298,6 @@ class AudioPlayerManager:
                     &&
                     !autoNextQueue.contains(
                         where: {
-
                             $0.id ==
                                 song.id
                         }
@@ -1220,9 +1308,7 @@ class AudioPlayerManager:
             guard let randomSong =
                 availableSongs
                     .randomElement()
-
             else {
-
                 return
             }
 
@@ -1241,7 +1327,6 @@ class AudioPlayerManager:
     func togglePlayPause() {
 
         guard let player else {
-
             return
         }
 
@@ -1323,7 +1408,6 @@ class AudioPlayerManager:
                     originalQueue
                         .firstIndex(
                             where: {
-
                                 $0.id ==
                                     current.id
                             }
@@ -1349,19 +1433,14 @@ class AudioPlayerManager:
         switch repeatMode {
 
         case .off:
-
             repeatMode =
                 .all
 
-
         case .all:
-
             repeatMode =
                 .one
 
-
         case .one:
-
             repeatMode =
                 .off
         }
@@ -1391,7 +1470,6 @@ class AudioPlayerManager:
 
 
                 guard let self else {
-
                     return
                 }
 
