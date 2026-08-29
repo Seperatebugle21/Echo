@@ -7,14 +7,15 @@ import UIKit
 struct FetchURLInlineSection:
     View {
 
+    let onResolved:
+        (FetchURLResolvedContent) -> Void
+
+
     @State private var urlText =
         ""
 
     @State private var isResolving =
         false
-
-    @State private var resolved:
-        FetchURLResolvedContent?
 
     @State private var errorMessage:
         String?
@@ -143,21 +144,6 @@ struct FetchURLInlineSection:
             )
         }
 
-        .sheet(
-            item:
-                $resolved
-        ) {
-            content in
-
-            NavigationStack {
-
-                FetchURLPreviewView(
-                    content:
-                        content
-                )
-            }
-        }
-
         .alert(
             "Could Not Open URL",
             isPresented:
@@ -229,18 +215,19 @@ struct FetchURLInlineSection:
                         )
 
 
-                // First let the loading UI settle.
                 isResolving =
                     false
 
 
-                // Give SwiftUI one update cycle before
-                // presenting the preview sheet.
+                // Let the List/Section finish its update
+                // before FetchView presents the sheet.
+
                 await Task.yield()
 
 
-                resolved =
+                onResolved(
                     result
+                )
 
 
             } catch {
@@ -451,13 +438,8 @@ struct FetchURLInputSheet:
                 }
             }
 
-            // MARK: Preview Navigation
-            //
-            // Important:
-            // This replaces the old nested .sheet(item:).
-            //
-            // The URL input stays inside its existing sheet
-            // and the preview is pushed in this NavigationStack.
+
+            // MARK: - Preview Navigation
 
             .navigationDestination(
                 isPresented:
@@ -559,13 +541,10 @@ struct FetchURLInputSheet:
                         )
 
 
-                // Finish changing the form first.
                 isResolving =
                     false
 
 
-                // Avoid navigation/presentation in the
-                // same SwiftUI transaction.
                 await Task.yield()
 
 
