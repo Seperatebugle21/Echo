@@ -3,7 +3,7 @@ import Intents
 
 
 // ============================================================
-// MARK: - App Delegate
+// MARK: - Echo App Delegate
 // ============================================================
 
 final class EchoAppDelegate:
@@ -12,7 +12,7 @@ final class EchoAppDelegate:
 
 
     // ========================================================
-    // MARK: - Background yt-dlp downloads
+    // MARK: - Background Downloads
     // ========================================================
 
     func application(
@@ -35,7 +35,7 @@ final class EchoAppDelegate:
 
 
     // ========================================================
-    // MARK: - SiriKit Intent Handler
+    // MARK: - Siri Intent Routing
     // ========================================================
 
     func application(
@@ -44,6 +44,11 @@ final class EchoAppDelegate:
     ) -> Any? {
 
         if intent is INPlayMediaIntent {
+
+            print(
+                "Siri stuurde INPlayMediaIntent naar Echo"
+            )
+
 
             return EchoMediaIntentHandler()
         }
@@ -64,7 +69,7 @@ final class EchoMediaIntentHandler:
 
 
     // ========================================================
-    // MARK: - Resolve Media
+    // MARK: - Resolve media items
     // ========================================================
 
     func resolveMediaItems(
@@ -83,61 +88,81 @@ final class EchoMediaIntentHandler:
                 MusicLibraryManager.shared
 
 
-            // ------------------------------------------------
-            // Siri can already provide a resolved media ID.
-            // ------------------------------------------------
+            // =================================================
+            // Already resolved identifier
+            // =================================================
 
             if
-                let requestedItem =
+                let item =
                     intent.mediaItems?.first,
 
                 let identifier =
-                    requestedItem.identifier,
+                    item.identifier,
 
                 let uuid =
                     UUID(
                         uuidString:
                             identifier
-                    ),
+                    ) {
 
-                let song =
+
+                if let song =
                     library.songs
                         .first(
                             where: {
-
                                 $0.id ==
                                     uuid
                             }
                         ) {
 
-                let mediaItem =
-                    makeMediaItem(
-                        from:
-                            song
+                    completion(
+                        [
+                            .success(
+                                with:
+                                    makeSongMediaItem(
+                                        song
+                                    )
+                            )
+                        ]
                     )
 
 
-                completion(
-                    [
-                        .success(
-                            with:
-                                mediaItem
-                        )
-                    ]
-                )
+                    return
+                }
 
 
-                return
+                if let playlist =
+                    library.playlists
+                        .first(
+                            where: {
+                                $0.id ==
+                                    uuid
+                            }
+                        ) {
+
+                    completion(
+                        [
+                            .success(
+                                with:
+                                    makePlaylistMediaItem(
+                                        playlist
+                                    )
+                            )
+                        ]
+                    )
+
+
+                    return
+                }
             }
 
 
-            // ------------------------------------------------
-            // Search request from Siri
-            // ------------------------------------------------
+            // =================================================
+            // Siri media search
+            // =================================================
 
             guard let search =
                 intent.mediaSearch
-
             else {
 
                 completion(
@@ -172,14 +197,22 @@ final class EchoMediaIntentHandler:
                 )
 
 
-            // ------------------------------------------------
-            // Playlist
-            // ------------------------------------------------
+            print(
+                "Siri media search:",
+                requestedName,
+                requestedArtist,
+                requestedAlbum
+            )
+
+
+            // =================================================
+            // Playlist search
+            // =================================================
 
             if search.mediaType ==
                 .playlist {
 
-                let matchingPlaylists =
+                let playlists =
                     library.playlists
                         .filter {
                             playlist in
@@ -191,9 +224,12 @@ final class EchoMediaIntentHandler:
                                 )
 
 
+                            if requestedName.isEmpty {
+                                return true
+                            }
+
+
                             return
-                                requestedName.isEmpty
-                                ||
                                 name ==
                                     requestedName
                                 ||
@@ -207,7 +243,8 @@ final class EchoMediaIntentHandler:
                         }
 
 
-                if matchingPlaylists.isEmpty {
+                guard !playlists.isEmpty
+                else {
 
                     completion(
                         [
@@ -221,27 +258,13 @@ final class EchoMediaIntentHandler:
 
 
                 let items =
-                    matchingPlaylists
+                    playlists
                         .prefix(
                             5
                         )
                         .map {
-                            playlist in
-
-
-                            INMediaItem(
-                                identifier:
-                                    playlist.id
-                                        .uuidString,
-
-                                title:
-                                    playlist.name,
-
-                                type:
-                                    .playlist,
-
-                                artwork:
-                                    nil
+                            makePlaylistMediaItem(
+                                $0
                             )
                         }
 
@@ -278,11 +301,11 @@ final class EchoMediaIntentHandler:
             }
 
 
-            // ------------------------------------------------
+            // =================================================
             // Song search
-            // ------------------------------------------------
+            // =================================================
 
-            let scoredSongs =
+            let results =
                 library.songs
                     .map {
                         song in
@@ -309,20 +332,16 @@ final class EchoMediaIntentHandler:
                         )
                     }
                     .filter {
-
                         $0.score >
                             0
                     }
                     .sorted {
-
                         $0.score >
                             $1.score
                     }
 
 
-            guard !scoredSongs
-                .isEmpty
-
+            guard !results.isEmpty
             else {
 
                 completion(
@@ -336,38 +355,17 @@ final class EchoMediaIntentHandler:
             }
 
 
-            // ------------------------------------------------
-            // If one result is clearly best, choose it.
-            // ------------------------------------------------
-
-            if
-                scoredSongs.count ==
-                    1
-                ||
-                (
-                    scoredSongs.count >
-                        1
-                    &&
-                    scoredSongs[0].score
-                    >
-                    scoredSongs[1].score
-                    +
-                    100
-                ) {
-
-                let item =
-                    makeMediaItem(
-                        from:
-                            scoredSongs[0]
-                                .song
-                    )
-
+            if results.count ==
+                1 {
 
                 completion(
                     [
                         .success(
                             with:
-                                item
+                                makeSongMediaItem(
+                                    results[0]
+                                        .song
+                                )
                         )
                     ]
                 )
@@ -377,20 +375,40 @@ final class EchoMediaIntentHandler:
             }
 
 
-            // ------------------------------------------------
-            // Siri asks which one when multiple songs match.
-            // ------------------------------------------------
+            // Pick a clearly better result automatically.
+
+            if
+                results[0].score
+                >
+                results[1].score
+                +
+                100 {
+
+                completion(
+                    [
+                        .success(
+                            with:
+                                makeSongMediaItem(
+                                    results[0]
+                                        .song
+                                )
+                        )
+                    ]
+                )
+
+
+                return
+            }
+
 
             let items =
-                scoredSongs
+                results
                     .prefix(
                         5
                     )
                     .map {
-
-                        makeMediaItem(
-                            from:
-                                $0.song
+                        makeSongMediaItem(
+                            $0.song
                         )
                     }
 
@@ -421,7 +439,7 @@ final class EchoMediaIntentHandler:
             ) -> Void
     ) {
 
-        let response =
+        completion(
             INPlayMediaIntentResponse(
                 code:
                     .ready,
@@ -429,10 +447,6 @@ final class EchoMediaIntentHandler:
                 userActivity:
                     nil
             )
-
-
-        completion(
-            response
         )
     }
 
@@ -461,9 +475,14 @@ final class EchoMediaIntentHandler:
                 AudioPlayerManager.shared
 
 
-            // ------------------------------------------------
-            // First try resolved mediaItems.
-            // ------------------------------------------------
+            print(
+                "Echo behandelt Siri PlayMedia intent"
+            )
+
+
+            // =================================================
+            // Resolved media item
+            // =================================================
 
             if
                 let mediaItem =
@@ -479,307 +498,100 @@ final class EchoMediaIntentHandler:
                             identifier
                     ) {
 
-                // ============================================
+
+                // =============================================
                 // Playlist
-                // ============================================
+                // =============================================
 
-                if mediaItem.type ==
-                    .playlist {
-
-                    if let playlist =
-                        library.playlists
-                            .first(
-                                where: {
-
-                                    $0.id ==
-                                        uuid
-                                }
-                            ) {
-
-                        let songs =
-                            playlist.songIDs
-                                .compactMap {
-                                    songID in
-
-
-                                    library.songs
-                                        .first(
-                                            where: {
-
-                                                $0.id ==
-                                                    songID
-                                            }
-                                        )
-                                }
-
-
-                        if let firstSong =
-                            songs.first,
-
-                           let url =
-                            library.getURL(
-                                for:
-                                    firstSong
-                            ) {
-
-                            audio.allSongs =
-                                library.songs
-
-
-                            audio.play(
-                                song:
-                                    firstSong,
-
-                                url:
-                                    url,
-
-                                queue:
-                                    songs
-                            )
-
-
-                            applyPlaybackOptions(
-                                intent:
-                                    intent,
-
-                                audio:
-                                    audio
-                            )
-
-
-                            completion(
-                                INPlayMediaIntentResponse(
-                                    code:
-                                        .success,
-
-                                    userActivity:
-                                        nil
-                                )
-                            )
-
-
-                            return
-                        }
-                    }
-                }
-
-
-                // ============================================
-                // Song
-                // ============================================
-
-                if let song =
-                    library.songs
+                if let playlist =
+                    library.playlists
                         .first(
                             where: {
-
                                 $0.id ==
                                     uuid
                             }
-                        ),
+                        ) {
 
-                   let url =
-                    library.getURL(
-                        for:
-                            song
-                    ) {
-
-                    audio.allSongs =
-                        library.songs
+                    let songs =
+                        playlist.songIDs
+                            .compactMap {
+                                id in
 
 
-                    audio.play(
-                        song:
-                            song,
-
-                        url:
-                            url,
-
-                        queue:
-                            library.songs
-                    )
-
-
-                    applyPlaybackOptions(
-                        intent:
-                            intent,
-
-                        audio:
-                            audio
-                    )
-
-
-                    completion(
-                        INPlayMediaIntentResponse(
-                            code:
-                                .success,
-
-                            userActivity:
-                                nil
-                        )
-                    )
-
-
-                    return
-                }
-            }
-
-
-            // ------------------------------------------------
-            // Fallback:
-            // Search directly if Siri didn't resolve first.
-            // ------------------------------------------------
-
-            if
-                let search =
-                    intent.mediaSearch {
-
-                let requestedName =
-                    normalize(
-                        search.mediaName ??
-                        ""
-                    )
-
-
-                let requestedArtist =
-                    normalize(
-                        search.artistName ??
-                        ""
-                    )
-
-
-                // ============================================
-                // Playlist fallback
-                // ============================================
-
-                if search.mediaType ==
-                    .playlist {
-
-                    if let playlist =
-                        library.playlists
-                            .first(
-                                where: {
-
-                                    normalize(
-                                        $0.name
+                                library.songs
+                                    .first(
+                                        where: {
+                                            $0.id ==
+                                                id
+                                        }
                                     )
-                                    .contains(
-                                        requestedName
-                                    )
-                                }
+                            }
+
+
+                    if
+                        let first =
+                            songs.first,
+
+                        let url =
+                            library.getURL(
+                                for:
+                                    first
                             ) {
 
-                        let songs =
-                            playlist.songIDs
-                                .compactMap {
-                                    id in
+                        audio.allSongs =
+                            library.songs
 
 
-                                    library.songs
-                                        .first(
-                                            where: {
+                        audio.play(
+                            song:
+                                first,
 
-                                                $0.id ==
-                                                    id
-                                            }
-                                        )
-                                }
+                            url:
+                                url,
+
+                            queue:
+                                songs
+                        )
 
 
-                        if
-                            let first =
-                                songs.first,
+                        applyOptions(
+                            intent:
+                                intent,
 
-                            let url =
-                                library.getURL(
-                                    for:
-                                        first
-                                ) {
+                            audio:
+                                audio
+                        )
 
-                            audio.play(
-                                song:
-                                    first,
 
-                                url:
-                                    url,
+                        completion(
+                            INPlayMediaIntentResponse(
+                                code:
+                                    .success,
 
-                                queue:
-                                    songs
+                                userActivity:
+                                    nil
                             )
+                        )
 
 
-                            applyPlaybackOptions(
-                                intent:
-                                    intent,
-
-                                audio:
-                                    audio
-                            )
-
-
-                            completion(
-                                INPlayMediaIntentResponse(
-                                    code:
-                                        .success,
-
-                                    userActivity:
-                                        nil
-                                )
-                            )
-
-
-                            return
-                        }
+                        return
                     }
                 }
 
 
-                // ============================================
-                // Song fallback
-                // ============================================
-
-                let song =
-                    library.songs
-                        .map {
-                            song in
-
-
-                            (
-                                song:
-                                    song,
-
-                                score:
-                                    score(
-                                        song:
-                                            song,
-
-                                        requestedName:
-                                            requestedName,
-
-                                        requestedArtist:
-                                            requestedArtist,
-
-                                        requestedAlbum:
-                                            ""
-                                    )
-                            )
-                        }
-                        .filter {
-
-                            $0.score >
-                                0
-                        }
-                        .sorted {
-
-                            $0.score >
-                                $1.score
-                        }
-                        .first?
-                        .song
-
+                // =============================================
+                // Song
+                // =============================================
 
                 if
-                    let song,
+                    let song =
+                        library.songs
+                            .first(
+                                where: {
+                                    $0.id ==
+                                        uuid
+                                }
+                            ),
 
                     let url =
                         library.getURL(
@@ -803,7 +615,7 @@ final class EchoMediaIntentHandler:
                     )
 
 
-                    applyPlaybackOptions(
+                    applyOptions(
                         intent:
                             intent,
 
@@ -828,9 +640,232 @@ final class EchoMediaIntentHandler:
             }
 
 
-            // ------------------------------------------------
-            // Nothing found
-            // ------------------------------------------------
+            // =================================================
+            // Direct search fallback
+            // =================================================
+
+            if let search =
+                intent.mediaSearch {
+
+                let requestedName =
+                    normalize(
+                        search.mediaName ??
+                        ""
+                    )
+
+
+                let requestedArtist =
+                    normalize(
+                        search.artistName ??
+                        ""
+                    )
+
+
+                let requestedAlbum =
+                    normalize(
+                        search.albumName ??
+                        ""
+                    )
+
+
+                // =============================================
+                // Playlist
+                // =============================================
+
+                if search.mediaType ==
+                    .playlist {
+
+                    let playlist =
+                        library.playlists
+                            .first {
+                                playlist in
+
+
+                                let name =
+                                    normalize(
+                                        playlist.name
+                                    )
+
+
+                                if requestedName.isEmpty {
+                                    return false
+                                }
+
+
+                                return
+                                    name ==
+                                        requestedName
+                                    ||
+                                    name.contains(
+                                        requestedName
+                                    )
+                                    ||
+                                    requestedName.contains(
+                                        name
+                                    )
+                            }
+
+
+                    if let playlist {
+
+                        let songs =
+                            playlist.songIDs
+                                .compactMap {
+                                    id in
+
+
+                                    library.songs
+                                        .first(
+                                            where: {
+                                                $0.id ==
+                                                    id
+                                            }
+                                        )
+                                }
+
+
+                        if
+                            let first =
+                                songs.first,
+
+                            let url =
+                                library.getURL(
+                                    for:
+                                        first
+                                ) {
+
+                            audio.allSongs =
+                                library.songs
+
+
+                            audio.play(
+                                song:
+                                    first,
+
+                                url:
+                                    url,
+
+                                queue:
+                                    songs
+                            )
+
+
+                            applyOptions(
+                                intent:
+                                    intent,
+
+                                audio:
+                                    audio
+                            )
+
+
+                            completion(
+                                INPlayMediaIntentResponse(
+                                    code:
+                                        .success,
+
+                                    userActivity:
+                                        nil
+                                )
+                            )
+
+
+                            return
+                        }
+                    }
+                }
+
+
+                // =============================================
+                // Song
+                // =============================================
+
+                let best =
+                    library.songs
+                        .map {
+                            song in
+
+
+                            (
+                                song:
+                                    song,
+
+                                score:
+                                    score(
+                                        song:
+                                            song,
+
+                                        requestedName:
+                                            requestedName,
+
+                                        requestedArtist:
+                                            requestedArtist,
+
+                                        requestedAlbum:
+                                            requestedAlbum
+                                    )
+                            )
+                        }
+                        .filter {
+                            $0.score >
+                                0
+                        }
+                        .sorted {
+                            $0.score >
+                                $1.score
+                        }
+                        .first
+
+
+                if
+                    let best,
+
+                    let url =
+                        library.getURL(
+                            for:
+                                best.song
+                        ) {
+
+                    audio.allSongs =
+                        library.songs
+
+
+                    audio.play(
+                        song:
+                            best.song,
+
+                        url:
+                            url,
+
+                        queue:
+                            library.songs
+                    )
+
+
+                    applyOptions(
+                        intent:
+                            intent,
+
+                        audio:
+                            audio
+                    )
+
+
+                    completion(
+                        INPlayMediaIntentResponse(
+                            code:
+                                .success,
+
+                            userActivity:
+                                nil
+                        )
+                    )
+
+
+                    return
+                }
+            }
+
 
             completion(
                 INPlayMediaIntentResponse(
@@ -846,18 +881,14 @@ final class EchoMediaIntentHandler:
 
 
     // ========================================================
-    // MARK: - Playback options
+    // MARK: - Playback Options
     // ========================================================
 
     @MainActor
-    private func applyPlaybackOptions(
+    private func applyOptions(
         intent: INPlayMediaIntent,
         audio: AudioPlayerManager
     ) {
-
-        // ----------------------------------------------------
-        // Shuffle
-        // ----------------------------------------------------
 
         if let shuffled =
             intent.playShuffled {
@@ -867,10 +898,6 @@ final class EchoMediaIntentHandler:
             )
         }
 
-
-        // ----------------------------------------------------
-        // Repeat
-        // ----------------------------------------------------
 
         switch intent.playbackRepeatMode {
 
@@ -896,19 +923,17 @@ final class EchoMediaIntentHandler:
 
 
         default:
-
             break
         }
     }
 
 
     // ========================================================
-    // MARK: - Convert Song -> INMediaItem
+    // MARK: - Song Media Item
     // ========================================================
 
-    @MainActor
-    private func makeMediaItem(
-        from song: Song
+    private func makeSongMediaItem(
+        _ song: Song
     ) -> INMediaItem {
 
         var artwork:
@@ -916,21 +941,20 @@ final class EchoMediaIntentHandler:
             nil
 
 
-        if let coverData =
+        if let data =
             song.coverData {
 
             artwork =
                 INImage(
                     imageData:
-                        coverData
+                        data
                 )
         }
 
 
         return INMediaItem(
             identifier:
-                song.id
-                    .uuidString,
+                song.id.uuidString,
 
             title:
                 song.title,
@@ -943,6 +967,46 @@ final class EchoMediaIntentHandler:
 
             artist:
                 song.artist
+        )
+    }
+
+
+    // ========================================================
+    // MARK: - Playlist Media Item
+    // ========================================================
+
+    private func makePlaylistMediaItem(
+        _ playlist: Playlist
+    ) -> INMediaItem {
+
+        var artwork:
+            INImage? =
+            nil
+
+
+        if let data =
+            playlist.imageData {
+
+            artwork =
+                INImage(
+                    imageData:
+                        data
+                )
+        }
+
+
+        return INMediaItem(
+            identifier:
+                playlist.id.uuidString,
+
+            title:
+                playlist.name,
+
+            type:
+                .playlist,
+
+            artwork:
+                artwork
         )
     }
 
@@ -977,104 +1041,104 @@ final class EchoMediaIntentHandler:
             )
 
 
-        var score =
+        var value =
             0
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // Title
-        // ----------------------------------------------------
+        // ====================================================
 
-        if !requestedName
-            .isEmpty {
+        if !requestedName.isEmpty {
 
             if title ==
                 requestedName {
 
-                score +=
+                value +=
                     1000
 
 
-            } else if title
-                .hasPrefix(
-                    requestedName
-                ) {
+            } else if title.hasPrefix(
+                requestedName
+            ) {
 
-                score +=
-                    850
+                value +=
+                    900
 
 
-            } else if title
-                .contains(
-                    requestedName
-                ) {
+            } else if title.contains(
+                requestedName
+            ) {
 
-                score +=
+                value +=
+                    800
+
+
+            } else if requestedName.contains(
+                title
+            ) {
+
+                value +=
                     750
-
-
-            } else if requestedName
-                .contains(
-                    title
-                ) {
-
-                score +=
-                    700
             }
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // Artist
-        // ----------------------------------------------------
+        // ====================================================
 
-        if !requestedArtist
-            .isEmpty {
+        if !requestedArtist.isEmpty {
 
             if artist ==
                 requestedArtist {
 
-                score +=
+                value +=
                     500
 
 
-            } else if artist
-                .contains(
-                    requestedArtist
-                ) {
+            } else if artist.contains(
+                requestedArtist
+            ) {
 
-                score +=
+                value +=
                     350
+
+
+            } else if requestedArtist.contains(
+                artist
+            ) {
+
+                value +=
+                    300
             }
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // Album
-        // ----------------------------------------------------
+        // ====================================================
 
-        if !requestedAlbum
-            .isEmpty {
+        if !requestedAlbum.isEmpty {
 
             if album ==
                 requestedAlbum {
 
-                score +=
+                value +=
                     250
 
 
-            } else if album
-                .contains(
-                    requestedAlbum
-                ) {
+            } else if album.contains(
+                requestedAlbum
+            ) {
 
-                score +=
+                value +=
                     150
             }
         }
 
 
-        return score
+        return value
     }
 
 
