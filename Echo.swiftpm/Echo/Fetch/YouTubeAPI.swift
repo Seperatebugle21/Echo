@@ -74,6 +74,168 @@ final class YouTubeAPI {
             )
         }
     }
+
+    func searchMusic(
+    query: String,
+    maxResults: Int = 25
+) async throws -> [YouTubeSearchResult] {
+
+    let cleaned =
+        query
+            .trimmingCharacters(
+                in:
+                    .whitespacesAndNewlines
+            )
+
+
+    guard !cleaned.isEmpty else {
+
+        return []
+    }
+
+
+    var components =
+        URLComponents(
+            string:
+                "https://www.googleapis.com/youtube/v3/search"
+        )!
+
+
+    components.queryItems = [
+
+        URLQueryItem(
+            name: "part",
+            value: "snippet"
+        ),
+
+        URLQueryItem(
+            name: "type",
+            value: "video"
+        ),
+
+        URLQueryItem(
+            name: "videoCategoryId",
+            value: "10"
+        ),
+
+        URLQueryItem(
+            name: "maxResults",
+            value: "\(maxResults)"
+        ),
+
+        URLQueryItem(
+            name: "q",
+            value: "\(cleaned) audio"
+        ),
+
+        URLQueryItem(
+            name: "key",
+            value: apiKey
+        )
+    ]
+
+
+    guard let url =
+        components.url
+    else {
+
+        throw YouTubeAPIError
+            .invalidURL
+    }
+
+
+    let (
+        data,
+        response
+    ) =
+        try await
+        URLSession.shared
+            .data(
+                from: url
+            )
+
+
+    guard
+        let http =
+            response
+                as?
+                HTTPURLResponse,
+
+        200..<300 ~=
+            http.statusCode
+
+    else {
+
+        throw YouTubeAPIError
+            .invalidResponse
+    }
+
+
+    let decoded =
+        try JSONDecoder()
+            .decode(
+                YouTubeSearchResponse.self,
+                from: data
+            )
+
+
+    return decoded.items
+        .compactMap {
+            item in
+
+
+            guard
+                let videoID =
+                    item.id.videoId,
+
+                let videoURL =
+                    URL(
+                        string:
+                            "https://www.youtube.com/watch?v=\(videoID)"
+                    )
+
+            else {
+
+                return nil
+            }
+
+
+            let thumbnail =
+                item.snippet
+                    .thumbnails
+                    .high?
+                    .url
+                ??
+                item.snippet
+                    .thumbnails
+                    .medium?
+                    .url
+                ??
+                item.snippet
+                    .thumbnails
+                    .defaultImage?
+                    .url
+
+
+            return YouTubeSearchResult(
+                id:
+                    videoID,
+
+                title:
+                    item.snippet.title,
+
+                channelTitle:
+                    item.snippet.channelTitle,
+
+                thumbnailURL:
+                    thumbnail,
+
+                videoURL:
+                    videoURL
+            )
+        }
+    }
+    
 }
 
 
