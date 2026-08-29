@@ -22,6 +22,12 @@ struct SpotifyPlaylistDetailView: View {
     @State private var selectedTrack:
         SpotifyTrack?
 
+    @State private var isFetchingPlaylist =
+        false
+
+    @State private var showFetchConfirmation =
+        false
+
 
     var filteredTracks:
         [SpotifyTrack] {
@@ -71,6 +77,50 @@ struct SpotifyPlaylistDetailView: View {
                     ProgressView()
 
                     Spacer()
+                }
+            }
+
+
+            // MARK: - Preparing Playlist
+
+            if isFetchingPlaylist {
+
+                Section {
+
+                    HStack(
+                        spacing:
+                            12
+                    ) {
+
+                        ProgressView()
+
+
+                        VStack(
+                            alignment:
+                                .leading,
+                            spacing:
+                                3
+                        ) {
+
+                            Text(
+                                "Adding playlist to Fetch"
+                            )
+                            .font(
+                                .headline
+                            )
+
+
+                            Text(
+                                "\(tracks.count) songs"
+                            )
+                            .font(
+                                .caption
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+                    }
                 }
             }
 
@@ -141,6 +191,48 @@ struct SpotifyPlaylistDetailView: View {
             .inline
         )
 
+        .toolbar {
+
+            ToolbarItem(
+                placement:
+                    .topBarTrailing
+            ) {
+
+                Button {
+
+                    showFetchConfirmation =
+                        true
+
+                } label: {
+
+                    if isFetchingPlaylist {
+
+                        ProgressView()
+                            .controlSize(
+                                .small
+                            )
+
+                    } else {
+
+                        Image(
+                            systemName:
+                                "arrow.down.circle"
+                        )
+                    }
+                }
+                .disabled(
+                    isLoading
+                    ||
+                    isFetchingPlaylist
+                    ||
+                    tracks.isEmpty
+                )
+                .accessibilityLabel(
+                    "Fetch Entire Playlist"
+                )
+            }
+        }
+
         .searchable(
             text:
                 $searchText,
@@ -156,6 +248,35 @@ struct SpotifyPlaylistDetailView: View {
         .refreshable {
 
             await loadTracks()
+        }
+
+        .confirmationDialog(
+            "Fetch Entire Playlist?",
+            isPresented:
+                $showFetchConfirmation,
+            titleVisibility:
+                .visible
+        ) {
+
+            Button(
+                "Fetch \(tracks.count) Songs"
+            ) {
+
+                fetchEntirePlaylist()
+            }
+
+
+            Button(
+                "Cancel",
+                role:
+                    .cancel
+            ) {}
+
+        } message: {
+
+            Text(
+                "Every song will be added to Fetch and processed one after another."
+            )
         }
 
         .sheet(
@@ -193,6 +314,58 @@ struct SpotifyPlaylistDetailView: View {
                     }
                 }
             )
+        }
+    }
+
+
+    // MARK: - Fetch Entire Playlist
+
+    @MainActor
+    private func fetchEntirePlaylist() {
+
+        guard !isFetchingPlaylist else {
+
+            return
+        }
+
+
+        guard !tracks.isEmpty else {
+
+            return
+        }
+
+
+        isFetchingPlaylist =
+            true
+
+        errorMessage =
+            nil
+
+
+        let playlistTracks =
+            tracks
+
+
+        Task {
+
+            await FetchManager.shared
+                .preparePlaylistTracks(
+                    playlistTracks
+                )
+
+
+            isFetchingPlaylist =
+                false
+
+
+            NotificationCenter
+                .default
+                .post(
+                    name:
+                        .echoOpenFetchDownloads,
+                    object:
+                        nil
+                )
         }
     }
 
