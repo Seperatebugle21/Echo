@@ -263,8 +263,6 @@ enum FetchURLResolverError:
 
     case invalidURL
     case unsupportedURL
-    case spotifyLoginRequired
-    case spotifyRequestFailed
     case unsupportedSpotifyType
     case youtubeMetadataFailed
     case emptyPlaylist
@@ -285,18 +283,6 @@ enum FetchURLResolverError:
 
             return
                 "Echo currently supports Spotify and YouTube Music URLs."
-
-
-        case .spotifyLoginRequired:
-
-            return
-                "Connect Spotify first so Echo can load the track or playlist information."
-
-
-        case .spotifyRequestFailed:
-
-            return
-                "Echo could not load the Spotify information."
 
 
         case .unsupportedSpotifyType:
@@ -387,9 +373,11 @@ final class FetchURLResolver {
         }
 
 
-        guard isYouTubeURL(
-            url
-        ) else {
+        guard
+            isYouTubeURL(
+                url
+            )
+        else {
 
             throw FetchURLResolverError
                 .unsupportedURL
@@ -412,27 +400,20 @@ final class FetchURLResolver {
     ) async throws
         -> FetchURLResolvedContent {
 
-        guard
-            SpotifyManager.shared
-                .isConnected
-        else {
-
-            throw FetchURLResolverError
-                .spotifyLoginRequired
-        }
-
-
-        switch reference.type {
-
-        case .track:
-
-            let track =
-                try await
-                getSpotifyTrack(
-                    id:
-                        reference.id
+        let result =
+            try await
+            SpotifyPublicURLResolver.shared
+                .resolve(
+                    reference:
+                        reference
                 )
 
+
+        switch result {
+
+        case .track(
+            let track
+        ):
 
             return
                 .spotifyTrack(
@@ -440,24 +421,10 @@ final class FetchURLResolver {
                 )
 
 
-        case .playlist:
-
-            let playlist =
-                try await
-                getSpotifyPlaylist(
-                    id:
-                        reference.id
-                )
-
-
-            let tracks =
-                try await
-                SpotifyAPI.shared
-                    .getPlaylistTracks(
-                        playlistID:
-                            reference.id
-                    )
-
+        case .playlist(
+            let playlist,
+            let tracks
+        ):
 
             guard !tracks.isEmpty else {
 
@@ -471,219 +438,7 @@ final class FetchURLResolver {
                     playlist,
                     tracks
                 )
-
-
-        case .album:
-
-            throw FetchURLResolverError
-                .unsupportedSpotifyType
         }
-    }
-
-
-    // MARK: - Spotify Track
-
-    private func getSpotifyTrack(
-        id: String
-    ) async throws
-        -> SpotifyTrack {
-
-        let data =
-            try await
-            spotifyRequest(
-                path:
-                    "/v1/tracks/\(id)"
-            )
-
-
-        let decoded =
-            try JSONDecoder()
-                .decode(
-                    SpotifyAPITrack.self,
-                    from:
-                        data
-                )
-
-
-        let artist =
-            decoded.artists
-                .map(
-                    \.name
-                )
-                .joined(
-                    separator:
-                        ", "
-                )
-
-
-        let artwork =
-            decoded.album.images
-                .first?
-                .url
-
-
-        return SpotifyTrack(
-
-            id:
-                decoded.id,
-
-            name:
-                decoded.name,
-
-            artist:
-                artist,
-
-            album:
-                decoded.album.name,
-
-            durationMS:
-                decoded.durationMS,
-
-            artworkURL:
-                artwork,
-
-            spotifyURL:
-                decoded.externalURLs
-                    .spotify
-        )
-    }
-
-
-    // MARK: - Spotify Playlist
-
-    private func getSpotifyPlaylist(
-        id: String
-    ) async throws
-        -> SpotifyPlaylist {
-
-        let data =
-            try await
-            spotifyRequest(
-                path:
-                    "/v1/playlists/\(id)"
-            )
-
-
-        let decoded =
-            try JSONDecoder()
-                .decode(
-                    SpotifyAPIPlaylist.self,
-                    from:
-                        data
-                )
-
-
-        let artwork =
-            decoded.images
-                .first?
-                .url
-
-
-        return SpotifyPlaylist(
-
-            id:
-                decoded.id,
-
-            name:
-                decoded.name,
-
-            artworkURL:
-                artwork,
-
-            spotifyURL:
-                decoded.externalURLs
-                    .spotify,
-
-            trackCount:
-                decoded.trackCount
-        )
-    }
-
-
-    // MARK: - Spotify Request
-
-    private func spotifyRequest(
-        path: String
-    ) async throws
-        -> Data {
-
-        let token =
-            try await
-            SpotifyManager.shared
-                .validAccessToken()
-
-
-        guard let url =
-            URL(
-                string:
-                    "https://api.spotify.com\(path)"
-            )
-        else {
-
-            throw FetchURLResolverError
-                .spotifyRequestFailed
-        }
-
-
-        var request =
-            URLRequest(
-                url:
-                    url
-            )
-
-
-        request.setValue(
-            "Bearer \(token)",
-            forHTTPHeaderField:
-                "Authorization"
-        )
-
-
-        request.setValue(
-            "application/json",
-            forHTTPHeaderField:
-                "Accept"
-        )
-
-
-        let result =
-            try await
-            URLSession.shared
-                .data(
-                    for:
-                        request
-                )
-
-
-        let data =
-            result.0
-
-        let response =
-            result.1
-
-
-        guard let http =
-            response
-                as?
-                HTTPURLResponse
-        else {
-
-            throw FetchURLResolverError
-                .spotifyRequestFailed
-        }
-
-
-        guard
-            200..<300 ~=
-                http.statusCode
-        else {
-
-            throw FetchURLResolverError
-                .spotifyRequestFailed
-        }
-
-
-        return data
     }
 
 
@@ -976,7 +731,9 @@ final class FetchURLResolver {
                             ]
 
 
+                        // =====================================
                         // ID
+                        // =====================================
 
                         let idValue =
                             Self.stringValue(
@@ -991,7 +748,9 @@ final class FetchURLResolver {
                                 .uuidString
 
 
+                        // =====================================
                         // Title
+                        // =====================================
 
                         let titleValue =
                             Self.stringValue(
@@ -1005,7 +764,9 @@ final class FetchURLResolver {
                             "YouTube Music"
 
 
+                        // =====================================
                         // Artist
+                        // =====================================
 
                         let artistValue =
                             Self.stringValue(
@@ -1035,7 +796,9 @@ final class FetchURLResolver {
                             "YouTube Music"
 
 
+                        // =====================================
                         // Thumbnail
+                        // =====================================
 
                         let thumbnail =
                             Self.stringValue(
@@ -1076,13 +839,10 @@ final class FetchURLResolver {
                             for entry
                                 in pythonEntries {
 
-                                let parsedEntry =
+                                if let parsedEntry =
                                     Self.parseYouTubeEntry(
                                         entry
-                                    )
-
-
-                                if let parsedEntry {
+                                    ) {
 
                                     entries.append(
                                         parsedEntry
@@ -1093,7 +853,7 @@ final class FetchURLResolver {
 
 
                         // =====================================
-                        // Return
+                        // Result
                         // =====================================
 
                         return YouTubeInspection(
@@ -1134,8 +894,13 @@ final class FetchURLResolver {
 
     nonisolated
     private static func parseYouTubeEntry(
-        _ entry: PythonObject
+        _ entry:
+            PythonObject
     ) -> YouTubeInspectionEntry? {
+
+        // =====================================
+        // Python values
+        // =====================================
 
         let idObject =
             entry.checking[
@@ -1183,7 +948,7 @@ final class FetchURLResolver {
         // ID
         // =====================================
 
-        let id =
+        let entryID =
             stringValue(
                 idObject
             )
@@ -1196,7 +961,7 @@ final class FetchURLResolver {
         // Title
         // =====================================
 
-        let title =
+        let entryTitle =
             stringValue(
                 titleObject
             )
@@ -1208,18 +973,30 @@ final class FetchURLResolver {
         // Artist
         // =====================================
 
-        let artist =
+        let artistValue =
             stringValue(
                 artistObject
             )
-            ??
+
+
+        let uploaderValue =
             stringValue(
                 uploaderObject
             )
-            ??
+
+
+        let channelValue =
             stringValue(
                 channelObject
             )
+
+
+        let entryArtist =
+            artistValue
+            ??
+            uploaderValue
+            ??
+            channelValue
             ??
             "YouTube Music"
 
@@ -1234,7 +1011,7 @@ final class FetchURLResolver {
             )
 
 
-        let artworkURL =
+        let entryArtworkURL =
             makeURL(
                 thumbnail
             )
@@ -1269,7 +1046,7 @@ final class FetchURLResolver {
             sourceURL =
                 URL(
                     string:
-                        "https://www.youtube.com/watch?v=\(id)"
+                        "https://www.youtube.com/watch?v=\(entryID)"
                 )
         }
 
@@ -1283,16 +1060,16 @@ final class FetchURLResolver {
         return YouTubeInspectionEntry(
 
             id:
-                id,
+                entryID,
 
             title:
-                title,
+                entryTitle,
 
             artist:
-                artist,
+                entryArtist,
 
             artworkURL:
-                artworkURL,
+                entryArtworkURL,
 
             sourceURL:
                 sourceURL
@@ -1314,20 +1091,20 @@ final class FetchURLResolver {
         }
 
 
-        let result =
+        let value =
             String(
                 object
             )
 
 
-        guard let result else {
+        guard let value else {
 
             return nil
         }
 
 
         let cleaned =
-            result
+            value
                 .trimmingCharacters(
                     in:
                         .whitespacesAndNewlines
