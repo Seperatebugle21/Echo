@@ -3,7 +3,7 @@ import SwiftUI
 struct DeveloperView: View {
 
     @AppStorage("developerMaxDownloadChunks")
-    private var maxDownloadChunks: Int = 6
+    private var maxDownloadChunks: Int = 4
 
 
     var body: some View {
@@ -54,7 +54,7 @@ struct DeveloperView: View {
 
                 Button("Reset to Default") {
 
-                    maxDownloadChunks = 6
+                    maxDownloadChunks = 4
                 }
             }
         }
