@@ -32,6 +32,33 @@ struct BackgroundFetchRecord:
 }
 
 
+// MARK: - Parallel Download Helpers
+
+private struct ParallelDownloadProbe:
+    Sendable {
+
+    let totalBytes: Int64
+    let response: HTTPURLResponse
+}
+
+
+private struct ParallelChunkResult:
+    Sendable {
+
+    let index: Int
+    let fileURL: URL
+}
+
+
+private enum ParallelDownloadError:
+    Error {
+
+    case invalidProbe
+    case invalidRangeResponse
+    case invalidChunkLength
+}
+
+
 // MARK: - Background Download Engine
 
 final class FetchDownloadEngine:
@@ -50,6 +77,19 @@ final class FetchDownloadEngine:
 
     private let recordsKey =
         "echo.fetch.background.records"
+
+
+    // Six simultaneous byte ranges.
+
+    private let parallelChunkCount =
+        6
+
+
+    // Tiny files don't benefit much.
+
+    private let minimumParallelFileSize:
+        Int64 =
+        1_000_000
 
 
     private let stateLock =
@@ -74,9 +114,6 @@ final class FetchDownloadEngine:
         ] = [:]
 
 
-    // A claimed record is already owned
-    // by a normal FetchManager pipeline.
-
     private var claimedRecords:
         Set<UUID> = []
 
@@ -84,8 +121,6 @@ final class FetchDownloadEngine:
     private var backgroundCompletionHandler:
         (() -> Void)?
 
-
-    // Used after an app relaunch.
 
     var progressObserver:
         (@Sendable (UUID, Double) -> Void)?
@@ -95,7 +130,7 @@ final class FetchDownloadEngine:
         (@Sendable (BackgroundFetchRecord) -> Void)?
 
 
-    // MARK: - Session
+    // MARK: - Background Session
 
     private lazy var session:
         URLSession = {
@@ -153,6 +188,42 @@ final class FetchDownloadEngine:
 
             delegateQueue:
                 queue
+        )
+    }()
+
+
+    // MARK: - Foreground Parallel Session
+
+    private lazy var parallelSession:
+        URLSession = {
+
+        let configuration =
+            URLSessionConfiguration.default
+
+
+        configuration.waitsForConnectivity =
+            true
+
+
+        configuration.allowsCellularAccess =
+            true
+
+
+        configuration.timeoutIntervalForRequest =
+            180
+
+
+        configuration.timeoutIntervalForResource =
+            60 * 60
+
+
+        configuration.httpMaximumConnectionsPerHost =
+            parallelChunkCount
+
+
+        return URLSession(
+            configuration:
+                configuration
         )
     }()
 
@@ -235,10 +306,725 @@ final class FetchDownloadEngine:
         )
 
 
+        // Try accelerated mode only while app is active.
+
+        if UIApplication.shared
+            .applicationState ==
+            .active {
+
+            do {
+
+                if let probe =
+                    try await probeParallelDownload(
+                        url:
+                            result.downloadURL
+                    ),
+
+                   probe.totalBytes >=
+                    minimumParallelFileSize {
+
+                    print(
+                        "Echo parallel download:",
+                        parallelChunkCount,
+                        "chunks,",
+                        probe.totalBytes,
+                        "bytes"
+                    )
+
+
+                    return try await
+                        downloadInParallel(
+                            record:
+                                record,
+
+                            downloadURL:
+                                result.downloadURL,
+
+                            probe:
+                                probe,
+
+                            progress:
+                                progress
+                        )
+                }
+
+
+            } catch {
+
+                print(
+                    "Parallel download fallback:",
+                    error.localizedDescription
+                )
+            }
+        }
+
+
+        // Fall back to old reliable background downloader.
+
+        return try await
+            startBackgroundDownload(
+                record:
+                    record,
+
+                downloadURL:
+                    result.downloadURL,
+
+                progress:
+                    progress
+            )
+    }
+
+
+    // MARK: - Probe Range Support
+
+    private func probeParallelDownload(
+        url: URL
+    ) async throws
+        -> ParallelDownloadProbe? {
+
         var request =
             URLRequest(
                 url:
-                    result.downloadURL
+                    url
+            )
+
+
+        request.timeoutInterval =
+            30
+
+
+        request.setValue(
+            "bytes=0-0",
+            forHTTPHeaderField:
+                "Range"
+        )
+
+
+        let (_, response) =
+            try await parallelSession
+                .data(
+                    for:
+                        request
+                )
+
+
+        guard let http =
+            response as?
+                HTTPURLResponse
+        else {
+
+            return nil
+        }
+
+
+        guard http.statusCode ==
+            206
+        else {
+
+            return nil
+        }
+
+
+        guard let contentRange =
+            http.value(
+                forHTTPHeaderField:
+                    "Content-Range"
+            ),
+
+              let slashIndex =
+            contentRange.lastIndex(
+                of:
+                    "/"
+            )
+        else {
+
+            return nil
+        }
+
+
+        let totalString =
+            contentRange[
+                contentRange.index(
+                    after:
+                        slashIndex
+                )...
+            ]
+
+
+        guard let totalBytes =
+            Int64(
+                totalString
+            ),
+
+              totalBytes >
+            0
+        else {
+
+            return nil
+        }
+
+
+        return ParallelDownloadProbe(
+            totalBytes:
+                totalBytes,
+
+            response:
+                http
+        )
+    }
+
+
+    // MARK: - Six-Part Download
+
+    @MainActor
+    private func downloadInParallel(
+        record originalRecord: BackgroundFetchRecord,
+        downloadURL: URL,
+        probe: ParallelDownloadProbe,
+        progress:
+            @escaping
+            @MainActor
+            (Double) -> Void
+    ) async throws -> URL {
+
+        let directory =
+            try backgroundSourceDirectory()
+
+
+        let partsDirectory =
+            directory
+                .appendingPathComponent(
+                    "\(originalRecord.id.uuidString).parts",
+                    isDirectory:
+                        true
+                )
+
+
+        try? FileManager.default
+            .removeItem(
+                at:
+                    partsDirectory
+            )
+
+
+        try FileManager.default
+            .createDirectory(
+                at:
+                    partsDirectory,
+
+                withIntermediateDirectories:
+                    true
+            )
+
+
+        let extensionName =
+            fileExtension(
+                record:
+                    originalRecord,
+
+                response:
+                    probe.response
+            )
+
+
+        let destination =
+            directory
+                .appendingPathComponent(
+                    "\(originalRecord.id.uuidString).\(extensionName)"
+                )
+
+
+        try? FileManager.default
+            .removeItem(
+                at:
+                    destination
+            )
+
+
+        let totalBytes =
+            probe.totalBytes
+
+
+        let chunkCount =
+            min(
+                parallelChunkCount,
+                max(
+                    1,
+                    Int(
+                        totalBytes
+                    )
+                )
+            )
+
+
+        let baseChunkSize =
+            totalBytes
+            /
+            Int64(
+                chunkCount
+            )
+
+
+        var ranges:
+            [
+                (
+                    index: Int,
+                    start: Int64,
+                    end: Int64,
+                    expected: Int64
+                )
+            ] = []
+
+
+        for index in
+            0..<chunkCount {
+
+            let start =
+                Int64(
+                    index
+                )
+                *
+                baseChunkSize
+
+
+            let end:
+                Int64
+
+
+            if index ==
+                chunkCount - 1 {
+
+                end =
+                    totalBytes - 1
+
+
+            } else {
+
+                end =
+                    start
+                    +
+                    baseChunkSize
+                    -
+                    1
+            }
+
+
+            ranges.append(
+                (
+                    index:
+                        index,
+
+                    start:
+                        start,
+
+                    end:
+                        end,
+
+                    expected:
+                        end - start + 1
+                )
+            )
+        }
+
+
+        do {
+
+            var completedBytes:
+                Int64 =
+                0
+
+
+            var chunkResults:
+                [ParallelChunkResult] =
+                []
+
+
+            try await withThrowingTaskGroup(
+                of:
+                    (
+                        ParallelChunkResult,
+                        Int64
+                    ).self
+            ) {
+                group in
+
+
+                for range in
+                    ranges {
+
+                    let partURL =
+                        partsDirectory
+                            .appendingPathComponent(
+                                "\(range.index).part"
+                            )
+
+
+                    group.addTask {
+                        [parallelSession]
+                        in
+
+
+                        var request =
+                            URLRequest(
+                                url:
+                                    downloadURL
+                            )
+
+
+                        request.timeoutInterval =
+                            180
+
+
+                        request.setValue(
+                            "bytes=\(range.start)-\(range.end)",
+                            forHTTPHeaderField:
+                                "Range"
+                        )
+
+
+                        let (data, response) =
+                            try await parallelSession
+                                .data(
+                                    for:
+                                        request
+                                )
+
+
+                        guard let http =
+                            response as?
+                                HTTPURLResponse,
+
+                              http.statusCode ==
+                            206
+                        else {
+
+                            throw ParallelDownloadError
+                                .invalidRangeResponse
+                        }
+
+
+                        guard Int64(
+                            data.count
+                        ) ==
+                            range.expected
+                        else {
+
+                            throw ParallelDownloadError
+                                .invalidChunkLength
+                        }
+
+
+                        try data.write(
+                            to:
+                                partURL,
+
+                            options:
+                                .atomic
+                        )
+
+
+                        return (
+                            ParallelChunkResult(
+                                index:
+                                    range.index,
+
+                                fileURL:
+                                    partURL
+                            ),
+                            range.expected
+                        )
+                    }
+                }
+
+
+                for try await result in
+                    group {
+
+                    chunkResults.append(
+                        result.0
+                    )
+
+
+                    completedBytes +=
+                        result.1
+
+
+                    let value =
+                        min(
+                            max(
+                                Double(
+                                    completedBytes
+                                )
+                                /
+                                Double(
+                                    totalBytes
+                                ),
+                                0
+                            ),
+                            1
+                        )
+
+
+                    emitParallelProgress(
+                        id:
+                            originalRecord.id,
+
+                        value:
+                            value,
+
+                        progress:
+                            progress
+                    )
+                }
+            }
+
+
+            guard chunkResults.count ==
+                chunkCount
+            else {
+
+                throw ParallelDownloadError
+                    .invalidChunkLength
+            }
+
+
+            chunkResults.sort {
+
+                $0.index <
+                    $1.index
+            }
+
+
+            FileManager.default
+                .createFile(
+                    atPath:
+                        destination.path,
+
+                    contents:
+                        nil
+                )
+
+
+            let output =
+                try FileHandle(
+                    forWritingTo:
+                        destination
+                )
+
+
+            defer {
+
+                try? output.close()
+            }
+
+
+            // Merge chunks in correct order.
+
+            for chunk in
+                chunkResults {
+
+                let input =
+                    try FileHandle(
+                        forReadingFrom:
+                            chunk.fileURL
+                    )
+
+
+                defer {
+
+                    try? input.close()
+                }
+
+
+                while true {
+
+                    let data =
+                        try input.read(
+                            upToCount:
+                                512 * 1024
+                        )
+                        ??
+                        Data()
+
+
+                    if data.isEmpty {
+
+                        break
+                    }
+
+
+                    try output.write(
+                        contentsOf:
+                            data
+                    )
+                }
+            }
+
+
+            let attributes =
+                try FileManager.default
+                    .attributesOfItem(
+                        atPath:
+                            destination.path
+                    )
+
+
+            let finalSize =
+                (
+                    attributes[
+                        .size
+                    ] as?
+                        NSNumber
+                )?
+                .int64Value
+                ??
+                -1
+
+
+            guard finalSize ==
+                totalBytes
+            else {
+
+                throw ParallelDownloadError
+                    .invalidChunkLength
+            }
+
+
+            try? FileManager.default
+                .removeItem(
+                    at:
+                        partsDirectory
+                )
+
+
+            var record =
+                originalRecord
+
+
+            record.localFilePath =
+                destination.path
+
+
+            record.completed =
+                true
+
+
+            record.errorMessage =
+                nil
+
+
+            saveOrUpdate(
+                record
+            )
+
+
+            stateLock.lock()
+
+
+            claimedRecords.insert(
+                record.id
+            )
+
+
+            stateLock.unlock()
+
+
+            emitParallelProgress(
+                id:
+                    record.id,
+
+                value:
+                    1,
+
+                progress:
+                    progress
+            )
+
+
+            return destination
+
+
+        } catch {
+
+            try? FileManager.default
+                .removeItem(
+                    at:
+                        partsDirectory
+                )
+
+
+            try? FileManager.default
+                .removeItem(
+                    at:
+                        destination
+                )
+
+
+            throw error
+        }
+    }
+
+
+    // MARK: - Parallel Progress
+
+    @MainActor
+    private func emitParallelProgress(
+        id: UUID,
+        value: Double,
+        progress:
+            @escaping
+            @MainActor
+            (Double) -> Void
+    ) {
+
+        let clamped =
+            min(
+                max(
+                    value,
+                    0
+                ),
+                1
+            )
+
+
+        progress(
+            clamped
+        )
+
+
+        stateLock.lock()
+
+
+        let observer =
+            progressObserver
+
+
+        stateLock.unlock()
+
+
+        observer?(
+            id,
+            clamped
+        )
+    }
+
+
+    // MARK: - Existing Background Download
+
+    @MainActor
+    private func startBackgroundDownload(
+        record: BackgroundFetchRecord,
+        downloadURL: URL,
+        progress:
+            @escaping
+            @MainActor
+            (Double) -> Void
+    ) async throws -> URL {
+
+        var request =
+            URLRequest(
+                url:
+                    downloadURL
             )
 
 
@@ -296,7 +1082,7 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - Progress
+    // MARK: - Background Progress
 
     func urlSession(
         _ session: URLSession,
@@ -365,7 +1151,7 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - Download Finished
+    // MARK: - Background Download Finished
 
     func urlSession(
         _ session: URLSession,
@@ -445,10 +1231,6 @@ final class FetchDownloadEngine:
             }
 
 
-            // The URL supplied by iOS only exists
-            // during this delegate callback.
-            // Store it immediately.
-
             try FileManager.default
                 .moveItem(
                     at:
@@ -475,23 +1257,6 @@ final class FetchDownloadEngine:
                 record
             )
 
-
-            // IMPORTANT:
-            //
-            // There are two possible situations:
-            //
-            // 1. The original FetchManager async task
-            //    still exists.
-            //
-            //    -> Resume ONLY that pipeline.
-            //
-            // 2. Echo was relaunched and the old
-            //    continuation no longer exists.
-            //
-            //    -> Send the record to recovery.
-            //
-            // Never do both, otherwise the same
-            // source gets encoded twice.
 
             let hasLiveDownload =
                 hasLiveContinuation(
@@ -543,7 +1308,7 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - Task Failed
+    // MARK: - Background Task Failed
 
     func urlSession(
         _ session: URLSession,
@@ -674,9 +1439,6 @@ final class FetchDownloadEngine:
 
 
         for record in completed {
-
-            // Only records with a still-existing
-            // continuation should be resumed here.
 
             if hasLiveContinuation(
                 id:
@@ -862,9 +1624,8 @@ final class FetchDownloadEngine:
         record: BackgroundFetchRecord
     ) {
 
-        guard
-            let path =
-                record.localFilePath
+        guard let path =
+            record.localFilePath
 
         else {
 
