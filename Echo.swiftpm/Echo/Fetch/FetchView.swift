@@ -15,6 +15,9 @@ struct FetchView: View {
     @State private var spotify =
         SpotifyManager.shared
 
+    @State private var library =
+        MusicLibraryManager.shared
+
 
     // MARK: - Apify Usage
 
@@ -27,9 +30,6 @@ struct FetchView: View {
     @State private var apifyUsageError:
         String?
 
-    @State private var library =
-    MusicLibraryManager.shared
-
 
     // MARK: - Navigation
 
@@ -41,6 +41,12 @@ struct FetchView: View {
 
     @State private var showURLInput =
         false
+
+
+    // MARK: - Inline URL Preview
+
+    @State private var inlineURLPreview:
+        FetchURLResolvedContent?
 
 
     var body: some View {
@@ -64,7 +70,12 @@ struct FetchView: View {
 
                 // Inline URL downloader
 
-                FetchURLInlineSection()
+                FetchURLInlineSection {
+                    content in
+
+                    inlineURLPreview =
+                        content
+                }
 
 
                 if apifySettings.downloadMethod ==
@@ -153,6 +164,9 @@ struct FetchView: View {
             fetchNavigationID
         )
 
+
+        // MARK: - Open Downloads Notification
+
         .onReceive(
             NotificationCenter.default
                 .publisher(
@@ -174,100 +188,104 @@ struct FetchView: View {
             }
         }
 
+
+        // MARK: - Duplicate Alert
+
         .alert(
-    Text(
-        "alert_duplicate_title"
-    ),
-    isPresented:
-        Bindable(library)
-            .showDuplicateAlert
-) {
+            Text(
+                "alert_duplicate_title"
+            ),
+            isPresented:
+                Bindable(library)
+                    .showDuplicateAlert
+        ) {
 
-    Button(
-        String(
-            localized:
-                "action_skip"
-        )
-    ) {
+            Button(
+                String(
+                    localized:
+                        "action_skip"
+                )
+            ) {
 
-        library.resolveDuplicate(
-            choice:
-                .skip,
-            applyToAll:
-                false
-        )
-    }
-
-
-    Button(
-        String(
-            localized:
-                "action_replace"
-        ),
-        role:
-            .destructive
-    ) {
-
-        library.resolveDuplicate(
-            choice:
-                .replace,
-            applyToAll:
-                false
-        )
-    }
+                library.resolveDuplicate(
+                    choice:
+                        .skip,
+                    applyToAll:
+                        false
+                )
+            }
 
 
-    Button(
-        String(
-            localized:
-                "action_skip_all"
-        )
-    ) {
+            Button(
+                String(
+                    localized:
+                        "action_replace"
+                ),
+                role:
+                    .destructive
+            ) {
 
-        library.resolveDuplicate(
-            choice:
-                .skip,
-            applyToAll:
-                true
-        )
-    }
-
-
-    Button(
-        String(
-            localized:
-                "action_replace_all"
-        ),
-        role:
-            .destructive
-    ) {
-
-        library.resolveDuplicate(
-            choice:
-                .replace,
-            applyToAll:
-                true
-        )
-    }
+                library.resolveDuplicate(
+                    choice:
+                        .replace,
+                    applyToAll:
+                        false
+                )
+            }
 
 
-    Button(
-        String(
-            localized:
-                "action_cancel"
-        ),
-        role:
-            .cancel
-    ) {}
+            Button(
+                String(
+                    localized:
+                        "action_skip_all"
+                )
+            ) {
 
-} message: {
+                library.resolveDuplicate(
+                    choice:
+                        .skip,
+                    applyToAll:
+                        true
+                )
+            }
 
-    Text(
-        "alert_duplicate_message \(library.duplicateSongName)"
-    )
-}
 
-        // MARK: Downloads Sheet
+            Button(
+                String(
+                    localized:
+                        "action_replace_all"
+                ),
+                role:
+                    .destructive
+            ) {
+
+                library.resolveDuplicate(
+                    choice:
+                        .replace,
+                    applyToAll:
+                        true
+                )
+            }
+
+
+            Button(
+                String(
+                    localized:
+                        "action_cancel"
+                ),
+                role:
+                    .cancel
+            ) {}
+
+        } message: {
+
+            Text(
+                "alert_duplicate_message \(library.duplicateSongName)"
+            )
+        }
+
+
+        // MARK: - Downloads Sheet
 
         .sheet(
             isPresented:
@@ -305,12 +323,8 @@ struct FetchView: View {
             }
         }
 
-        // MARK: URL Sheet
-        //
-        // Only ONE sheet.
-        //
-        // FetchURLInputSheet pushes the preview
-        // using navigationDestination.
+
+        // MARK: - Toolbar URL Sheet
 
         .sheet(
             isPresented:
@@ -318,6 +332,31 @@ struct FetchView: View {
         ) {
 
             FetchURLInputSheet()
+        }
+
+
+        // MARK: - Inline URL Preview Sheet
+        //
+        // Important:
+        // This sheet is presented by FetchView itself,
+        // NOT by the Section inside the List.
+        //
+        // That prevents the sheet from instantly
+        // disappearing during a List refresh.
+
+        .sheet(
+            item:
+                $inlineURLPreview
+        ) {
+            content in
+
+            NavigationStack {
+
+                FetchURLPreviewView(
+                    content:
+                        content
+                )
+            }
         }
     }
 
