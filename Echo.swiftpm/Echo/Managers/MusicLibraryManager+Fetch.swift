@@ -25,34 +25,25 @@ extension MusicLibraryManager {
 
 
         // =========================================
-        // Already exists?
-        //
-        // Bijvoorbeeld wanneer een documents sync
-        // het bestand net vóór ons al gevonden heeft.
-        //
-        // Dan corrigeren we de metadata in plaats
-        // van nog een Song te maken.
+        // Exact same file already registered
         // =========================================
 
         if let existingIndex =
             songs.firstIndex(
                 where: {
                     $0.fileName ==
-                    fileName
+                        fileName
                 }
             ) {
 
             songs[existingIndex].title =
                 title
 
-
             songs[existingIndex].artist =
                 artist
 
-
             songs[existingIndex].album =
                 album
-
 
             songs[existingIndex].coverData =
                 coverData
@@ -71,26 +62,110 @@ extension MusicLibraryManager {
 
 
         // =========================================
-        // Add directly
+        // Duplicate song in library
         //
-        // We already KNOW all metadata from Spotify.
+        // Same title + same artist.
         //
-        // Dus niet:
-        //
-        // MP3 -> AVAsset -> metadata gokken
-        //
-        // maar:
-        //
-        // Spotify -> Song
+        // Use the EXISTING Echo duplicate system
+        // instead of silently adding another copy.
+        // =========================================
+
+        let duplicate =
+            songs.first {
+                song in
+
+                normalizedDuplicateValue(
+                    song.title
+                )
+                ==
+                normalizedDuplicateValue(
+                    title
+                )
+                &&
+                normalizedDuplicateValue(
+                    song.artist
+                )
+                ==
+                normalizedDuplicateValue(
+                    artist
+                )
+            }
+
+
+        if duplicate != nil {
+
+            // =====================================
+            // Apply previous "to all" choice
+            // =====================================
+
+            if applyToAllDuplicates,
+               let lastDuplicateChoice {
+
+                pendingDuplicateURL =
+                    fileURL
+
+                duplicateSongName =
+                    title
+
+
+                resolveDuplicate(
+                    choice:
+                        lastDuplicateChoice,
+                    applyToAll:
+                        true
+                )
+
+
+                return
+            }
+
+
+            // =====================================
+            // Ask user
+            // =====================================
+
+            duplicateSongName =
+                title
+
+            pendingDuplicateURL =
+                fileURL
+
+            showDuplicateAlert =
+                true
+
+
+            print(
+                "Fetch duplicate found:",
+                title,
+                "-",
+                artist
+            )
+
+
+            return
+        }
+
+
+        // =========================================
+        // New song
         // =========================================
 
         let song =
             Song(
-                title: title,
-                artist: artist,
-                fileName: fileName,
-                album: album,
-                coverData: coverData
+                title:
+                    title,
+
+                artist:
+                    artist,
+
+                fileName:
+                    fileName,
+
+                album:
+                    album,
+
+                coverData:
+                    coverData
             )
 
 
@@ -105,5 +180,36 @@ extension MusicLibraryManager {
             "-",
             song.artist
         )
+    }
+
+
+    // MARK: - Duplicate Normalization
+
+    private func normalizedDuplicateValue(
+        _ value: String
+    ) -> String {
+
+        value
+            .trimmingCharacters(
+                in:
+                    .whitespacesAndNewlines
+            )
+            .folding(
+                options: [
+                    .caseInsensitive,
+                    .diacriticInsensitive
+                ],
+                locale:
+                    .current
+            )
+            .replacingOccurrences(
+                of:
+                    "\\s+",
+                with:
+                    " ",
+                options:
+                    .regularExpression
+            )
+            .lowercased()
     }
 }
