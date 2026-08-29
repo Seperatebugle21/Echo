@@ -9,6 +9,7 @@ on:
 
 
 jobs:
+
   build:
 
     runs-on: macos-latest
@@ -51,12 +52,6 @@ jobs:
 
           mkdir -p ../build
 
-          echo ""
-          echo "========================================"
-          echo " RESOLVING PACKAGES"
-          echo "========================================"
-          echo ""
-
           xcodebuild \
             -resolvePackageDependencies \
             -scheme Echo \
@@ -64,7 +59,7 @@ jobs:
 
 
       # ============================================
-      # 3. Zoek device libpython
+      # 3. Locate Python library
       # ============================================
 
       - name: Locate Python library
@@ -91,11 +86,6 @@ jobs:
           echo "XCFramework:"
           echo "$PYTHON_XCFRAMEWORK"
 
-          echo ""
-          echo "========================================"
-          echo " SEARCHING DEVICE ARM64 SLICE"
-          echo "========================================"
-          echo ""
 
           PYTHON_BIN=$(find "$PYTHON_XCFRAMEWORK/ios-arm64" \
             -maxdepth 1 \
@@ -106,10 +96,6 @@ jobs:
           if [ -z "$PYTHON_BIN" ]; then
 
             echo "ERROR: iOS arm64 libpython binary niet gevonden."
-
-            echo ""
-            echo "Inhoud ios-arm64:"
-            echo ""
 
             find "$PYTHON_XCFRAMEWORK/ios-arm64" \
               -maxdepth 2 \
@@ -129,42 +115,20 @@ jobs:
           echo "Python device binary:"
           echo "$PYTHON_BIN"
 
-          echo ""
-          echo "========================================"
-          echo " PYTHON BINARY INFO"
-          echo "========================================"
-          echo ""
-
           lipo -info "$PYTHON_BIN"
-
-          echo ""
-          echo "Py_Initialize:"
 
           nm -g "$PYTHON_BIN" \
             | grep " T _Py_Initialize$" \
             | head -n 5 || true
 
-          echo ""
-          echo "Py_IsInitialized:"
-
           nm -g "$PYTHON_BIN" \
             | grep " T _Py_IsInitialized$" \
             | head -n 5 || true
-
-          echo ""
-          echo "PyUnicode_FromString:"
 
           nm -g "$PYTHON_BIN" \
             | grep " T _PyUnicode_FromString$" \
             | head -n 5 || true
 
-          echo ""
-          echo "========================================"
-          echo " PYTHON DEVICE LIBRARY FOUND"
-          echo "========================================"
-          echo ""
-
-          echo "$PYTHON_BIN"
 
           echo "PYTHON_BIN=$PYTHON_BIN" >> "$GITHUB_ENV"
 
@@ -189,14 +153,6 @@ jobs:
           PACKAGE_DIR=$(dirname "$PACKAGE_FILE")
 
           echo "Gevonden Package map: $PACKAGE_DIR"
-
-          echo ""
-          echo "========================================"
-          echo " PYTHON BINARY"
-          echo "========================================"
-          echo ""
-
-          echo "$PYTHON_BIN"
 
           if [ -z "$PYTHON_BIN" ]; then
             echo "ERROR: PYTHON_BIN ontbreekt."
@@ -240,12 +196,6 @@ jobs:
       - name: Verify embedded Python runtime
         run: |
 
-          echo ""
-          echo "========================================"
-          echo " CHECKING PYTHON RUNTIME"
-          echo "========================================"
-          echo ""
-
           APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
             -maxdepth 1 \
             -name "*.app" \
@@ -258,15 +208,7 @@ jobs:
 
           APP_PATH=$(realpath "$APP_PATH")
 
-          echo "App:"
-          echo "$APP_PATH"
-
           INFO_PLIST="$APP_PATH/Info.plist"
-
-          if [ ! -f "$INFO_PLIST" ]; then
-            echo "ERROR: Info.plist niet gevonden."
-            exit 1
-          fi
 
           EXECUTABLE_NAME=$(
             /usr/libexec/PlistBuddy \
@@ -276,9 +218,6 @@ jobs:
 
           EXECUTABLE="$APP_PATH/$EXECUTABLE_NAME"
 
-          echo ""
-          echo "Executable:"
-          echo "$EXECUTABLE"
 
           if [ ! -f "$EXECUTABLE" ]; then
             echo "ERROR: executable niet gevonden."
@@ -287,21 +226,14 @@ jobs:
 
 
           # ============================================
-          # PythonSupport bundle
+          # Python support bundle
           # ============================================
-
-          echo ""
-          echo "========================================"
-          echo " PYTHON SUPPORT BUNDLE"
-          echo "========================================"
-          echo ""
 
           PYTHON_SUPPORT_BUNDLE=$(find "$APP_PATH" \
             -type d \
             -name "*PythonSupport.bundle" \
             | head -n 1)
 
-          echo "$PYTHON_SUPPORT_BUNDLE"
 
           if [ -z "$PYTHON_SUPPORT_BUNDLE" ]; then
             echo "ERROR: PythonSupport bundle ontbreekt."
@@ -313,12 +245,6 @@ jobs:
           # Python stdlib
           # ============================================
 
-          echo ""
-          echo "========================================"
-          echo " PYTHON STDLIB"
-          echo "========================================"
-          echo ""
-
           PYTHON_RESOURCE=$(find "$PYTHON_SUPPORT_BUNDLE" \
             \( \
               -name "python310.zip" \
@@ -327,11 +253,14 @@ jobs:
             \) \
             | head -n 1)
 
+
           if [ -z "$PYTHON_RESOURCE" ]; then
             echo "ERROR: Python stdlib ontbreekt."
             exit 1
           fi
 
+
+          echo ""
           echo "Python stdlib:"
           echo "$PYTHON_RESOURCE"
 
@@ -339,34 +268,6 @@ jobs:
           # ============================================
           # Symbols
           # ============================================
-
-          echo ""
-          echo "========================================"
-          echo " CPYTHON SYMBOLS"
-          echo "========================================"
-          echo ""
-
-          xcrun nm -gU "$EXECUTABLE" \
-            | grep "_Py_Initialize" || true
-
-          xcrun nm -gU "$EXECUTABLE" \
-            | grep "_Py_IsInitialized" || true
-
-          xcrun nm -gU "$EXECUTABLE" \
-            | grep "_PyUnicode_FromString" || true
-
-          xcrun nm -gU "$EXECUTABLE" \
-            | grep "_PyObject_GetAttrString" || true
-
-          xcrun nm -gU "$EXECUTABLE" \
-            | grep "_Py_DecRef" || true
-
-
-          echo ""
-          echo "========================================"
-          echo " STRICT SYMBOL CHECK"
-          echo "========================================"
-          echo ""
 
           check_symbol() {
 
@@ -384,21 +285,22 @@ jobs:
             fi
           }
 
+
           check_symbol "_Py_Initialize"
           check_symbol "_Py_IsInitialized"
           check_symbol "_PyUnicode_FromString"
           check_symbol "_PyObject_GetAttrString"
           check_symbol "_Py_DecRef"
 
+
           echo ""
           echo "========================================"
           echo " PYTHON LINKING OK"
           echo "========================================"
-          echo ""
 
 
       # ============================================
-      # 6. Create Payload
+      # 6. Create IPA
       # ============================================
 
       - name: Create IPA Package
@@ -407,33 +309,36 @@ jobs:
           rm -rf Payload
           mkdir -p Payload
 
+
           BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
             -maxdepth 1 \
             -name "*.app" \
             | head -n 1)
+
 
           if [ -z "$BUILT_APP" ]; then
             echo "Geen gebouwde Echo.app gevonden."
             exit 1
           fi
 
-          echo ""
-          echo "Gebouwde app:"
-          echo "$BUILT_APP"
 
           cp -R "$BUILT_APP" Payload/
+
 
           APP_PATH=$(find Payload \
             -maxdepth 1 \
             -name "*.app" \
             | head -n 1)
 
+
           if [ -z "$APP_PATH" ]; then
             echo "App niet gevonden in Payload."
             exit 1
           fi
 
+
           INFO_PLIST="$APP_PATH/Info.plist"
+
 
           if [ ! -f "$INFO_PLIST" ]; then
             echo "Info.plist niet gevonden."
@@ -450,9 +355,11 @@ jobs:
             "$INFO_PLIST" \
             2>/dev/null || true
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :UIBackgroundModes array" \
             "$INFO_PLIST"
+
 
           /usr/libexec/PlistBuddy \
             -c "Add :UIBackgroundModes:0 string audio" \
@@ -470,6 +377,7 @@ jobs:
           /usr/libexec/PlistBuddy \
             -c "Set :UIFileSharingEnabled true" \
             "$INFO_PLIST"
+
 
           /usr/libexec/PlistBuddy \
             -c "Add :LSSupportsOpeningDocumentsInPlace bool true" \
@@ -489,63 +397,130 @@ jobs:
             "$INFO_PLIST" \
             2>/dev/null || true
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes array" \
             "$INFO_PLIST"
+
 
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0 dict" \
             "$INFO_PLIST"
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLName string echo.spotify.login" \
             "$INFO_PLIST"
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
             "$INFO_PLIST"
+
 
           /usr/libexec/PlistBuddy \
             -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string echo-spotify-login" \
             "$INFO_PLIST"
 
 
-                      # ============================================
-          # Siri / Media Intents
           # ============================================
+          # Siri / SiriKit
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " CONFIGURING SIRI"
+          echo "========================================"
+          echo ""
+
 
           /usr/libexec/PlistBuddy \
             -c "Delete :INIntentsSupported" \
             "$INFO_PLIST" \
             2>/dev/null || true
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :INIntentsSupported array" \
             "$INFO_PLIST"
+
 
           /usr/libexec/PlistBuddy \
             -c "Add :INIntentsSupported:0 string INPlayMediaIntent" \
             "$INFO_PLIST"
 
 
+          # ============================================
+          # Music media category
+          # ============================================
+
           /usr/libexec/PlistBuddy \
             -c "Delete :INSupportedMediaCategories" \
             "$INFO_PLIST" \
             2>/dev/null || true
 
+
           /usr/libexec/PlistBuddy \
             -c "Add :INSupportedMediaCategories array" \
             "$INFO_PLIST"
+
 
           /usr/libexec/PlistBuddy \
             -c "Add :INSupportedMediaCategories:0 string INMediaCategoryMusic" \
             "$INFO_PLIST"
 
 
+          # ============================================
+          # Siri usage description
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :NSSiriUsageDescription" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :NSSiriUsageDescription string Echo gebruikt Siri om muziek en playlists af te spelen." \
+            "$INFO_PLIST"
 
 
           # ============================================
-          # Final debug
+          # Verify Siri configuration
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " SIRI CONFIGURATION"
+          echo "========================================"
+
+
+          echo ""
+          echo "Supported intents:"
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :INIntentsSupported" \
+            "$INFO_PLIST"
+
+
+          echo ""
+          echo "Supported media categories:"
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :INSupportedMediaCategories" \
+            "$INFO_PLIST"
+
+
+          echo ""
+          echo "Siri usage description:"
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :NSSiriUsageDescription" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Final Info.plist
           # ============================================
 
           echo ""
@@ -554,15 +529,21 @@ jobs:
           echo "========================================"
           echo ""
 
+
           /usr/libexec/PlistBuddy \
             -c "Print" \
             "$INFO_PLIST"
 
+
+          # ============================================
+          # Python files
+          # ============================================
+
           echo ""
           echo "========================================"
-          echo " PYTHON FILES IN PAYLOAD"
+          echo " PYTHON FILES"
           echo "========================================"
-          echo ""
+
 
           find "$APP_PATH" \
             \( \
@@ -574,7 +555,7 @@ jobs:
 
 
           # ============================================
-          # IPA
+          # Create IPA
           # ============================================
 
           rm -f Echo.ipa
