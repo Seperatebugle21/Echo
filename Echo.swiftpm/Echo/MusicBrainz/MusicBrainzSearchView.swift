@@ -28,12 +28,73 @@ struct MusicBrainzSearchView:
 
         List {
 
+           Section {
+
+    HStack(
+        spacing: 10
+    ) {
+
+        Image(
+            systemName: "magnifyingglass"
+        )
+        .foregroundStyle(
+            .secondary
+        )
+
+
+        TextField(
+            "Song, artist or album",
+            text: $query
+        )
+        .textInputAutocapitalization(
+            .never
+        )
+        .autocorrectionDisabled()
+        .submitLabel(
+            .search
+        )
+        .onSubmit {
+
+            Task {
+
+                await search()
+            }
+        }
+
+
+        if !query.isEmpty {
+
+            Button {
+
+                query = ""
+                results = []
+                errorMessage = nil
+
+            } label: {
+
+                Image(
+                    systemName:
+                        "xmark.circle.fill"
+                )
+                .foregroundStyle(
+                    .secondary
+                )
+            }
+            .buttonStyle(
+                .plain
+            )
+        }
+    }
+} 
+
             // MARK: - Intro
 
             if
                 results.isEmpty,
                 !isLoading,
                 errorMessage == nil {
+
+                    
 
                 Section {
 
@@ -200,23 +261,7 @@ struct MusicBrainzSearchView:
             .inline
         )
 
-        .searchable(
-            text:
-                $query,
-            prompt:
-                "Song, artist or album"
-        )
-
-        .onSubmit(
-            of:
-                .search
-        ) {
-
-            Task {
-
-                await search()
-            }
-        }
+    
 
         .sheet(
             item:
