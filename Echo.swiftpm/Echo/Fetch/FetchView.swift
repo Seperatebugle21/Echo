@@ -470,9 +470,9 @@ struct FetchView: View {
                     .font(
                         .title3
                     )
-                    .foregroundStyle(
-                        .accent
-                    )
+                   .foregroundStyle(
+    Color.accentColor
+) 
                     .frame(
                         width:
                             30
