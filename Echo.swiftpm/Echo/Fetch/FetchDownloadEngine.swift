@@ -239,8 +239,8 @@ final class FetchDownloadEngine:
             60 * 60
 
 
-        configuration.httpMaximumConnectionsPerHost =
-            parallelChunkCount
+     configuration.httpMaximumConnectionsPerHost =
+            16
 
 
         return URLSession(
