@@ -226,6 +226,21 @@ struct SettingsView: View {
                     Text(LocalizedStringKey("settings_made_with"))
                         .foregroundStyle(.secondary)
                 }
+
+                Section("Developer") {
+
+    NavigationLink {
+
+        DeveloperView()
+
+    } label: {
+
+        Label(
+            "Developer Settings",
+            systemImage: "hammer"
+        )
+    }
+}
             }
             
             .navigationTitle(LocalizedStringKey("tab_settings"))
