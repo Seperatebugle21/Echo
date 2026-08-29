@@ -4,7 +4,10 @@ import UIKit
 
 // MARK: - Persistent Background Record
 
-struct BackgroundFetchRecord: Codable, Identifiable, Sendable {
+struct BackgroundFetchRecord:
+    Codable,
+    Identifiable,
+    Sendable {
 
     let id: UUID
 
@@ -22,7 +25,9 @@ struct BackgroundFetchRecord: Codable, Identifiable, Sendable {
     let suggestedFileName: String?
 
     var localFilePath: String?
+
     var completed: Bool
+
     var errorMessage: String?
 }
 
@@ -69,8 +74,9 @@ final class FetchDownloadEngine:
         ] = [:]
 
 
-    // A claimed download is already owned by
-    // the current FetchManager pipeline.
+    // A claimed record is already owned
+    // by a normal FetchManager pipeline.
+
     private var claimedRecords:
         Set<UUID> = []
 
@@ -83,6 +89,7 @@ final class FetchDownloadEngine:
 
     var progressObserver:
         (@Sendable (UUID, Double) -> Void)?
+
 
     var completionObserver:
         (@Sendable (BackgroundFetchRecord) -> Void)?
@@ -101,13 +108,10 @@ final class FetchDownloadEngine:
                 )
 
 
-        // Start immediately.
         configuration.isDiscretionary =
             false
 
 
-        // Let iOS relaunch/wake Echo
-        // when transfers finish.
         configuration.sessionSendsLaunchEvents =
             true
 
@@ -143,8 +147,10 @@ final class FetchDownloadEngine:
         return URLSession(
             configuration:
                 configuration,
+
             delegate:
                 self,
+
             delegateQueue:
                 queue
         )
@@ -157,7 +163,7 @@ final class FetchDownloadEngine:
     }
 
 
-    // Force creation of the background session.
+    // MARK: - Prepare
 
     func prepare() {
 
@@ -247,6 +253,7 @@ final class FetchDownloadEngine:
 
                 stateLock.lock()
 
+
                 continuations[
                     record.id
                 ] =
@@ -262,11 +269,13 @@ final class FetchDownloadEngine:
                     Task {
                         @MainActor in
 
+
                         progress(
                             value
                         )
                     }
                 }
+
 
                 stateLock.unlock()
 
@@ -277,9 +286,6 @@ final class FetchDownloadEngine:
                             request
                     )
 
-
-                // The task can survive Echo being suspended.
-                // Store only the persistent UUID here.
 
                 task.taskDescription =
                     record.id.uuidString
@@ -302,12 +308,15 @@ final class FetchDownloadEngine:
 
         guard
             totalBytesExpectedToWrite > 0,
+
             let id =
                 recordID(
                     for:
                         downloadTask
                 )
+
         else {
+
             return
         }
 
@@ -330,13 +339,16 @@ final class FetchDownloadEngine:
 
         stateLock.lock()
 
+
         let handler =
             progressHandlers[
                 id
             ]
 
+
         let observer =
             progressObserver
+
 
         stateLock.unlock()
 
@@ -367,11 +379,13 @@ final class FetchDownloadEngine:
                     for:
                         downloadTask
                 ),
+
             var record =
                 record(
                     id:
                         id
                 )
+
         else {
 
             return
@@ -385,8 +399,10 @@ final class FetchDownloadEngine:
                     downloadTask.response
                         as?
                         HTTPURLResponse,
+
                 200..<300 ~=
                     response.statusCode
+
             else {
 
                 throw FetchAudioSourceError
@@ -402,6 +418,7 @@ final class FetchDownloadEngine:
                 fileExtension(
                     record:
                         record,
+
                     response:
                         response
                 )
@@ -428,17 +445,15 @@ final class FetchDownloadEngine:
             }
 
 
-            // IMPORTANT:
-            //
-            // The URL supplied by iOS is temporary and
-            // disappears after this delegate callback.
-            //
-            // Move it immediately to Application Support.
+            // The URL supplied by iOS only exists
+            // during this delegate callback.
+            // Store it immediately.
 
             try FileManager.default
                 .moveItem(
                     at:
                         location,
+
                     to:
                         destination
                 )
@@ -461,24 +476,47 @@ final class FetchDownloadEngine:
             )
 
 
-            completionObserver?(
-                record
-            )
-
-
-            // Only continue into LAME immediately when
-            // Echo is actually in the foreground.
+            // IMPORTANT:
             //
-            // Otherwise the source remains safely stored
-            // until Echo becomes active again.
+            // There are two possible situations:
+            //
+            // 1. The original FetchManager async task
+            //    still exists.
+            //
+            //    -> Resume ONLY that pipeline.
+            //
+            // 2. Echo was relaunched and the old
+            //    continuation no longer exists.
+            //
+            //    -> Send the record to recovery.
+            //
+            // Never do both, otherwise the same
+            // source gets encoded twice.
 
-            if UIApplication.shared
-                .applicationState ==
-                .active {
+            let hasLiveDownload =
+                hasLiveContinuation(
+                    id:
+                        record.id
+                )
 
-                resumeLiveContinuation(
-                    record:
-                        record
+
+            if hasLiveDownload {
+
+                if UIApplication.shared
+                    .applicationState ==
+                    .active {
+
+                    resumeLiveContinuation(
+                        record:
+                            record
+                    )
+                }
+
+
+            } else {
+
+                completionObserver?(
+                    record
                 )
             }
 
@@ -497,6 +535,7 @@ final class FetchDownloadEngine:
             failLiveContinuation(
                 id:
                     id,
+
                 error:
                     error
             )
@@ -514,11 +553,13 @@ final class FetchDownloadEngine:
 
         guard
             let error,
+
             let id =
                 recordID(
                     for:
                         task
                 )
+
         else {
 
             return
@@ -544,6 +585,7 @@ final class FetchDownloadEngine:
         failLiveContinuation(
             id:
                 id,
+
             error:
                 error
         )
@@ -560,10 +602,12 @@ final class FetchDownloadEngine:
     ) {
 
         guard identifier ==
-                Self.backgroundSessionIdentifier
+            Self.backgroundSessionIdentifier
+
         else {
 
             completionHandler()
+
             return
         }
 
@@ -573,8 +617,10 @@ final class FetchDownloadEngine:
 
         stateLock.lock()
 
+
         backgroundCompletionHandler =
             completionHandler
+
 
         stateLock.unlock()
     }
@@ -586,6 +632,7 @@ final class FetchDownloadEngine:
 
         stateLock.lock()
 
+
         let handler =
             backgroundCompletionHandler
 
@@ -593,10 +640,12 @@ final class FetchDownloadEngine:
         backgroundCompletionHandler =
             nil
 
+
         stateLock.unlock()
 
 
         guard let handler else {
+
             return
         }
 
@@ -610,44 +659,46 @@ final class FetchDownloadEngine:
 
     // MARK: - Foreground Resume
 
-    /// Call whenever Echo becomes active.
-    ///
-    /// This resumes downloads that finished while
-    /// the device was locked/backgrounded but whose
-    /// original async FetchManager call still exists.
-
     func resumeLiveCompletedTransfers() {
 
         let completed =
             records()
                 .filter {
-                    $0.completed &&
-                    $0.localFilePath != nil &&
+
+                    $0.completed
+                    &&
+                    $0.localFilePath != nil
+                    &&
                     $0.errorMessage == nil
                 }
 
 
         for record in completed {
 
-            resumeLiveContinuation(
-                record:
-                    record
-            )
+            // Only records with a still-existing
+            // continuation should be resumed here.
+
+            if hasLiveContinuation(
+                id:
+                    record.id
+            ) {
+
+                resumeLiveContinuation(
+                    record:
+                        record
+                )
+            }
         }
     }
 
 
     // MARK: - Recovery After Relaunch
 
-    /// Returns records that are no longer attached
-    /// to an in-memory continuation.
-    ///
-    /// This happens after iOS terminated/relaunched Echo.
-
     func recoveryRecords()
         -> [BackgroundFetchRecord] {
 
         stateLock.lock()
+
 
         let liveIDs =
             Set(
@@ -657,6 +708,7 @@ final class FetchDownloadEngine:
 
         let claimed =
             claimedRecords
+
 
         stateLock.unlock()
 
@@ -675,62 +727,63 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - Consumed
+    // MARK: - Remove Records
+
+    func removeRecords(
+        spotifyURL: URL,
+        title: String
+    ) {
+
+        let matchingRecords =
+            records()
+                .filter {
+
+                    $0.spotifyURL ==
+                        spotifyURL.absoluteString
+                    &&
+                    $0.title ==
+                        title
+                }
 
 
-        func removeRecords(
-    spotifyURL: URL,
-    title: String
-) {
+        for record in matchingRecords {
 
-    let matchingRecords =
-        records()
-            .filter {
+            if let path =
+                record.localFilePath {
 
-                $0.spotifyURL ==
-                    spotifyURL.absoluteString
-                &&
-                $0.title ==
-                    title
+                try? FileManager.default
+                    .removeItem(
+                        atPath:
+                            path
+                    )
             }
 
 
-    for record in matchingRecords {
-
-        if let path =
-            record.localFilePath {
-
-            try? FileManager.default
-                .removeItem(
-                    atPath:
-                        path
-                )
+            removeRecord(
+                id:
+                    record.id
+            )
         }
-
-
-        removeRecord(
-            id:
-                record.id
-        )
     }
-}
 
 
-  
-        
+    // MARK: - Consumed Source
+
     func markSourceConsumed(
         _ sourceURL: URL
     ) {
 
         let match =
-            records().first {
+            records()
+                .first {
 
-                $0.localFilePath ==
-                    sourceURL.path
-            }
+                    $0.localFilePath ==
+                        sourceURL.path
+                }
 
 
         guard let match else {
+
             return
         }
 
@@ -757,13 +810,15 @@ final class FetchDownloadEngine:
         id: UUID
     ) {
 
-        if let existing =
-            record(
-                id:
-                    id
-            ),
-           let path =
-            existing.localFilePath {
+        if
+            let existing =
+                record(
+                    id:
+                        id
+                ),
+
+            let path =
+                existing.localFilePath {
 
             try? FileManager.default
                 .removeItem(
@@ -780,7 +835,28 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - Continuation
+    // MARK: - Live Continuation Check
+
+    private func hasLiveContinuation(
+        id: UUID
+    ) -> Bool {
+
+        stateLock.lock()
+
+
+        defer {
+
+            stateLock.unlock()
+        }
+
+
+        return continuations[
+            id
+        ] != nil
+    }
+
+
+    // MARK: - Resume Continuation
 
     private func resumeLiveContinuation(
         record: BackgroundFetchRecord
@@ -789,6 +865,7 @@ final class FetchDownloadEngine:
         guard
             let path =
                 record.localFilePath
+
         else {
 
             return
@@ -807,6 +884,7 @@ final class FetchDownloadEngine:
                 atPath:
                     url.path
             )
+
         else {
 
             return
@@ -821,15 +899,18 @@ final class FetchDownloadEngine:
                 .contains(
                     record.id
                 ),
+
             let continuation =
                 continuations
                     .removeValue(
                         forKey:
                             record.id
                     )
+
         else {
 
             stateLock.unlock()
+
             return
         }
 
@@ -855,6 +936,8 @@ final class FetchDownloadEngine:
         )
     }
 
+
+    // MARK: - Fail Continuation
 
     private func failLiveContinuation(
         id: UUID,
@@ -896,7 +979,7 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - IDs
+    // MARK: - Task Record ID
 
     private func recordID(
         for task: URLSessionTask
@@ -904,6 +987,7 @@ final class FetchDownloadEngine:
 
         guard let description =
             task.taskDescription
+
         else {
 
             return nil
@@ -923,7 +1007,10 @@ final class FetchDownloadEngine:
         -> [BackgroundFetchRecord] {
 
         stateLock.lock()
+
+
         defer {
+
             stateLock.unlock()
         }
 
@@ -935,13 +1022,16 @@ final class FetchDownloadEngine:
                         forKey:
                             recordsKey
                     ),
+
             let values =
                 try? JSONDecoder()
                     .decode(
                         [BackgroundFetchRecord].self,
+
                         from:
                             data
                     )
+
         else {
 
             return []
@@ -956,11 +1046,12 @@ final class FetchDownloadEngine:
         id: UUID
     ) -> BackgroundFetchRecord? {
 
-        records().first {
+        records()
+            .first {
 
-            $0.id ==
-                id
-        }
+                $0.id ==
+                    id
+            }
     }
 
 
@@ -982,16 +1073,19 @@ final class FetchDownloadEngine:
                         forKey:
                             recordsKey
                     ),
+
             let decoded =
                 try? JSONDecoder()
                     .decode(
                         [BackgroundFetchRecord].self,
+
                         from:
                             data
                     ) {
 
             values =
                 decoded
+
 
         } else {
 
@@ -1009,8 +1103,11 @@ final class FetchDownloadEngine:
                 }
             ) {
 
-            values[index] =
+            values[
+                index
+            ] =
                 record
+
 
         } else {
 
@@ -1029,6 +1126,7 @@ final class FetchDownloadEngine:
             UserDefaults.standard
                 .set(
                     data,
+
                     forKey:
                         recordsKey
                 )
@@ -1047,7 +1145,8 @@ final class FetchDownloadEngine:
 
 
         var values:
-            [BackgroundFetchRecord] = []
+            [BackgroundFetchRecord] =
+            []
 
 
         if
@@ -1057,10 +1156,12 @@ final class FetchDownloadEngine:
                         forKey:
                             recordsKey
                     ),
+
             let decoded =
                 try? JSONDecoder()
                     .decode(
                         [BackgroundFetchRecord].self,
+
                         from:
                             data
                     ) {
@@ -1086,6 +1187,7 @@ final class FetchDownloadEngine:
             UserDefaults.standard
                 .set(
                     data,
+
                     forKey:
                         recordsKey
                 )
@@ -1116,7 +1218,7 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - File Location
+    // MARK: - Background Source Directory
 
     private func backgroundSourceDirectory()
         throws -> URL {
@@ -1126,6 +1228,7 @@ final class FetchDownloadEngine:
                 .urls(
                     for:
                         .applicationSupportDirectory,
+
                     in:
                         .userDomainMask
                 )[0]
@@ -1135,6 +1238,7 @@ final class FetchDownloadEngine:
             root
                 .appendingPathComponent(
                     "EchoBackgroundSources",
+
                     isDirectory:
                         true
                 )
@@ -1144,6 +1248,7 @@ final class FetchDownloadEngine:
             .createDirectory(
                 at:
                     directory,
+
                 withIntermediateDirectories:
                     true
             )
@@ -1152,6 +1257,8 @@ final class FetchDownloadEngine:
         return directory
     }
 
+
+    // MARK: - File Extension
 
     private func fileExtension(
         record: BackgroundFetchRecord,
@@ -1180,28 +1287,43 @@ final class FetchDownloadEngine:
             .lowercased() {
 
         case "audio/mp4":
+
             return "m4a"
 
+
         case "video/mp4":
+
             return "mp4"
+
 
         case "audio/webm",
              "video/webm":
+
             return "webm"
 
+
         case "audio/mpeg":
+
             return "mp3"
 
+
         case "audio/aac":
+
             return "aac"
 
+
         case "audio/ogg":
+
             return "ogg"
 
+
         case "audio/opus":
+
             return "opus"
 
+
         default:
+
             return "audio"
         }
     }
