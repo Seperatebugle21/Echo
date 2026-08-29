@@ -3,9 +3,6 @@ import UIKit
 
 
 // MARK: - Encoding Gate
-//
-// Multiple tracks may resolve/download at once,
-// but only one LAME encoder runs at a time.
 
 private actor FetchEncodingGate {
 
@@ -55,6 +52,7 @@ private actor FetchEncodingGate {
 
             busy =
                 false
+
 
         } else {
 
@@ -111,6 +109,7 @@ final class FetchManager {
                         .updateRestoredBackgroundProgress(
                             id:
                                 id,
+
                             progress:
                                 progress
                         )
@@ -147,6 +146,7 @@ final class FetchManager {
             SpotifyURLParser.parse(
                 string
             )
+
         else {
 
             return
@@ -157,11 +157,13 @@ final class FetchManager {
             FetchItem(
                 spotifyURL:
                     reference.url,
+
                 title:
                     defaultTitle(
                         for:
                             reference.type
                     ),
+
                 artist:
                     "Spotify"
             )
@@ -187,16 +189,22 @@ final class FetchManager {
             FetchItem(
                 spotifyURL:
                     track.spotifyURL,
+
                 title:
                     track.name,
+
                 artist:
                     track.artist,
+
                 album:
                     track.album,
+
                 artworkURL:
                     track.artworkURL,
+
                 youtubeURL:
                     youtubeResult.videoURL,
+
                 permissionConfirmed:
                     true
             )
@@ -256,8 +264,10 @@ final class FetchManager {
                         .search(
                             title:
                                 track.name,
+
                             artist:
                                 track.artist,
+
                             maxResults:
                                 1
                         )
@@ -265,6 +275,7 @@ final class FetchManager {
 
                 guard let result =
                     results.first
+
                 else {
 
                     return
@@ -275,16 +286,22 @@ final class FetchManager {
                     FetchItem(
                         spotifyURL:
                             track.spotifyURL,
+
                         title:
                             track.name,
+
                         artist:
                             track.artist,
+
                         album:
                             track.album,
+
                         artworkURL:
                             track.artworkURL,
+
                         youtubeURL:
                             result.videoURL,
+
                         permissionConfirmed:
                             true
                     )
@@ -297,21 +314,28 @@ final class FetchManager {
                     FetchItem(
                         spotifyURL:
                             track.spotifyURL,
+
                         title:
                             track.name,
+
                         artist:
                             track.artist,
+
                         album:
                             track.album,
+
                         artworkURL:
                             track.artworkURL,
+
                         youtubeURL:
                             nil,
+
                         permissionConfirmed:
                             true
                     )
                 )
             }
+
 
         } catch {
 
@@ -324,19 +348,20 @@ final class FetchManager {
     }
 
 
+    // MARK: - Prepared Item
 
     func addPreparedItem(
-    _ item: FetchItem
-) {
+        _ item: FetchItem
+    ) {
 
-    items.append(
-        item
-    )
+        items.append(
+            item
+        )
 
 
-    startIfNeeded()
-}
-    
+        startIfNeeded()
+    }
+
 
     // MARK: - Add Track
 
@@ -348,12 +373,16 @@ final class FetchManager {
             FetchItem(
                 spotifyURL:
                     track.spotifyURL,
+
                 title:
                     track.name,
+
                 artist:
                     track.artist,
+
                 album:
                     track.album,
+
                 artworkURL:
                     track.artworkURL
             )
@@ -374,10 +403,13 @@ final class FetchManager {
             FetchItem(
                 spotifyURL:
                     playlist.spotifyURL,
+
                 title:
                     playlist.name,
+
                 artist:
                     "\(playlist.trackCount) songs",
+
                 artworkURL:
                     playlist.artworkURL
             )
@@ -398,16 +430,22 @@ final class FetchManager {
             FetchItem(
                 spotifyURL:
                     track.spotifyURL,
+
                 title:
                     track.name,
+
                 artist:
                     track.artist,
+
                 album:
                     track.album,
+
                 artworkURL:
                     track.artworkURL,
+
                 youtubeURL:
                     nil,
+
                 permissionConfirmed:
                     true
             )
@@ -420,42 +458,77 @@ final class FetchManager {
 
     // MARK: - Remove
 
-func remove(
-    _ item: FetchItem
-) {
+    func remove(
+        _ item: FetchItem
+    ) {
 
-    switch item.status {
+        switch item.status {
 
-    case .failed,
-         .completed:
+        case .failed,
+             .completed:
 
-        FetchDownloadEngine.shared
-            .removeRecords(
-                spotifyURL:
-                    item.spotifyURL,
-                title:
-                    item.title
-            )
+            FetchDownloadEngine.shared
+                .removeRecords(
+                    spotifyURL:
+                        item.spotifyURL,
+
+                    title:
+                        item.title
+                )
 
 
-    default:
+        default:
 
-        break
+            break
+        }
+
+
+        items.removeAll {
+
+            $0.id ==
+                item.id
+        }
     }
 
 
-    items.removeAll {
+    // MARK: - Clear
 
-        $0.id ==
-            item.id
-    }
-}
+    func clearCompleted() {
+
+        let removableItems =
+            items.filter {
+                item in
 
 
-  func clearCompleted() {
+                switch item.status {
 
-    let removableItems =
-        items.filter {
+                case .completed,
+                     .failed:
+
+                    return true
+
+
+                default:
+
+                    return false
+                }
+            }
+
+
+        for item in removableItems {
+
+            FetchDownloadEngine.shared
+                .removeRecords(
+                    spotifyURL:
+                        item.spotifyURL,
+
+                    title:
+                        item.title
+                )
+        }
+
+
+        items.removeAll {
             item in
 
 
@@ -472,38 +545,7 @@ func remove(
                 return false
             }
         }
-
-
-    for item in removableItems {
-
-        FetchDownloadEngine.shared
-            .removeRecords(
-                spotifyURL:
-                    item.spotifyURL,
-                title:
-                    item.title
-            )
     }
-
-
-    items.removeAll {
-        item in
-
-
-        switch item.status {
-
-        case .completed,
-             .failed:
-
-            return true
-
-
-        default:
-
-            return false
-        }
-    }
-}
 
 
     // MARK: - Queue
@@ -563,9 +605,6 @@ func remove(
 
 
     // MARK: - Parallel Queue
-    //
-    // Two workers are allowed to resolve and
-    // download simultaneously.
 
     private func processQueue()
         async {
@@ -601,9 +640,6 @@ func remove(
     }
 
 
-    // MainActor makes this operation atomic
-    // with respect to the second worker.
-
     private func claimNextQueuedItem()
         -> FetchItem? {
 
@@ -623,17 +659,16 @@ func remove(
                     return false
                 }
             )
+
         else {
 
             return nil
         }
 
 
-        // Claim immediately.
-
         next.status =
             .preparing(
-                0.02
+                0.01
             )
 
 
@@ -649,7 +684,7 @@ func remove(
 
         item.status =
             .preparing(
-                0.02
+                0.01
             )
 
 
@@ -666,7 +701,7 @@ func remove(
 
             item.status =
                 .preparing(
-                    0.05
+                    0.03
                 )
 
 
@@ -678,17 +713,17 @@ func remove(
 
                 guard let youtubeURL =
                     item.youtubeURL
+
                 else {
 
-                    throw
-                        ApifyDownloadError
-                            .invalidURL
+                    throw ApifyDownloadError
+                        .invalidURL
                 }
 
 
                 item.status =
                     .preparing(
-                        0.07
+                        0.05
                     )
 
 
@@ -698,6 +733,7 @@ func remove(
                         .resolveMP3(
                             youtubeURL:
                                 youtubeURL,
+
                             permissionConfirmed:
                                 item.permissionConfirmed
                         )
@@ -707,6 +743,7 @@ func remove(
                     FetchAudioResult(
                         downloadURL:
                             result.downloadURL,
+
                         suggestedFileName:
                             makeTemporaryApifyName(
                                 item:
@@ -721,7 +758,7 @@ func remove(
 
                 item.status =
                     .preparing(
-                        0.07
+                        0.05
                     )
 
 
@@ -735,14 +772,20 @@ func remove(
             }
 
 
+            // Ready to start the actual file transfer.
+
             item.status =
                 .preparing(
-                    0.10
+                    0.06
                 )
 
 
-            // MARK: HTTP Download
-            // 10 - 60%
+            // MARK: - HTTP Download
+            //
+            // 6% → 94%
+            //
+            // 88 percentage points are reserved
+            // for the actual network transfer.
 
             let downloadedFile =
                 try await
@@ -750,6 +793,7 @@ func remove(
                     .download(
                         item:
                             item,
+
                         result:
                             downloadResult
                     ) {
@@ -757,12 +801,12 @@ func remove(
 
 
                         let overall =
-                            0.10
+                            0.06
                             +
                             (
                                 localProgress
                                 *
-                                0.50
+                                0.88
                             )
 
 
@@ -773,17 +817,15 @@ func remove(
                     }
 
 
-            // File has arrived.
-            // It may now have to wait briefly for
-            // the single MP3 encoder.
+            // Network transfer completed.
 
             item.status =
                 .processing(
-                    0.60
+                    0.94
                 )
 
 
-            // MARK: Single Encoder Gate
+            // MARK: - Single Encoder Gate
 
             await FetchEncodingGate.shared
                 .acquire()
@@ -801,8 +843,10 @@ func remove(
                         .process(
                             sourceURL:
                                 downloadedFile,
+
                             item:
                                 item,
+
                             quality:
                                 FetchSettings.shared
                                     .quality
@@ -810,19 +854,24 @@ func remove(
                             localProgress in
 
 
+                            // Encoding uses 94 → 99%.
+
                             let overall =
-                                0.60
+                                0.94
                                 +
                                 (
                                     localProgress
                                     *
-                                    0.35
+                                    0.05
                                 )
 
 
                             item.status =
                                 .processing(
-                                    overall
+                                    min(
+                                        overall,
+                                        0.99
+                                    )
                                 )
                         }
 
@@ -841,7 +890,7 @@ func remove(
             }
 
 
-            // MARK: Remove Temporary Source
+            // MARK: - Remove Temporary Source
 
             if downloadedFile !=
                 processedAudio.fileURL {
@@ -853,12 +902,11 @@ func remove(
             }
 
 
-            // MARK: Library
-            // 95 - 100%
+            // MARK: - Library
 
             item.status =
                 .processing(
-                    0.96
+                    0.992
                 )
 
 
@@ -866,12 +914,16 @@ func remove(
                 .addProcessedFetch(
                     fileURL:
                         processedAudio.fileURL,
+
                     title:
                         processedAudio.title,
+
                     artist:
                         processedAudio.artist,
+
                     album:
                         processedAudio.album,
+
                     coverData:
                         processedAudio.artworkData
                 )
@@ -879,7 +931,7 @@ func remove(
 
             item.status =
                 .processing(
-                    0.99
+                    0.998
                 )
 
 
@@ -887,6 +939,7 @@ func remove(
                 .post(
                     name:
                         .echoFetchCompleted,
+
                     object:
                         nil
                 )
@@ -983,7 +1036,21 @@ func remove(
     func restoreBackgroundDownloads()
         async {
 
+        // Do not start CPU-heavy LAME encoding
+        // during a background launch/wake.
+
+        guard UIApplication.shared
+            .applicationState ==
+            .active
+
+        else {
+
+            return
+        }
+
+
         guard !backgroundRecoveryRunning
+
         else {
 
             return
@@ -1022,6 +1089,7 @@ func remove(
                     from:
                         record
                 )
+
             else {
 
                 continue
@@ -1053,6 +1121,7 @@ func remove(
 
             if
                 record.completed,
+
                 let path =
                     record.localFilePath {
 
@@ -1068,6 +1137,7 @@ func remove(
                         atPath:
                             source.path
                     )
+
                 else {
 
                     item.status =
@@ -1080,16 +1150,21 @@ func remove(
                 }
 
 
+                // Network transfer was already completed,
+                // therefore jump directly to 94%.
+
                 item.status =
                     .processing(
-                        0.60
+                        0.94
                     )
 
 
                 await processRecoveredSource(
                     source,
+
                     item:
                         item,
+
                     recordID:
                         record.id
                 )
@@ -1099,7 +1174,7 @@ func remove(
 
                 item.status =
                     .downloading(
-                        0.10
+                        0.06
                     )
             }
         }
@@ -1124,31 +1199,35 @@ func remove(
                                 id
                         }
                     )
+
         else {
 
             return
         }
 
 
-        guard
-            let item =
-                findRecoveredItem(
-                    record:
-                        record
-                )
+        guard let item =
+            findRecoveredItem(
+                record:
+                    record
+            )
+
         else {
 
             return
         }
 
+
+        // Restored/background transfer:
+        // 6% → 94%.
 
         let overall =
-            0.10
+            0.06
             +
             (
                 progress
                 *
-                0.50
+                0.88
             )
 
 
@@ -1168,6 +1247,7 @@ func remove(
         guard UIApplication.shared
             .applicationState ==
             .active
+
         else {
 
             return
@@ -1176,6 +1256,7 @@ func remove(
 
         guard let path =
             record.localFilePath
+
         else {
 
             return
@@ -1202,6 +1283,7 @@ func remove(
             item =
                 existing
 
+
         } else {
 
             guard let created =
@@ -1209,6 +1291,7 @@ func remove(
                     from:
                         record
                 )
+
             else {
 
                 return
@@ -1232,7 +1315,7 @@ func remove(
 
         item.status =
             .processing(
-                0.60
+                0.94
             )
 
 
@@ -1240,8 +1323,10 @@ func remove(
 
             await processRecoveredSource(
                 source,
+
                 item:
                     item,
+
                 recordID:
                     record.id
             )
@@ -1259,8 +1344,31 @@ func remove(
 
         do {
 
-            // Recovered downloads use the exact same
-            // single-encoder gate as normal downloads.
+            // Prevent the same recovered source
+            // from being processed if it disappeared.
+
+            guard FileManager.default
+                .fileExists(
+                    atPath:
+                        sourceURL.path
+                )
+
+            else {
+
+                throw NSError(
+                    domain:
+                        "Echo.Fetch",
+
+                    code:
+                        404,
+
+                    userInfo: [
+                        NSLocalizedDescriptionKey:
+                            "Downloaded source file is missing."
+                    ]
+                )
+            }
+
 
             await FetchEncodingGate.shared
                 .acquire()
@@ -1278,8 +1386,10 @@ func remove(
                         .process(
                             sourceURL:
                                 sourceURL,
+
                             item:
                                 item,
+
                             quality:
                                 FetchSettings.shared
                                     .quality
@@ -1287,14 +1397,21 @@ func remove(
                             progress in
 
 
+                            let overall =
+                                0.94
+                                +
+                                (
+                                    progress
+                                    *
+                                    0.05
+                                )
+
+
                             item.status =
                                 .processing(
-                                    0.60
-                                    +
-                                    (
-                                        progress
-                                        *
-                                        0.35
+                                    min(
+                                        overall,
+                                        0.99
                                     )
                                 )
                         }
@@ -1316,7 +1433,7 @@ func remove(
 
             item.status =
                 .processing(
-                    0.96
+                    0.992
                 )
 
 
@@ -1324,12 +1441,16 @@ func remove(
                 .addProcessedFetch(
                     fileURL:
                         processed.fileURL,
+
                     title:
                         processed.title,
+
                     artist:
                         processed.artist,
+
                     album:
                         processed.album,
+
                     coverData:
                         processed.artworkData
                 )
@@ -1337,7 +1458,7 @@ func remove(
 
             item.status =
                 .processing(
-                    0.99
+                    0.998
                 )
 
 
@@ -1356,6 +1477,7 @@ func remove(
                 .post(
                     name:
                         .echoFetchCompleted,
+
                     object:
                         nil
                 )
@@ -1395,6 +1517,7 @@ func remove(
                 string:
                     record.spotifyURL
             )
+
         else {
 
             return nil
@@ -1413,6 +1536,7 @@ func remove(
                     string:
                         string
                 )
+
 
         } else {
 
@@ -1434,6 +1558,7 @@ func remove(
                         string
                 )
 
+
         } else {
 
             youtubeURL =
@@ -1444,16 +1569,22 @@ func remove(
         return FetchItem(
             spotifyURL:
                 spotifyURL,
+
             title:
                 record.title,
+
             artist:
                 record.artist,
+
             album:
                 record.album,
+
             artworkURL:
                 artworkURL,
+
             youtubeURL:
                 youtubeURL,
+
             permissionConfirmed:
                 record.permissionConfirmed
         )
