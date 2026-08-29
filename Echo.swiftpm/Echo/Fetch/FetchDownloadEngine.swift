@@ -93,7 +93,7 @@ final class FetchDownloadEngine:
 
     if stored <= 0 {
 
-        return 6
+        return 4
     }
 
 
