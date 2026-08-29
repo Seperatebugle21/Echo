@@ -15,6 +15,9 @@ struct FetchView: View {
     @State private var spotify =
         SpotifyManager.shared
 
+    @State private var library =
+    MusicLibraryManager.shared
+
 
     // MARK: - Apify Usage
 
@@ -137,6 +140,99 @@ struct FetchView: View {
                     true
             }
         }
+
+        .alert(
+    Text(
+        "alert_duplicate_title"
+    ),
+    isPresented:
+        Bindable(library)
+            .showDuplicateAlert
+) {
+
+    Button(
+        String(
+            localized:
+                "action_skip"
+        )
+    ) {
+
+        library.resolveDuplicate(
+            choice:
+                .skip,
+            applyToAll:
+                false
+        )
+    }
+
+
+    Button(
+        String(
+            localized:
+                "action_replace"
+        ),
+        role:
+            .destructive
+    ) {
+
+        library.resolveDuplicate(
+            choice:
+                .replace,
+            applyToAll:
+                false
+        )
+    }
+
+
+    Button(
+        String(
+            localized:
+                "action_skip_all"
+        )
+    ) {
+
+        library.resolveDuplicate(
+            choice:
+                .skip,
+            applyToAll:
+                true
+        )
+    }
+
+
+    Button(
+        String(
+            localized:
+                "action_replace_all"
+        ),
+        role:
+            .destructive
+    ) {
+
+        library.resolveDuplicate(
+            choice:
+                .replace,
+            applyToAll:
+                true
+        )
+    }
+
+
+    Button(
+        String(
+            localized:
+                "action_cancel"
+        ),
+        role:
+            .cancel
+    ) {}
+
+} message: {
+
+    Text(
+        "alert_duplicate_message \(library.duplicateSongName)"
+    )
+}
 
         .sheet(
             isPresented:
