@@ -677,6 +677,47 @@ final class FetchDownloadEngine:
 
     // MARK: - Consumed
 
+
+        func removeRecords(
+    spotifyURL: URL,
+    title: String
+) {
+
+    let matchingRecords =
+        records()
+            .filter {
+
+                $0.spotifyURL ==
+                    spotifyURL.absoluteString
+                &&
+                $0.title ==
+                    title
+            }
+
+
+    for record in matchingRecords {
+
+        if let path =
+            record.localFilePath {
+
+            try? FileManager.default
+                .removeItem(
+                    atPath:
+                        path
+                )
+        }
+
+
+        removeRecord(
+            id:
+                record.id
+        )
+    }
+}
+
+
+  
+        
     func markSourceConsumed(
         _ sourceURL: URL
     ) {
