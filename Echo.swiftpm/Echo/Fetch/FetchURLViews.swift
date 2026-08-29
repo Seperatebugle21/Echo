@@ -149,7 +149,6 @@ struct FetchURLInlineSection:
         ) {
             content in
 
-
             FetchURLPreviewView(
                 content:
                     content
@@ -167,7 +166,6 @@ struct FetchURLInlineSection:
                     },
                     set: {
                         newValue in
-
 
                         if !newValue {
 
@@ -195,7 +193,7 @@ struct FetchURLInlineSection:
     }
 
 
-    // MARK: Resolve
+    // MARK: - Resolve
 
     private func resolve() {
 
@@ -245,7 +243,7 @@ struct FetchURLInlineSection:
     }
 
 
-    // MARK: Paste
+    // MARK: - Paste
 
     private func paste() {
 
@@ -421,7 +419,6 @@ struct FetchURLInputSheet:
         ) {
             content in
 
-
             FetchURLPreviewView(
                 content:
                     content
@@ -439,7 +436,6 @@ struct FetchURLInputSheet:
                     },
                     set: {
                         newValue in
-
 
                         if !newValue {
 
@@ -466,6 +462,8 @@ struct FetchURLInputSheet:
         }
     }
 
+
+    // MARK: - Resolve
 
     private func resolve() {
 
@@ -510,6 +508,8 @@ struct FetchURLInputSheet:
         }
     }
 
+
+    // MARK: - Paste
 
     private func paste() {
 
@@ -775,7 +775,6 @@ struct FetchURLPreviewView:
                     set: {
                         value in
 
-
                         if !value {
 
                             errorMessage =
@@ -812,7 +811,6 @@ struct FetchURLPreviewView:
                 content.artworkURL
         ) {
             image in
-
 
             image
                 .resizable()
@@ -915,7 +913,6 @@ struct FetchURLPreviewView:
             ) {
                 row in
 
-
                 HStack(
                     spacing:
                         10
@@ -926,7 +923,6 @@ struct FetchURLPreviewView:
                             row.artworkURL
                     ) {
                         image in
-
 
                         image
                             .resizable()
@@ -1013,3 +1009,418 @@ struct FetchURLPreviewView:
                 .foregroundStyle(
                     .secondary
                 )
+                .padding(
+                    .top,
+                    10
+                )
+            }
+        }
+        .padding(
+            14
+        )
+        .background(
+            .secondary
+                .opacity(
+                    0.07
+                ),
+            in:
+                RoundedRectangle(
+                    cornerRadius:
+                        16
+                )
+        )
+    }
+
+
+    // MARK: - Presentation
+
+    private var subtitle:
+        String {
+
+        switch content {
+
+        case .spotifyTrack(
+            let track
+        ):
+
+            return
+                "\(track.artist) • \(track.album)"
+
+
+        case .spotifyPlaylist(
+            _,
+            let tracks
+        ):
+
+            return
+                "\(tracks.count) songs"
+
+
+        case .youtubeTrack(
+            let track
+        ):
+
+            return
+                track.artist
+
+
+        case .youtubePlaylist(
+            let playlist
+        ):
+
+            return
+                "\(playlist.tracks.count) songs"
+        }
+    }
+
+
+    private var sourceIcon:
+        String {
+
+        switch content {
+
+        case .spotifyTrack,
+             .spotifyPlaylist:
+
+            return
+                "music.note"
+
+
+        case .youtubeTrack,
+             .youtubePlaylist:
+
+            return
+                "play.rectangle.fill"
+        }
+    }
+
+
+    private var downloadButtonTitle:
+        String {
+
+        if content.isPlaylist {
+
+            return
+                "Download \(content.trackCount) Songs"
+
+        } else {
+
+            return
+                "Download"
+        }
+    }
+
+
+    // MARK: - Rows
+
+    private struct PreviewRow:
+        Identifiable {
+
+        let id:
+            String
+
+        let title:
+            String
+
+        let artist:
+            String
+
+        let artworkURL:
+            URL?
+    }
+
+
+    private var playlistRows:
+        [PreviewRow] {
+
+        switch content {
+
+        case .spotifyPlaylist(
+            _,
+            let tracks
+        ):
+
+            return tracks.map {
+                track in
+
+                PreviewRow(
+                    id:
+                        track.id,
+
+                    title:
+                        track.name,
+
+                    artist:
+                        track.artist,
+
+                    artworkURL:
+                        track.artworkURL
+                )
+            }
+
+
+        case .youtubePlaylist(
+            let playlist
+        ):
+
+            return playlist.tracks.map {
+                track in
+
+                PreviewRow(
+                    id:
+                        track.id,
+
+                    title:
+                        track.title,
+
+                    artist:
+                        track.artist,
+
+                    artworkURL:
+                        track.artworkURL
+                )
+            }
+
+
+        default:
+
+            return []
+        }
+    }
+
+
+    // MARK: - Download
+
+    private func startDownload() {
+
+        guard !isStarting else {
+
+            return
+        }
+
+
+        isStarting =
+            true
+
+
+        Task {
+
+            do {
+
+                switch content {
+
+                // MARK: Spotify Track
+
+                case .spotifyTrack(
+                    let track
+                ):
+
+                    try await
+                        addSpotifyTrack(
+                            track
+                        )
+
+
+                // MARK: Spotify Playlist
+
+                case .spotifyPlaylist(
+                    _,
+                    let tracks
+                ):
+
+                    await manager
+                        .preparePlaylistTracks(
+                            tracks
+                        )
+
+
+                // MARK: YouTube Track
+
+                case .youtubeTrack(
+                    let track
+                ):
+
+                    addYouTubeTrack(
+                        track
+                    )
+
+
+                // MARK: YouTube Playlist
+
+                case .youtubePlaylist(
+                    let playlist
+                ):
+
+                    for track
+                        in playlist.tracks {
+
+                        addYouTubeTrack(
+                            track
+                        )
+                    }
+                }
+
+
+                showStarted =
+                    true
+
+
+            } catch {
+
+                errorMessage =
+                    error.localizedDescription
+            }
+
+
+            isStarting =
+                false
+        }
+    }
+
+
+    // MARK: - Spotify Track Download
+
+    private func addSpotifyTrack(
+        _ track: SpotifyTrack
+    ) async throws {
+
+        switch
+            ApifySettings.shared
+                .downloadMethod {
+
+        case .spotify:
+
+            manager
+                .addAuthorizedSpotifyTrack(
+                    track
+                )
+
+
+        case .youtube:
+
+            let results =
+                try await
+                YouTubeAPI.shared
+                    .search(
+                        title:
+                            track.name,
+
+                        artist:
+                            track.artist,
+
+                        maxResults:
+                            1
+                    )
+
+
+            guard let result =
+                results.first
+            else {
+
+                throw
+                    YTDLPAudioSourceError
+                        .noYouTubeMatch
+            }
+
+
+            manager
+                .addAuthorizedMatch(
+                    track:
+                        track,
+
+                    youtubeResult:
+                        result
+                )
+        }
+    }
+
+
+    // MARK: - YouTube Track Download
+
+    private func addYouTubeTrack(
+        _ track:
+            FetchURLTrackPreview
+    ) {
+
+        let item =
+            FetchItem(
+                spotifyURL:
+                    track.sourceURL,
+
+                title:
+                    cleanedYouTubeTitle(
+                        track.title
+                    ),
+
+                artist:
+                    track.artist,
+
+                album:
+                    nil,
+
+                artworkURL:
+                    track.artworkURL,
+
+                youtubeURL:
+                    track.sourceURL,
+
+                permissionConfirmed:
+                    true
+            )
+
+
+        manager
+            .addPreparedItem(
+                item
+            )
+    }
+
+
+    // MARK: - Clean YouTube Title
+
+    private func cleanedYouTubeTitle(
+        _ value: String
+    ) -> String {
+
+        var title =
+            value
+
+
+        let removable = [
+
+            "(Official Video)",
+            "(Official Music Video)",
+            "(Official Audio)",
+
+            "[Official Video]",
+            "[Official Audio]",
+
+            "Official Video",
+            "Official Audio"
+        ]
+
+
+        for part in removable {
+
+            title =
+                title
+                    .replacingOccurrences(
+                        of:
+                            part,
+
+                        with:
+                            "",
+
+                        options:
+                            .caseInsensitive
+                    )
+        }
+
+
+        return title
+            .trimmingCharacters(
+                in:
+                    .whitespacesAndNewlines
+            )
+    }
+}
