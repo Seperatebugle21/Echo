@@ -510,6 +510,40 @@ jobs:
             "$INFO_PLIST"
 
 
+                      # ============================================
+          # Siri / Media Intents
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :INIntentsSupported" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INIntentsSupported array" \
+            "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INIntentsSupported:0 string INPlayMediaIntent" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :INSupportedMediaCategories" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INSupportedMediaCategories array" \
+            "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INSupportedMediaCategories:0 string INMediaCategoryMusic" \
+            "$INFO_PLIST"
+
+
+
+
           # ============================================
           # Final debug
           # ============================================
