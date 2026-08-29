@@ -45,7 +45,15 @@ struct FetchView: View {
 
                 methodSection
 
+
+                // Existing Spotify integration
+
                 spotifySection
+
+
+                // New login-free search source
+
+                musicSearchSection
 
 
                 if apifySettings.downloadMethod ==
@@ -78,7 +86,10 @@ struct FetchView: View {
             .onChange(
                 of:
                     apifySettings.downloadMethod
-            ) { _, newMethod in
+            ) {
+                _,
+                newMethod in
+
 
                 Task {
 
@@ -102,9 +113,6 @@ struct FetchView: View {
             }
         }
 
-        // Rebuild entire Fetch navigation when
-        // View Downloads is opened from a song.
-
         .id(
             fetchNavigationID
         )
@@ -115,7 +123,9 @@ struct FetchView: View {
                     for:
                         .echoOpenFetchDownloads
                 )
-        ) { _ in
+        ) {
+            _ in
+
 
             fetchNavigationID =
                 UUID()
@@ -166,7 +176,7 @@ struct FetchView: View {
     }
 
 
-    // MARK: - Method
+    // MARK: - Download Method
 
     private var methodSection:
         some View {
@@ -181,7 +191,9 @@ struct FetchView: View {
 
                 ForEach(
                     ApifyDownloadMethod.allCases
-                ) { method in
+                ) {
+                    method in
+
 
                     Text(
                         method.title
@@ -366,7 +378,7 @@ struct FetchView: View {
 
 
                             Text(
-                                "Connect your account to browse your library and search for music."
+                                "Connect your account to browse your library and search Spotify."
                             )
                             .font(
                                 .caption
@@ -422,7 +434,94 @@ struct FetchView: View {
                 Text(
                     "Choose music from your Spotify library or search the Spotify catalog."
                 )
+
+            } else {
+
+                Text(
+                    "Spotify is optional. You can also search music without an account below."
+                )
             }
+        }
+    }
+
+
+    // MARK: - Music Search
+
+    private var musicSearchSection:
+        some View {
+
+        Section {
+
+            NavigationLink {
+
+                MusicBrainzSearchView()
+
+            } label: {
+
+                HStack(
+                    spacing:
+                        12
+                ) {
+
+                    Image(
+                        systemName:
+                            "magnifyingglass.circle.fill"
+                    )
+                    .font(
+                        .title3
+                    )
+                    .foregroundStyle(
+                        .accent
+                    )
+                    .frame(
+                        width:
+                            30
+                    )
+
+
+                    VStack(
+                        alignment:
+                            .leading,
+                        spacing:
+                            2
+                    ) {
+
+                        Text(
+                            "Search Music"
+                        )
+                        .font(
+                            .headline
+                        )
+
+
+                        Text(
+                            "No Spotify account required"
+                        )
+                        .font(
+                            .caption
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+                    }
+                }
+                .padding(
+                    .vertical,
+                    3
+                )
+            }
+
+        } header: {
+
+            Text(
+                "Music"
+            )
+
+        } footer: {
+
+            Text(
+                "Search the MusicBrainz catalog without signing in. Downloads still use your selected Echo download method."
+            )
         }
     }
 
@@ -731,7 +830,9 @@ struct FetchView: View {
 
                 ForEach(
                     FetchQuality.allCases
-                ) { quality in
+                ) {
+                    quality in
+
 
                     Text(
                         quality.title
@@ -798,7 +899,9 @@ struct FetchView: View {
                             4
                         )
                 )
-            ) { item in
+            ) {
+                item in
+
 
                 FetchItemRow(
                     item:
@@ -837,7 +940,9 @@ struct FetchView: View {
         Int {
 
         manager.items
-            .filter { item in
+            .filter {
+                item in
+
 
                 switch item.status {
 
@@ -865,9 +970,12 @@ struct FetchView: View {
         switch apifySettings.downloadMethod {
 
         case .youtube:
+
             return "cloud"
 
+
         case .spotify:
+
             return "terminal"
         }
     }
@@ -880,12 +988,14 @@ struct FetchView: View {
 
         case .youtube:
 
-            return "Downloads are processed through your configured Apify account."
+            return
+                "Downloads are processed through your configured Apify account."
 
 
         case .spotify:
 
-            return "Audio is resolved locally with the embedded yt-dlp engine."
+            return
+                "Audio is resolved locally with the embedded yt-dlp engine."
         }
     }
 
@@ -952,6 +1062,7 @@ struct FetchView: View {
 
             apifyUsage =
                 nil
+
 
             apifyUsageError =
                 error.localizedDescription
