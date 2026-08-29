@@ -1,13 +1,13 @@
 import Foundation
 import AppIntents
+import MediaIntents
 
 
 // ============================================================
-// MARK: - Siri Errors
+// MARK: - Errors
 // ============================================================
 
-enum EchoSiriError:
-    LocalizedError {
+enum EchoSiriError: Error, LocalizedError {
 
     case songNotFound
     case playlistNotFound
@@ -15,40 +15,107 @@ enum EchoSiriError:
     case audioFileMissing
     case nothingPlaying
 
-
-    var errorDescription:
-        String? {
+    var errorDescription: String? {
 
         switch self {
 
         case .songNotFound:
-
-            return
-                "Ik kan dat nummer niet vinden in Echo."
-
+            return "Ik kan dat nummer niet vinden in Echo."
 
         case .playlistNotFound:
-
-            return
-                "Ik kan die playlist niet vinden in Echo."
-
+            return "Ik kan die playlist niet vinden in Echo."
 
         case .playlistEmpty:
-
-            return
-                "Die playlist bevat geen nummers."
-
+            return "Die playlist bevat geen nummers."
 
         case .audioFileMissing:
-
-            return
-                "Het audiobestand van dat nummer kon niet worden gevonden."
-
+            return "Het audiobestand kon niet worden gevonden."
 
         case .nothingPlaying:
+            return "Er speelt momenteel geen nummer."
+        }
+    }
+}
 
-            return
-                "Er speelt momenteel geen nummer in Echo."
+
+// ============================================================
+// MARK: - Artist Entity
+// ============================================================
+
+@available(iOS 26.0, *)
+@AppEntity(schema: .audio.artist)
+struct EchoArtistEntity {
+
+    static let defaultQuery =
+        EchoArtistQuery()
+
+    let id: String
+
+    var name: String
+
+
+    init(
+        name: String
+    ) {
+
+        self.id =
+            name
+                .folding(
+                    options: [
+                        .caseInsensitive,
+                        .diacriticInsensitive
+                    ],
+                    locale: .current
+                )
+                .lowercased()
+
+        self.name =
+            name
+    }
+
+
+    var displayRepresentation:
+        DisplayRepresentation {
+
+        DisplayRepresentation(
+            title: "\(name)"
+        )
+    }
+}
+
+
+// MARK: Artist Query
+
+@available(iOS 26.0, *)
+struct EchoArtistQuery:
+    EntityQuery {
+
+    func entities(
+        for identifiers: [String]
+    ) async throws -> [EchoArtistEntity] {
+
+        await MainActor.run {
+
+            let artists =
+                Set(
+                    MusicLibraryManager.shared
+                        .songs
+                        .map {
+                            $0.artist
+                        }
+                )
+
+            return artists
+                .map {
+                    EchoArtistEntity(
+                        name: $0
+                    )
+                }
+                .filter {
+                    identifiers.contains(
+                        $0.id
+                    )
+                }
         }
     }
 }
@@ -58,69 +125,90 @@ enum EchoSiriError:
 // MARK: - Song Entity
 // ============================================================
 
-struct EchoSongEntity:
-    AppEntity {
+@available(iOS 26.0, *)
+@AppEntity(schema: .audio.song)
+struct EchoSongEntity {
 
-    static var typeDisplayRepresentation =
-        TypeDisplayRepresentation(
-            name:
-                "Nummer"
-        )
-
-
-    static var defaultQuery =
+    static let defaultQuery =
         EchoSongQuery()
 
 
-    let id:
-        String
+    let id: String
 
 
-    @Property(
-        title:
-            "Titel"
-    )
-    var title:
-        String
+    // Required audio.song schema properties
 
+    var title: String
 
-    @Property(
-        title:
-            "Artiest"
-    )
-    var artist:
-        String
+    var artistName: String
 
+    var composerName: String?
 
-    init(
-        id: String,
-        title: String,
-        artist: String
-    ) {
+    var albumTitle: String?
 
-        self.id =
-            id
+    var artists:
+        [EchoArtistEntity]
 
-        self.title =
-            title
+    var album:
+        EchoAlbumEntity?
 
-        self.artist =
-            artist
-    }
+    var composers:
+        [EchoArtistEntity]
+
+    var internationalStandardRecordingCode:
+        String?
 
 
     init(
         song: Song
     ) {
 
-        self.id =
+        id =
             song.id.uuidString
 
-        self.title =
+        title =
             song.title
 
-        self.artist =
+        artistName =
             song.artist
+
+        composerName =
+            nil
+
+        albumTitle =
+            song.album
+
+        artists = [
+            EchoArtistEntity(
+                name:
+                    song.artist
+            )
+        ]
+
+        if
+            let albumName =
+                song.album,
+            !albumName.isEmpty {
+
+            album =
+                EchoAlbumEntity(
+                    title:
+                        albumName,
+                    artist:
+                        song.artist
+                )
+
+        } else {
+
+            album =
+                nil
+        }
+
+        composers =
+            []
+
+        internationalStandardRecordingCode =
+            nil
     }
 
 
@@ -130,10 +218,151 @@ struct EchoSongEntity:
         DisplayRepresentation(
             title:
                 "\(title)",
-
             subtitle:
-                "\(artist)"
+                "\(artistName)"
         )
+    }
+}
+
+
+// ============================================================
+// MARK: - Album Entity
+// ============================================================
+
+@available(iOS 26.0, *)
+@AppEntity(schema: .audio.album)
+struct EchoAlbumEntity {
+
+    static let defaultQuery =
+        EchoAlbumQuery()
+
+
+    let id: String
+
+    var title: String
+
+    var artistName: String
+
+    var artists:
+        [EchoArtistEntity]
+
+    var universalProductCode:
+        String?
+
+
+    init(
+        title: String,
+        artist: String
+    ) {
+
+        self.id =
+            "\(artist)|\(title)"
+                .folding(
+                    options: [
+                        .caseInsensitive,
+                        .diacriticInsensitive
+                    ],
+                    locale:
+                        .current
+                )
+                .lowercased()
+
+        self.title =
+            title
+
+        self.artistName =
+            artist
+
+        self.artists = [
+            EchoArtistEntity(
+                name:
+                    artist
+            )
+        ]
+
+        self.universalProductCode =
+            nil
+    }
+
+
+    var displayRepresentation:
+        DisplayRepresentation {
+
+        DisplayRepresentation(
+            title:
+                "\(title)",
+            subtitle:
+                "\(artistName)"
+        )
+    }
+}
+
+
+// MARK: Album Query
+
+@available(iOS 26.0, *)
+struct EchoAlbumQuery:
+    EntityQuery {
+
+    func entities(
+        for identifiers: [String]
+    ) async throws
+        -> [EchoAlbumEntity] {
+
+        await MainActor.run {
+
+            var result:
+                [EchoAlbumEntity] = []
+
+            var seen =
+                Set<String>()
+
+
+            for song in
+                MusicLibraryManager.shared.songs {
+
+                guard
+                    let album =
+                        song.album,
+                    !album.isEmpty
+
+                else {
+
+                    continue
+                }
+
+
+                let entity =
+                    EchoAlbumEntity(
+                        title:
+                            album,
+                        artist:
+                            song.artist
+                    )
+
+
+                guard seen.insert(
+                    entity.id
+                ).inserted
+                else {
+
+                    continue
+                }
+
+
+                if identifiers.contains(
+                    entity.id
+                ) {
+
+                    result.append(
+                        entity
+                    )
+                }
+            }
+
+
+            return result
+        }
     }
 }
 
@@ -142,14 +371,12 @@ struct EchoSongEntity:
 // MARK: - Song Query
 // ============================================================
 
+@available(iOS 26.0, *)
 struct EchoSongQuery:
-    EntityStringQuery {
-
-    // Siri already knows the IDs.
+    EntityQuery {
 
     func entities(
-        for identifiers:
-            [String]
+        for identifiers: [String]
     ) async throws
         -> [EchoSongEntity] {
 
@@ -172,71 +399,60 @@ struct EchoSongQuery:
                 }
         }
     }
+}
 
 
-    // Siri searches by spoken name.
+// ============================================================
+// MARK: - Siri Audio Search
+// ============================================================
 
-    func entities(
-        matching string: String
+@available(iOS 26.0, *)
+extension EchoSongQuery:
+    IntentValueQuery {
+
+    func values(
+        for audioSearch: AudioSearch
     ) async throws
         -> [EchoSongEntity] {
 
-        let search =
-            normalize(
-                string
-            )
+        switch audioSearch.criteria {
+
+        // Siri understood an actual search.
+
+        case .searchQuery(
+            let query
+        ):
+
+            return await
+                searchEchoLibrary(
+                    query
+                )
 
 
-        return await MainActor.run {
+        // Example:
+        //
+        // "Speel muziek met Echo"
+        //
+        // Siri isn't requesting a particular song.
 
-            MusicLibraryManager.shared
-                .songs
-                .filter {
-                    song in
+        case .unspecified:
 
+            return await MainActor.run {
 
-                    let title =
-                        normalize(
-                            song.title
+                Array(
+                    MusicLibraryManager.shared
+                        .songs
+                        .sorted {
+
+                            $0.lastPlayed ??
+                                .distantPast
+                            >
+                            $1.lastPlayed ??
+                                .distantPast
+                        }
+                        .prefix(
+                            25
                         )
-
-
-                    let artist =
-                        normalize(
-                            song.artist
-                        )
-
-
-                    return
-                        title.contains(
-                            search
-                        )
-                        ||
-                        artist.contains(
-                            search
-                        )
-                }
-                .sorted {
-                    left,
-                    right in
-
-
-                    score(
-                        song:
-                            left,
-                        search:
-                            search
-                    )
-                    >
-                    score(
-                        song:
-                            right,
-                        search:
-                            search
-                    )
-                }
-                .prefix(
-                    25
                 )
                 .map {
 
@@ -245,32 +461,86 @@ struct EchoSongQuery:
                             $0
                     )
                 }
+            }
+
+
+        // Echo doesn't currently expose permanent
+        // public URLs for songs.
+
+        case .url:
+
+            return []
         }
     }
 
 
-    // Suggestions shown by Siri / Shortcuts.
+    // MARK: Search
 
-    func suggestedEntities()
-        async throws
+    private func searchEchoLibrary(
+        _ rawQuery: String
+    ) async
         -> [EchoSongEntity] {
 
-        await MainActor.run {
+        let query =
+            normalize(
+                rawQuery
+            )
 
-            Array(
+
+        guard !query.isEmpty else {
+
+            return []
+        }
+
+
+        return await MainActor.run {
+
+            let songs =
                 MusicLibraryManager.shared
                     .songs
-                    .prefix(
-                        50
-                    )
-            )
-            .map {
 
-                EchoSongEntity(
-                    song:
-                        $0
+
+            return songs
+                .map {
+                    song in
+
+                    (
+                        song:
+                            song,
+
+                        score:
+                            score(
+                                song:
+                                    song,
+                                query:
+                                    query
+                            )
+                    )
+                }
+
+                .filter {
+
+                    $0.score >
+                        0
+                }
+
+                .sorted {
+
+                    $0.score >
+                        $1.score
+                }
+
+                .prefix(
+                    25
                 )
-            }
+
+                .map {
+
+                    EchoSongEntity(
+                        song:
+                            $0.song
+                    )
+                }
         }
     }
 
@@ -279,7 +549,7 @@ struct EchoSongQuery:
 
     private func score(
         song: Song,
-        search: String
+        query: String
     ) -> Int {
 
         let title =
@@ -287,48 +557,152 @@ struct EchoSongQuery:
                 song.title
             )
 
-
         let artist =
             normalize(
                 song.artist
             )
 
+        let album =
+            normalize(
+                song.album ??
+                    ""
+            )
+
+
+        // Exact title
 
         if title ==
-            search {
+            query {
 
-            return 100
+            return 1000
+        }
+
+
+        // Siri may send:
+        // "every breath you take by the police"
+
+        let combined =
+            "\(title) \(artist)"
+
+
+        if combined ==
+            query {
+
+            return 990
+        }
+
+
+        if
+            query.contains(
+                title
+            ),
+            query.contains(
+                artist
+            ) {
+
+            return 950
         }
 
 
         if title.hasPrefix(
-            search
+            query
         ) {
 
-            return 90
+            return 900
         }
 
 
         if title.contains(
-            search
+            query
         ) {
 
-            return 80
+            return 850
+        }
+
+
+        if query.contains(
+            title
+        ) {
+
+            return 825
         }
 
 
         if artist ==
-            search {
+            query {
 
-            return 70
+            return 700
         }
 
 
         if artist.contains(
-            search
+            query
         ) {
 
-            return 60
+            return 650
+        }
+
+
+        if album ==
+            query {
+
+            return 600
+        }
+
+
+        if album.contains(
+            query
+        ) {
+
+            return 550
+        }
+
+
+        // Check individual words.
+
+        let queryWords =
+            Set(
+                query.split(
+                    separator:
+                        " "
+                )
+                .map(
+                    String.init
+                )
+            )
+
+
+        let songWords =
+            Set(
+                "\(title) \(artist)"
+                    .split(
+                        separator:
+                            " "
+                    )
+                    .map(
+                        String.init
+                    )
+            )
+
+
+        let matches =
+            queryWords
+                .intersection(
+                    songWords
+                )
+                .count
+
+
+        if matches >= 2 {
+
+            return
+                300
+                +
+                (
+                    matches
+                    *
+                    10
+                )
         }
 
 
@@ -340,21 +714,51 @@ struct EchoSongQuery:
         _ value: String
     ) -> String {
 
-        value
-            .folding(
-                options: [
-                    .diacriticInsensitive,
-                    .caseInsensitive
-                ],
+        var result =
+            value
+                .folding(
+                    options: [
+                        .caseInsensitive,
+                        .diacriticInsensitive
+                    ],
+                    locale:
+                        .current
+                )
+                .lowercased()
 
-                locale:
-                    .current
-            )
+
+        // Remove common Siri filler words.
+
+        let removable = [
+
+            "speel ",
+            "play ",
+            "nummer ",
+            "liedje ",
+            "song ",
+            "met echo",
+            "in echo",
+            "via echo"
+        ]
+
+
+        for value in removable {
+
+            result =
+                result.replacingOccurrences(
+                    of:
+                        value,
+                    with:
+                        ""
+                )
+        }
+
+
+        return result
             .trimmingCharacters(
                 in:
                     .whitespacesAndNewlines
             )
-            .lowercased()
     }
 }
 
@@ -363,54 +767,52 @@ struct EchoSongQuery:
 // MARK: - Playlist Entity
 // ============================================================
 
-struct EchoPlaylistEntity:
-    AppEntity {
+@available(iOS 26.0, *)
+@AppEntity(schema: .audio.playlist)
+struct EchoPlaylistEntity {
 
-    static var typeDisplayRepresentation =
-        TypeDisplayRepresentation(
-            name:
-                "Playlist"
-        )
-
-
-    static var defaultQuery =
+    static let defaultQuery =
         EchoPlaylistQuery()
 
 
-    let id:
-        String
+    let id: String
 
 
-    @Property(
-        title:
-            "Naam"
-    )
-    var name:
-        String
+    // Required playlist schema field
+
+    var title: String
 
 
-    init(
-        id: String,
-        name: String
-    ) {
+    // Echo owns locally created playlists.
 
-        self.id =
-            id
+    var owner:
+        EchoArtistEntity?
 
-        self.name =
-            name
-    }
+    var createdByMe:
+        Bool?
+
+    var curatedForMe:
+        Bool?
 
 
     init(
         playlist: Playlist
     ) {
 
-        self.id =
+        id =
             playlist.id.uuidString
 
-        self.name =
+        title =
             playlist.name
+
+        owner =
+            nil
+
+        createdByMe =
+            true
+
+        curatedForMe =
+            false
     }
 
 
@@ -419,7 +821,7 @@ struct EchoPlaylistEntity:
 
         DisplayRepresentation(
             title:
-                "\(name)"
+                "\(title)"
         )
     }
 }
@@ -429,12 +831,12 @@ struct EchoPlaylistEntity:
 // MARK: - Playlist Query
 // ============================================================
 
+@available(iOS 26.0, *)
 struct EchoPlaylistQuery:
-    EntityStringQuery {
+    EntityQuery {
 
     func entities(
-        for identifiers:
-            [String]
+        for identifiers: [String]
     ) async throws
         -> [EchoPlaylistEntity] {
 
@@ -457,145 +859,16 @@ struct EchoPlaylistQuery:
                 }
         }
     }
-
-
-    func entities(
-        matching string: String
-    ) async throws
-        -> [EchoPlaylistEntity] {
-
-        let search =
-            normalize(
-                string
-            )
-
-
-        return await MainActor.run {
-
-            MusicLibraryManager.shared
-                .playlists
-                .filter {
-
-                    normalize(
-                        $0.name
-                    )
-                    .contains(
-                        search
-                    )
-                }
-                .sorted {
-                    left,
-                    right in
-
-
-                    playlistScore(
-                        left.name,
-                        search:
-                            search
-                    )
-                    >
-                    playlistScore(
-                        right.name,
-                        search:
-                            search
-                    )
-                }
-                .prefix(
-                    25
-                )
-                .map {
-
-                    EchoPlaylistEntity(
-                        playlist:
-                            $0
-                    )
-                }
-        }
-    }
-
-
-    func suggestedEntities()
-        async throws
-        -> [EchoPlaylistEntity] {
-
-        await MainActor.run {
-
-            MusicLibraryManager.shared
-                .playlists
-                .map {
-
-                    EchoPlaylistEntity(
-                        playlist:
-                            $0
-                    )
-                }
-        }
-    }
-
-
-    private func playlistScore(
-        _ value: String,
-        search: String
-    ) -> Int {
-
-        let value =
-            normalize(
-                value
-            )
-
-
-        if value ==
-            search {
-
-            return 100
-        }
-
-
-        if value.hasPrefix(
-            search
-        ) {
-
-            return 90
-        }
-
-
-        if value.contains(
-            search
-        ) {
-
-            return 80
-        }
-
-
-        return 0
-    }
-
-
-    private func normalize(
-        _ value: String
-    ) -> String {
-
-        value
-            .folding(
-                options: [
-                    .diacriticInsensitive,
-                    .caseInsensitive
-                ],
-
-                locale:
-                    .current
-            )
-            .trimmingCharacters(
-                in:
-                    .whitespacesAndNewlines
-            )
-            .lowercased()
-    }
 }
 
 
 // ============================================================
-// MARK: - Play Song
+// MARK: - Normal App Shortcut Play Song
+//
+// Keep this as fallback.
+//
+// This means Echo still works from Shortcuts even if Siri's
+// newer media routing isn't available on a particular device.
 // ============================================================
 
 struct PlaySongIntent:
@@ -604,12 +877,6 @@ struct PlaySongIntent:
     static var title:
         LocalizedStringResource =
         "Speel nummer"
-
-
-    static var description =
-        IntentDescription(
-            "Speelt een nummer uit je Echo-bibliotheek."
-        )
 
 
     static var openAppWhenRun:
@@ -629,8 +896,7 @@ struct PlaySongIntent:
 
 
     init(
-        song:
-            EchoSongEntity
+        song: EchoSongEntity
     ) {
 
         self.song =
@@ -638,15 +904,28 @@ struct PlaySongIntent:
     }
 
 
+    @MainActor
     func perform()
         async throws
         -> some IntentResult {
 
-        guard let uuid =
-            UUID(
-                uuidString:
-                    song.id
-            )
+        guard
+            let id =
+                UUID(
+                    uuidString:
+                        song.id
+                ),
+
+            let found =
+                MusicLibraryManager.shared
+                    .songs
+                    .first(
+                        where: {
+
+                            $0.id ==
+                                id
+                        }
+                    )
 
         else {
 
@@ -655,61 +934,14 @@ struct PlaySongIntent:
         }
 
 
-        try await MainActor.run {
+        try play(
+            song:
+                found,
 
-            let library =
+            queue:
                 MusicLibraryManager.shared
-
-
-            let audio =
-                AudioPlayerManager.shared
-
-
-            guard let found =
-                library.songs
-                    .first(
-                        where: {
-
-                            $0.id ==
-                                uuid
-                        }
-                    )
-
-            else {
-
-                throw EchoSiriError
-                    .songNotFound
-            }
-
-
-            guard let url =
-                library.getURL(
-                    for:
-                        found
-                )
-
-            else {
-
-                throw EchoSiriError
-                    .audioFileMissing
-            }
-
-
-            audio.allSongs =
-                library.songs
-
-
-            audio.play(
-                song:
-                    found,
-
-                url:
-                    url,
-
-                queue:
-                    library.songs
-            )
-        }
+                    .songs
+        )
 
 
         return .result()
@@ -729,12 +961,6 @@ struct PlayPlaylistIntent:
         "Speel playlist"
 
 
-    static var description =
-        IntentDescription(
-            "Speelt een playlist uit Echo."
-        )
-
-
     static var openAppWhenRun:
         Bool =
         false
@@ -751,25 +977,28 @@ struct PlayPlaylistIntent:
     init() {}
 
 
-    init(
-        playlist:
-            EchoPlaylistEntity
-    ) {
-
-        self.playlist =
-            playlist
-    }
-
-
+    @MainActor
     func perform()
         async throws
         -> some IntentResult {
 
-        guard let uuid =
-            UUID(
-                uuidString:
-                    playlist.id
-            )
+        guard
+            let id =
+                UUID(
+                    uuidString:
+                        playlist.id
+                ),
+
+            let foundPlaylist =
+                MusicLibraryManager.shared
+                    .playlists
+                    .first(
+                        where: {
+
+                            $0.id ==
+                                id
+                        }
+                    )
 
         else {
 
@@ -778,90 +1007,40 @@ struct PlayPlaylistIntent:
         }
 
 
-        try await MainActor.run {
+        let songs =
+            foundPlaylist.songIDs
+                .compactMap {
+                    songID in
 
-            let library =
-                MusicLibraryManager.shared
+                    MusicLibraryManager.shared
+                        .songs
+                        .first(
+                            where: {
 
-
-            let audio =
-                AudioPlayerManager.shared
-
-
-            guard let foundPlaylist =
-                library.playlists
-                    .first(
-                        where: {
-
-                            $0.id ==
-                                uuid
-                        }
-                    )
-
-            else {
-
-                throw EchoSiriError
-                    .playlistNotFound
-            }
+                                $0.id ==
+                                    songID
+                            }
+                        )
+                }
 
 
-            // Keep the exact playlist order.
+        guard let first =
+            songs.first
 
-            let playlistSongs =
-                foundPlaylist.songIDs
-                    .compactMap {
-                        songID in
+        else {
 
-
-                        library.songs
-                            .first(
-                                where: {
-
-                                    $0.id ==
-                                        songID
-                                }
-                            )
-                    }
-
-
-            guard let firstSong =
-                playlistSongs.first
-
-            else {
-
-                throw EchoSiriError
-                    .playlistEmpty
-            }
-
-
-            guard let url =
-                library.getURL(
-                    for:
-                        firstSong
-                )
-
-            else {
-
-                throw EchoSiriError
-                    .audioFileMissing
-            }
-
-
-            audio.allSongs =
-                library.songs
-
-
-            audio.play(
-                song:
-                    firstSong,
-
-                url:
-                    url,
-
-                queue:
-                    playlistSongs
-            )
+            throw EchoSiriError
+                .playlistEmpty
         }
+
+
+        try play(
+            song:
+                first,
+
+            queue:
+                songs
+        )
 
 
         return .result()
@@ -870,7 +1049,7 @@ struct PlayPlaylistIntent:
 
 
 // ============================================================
-// MARK: - Enable Shuffle
+// MARK: - Shuffle
 // ============================================================
 
 struct EnableShuffleIntent:
@@ -881,32 +1060,25 @@ struct EnableShuffleIntent:
         "Shuffle aan"
 
 
-    static var openAppWhenRun:
-        Bool =
+    static var openAppWhenRun =
         false
 
 
+    @MainActor
     func perform()
         async throws
         -> some IntentResult {
 
-        await MainActor.run {
-
-            AudioPlayerManager.shared
-                .setShuffle(
-                    true
-                )
-        }
+        AudioPlayerManager.shared
+            .setShuffle(
+                true
+            )
 
 
         return .result()
     }
 }
 
-
-// ============================================================
-// MARK: - Disable Shuffle
-// ============================================================
 
 struct DisableShuffleIntent:
     AudioPlaybackIntent {
@@ -916,22 +1088,19 @@ struct DisableShuffleIntent:
         "Shuffle uit"
 
 
-    static var openAppWhenRun:
-        Bool =
+    static var openAppWhenRun =
         false
 
 
+    @MainActor
     func perform()
         async throws
         -> some IntentResult {
 
-        await MainActor.run {
-
-            AudioPlayerManager.shared
-                .setShuffle(
-                    false
-                )
-        }
+        AudioPlayerManager.shared
+            .setShuffle(
+                false
+            )
 
 
         return .result()
@@ -940,7 +1109,7 @@ struct DisableShuffleIntent:
 
 
 // ============================================================
-// MARK: - Repeat Current Song
+// MARK: - Repeat
 // ============================================================
 
 struct RepeatCurrentSongIntent:
@@ -951,45 +1120,35 @@ struct RepeatCurrentSongIntent:
         "Herhaal dit nummer"
 
 
-    static var openAppWhenRun:
-        Bool =
+    static var openAppWhenRun =
         false
 
 
+    @MainActor
     func perform()
         async throws
         -> some IntentResult {
 
-        try await MainActor.run {
+        guard AudioPlayerManager.shared
+            .currentSong != nil
 
-            let audio =
-                AudioPlayerManager.shared
+        else {
 
-
-            guard audio.currentSong !=
-                    nil
-
-            else {
-
-                throw EchoSiriError
-                    .nothingPlaying
-            }
+            throw EchoSiriError
+                .nothingPlaying
+        }
 
 
-            audio.setRepeatMode(
+        AudioPlayerManager.shared
+            .setRepeatMode(
                 .one
             )
-        }
 
 
         return .result()
     }
 }
 
-
-// ============================================================
-// MARK: - Repeat All
-// ============================================================
 
 struct RepeatAllIntent:
     AudioPlaybackIntent {
@@ -999,32 +1158,25 @@ struct RepeatAllIntent:
         "Herhaal alles"
 
 
-    static var openAppWhenRun:
-        Bool =
+    static var openAppWhenRun =
         false
 
 
+    @MainActor
     func perform()
         async throws
         -> some IntentResult {
 
-        await MainActor.run {
-
-            AudioPlayerManager.shared
-                .setRepeatMode(
-                    .all
-                )
-        }
+        AudioPlayerManager.shared
+            .setRepeatMode(
+                .all
+            )
 
 
         return .result()
     }
 }
 
-
-// ============================================================
-// MARK: - Repeat Off
-// ============================================================
 
 struct DisableRepeatIntent:
     AudioPlaybackIntent {
@@ -1034,22 +1186,19 @@ struct DisableRepeatIntent:
         "Herhalen uit"
 
 
-    static var openAppWhenRun:
-        Bool =
+    static var openAppWhenRun =
         false
 
 
+    @MainActor
     func perform()
         async throws
         -> some IntentResult {
 
-        await MainActor.run {
-
-            AudioPlayerManager.shared
-                .setRepeatMode(
-                    .off
-                )
-        }
+        AudioPlayerManager.shared
+            .setRepeatMode(
+                .off
+            )
 
 
         return .result()
@@ -1058,7 +1207,63 @@ struct DisableRepeatIntent:
 
 
 // ============================================================
-// MARK: - Echo Siri Shortcuts
+// MARK: - Shared Playback
+// ============================================================
+
+@MainActor
+private func play(
+    song: Song,
+    queue: [Song]
+) throws {
+
+    let library =
+        MusicLibraryManager.shared
+
+
+    guard FileManager.default
+        .fileExists(
+            atPath:
+                library
+                    .getURL(
+                        for:
+                            song
+                    )
+                    .path
+        )
+
+    else {
+
+        throw EchoSiriError
+            .audioFileMissing
+    }
+
+
+    let audio =
+        AudioPlayerManager.shared
+
+
+    audio.allSongs =
+        library.songs
+
+
+    audio.play(
+        song:
+            song,
+
+        url:
+            library.getURL(
+                for:
+                    song
+            ),
+
+        queue:
+            queue
+    )
+}
+
+
+// ============================================================
+// MARK: - App Shortcuts
 // ============================================================
 
 struct EchoShortcuts:
@@ -1067,12 +1272,7 @@ struct EchoShortcuts:
     static var appShortcuts:
         [AppShortcut] {
 
-        // ----------------------------------------------------
-        // Play Song
-        // ----------------------------------------------------
-
         AppShortcut(
-
             intent:
                 PlaySongIntent(),
 
@@ -1080,9 +1280,7 @@ struct EchoShortcuts:
 
                 "Speel \(\.$song) met \(.applicationName)",
 
-                "Speel \(\.$song) in \(.applicationName)",
-
-                "Start \(\.$song) met \(.applicationName)"
+                "Speel \(\.$song) in \(.applicationName)"
             ],
 
             shortTitle:
@@ -1093,12 +1291,7 @@ struct EchoShortcuts:
         )
 
 
-        // ----------------------------------------------------
-        // Play Playlist
-        // ----------------------------------------------------
-
         AppShortcut(
-
             intent:
                 PlayPlaylistIntent(),
 
@@ -1117,20 +1310,15 @@ struct EchoShortcuts:
         )
 
 
-        // ----------------------------------------------------
-        // Shuffle On
-        // ----------------------------------------------------
-
         AppShortcut(
-
             intent:
                 EnableShuffleIntent(),
 
             phrases: [
 
-                "Zet shuffle aan in \(.applicationName)",
+                "Shuffle met \(.applicationName)",
 
-                "Shuffle met \(.applicationName)"
+                "Zet shuffle aan in \(.applicationName)"
             ],
 
             shortTitle:
@@ -1141,12 +1329,7 @@ struct EchoShortcuts:
         )
 
 
-        // ----------------------------------------------------
-        // Shuffle Off
-        // ----------------------------------------------------
-
         AppShortcut(
-
             intent:
                 DisableShuffleIntent(),
 
@@ -1163,12 +1346,7 @@ struct EchoShortcuts:
         )
 
 
-        // ----------------------------------------------------
-        // Repeat Current Song
-        // ----------------------------------------------------
-
         AppShortcut(
-
             intent:
                 RepeatCurrentSongIntent(),
 
@@ -1187,12 +1365,7 @@ struct EchoShortcuts:
         )
 
 
-        // ----------------------------------------------------
-        // Repeat All
-        // ----------------------------------------------------
-
         AppShortcut(
-
             intent:
                 RepeatAllIntent(),
 
@@ -1209,20 +1382,13 @@ struct EchoShortcuts:
         )
 
 
-        // ----------------------------------------------------
-        // Repeat Off
-        // ----------------------------------------------------
-
         AppShortcut(
-
             intent:
                 DisableRepeatIntent(),
 
             phrases: [
 
-                "Zet herhalen uit in \(.applicationName)",
-
-                "Stop herhalen in \(.applicationName)"
+                "Zet herhalen uit in \(.applicationName)"
             ],
 
             shortTitle:
