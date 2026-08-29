@@ -11,10 +11,8 @@ final class YTDLPPythonSerialExecutor:
 
     private let queue =
         DispatchQueue(
-
             label:
                 "com.echomusic.python",
-
             qos:
                 .utility
         )
@@ -86,6 +84,333 @@ actor YTDLPRunner {
     private init() {}
 
 
+    // MARK: - Search YouTube
+
+    func search(
+        title: String,
+        artist: String
+    ) async throws -> SearchResult {
+
+        let cleanedTitle =
+            title
+                .trimmingCharacters(
+                    in:
+                        .whitespacesAndNewlines
+                )
+
+
+        let cleanedArtist =
+            artist
+                .trimmingCharacters(
+                    in:
+                        .whitespacesAndNewlines
+                )
+
+
+        let query =
+            "\(cleanedTitle) \(cleanedArtist) audio"
+
+
+        return try await runIsolated {
+
+            Self.stage(
+                "PYTHON SEARCH 1 - started"
+            )
+
+
+            // Make sure embedded Python / yt-dlp
+            // has been initialized.
+
+            let _ =
+                try await
+                YtDlp()
+
+
+            Self.stage(
+                "PYTHON SEARCH 2 - YtDlp ready"
+            )
+
+
+            let module =
+                try Python.attemptImport(
+                    "yt_dlp"
+                )
+
+
+            Self.stage(
+                "PYTHON SEARCH 3 - module imported"
+            )
+
+
+            // =====================================
+            // Search options
+            // =====================================
+
+            let options =
+                PythonObject(
+                    [:]
+                        as
+                    [String: PythonObject]
+                )
+
+
+            options[
+                "quiet"
+            ] =
+                true
+
+
+            options[
+                "no_warnings"
+            ] =
+                true
+
+
+            options[
+                "nocheckcertificate"
+            ] =
+                true
+
+
+            options[
+                "socket_timeout"
+            ] =
+                30.0
+
+
+            // We only want the search result here.
+            // The actual media extraction happens
+            // afterwards in extract(url:).
+
+            options[
+                "extract_flat"
+            ] =
+                true
+
+
+            options[
+                "skip_download"
+            ] =
+                true
+
+
+            options[
+                "noplaylist"
+            ] =
+                false
+
+
+            let ydl =
+                module.YoutubeDL(
+                    options
+                )
+
+
+            Self.stage(
+                "PYTHON SEARCH 4 - YoutubeDL ready"
+            )
+
+
+            // =====================================
+            // ytsearch1:
+            //
+            // Ask yt-dlp for only the first result.
+            // =====================================
+
+            let searchValue =
+                "ytsearch1:\(query)"
+
+
+            let info =
+                try ydl
+                    .extract_info
+                    .throwing
+                    .dynamicallyCall(
+                        withArguments: [
+                            searchValue,
+                            false
+                        ]
+                    )
+
+
+            Self.stage(
+                "PYTHON SEARCH 5 - search returned"
+            )
+
+
+            // =====================================
+            // Entries
+            // =====================================
+
+            guard let entriesObject =
+                info.checking[
+                    "entries"
+                ]
+            else {
+
+                throw YTDLPRunnerError
+                    .noSearchResult
+            }
+
+
+            let entries:
+                [PythonObject] =
+                Array(
+                    entriesObject
+                )
+
+
+            guard let first =
+                entries.first
+            else {
+
+                throw YTDLPRunnerError
+                    .noSearchResult
+            }
+
+
+            // =====================================
+            // Video ID
+            // =====================================
+
+            let videoID =
+                first
+                    .checking[
+                        "id"
+                    ]
+                    .flatMap(
+                        String.init
+                    )
+
+
+            // =====================================
+            // Title
+            // =====================================
+
+            let resultTitle =
+                first
+                    .checking[
+                        "title"
+                    ]
+                    .flatMap(
+                        String.init
+                    )
+                ??
+                cleanedTitle
+
+
+            // =====================================
+            // Uploader / channel
+            // =====================================
+
+            let uploader =
+                first
+                    .checking[
+                        "uploader"
+                    ]
+                    .flatMap(
+                        String.init
+                    )
+                ??
+                first
+                    .checking[
+                        "channel"
+                    ]
+                    .flatMap(
+                        String.init
+                    )
+
+
+            // =====================================
+            // URL
+            // =====================================
+
+            var videoURL:
+                URL?
+
+
+            if let webpage =
+                first
+                    .checking[
+                        "webpage_url"
+                    ]
+                    .flatMap(
+                        String.init
+                    ) {
+
+                videoURL =
+                    URL(
+                        string:
+                            webpage
+                    )
+            }
+
+
+            if videoURL == nil,
+               let originalURL =
+                first
+                    .checking[
+                        "url"
+                    ]
+                    .flatMap(
+                        String.init
+                    ),
+               originalURL.hasPrefix(
+                    "http"
+               ) {
+
+                videoURL =
+                    URL(
+                        string:
+                            originalURL
+                    )
+            }
+
+
+            // extract_flat commonly gives us the
+            // video ID instead of the complete URL.
+
+            if videoURL == nil,
+               let videoID,
+               !videoID.isEmpty {
+
+                videoURL =
+                    URL(
+                        string:
+                            "https://www.youtube.com/watch?v=\(videoID)"
+                    )
+            }
+
+
+            guard let videoURL else {
+
+                throw YTDLPRunnerError
+                    .invalidSearchResult
+            }
+
+
+            Self.stage(
+                "PYTHON SEARCH 6 - COMPLETE"
+            )
+
+
+            return SearchResult(
+                title:
+                    resultTitle,
+
+                uploader:
+                    uploader,
+
+                videoID:
+                    videoID,
+
+                videoURL:
+                    videoURL
+            )
+        }
+    }
+
+
     // MARK: - Extract
 
     func extract(
@@ -137,7 +462,7 @@ actor YTDLPRunner {
             // Options
             // =====================================
 
-            var options =
+            let options =
                 PythonObject(
                     [:]
                         as
@@ -426,18 +751,8 @@ actor YTDLPRunner {
 
 
                     // =================================
-                    // iOS source compatibility
-                    //
-                    // Prefer:
-                    //
-                    // m4a / AAC
-                    //
-                    // over:
-                    //
-                    // webm / Opus
-                    //
-                    // because AVFoundation then has
-                    // to decode it into PCM for LAME.
+                    // Prefer formats AVFoundation
+                    // handles well on iOS.
                     // =================================
 
                     let compatibilityScore:
@@ -485,7 +800,6 @@ actor YTDLPRunner {
 
 
                     let shouldReplace:
-
                         Bool
 
 
@@ -731,7 +1045,6 @@ actor YTDLPRunner {
         UserDefaults.standard
             .set(
                 value,
-
                 forKey:
                     "ytdlpLastStage"
             )
@@ -742,7 +1055,26 @@ actor YTDLPRunner {
     }
 
 
-    // MARK: - Result
+    // MARK: - Search Result
+
+    struct SearchResult:
+        Sendable {
+
+        let title:
+            String
+
+        let uploader:
+            String?
+
+        let videoID:
+            String?
+
+        let videoURL:
+            URL
+    }
+
+
+    // MARK: - Extract Result
 
     struct Result:
         Sendable {
@@ -789,6 +1121,8 @@ enum YTDLPRunnerError:
     LocalizedError {
 
     case noAudioFormat
+    case noSearchResult
+    case invalidSearchResult
 
 
     var errorDescription:
@@ -798,7 +1132,20 @@ enum YTDLPRunnerError:
 
         case .noAudioFormat:
 
-            return "yt-dlp vond geen bruikbare audio-only stream."
+            return
+                "yt-dlp vond geen bruikbare audio-only stream."
+
+
+        case .noSearchResult:
+
+            return
+                "yt-dlp kon geen overeenkomende YouTube-video vinden."
+
+
+        case .invalidSearchResult:
+
+            return
+                "yt-dlp vond een resultaat, maar kon geen geldige YouTube-URL bepalen."
         }
     }
 }
