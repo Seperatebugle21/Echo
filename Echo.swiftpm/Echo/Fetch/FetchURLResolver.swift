@@ -5,7 +5,8 @@ import YoutubeDL
 
 // MARK: - Resolved Content
 
-enum FetchURLResolvedContent: Identifiable {
+enum FetchURLResolvedContent:
+    Identifiable {
 
     case spotifyTrack(
         SpotifyTrack
@@ -72,7 +73,8 @@ enum FetchURLResolvedContent: Identifiable {
             let track
         ):
 
-            return track.name
+            return
+                track.name
 
 
         case .spotifyPlaylist(
@@ -80,21 +82,24 @@ enum FetchURLResolvedContent: Identifiable {
             _
         ):
 
-            return playlist.name
+            return
+                playlist.name
 
 
         case .youtubeTrack(
             let track
         ):
 
-            return track.title
+            return
+                track.title
 
 
         case .youtubePlaylist(
             let playlist
         ):
 
-            return playlist.title
+            return
+                playlist.title
         }
     }
 
@@ -107,7 +112,8 @@ enum FetchURLResolvedContent: Identifiable {
             let track
         ):
 
-            return track.artworkURL
+            return
+                track.artworkURL
 
 
         case .spotifyPlaylist(
@@ -115,21 +121,24 @@ enum FetchURLResolvedContent: Identifiable {
             _
         ):
 
-            return playlist.artworkURL
+            return
+                playlist.artworkURL
 
 
         case .youtubeTrack(
             let track
         ):
 
-            return track.artworkURL
+            return
+                track.artworkURL
 
 
         case .youtubePlaylist(
             let playlist
         ):
 
-            return playlist.artworkURL
+            return
+                playlist.artworkURL
         }
     }
 
@@ -141,13 +150,15 @@ enum FetchURLResolvedContent: Identifiable {
         case .spotifyTrack,
              .spotifyPlaylist:
 
-            return "Spotify"
+            return
+                "Spotify"
 
 
         case .youtubeTrack,
              .youtubePlaylist:
 
-            return "YouTube Music"
+            return
+                "YouTube Music"
         }
     }
 
@@ -184,14 +195,16 @@ enum FetchURLResolvedContent: Identifiable {
             let tracks
         ):
 
-            return tracks.count
+            return
+                tracks.count
 
 
         case .youtubePlaylist(
             let playlist
         ):
 
-            return playlist.tracks.count
+            return
+                playlist.tracks.count
         }
     }
 }
@@ -204,15 +217,20 @@ struct FetchURLTrackPreview:
     Hashable,
     Sendable {
 
-    let id: String
+    let id:
+        String
 
-    let title: String
+    let title:
+        String
 
-    let artist: String
+    let artist:
+        String
 
-    let artworkURL: URL?
+    let artworkURL:
+        URL?
 
-    let sourceURL: URL
+    let sourceURL:
+        URL
 }
 
 
@@ -221,13 +239,17 @@ struct FetchURLPlaylistPreview:
     Hashable,
     Sendable {
 
-    let id: String
+    let id:
+        String
 
-    let title: String
+    let title:
+        String
 
-    let artworkURL: URL?
+    let artworkURL:
+        URL?
 
-    let sourceURL: URL
+    let sourceURL:
+        URL
 
     let tracks:
         [FetchURLTrackPreview]
@@ -240,17 +262,11 @@ enum FetchURLResolverError:
     LocalizedError {
 
     case invalidURL
-
     case unsupportedURL
-
     case spotifyLoginRequired
-
     case spotifyRequestFailed
-
     case unsupportedSpotifyType
-
     case youtubeMetadataFailed
-
     case emptyPlaylist
 
 
@@ -316,7 +332,7 @@ final class FetchURLResolver {
     private init() {}
 
 
-    // MARK: Resolve
+    // MARK: - Resolve
 
     func resolve(
         _ input: String
@@ -364,7 +380,6 @@ final class FetchURLResolver {
                 string:
                     value
             )
-
         else {
 
             throw FetchURLResolverError
@@ -372,11 +387,9 @@ final class FetchURLResolver {
         }
 
 
-        guard
-            isYouTubeURL(
-                url
-            )
-        else {
+        guard isYouTubeURL(
+            url
+        ) else {
 
             throw FetchURLResolverError
                 .unsupportedURL
@@ -468,7 +481,7 @@ final class FetchURLResolver {
     }
 
 
-    // MARK: Spotify Track
+    // MARK: - Spotify Track
 
     private func getSpotifyTrack(
         id: String
@@ -492,6 +505,23 @@ final class FetchURLResolver {
                 )
 
 
+        let artist =
+            decoded.artists
+                .map(
+                    \.name
+                )
+                .joined(
+                    separator:
+                        ", "
+                )
+
+
+        let artwork =
+            decoded.album.images
+                .first?
+                .url
+
+
         return SpotifyTrack(
 
             id:
@@ -501,14 +531,7 @@ final class FetchURLResolver {
                 decoded.name,
 
             artist:
-                decoded.artists
-                    .map(
-                        \.name
-                    )
-                    .joined(
-                        separator:
-                            ", "
-                    ),
+                artist,
 
             album:
                 decoded.album.name,
@@ -517,9 +540,7 @@ final class FetchURLResolver {
                 decoded.durationMS,
 
             artworkURL:
-                decoded.album.images
-                    .first?
-                    .url,
+                artwork,
 
             spotifyURL:
                 decoded.externalURLs
@@ -528,7 +549,7 @@ final class FetchURLResolver {
     }
 
 
-    // MARK: Spotify Playlist
+    // MARK: - Spotify Playlist
 
     private func getSpotifyPlaylist(
         id: String
@@ -552,6 +573,12 @@ final class FetchURLResolver {
                 )
 
 
+        let artwork =
+            decoded.images
+                .first?
+                .url
+
+
         return SpotifyPlaylist(
 
             id:
@@ -561,9 +588,7 @@ final class FetchURLResolver {
                 decoded.name,
 
             artworkURL:
-                decoded.images
-                    .first?
-                    .url,
+                artwork,
 
             spotifyURL:
                 decoded.externalURLs
@@ -575,7 +600,7 @@ final class FetchURLResolver {
     }
 
 
-    // MARK: Spotify Request
+    // MARK: - Spotify Request
 
     private func spotifyRequest(
         path: String
@@ -621,10 +646,7 @@ final class FetchURLResolver {
         )
 
 
-        let (
-            data,
-            response
-        ) =
+        let result =
             try await
             URLSession.shared
                 .data(
@@ -633,15 +655,27 @@ final class FetchURLResolver {
                 )
 
 
-        guard
-            let http =
-                response
-                    as?
-                    HTTPURLResponse,
+        let data =
+            result.0
 
+        let response =
+            result.1
+
+
+        guard let http =
+            response
+                as?
+                HTTPURLResponse
+        else {
+
+            throw FetchURLResolverError
+                .spotifyRequestFailed
+        }
+
+
+        guard
             200..<300 ~=
                 http.statusCode
-
         else {
 
             throw FetchURLResolverError
@@ -667,50 +701,76 @@ final class FetchURLResolver {
             )
 
 
-        if !inspection.entries
-            .isEmpty {
+        // =====================================
+        // Playlist
+        // =====================================
 
-            let tracks =
-                inspection.entries
-                    .compactMap {
-                        entry
-                        ->
-                        FetchURLTrackPreview?
-                        in
+        if !inspection.entries.isEmpty {
 
-
-                        guard let sourceURL =
-                            entry.sourceURL
-                        else {
-
-                            return nil
-                        }
+            var tracks:
+                [FetchURLTrackPreview] =
+                []
 
 
-                        return FetchURLTrackPreview(
+            for entry
+                in inspection.entries {
 
-                            id:
-                                entry.id,
+                guard let sourceURL =
+                    entry.sourceURL
+                else {
 
-                            title:
-                                entry.title,
+                    continue
+                }
 
-                            artist:
-                                entry.artist,
 
-                            artworkURL:
-                                entry.artworkURL,
+                let track =
+                    FetchURLTrackPreview(
 
-                            sourceURL:
-                                sourceURL
-                        )
-                    }
+                        id:
+                            entry.id,
+
+                        title:
+                            entry.title,
+
+                        artist:
+                            entry.artist,
+
+                        artworkURL:
+                            entry.artworkURL,
+
+                        sourceURL:
+                            sourceURL
+                    )
+
+
+                tracks.append(
+                    track
+                )
+            }
 
 
             guard !tracks.isEmpty else {
 
                 throw FetchURLResolverError
                     .emptyPlaylist
+            }
+
+
+            let playlistArtwork:
+                URL?
+
+
+            if let artwork =
+                inspection.artworkURL {
+
+                playlistArtwork =
+                    artwork
+
+            } else {
+
+                playlistArtwork =
+                    tracks.first?
+                        .artworkURL
             }
 
 
@@ -724,10 +784,7 @@ final class FetchURLResolver {
                         inspection.title,
 
                     artworkURL:
-                        inspection.artworkURL
-                        ??
-                        tracks.first?
-                            .artworkURL,
+                        playlistArtwork,
 
                     sourceURL:
                         url,
@@ -743,6 +800,10 @@ final class FetchURLResolver {
                 )
         }
 
+
+        // =====================================
+        // Single Track
+        // =====================================
 
         let track =
             FetchURLTrackPreview(
@@ -785,6 +846,10 @@ final class FetchURLResolver {
                 YTDLPRunner.shared
                     .runIsolated {
 
+                        // =====================================
+                        // Initialize Python / yt-dlp
+                        // =====================================
+
                         let _ =
                             try await
                             YtDlp()
@@ -796,6 +861,10 @@ final class FetchURLResolver {
                                     "yt_dlp"
                                 )
 
+
+                        // =====================================
+                        // Options
+                        // =====================================
 
                         var options =
                             PythonObject(
@@ -842,6 +911,10 @@ final class FetchURLResolver {
                             30.0
 
 
+                        // =====================================
+                        // Extract
+                        // =====================================
+
                         let ydl =
                             module.YoutubeDL(
                                 options
@@ -863,88 +936,135 @@ final class FetchURLResolver {
                                 )
 
 
+                        // =====================================
+                        // Main Metadata
+                        // =====================================
+
+                        let idObject =
+                            info.checking[
+                                "id"
+                            ]
+
+
+                        let titleObject =
+                            info.checking[
+                                "title"
+                            ]
+
+
+                        let artistObject =
+                            info.checking[
+                                "artist"
+                            ]
+
+
+                        let uploaderObject =
+                            info.checking[
+                                "uploader"
+                            ]
+
+
+                        let channelObject =
+                            info.checking[
+                                "channel"
+                            ]
+
+
+                        let thumbnailObject =
+                            info.checking[
+                                "thumbnail"
+                            ]
+
+
+                        // ID
+
+                        let idValue =
+                            Self.stringValue(
+                                idObject
+                            )
+
+
                         let id =
-                            info
-                                .checking[
-                                    "id"
-                                ]
-                                .flatMap(
-                                    String.init
-                                )
+                            idValue
                             ??
                             UUID()
                                 .uuidString
 
 
+                        // Title
+
+                        let titleValue =
+                            Self.stringValue(
+                                titleObject
+                            )
+
+
                         let title =
-                            info
-                                .checking[
-                                    "title"
-                                ]
-                                .flatMap(
-                                    String.init
-                                )
+                            titleValue
                             ??
                             "YouTube Music"
+
+
+                        // Artist
+
+                        let artistValue =
+                            Self.stringValue(
+                                artistObject
+                            )
+
+
+                        let uploaderValue =
+                            Self.stringValue(
+                                uploaderObject
+                            )
+
+
+                        let channelValue =
+                            Self.stringValue(
+                                channelObject
+                            )
 
 
                         let artist =
-                            info
-                                .checking[
-                                    "artist"
-                                ]
-                                .flatMap(
-                                    String.init
-                                )
+                            artistValue
                             ??
-                            info
-                                .checking[
-                                    "uploader"
-                                ]
-                                .flatMap(
-                                    String.init
-                                )
+                            uploaderValue
                             ??
-                            info
-                                .checking[
-                                    "channel"
-                                ]
-                                .flatMap(
-                                    String.init
-                                )
+                            channelValue
                             ??
                             "YouTube Music"
 
 
+                        // Thumbnail
+
                         let thumbnail =
-                            info
-                                .checking[
-                                    "thumbnail"
-                                ]
-                                .flatMap(
-                                    String.init
-                                )
+                            Self.stringValue(
+                                thumbnailObject
+                            )
 
 
                         let artworkURL =
-                            thumbnail
-                                .flatMap(
-                                    URL.init(
-                                        string:
-                                    )
-                                )
+                            Self.makeURL(
+                                thumbnail
+                            )
 
+
+                        // =====================================
+                        // Playlist Entries
+                        // =====================================
 
                         var entries:
                             [YouTubeInspectionEntry] =
                             []
 
 
-                        if let entriesObject =
-                            info
-                                .checking[
-                                    "entries"
-                                ] {
+                        let entriesObject =
+                            info.checking[
+                                "entries"
+                            ]
+
+
+                        if let entriesObject {
 
                             let pythonEntries:
                                 [PythonObject] =
@@ -956,135 +1076,25 @@ final class FetchURLResolver {
                             for entry
                                 in pythonEntries {
 
-                                let entryID =
-                                    entry
-                                        .checking[
-                                            "id"
-                                        ]
-                                        .flatMap(
-                                            String.init
-                                        )
-                                    ??
-                                    UUID()
-                                        .uuidString
-
-
-                                let entryTitle =
-                                    entry
-                                        .checking[
-                                            "title"
-                                        ]
-                                        .flatMap(
-                                            String.init
-                                        )
-                                    ??
-                                    "Unknown"
-
-
-                                let entryArtist =
-                                    entry
-                                        .checking[
-                                            "artist"
-                                        ]
-                                        .flatMap(
-                                            String.init
-                                        )
-                                    ??
-                                    entry
-                                        .checking[
-                                            "uploader"
-                                        ]
-                                        .flatMap(
-                                            String.init
-                                        )
-                                    ??
-                                    entry
-                                        .checking[
-                                            "channel"
-                                        ]
-                                        .flatMap(
-                                            String.init
-                                        )
-                                    ??
-                                    "YouTube Music"
-
-
-                                let entryThumbnail =
-                                    entry
-                                        .checking[
-                                            "thumbnail"
-                                        ]
-                                        .flatMap(
-                                            String.init
-                                        )
-
-
-                                let entryArtworkURL =
-                                    entryThumbnail
-                                        .flatMap(
-                                            URL.init(
-                                                string:
-                                            )
-                                        )
-
-
-                                let webpage =
-                                    entry
-                                        .checking[
-                                            "webpage_url"
-                                        ]
-                                        .flatMap(
-                                            String.init
-                                        )
-
-
-                                let sourceURL:
-                                    URL?
-
-
-                                if let webpage,
-                                   let parsed =
-                                    URL(
-                                        string:
-                                            webpage
-                                    ) {
-
-                                    sourceURL =
-                                        parsed
-
-
-                                } else {
-
-                                    sourceURL =
-                                        URL(
-                                            string:
-                                                "https://www.youtube.com/watch?v=\(entryID)"
-                                        )
-                                }
-
-
-                                entries.append(
-                                    YouTubeInspectionEntry(
-
-                                        id:
-                                            entryID,
-
-                                        title:
-                                            entryTitle,
-
-                                        artist:
-                                            entryArtist,
-
-                                        artworkURL:
-                                            entryArtworkURL,
-
-                                        sourceURL:
-                                            sourceURL
+                                let parsedEntry =
+                                    Self.parseYouTubeEntry(
+                                        entry
                                     )
-                                )
+
+
+                                if let parsedEntry {
+
+                                    entries.append(
+                                        parsedEntry
+                                    )
+                                }
                             }
                         }
 
+
+                        // =====================================
+                        // Return
+                        // =====================================
 
                         return YouTubeInspection(
 
@@ -1120,6 +1130,246 @@ final class FetchURLResolver {
     }
 
 
+    // MARK: - Parse YouTube Entry
+
+    nonisolated
+    private static func parseYouTubeEntry(
+        _ entry: PythonObject
+    ) -> YouTubeInspectionEntry? {
+
+        let idObject =
+            entry.checking[
+                "id"
+            ]
+
+
+        let titleObject =
+            entry.checking[
+                "title"
+            ]
+
+
+        let artistObject =
+            entry.checking[
+                "artist"
+            ]
+
+
+        let uploaderObject =
+            entry.checking[
+                "uploader"
+            ]
+
+
+        let channelObject =
+            entry.checking[
+                "channel"
+            ]
+
+
+        let thumbnailObject =
+            entry.checking[
+                "thumbnail"
+            ]
+
+
+        let webpageObject =
+            entry.checking[
+                "webpage_url"
+            ]
+
+
+        // =====================================
+        // ID
+        // =====================================
+
+        let id =
+            stringValue(
+                idObject
+            )
+            ??
+            UUID()
+                .uuidString
+
+
+        // =====================================
+        // Title
+        // =====================================
+
+        let title =
+            stringValue(
+                titleObject
+            )
+            ??
+            "Unknown"
+
+
+        // =====================================
+        // Artist
+        // =====================================
+
+        let artist =
+            stringValue(
+                artistObject
+            )
+            ??
+            stringValue(
+                uploaderObject
+            )
+            ??
+            stringValue(
+                channelObject
+            )
+            ??
+            "YouTube Music"
+
+
+        // =====================================
+        // Artwork
+        // =====================================
+
+        let thumbnail =
+            stringValue(
+                thumbnailObject
+            )
+
+
+        let artworkURL =
+            makeURL(
+                thumbnail
+            )
+
+
+        // =====================================
+        // Source URL
+        // =====================================
+
+        let webpage =
+            stringValue(
+                webpageObject
+            )
+
+
+        let sourceURL:
+            URL?
+
+
+        if let webpage,
+           let parsed =
+            URL(
+                string:
+                    webpage
+            ) {
+
+            sourceURL =
+                parsed
+
+        } else {
+
+            sourceURL =
+                URL(
+                    string:
+                        "https://www.youtube.com/watch?v=\(id)"
+                )
+        }
+
+
+        guard sourceURL != nil else {
+
+            return nil
+        }
+
+
+        return YouTubeInspectionEntry(
+
+            id:
+                id,
+
+            title:
+                title,
+
+            artist:
+                artist,
+
+            artworkURL:
+                artworkURL,
+
+            sourceURL:
+                sourceURL
+        )
+    }
+
+
+    // MARK: - Python Helpers
+
+    nonisolated
+    private static func stringValue(
+        _ object:
+            PythonObject?
+    ) -> String? {
+
+        guard let object else {
+
+            return nil
+        }
+
+
+        let result =
+            String(
+                object
+            )
+
+
+        guard let result else {
+
+            return nil
+        }
+
+
+        let cleaned =
+            result
+                .trimmingCharacters(
+                    in:
+                        .whitespacesAndNewlines
+                )
+
+
+        guard !cleaned.isEmpty else {
+
+            return nil
+        }
+
+
+        if cleaned ==
+            "None" {
+
+            return nil
+        }
+
+
+        return cleaned
+    }
+
+
+    nonisolated
+    private static func makeURL(
+        _ value:
+            String?
+    ) -> URL? {
+
+        guard let value else {
+
+            return nil
+        }
+
+
+        return URL(
+            string:
+                value
+        )
+    }
+
+
     // MARK: - URL Detection
 
     private func isYouTubeURL(
@@ -1135,21 +1385,21 @@ final class FetchURLResolver {
         }
 
 
-        return
-            host ==
-                "music.youtube.com"
-            ||
-            host ==
-                "youtube.com"
-            ||
-            host ==
-                "www.youtube.com"
-            ||
-            host ==
-                "m.youtube.com"
-            ||
-            host ==
-                "youtu.be"
+        switch host {
+
+        case "music.youtube.com",
+             "youtube.com",
+             "www.youtube.com",
+             "m.youtube.com",
+             "youtu.be":
+
+            return true
+
+
+        default:
+
+            return false
+        }
     }
 }
 
@@ -1159,13 +1409,17 @@ final class FetchURLResolver {
 private struct YouTubeInspection:
     Sendable {
 
-    let id: String
+    let id:
+        String
 
-    let title: String
+    let title:
+        String
 
-    let artist: String
+    let artist:
+        String
 
-    let artworkURL: URL?
+    let artworkURL:
+        URL?
 
     let entries:
         [YouTubeInspectionEntry]
@@ -1175,13 +1429,18 @@ private struct YouTubeInspection:
 private struct YouTubeInspectionEntry:
     Sendable {
 
-    let id: String
+    let id:
+        String
 
-    let title: String
+    let title:
+        String
 
-    let artist: String
+    let artist:
+        String
 
-    let artworkURL: URL?
+    let artworkURL:
+        URL?
 
-    let sourceURL: URL?
+    let sourceURL:
+        URL?
 }
