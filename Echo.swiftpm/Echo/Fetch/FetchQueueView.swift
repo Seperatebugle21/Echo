@@ -1,86 +1,60 @@
 import SwiftUI
 
-
 struct FetchQueueView: View {
 
     @State private var manager =
         FetchManager.shared
 
-
     var body: some View {
 
         List {
 
-            // MARK: - Keep App Open Warning
-
             Section {
 
                 HStack(
-                    alignment:
-                        .top,
-                    spacing:
-                        12
+                    alignment: .top,
+                    spacing: 12
                 ) {
 
                     Image(
                         systemName:
                             "exclamationmark.triangle.fill"
                     )
-                    .font(
-                        .title3
-                    )
-                    .foregroundStyle(
-                        .orange
-                    )
-
+                    .font(.title3)
+                    .foregroundStyle(.orange)
 
                     VStack(
-                        alignment:
-                            .leading,
-                        spacing:
-                            4
+                        alignment: .leading,
+                        spacing: 4
                     ) {
 
                         Text(
-                            "Keep Echo Open"
+                            "fetchqueueview_keep_echo_open"
                         )
                         .font(
                             .subheadline
-                                .weight(
-                                    .semibold
-                                )
+                                .weight(.semibold)
                         )
-
 
                         Text(
-                            "Keep Echo open while downloading. Downloads may pause or fail if the app is closed or your iPhone is locked."
+                            "fetchqueueview_keep_echo_open_description"
                         )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     }
                 }
-                .padding(
-                    .vertical,
-                    4
-                )
+                .padding(.vertical, 4)
             }
-
-
-            // MARK: - Downloads
 
             if manager.items.isEmpty {
 
                 ContentUnavailableView(
-                    "No Downloads",
+                    "fetchqueueview_no_downloads",
                     systemImage:
                         "arrow.down.circle",
                     description:
                         Text(
-                            "Songs you download will appear here."
+                            "fetchqueueview_no_downloads_description"
                         )
                 )
 
@@ -91,8 +65,7 @@ struct FetchQueueView: View {
                 ) { item in
 
                     FetchItemRow(
-                        item:
-                            item
+                        item: item
                     )
                 }
                 .onDelete { offsets in
@@ -100,9 +73,7 @@ struct FetchQueueView: View {
                     for index in offsets {
 
                         manager.remove(
-                            manager.items[
-                                index
-                            ]
+                            manager.items[index]
                         )
                     }
                 }
@@ -110,7 +81,7 @@ struct FetchQueueView: View {
         }
 
         .navigationTitle(
-            "Downloads"
+            "fetchqueueview_title"
         )
 
         .toolbar {
@@ -118,7 +89,7 @@ struct FetchQueueView: View {
             if !manager.items.isEmpty {
 
                 Button(
-                    "Clear"
+                    "fetchqueueview_clear"
                 ) {
 
                     manager
@@ -129,71 +100,37 @@ struct FetchQueueView: View {
     }
 }
 
-
-// MARK: - Download Row
-
 struct FetchItemRow: View {
 
-    let item:
-        FetchItem
-
+    let item: FetchItem
 
     var body: some View {
 
-        HStack(
-            spacing:
-                12
-        ) {
+        HStack(spacing: 12) {
 
             artwork
 
-
             VStack(
-                alignment:
-                    .leading,
-                spacing:
-                    4
+                alignment: .leading,
+                spacing: 4
             ) {
 
-                Text(
-                    item.title
-                )
-                .font(
-                    .headline
-                )
-                .lineLimit(
-                    1
-                )
+                Text(item.title)
+                    .font(.headline)
+                    .lineLimit(1)
 
-
-                Text(
-                    item.artist
-                )
-                .font(
-                    .subheadline
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .lineLimit(
-                    1
-                )
-
+                Text(item.artist)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
                 statusView
             }
 
-
             Spacer()
         }
-        .padding(
-            .vertical,
-            4
-        )
+        .padding(.vertical, 4)
     }
-
-
-    // MARK: - Artwork
 
     @ViewBuilder
     private var artwork:
@@ -203,8 +140,7 @@ struct FetchItemRow: View {
             item.artworkURL {
 
             AsyncImage(
-                url:
-                    artworkURL
+                url: artworkURL
             ) { image in
 
                 image
@@ -214,20 +150,15 @@ struct FetchItemRow: View {
             } placeholder: {
 
                 Color.secondary
-                    .opacity(
-                        0.15
-                    )
+                    .opacity(0.15)
             }
             .frame(
-                width:
-                    52,
-                height:
-                    52
+                width: 52,
+                height: 52
             )
             .clipShape(
                 RoundedRectangle(
-                    cornerRadius:
-                        8
+                    cornerRadius: 8
                 )
             )
 
@@ -238,27 +169,19 @@ struct FetchItemRow: View {
                     "music.note"
             )
             .frame(
-                width:
-                    52,
-                height:
-                    52
+                width: 52,
+                height: 52
             )
             .background(
                 .secondary
-                    .opacity(
-                        0.12
-                    ),
+                    .opacity(0.12),
                 in:
                     RoundedRectangle(
-                        cornerRadius:
-                            8
+                        cornerRadius: 8
                     )
             )
         }
     }
-
-
-    // MARK: - Status
 
     @ViewBuilder
     private var statusView:
@@ -269,15 +192,10 @@ struct FetchItemRow: View {
         case .queued:
 
             Text(
-                "Queued"
+                "fetchqueueview_queued"
             )
-            .font(
-                .caption
-            )
-            .foregroundStyle(
-                .secondary
-            )
-
+            .font(.caption)
+            .foregroundStyle(.secondary)
 
         case .preparing(
             let progress
@@ -285,11 +203,13 @@ struct FetchItemRow: View {
 
             activeProgress(
                 title:
-                    "Preparing",
+                    String(
+                        localized:
+                            "fetchqueueview_preparing"
+                    ),
                 progress:
                     progress
             )
-
 
         case .downloading(
             let progress
@@ -297,11 +217,13 @@ struct FetchItemRow: View {
 
             activeProgress(
                 title:
-                    "Downloading",
+                    String(
+                        localized:
+                            "fetchqueueview_downloading"
+                    ),
                 progress:
                     progress
             )
-
 
         case .processing(
             let progress
@@ -309,69 +231,48 @@ struct FetchItemRow: View {
 
             activeProgress(
                 title:
-                    "Encoding MP3",
+                    String(
+                        localized:
+                            "fetchqueueview_encoding_mp3"
+                    ),
                 progress:
                     progress
             )
 
-
         case .completed:
 
             Label(
-                "Completed",
+                "fetchqueueview_completed",
                 systemImage:
                     "checkmark.circle.fill"
             )
-            .font(
-                .caption
-            )
-            .foregroundStyle(
-                .green
-            )
-
+            .font(.caption)
+            .foregroundStyle(.green)
 
         case .failed(
             let message
         ):
 
             VStack(
-                alignment:
-                    .leading,
-                spacing:
-                    2
+                alignment: .leading,
+                spacing: 2
             ) {
 
                 Label(
-                    "Download Failed",
+                    "fetchqueueview_download_failed",
                     systemImage:
                         "exclamationmark.circle.fill"
                 )
-                .font(
-                    .caption
-                )
-                .foregroundStyle(
-                    .red
-                )
+                .font(.caption)
+                .foregroundStyle(.red)
 
-
-                Text(
-                    message
-                )
-                .font(
-                    .caption2
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .lineLimit(
-                    2
-                )
+                Text(message)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
         }
     }
-
-
-    // MARK: - Active Progress
 
     private func activeProgress(
         title: String,
@@ -387,40 +288,27 @@ struct FetchItemRow: View {
                 1
             )
 
-
         return VStack(
-            alignment:
-                .leading,
-            spacing:
-                3
+            alignment: .leading,
+            spacing: 3
         ) {
 
             HStack {
 
-                Text(
-                    title
-                )
-
+                Text(title)
 
                 Spacer()
-
 
                 Text(
                     "\(Int(safeProgress * 100))%"
                 )
                 .monospacedDigit()
             }
-            .font(
-                .caption
-            )
-            .foregroundStyle(
-                .secondary
-            )
-
+            .font(.caption)
+            .foregroundStyle(.secondary)
 
             ProgressView(
-                value:
-                    safeProgress
+                value: safeProgress
             )
         }
     }
