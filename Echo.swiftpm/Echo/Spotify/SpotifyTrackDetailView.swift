@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct SpotifyTrackDetailView: View {
 
     let track: SpotifyTrack
@@ -8,20 +7,17 @@ struct SpotifyTrackDetailView: View {
     let onClose: () -> Void
     let onViewDownloads: () -> Void
 
-
     @State private var fetch =
         FetchManager.shared
 
     @State private var method =
         ApifySettings.shared
 
-
     @State private var showDownloadStatus =
         false
 
     @State private var downloadItemID:
         UUID?
-
 
     var body: some View {
 
@@ -35,75 +31,66 @@ struct SpotifyTrackDetailView: View {
 
                     artwork
 
-
                     VStack(
                         spacing: 6
                     ) {
 
-                        Text(
-                            track.name
-                        )
-                        .font(
-                            .title2.bold()
-                        )
-                        .multilineTextAlignment(
-                            .center
-                        )
+                        Text(track.name)
+                            .font(.title2.bold())
+                            .multilineTextAlignment(.center)
 
+                        Text(track.artist)
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
 
-                        Text(
-                            track.artist
-                        )
-                        .font(
-                            .headline
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-
-
-                        Text(
-                            track.album
-                        )
-                        .font(
-                            .subheadline
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-                        .multilineTextAlignment(
-                            .center
-                        )
+                        Text(track.album)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
 
-
                     Divider()
-
 
                     VStack(
                         spacing: 14
                     ) {
 
                         informationRow(
-                            title: "Artist",
-                            value: track.artist
+                            title:
+                                String(
+                                    localized:
+                                        "spotifytrackdetailview_artist"
+                                ),
+                            value:
+                                track.artist
                         )
 
-
                         informationRow(
-                            title: "Album",
-                            value: track.album
+                            title:
+                                String(
+                                    localized:
+                                        "spotifytrackdetailview_album"
+                                ),
+                            value:
+                                track.album
                         )
 
-
                         informationRow(
-                            title: "Duration",
-                            value: durationText
+                            title:
+                                String(
+                                    localized:
+                                        "spotifytrackdetailview_duration"
+                                ),
+                            value:
+                                durationText
                         )
 
-
                         informationRow(
-                            title: "Method",
+                            title:
+                                String(
+                                    localized:
+                                        "spotifytrackdetailview_method"
+                                ),
                             value:
                                 method
                                     .downloadMethod
@@ -111,21 +98,19 @@ struct SpotifyTrackDetailView: View {
                         )
                     }
 
-
                     Spacer(
                         minLength: 10
                     )
 
-
                     downloadButton
                 }
-                .padding(
-                    24
-                )
+                .padding(24)
             }
+
             .navigationTitle(
-                "Song"
+                "spotifytrackdetailview_song"
             )
+
             .navigationBarTitleDisplayMode(
                 .inline
             )
@@ -138,7 +123,7 @@ struct SpotifyTrackDetailView: View {
                 ) {
 
                     Button(
-                        "Done"
+                        "spotifytrackdetailview_done"
                     ) {
 
                         onClose()
@@ -165,7 +150,6 @@ struct SpotifyTrackDetailView: View {
                     showDownloadStatus =
                         false
 
-
                     onClose()
                 },
 
@@ -174,27 +158,19 @@ struct SpotifyTrackDetailView: View {
                     showDownloadStatus =
                         false
 
-
                     onViewDownloads()
                 }
             )
-
             .presentationDetents(
                 [
-                    .height(
-                        330
-                    )
+                    .height(330)
                 ]
             )
-
             .presentationDragIndicator(
                 .visible
             )
         }
     }
-
-
-    // MARK: - Artwork
 
     private var artwork:
         some View {
@@ -202,8 +178,7 @@ struct SpotifyTrackDetailView: View {
         AsyncImage(
             url:
                 track.artworkURL
-        ) {
-            image in
+        ) { image in
 
             image
                 .resizable()
@@ -212,8 +187,7 @@ struct SpotifyTrackDetailView: View {
         } placeholder: {
 
             RoundedRectangle(
-                cornerRadius:
-                    22
+                cornerRadius: 22
             )
             .fill(
                 .secondary.opacity(
@@ -228,8 +202,7 @@ struct SpotifyTrackDetailView: View {
                 )
                 .font(
                     .system(
-                        size:
-                            50
+                        size: 50
                     )
                 )
                 .foregroundStyle(
@@ -238,37 +211,25 @@ struct SpotifyTrackDetailView: View {
             }
         }
         .frame(
-            width:
-                230,
-            height:
-                230
+            width: 230,
+            height: 230
         )
         .clipShape(
             RoundedRectangle(
-                cornerRadius:
-                    22
+                cornerRadius: 22
             )
         )
         .shadow(
-            radius:
-                10,
-            y:
-                5
+            radius: 10,
+            y: 5
         )
     }
-
-
-    // MARK: - Download
 
     @ViewBuilder
     private var downloadButton:
         some View {
 
         switch method.downloadMethod {
-
-        // =========================================
-        // yt-dlp
-        // =========================================
 
         case .spotify:
 
@@ -279,78 +240,50 @@ struct SpotifyTrackDetailView: View {
             } label: {
 
                 Label(
-                    "Download",
+                    "spotifytrackdetailview_download",
                     systemImage:
                         "arrow.down.circle.fill"
                 )
-                .font(
-                    .headline
-                )
+                .font(.headline)
                 .frame(
-                    maxWidth:
-                        .infinity
+                    maxWidth: .infinity
                 )
-                .padding(
-                    .vertical,
-                    5
-                )
+                .padding(.vertical, 5)
             }
             .buttonStyle(
                 .borderedProminent
             )
-            .controlSize(
-                .large
-            )
-
-
-        // =========================================
-        // Apify
-        //
-        // Needs the existing YouTube match.
-        // =========================================
+            .controlSize(.large)
 
         case .youtube:
 
             NavigationLink {
 
                 YouTubeSearchView(
-                    track:
-                        track
+                    track: track
                 )
 
             } label: {
 
                 Label(
-                    "Download",
+                    "spotifytrackdetailview_download",
                     systemImage:
                         "arrow.down.circle.fill"
                 )
-                .font(
-                    .headline
-                )
+                .font(.headline)
                 .frame(
-                    maxWidth:
-                        .infinity
+                    maxWidth: .infinity
                 )
-                .padding(
-                    .vertical,
-                    5
-                )
+                .padding(.vertical, 5)
             }
             .buttonStyle(
                 .borderedProminent
             )
-            .controlSize(
-                .large
-            )
+            .controlSize(.large)
         }
     }
 
-
     private func startYTDLPDownload() {
-
-        // Remember what was already in
-        // the queue before adding.
 
         let existingIDs =
             Set(
@@ -359,14 +292,10 @@ struct SpotifyTrackDetailView: View {
                 }
             )
 
-
         fetch
             .addAuthorizedSpotifyTrack(
                 track
             )
-
-
-        // Find the newly-created item.
 
         if let newItem =
             fetch.items.last(
@@ -377,25 +306,24 @@ struct SpotifyTrackDetailView: View {
                             $0.id
                         )
                 }
-            ) {
+            )
+        {
 
             downloadItemID =
                 newItem.id
         }
 
-
         showDownloadStatus =
             true
     }
 
-
     private var currentDownloadItem:
-        FetchItem? {
+        FetchItem?
+    {
 
         guard let downloadItemID else {
             return nil
         }
-
 
         return fetch.items.first {
 
@@ -404,9 +332,6 @@ struct SpotifyTrackDetailView: View {
         }
     }
 
-
-    // MARK: - Info
-
     private func informationRow(
         title: String,
         value: String
@@ -414,32 +339,17 @@ struct SpotifyTrackDetailView: View {
 
         HStack {
 
-            Text(
-                title
-            )
-            .foregroundStyle(
-                .secondary
-            )
-
+            Text(title)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
-
-            Text(
-                value
-            )
-            .multilineTextAlignment(
-                .trailing
-            )
-            .lineLimit(
-                2
-            )
+            Text(value)
+                .multilineTextAlignment(.trailing)
+                .lineLimit(2)
         }
-        .font(
-            .subheadline
-        )
+        .font(.subheadline)
     }
-
 
     private var durationText:
         String {
@@ -449,18 +359,15 @@ struct SpotifyTrackDetailView: View {
             /
             1000
 
-
         let minutes =
             seconds
             /
             60
 
-
         let remaining =
             seconds
             %
             60
-
 
         return String(
             format:
@@ -470,9 +377,6 @@ struct SpotifyTrackDetailView: View {
         )
     }
 }
-
-
-// MARK: - Download Status Sheet
 
 private struct DownloadStartedSheet: View {
 
@@ -488,12 +392,10 @@ private struct DownloadStartedSheet: View {
     let onViewDownloads:
         () -> Void
 
-
     var body: some View {
 
         VStack(
-            spacing:
-                20
+            spacing: 20
         ) {
 
             Image(
@@ -502,109 +404,82 @@ private struct DownloadStartedSheet: View {
             )
             .font(
                 .system(
-                    size:
-                        42
+                    size: 42
                 )
             )
             .foregroundStyle(
                 statusColor
             )
 
-
             VStack(
-                spacing:
-                    5
+                spacing: 5
             ) {
 
                 Text(
                     statusTitle
                 )
-                .font(
-                    .title2.bold()
-                )
-
+                .font(.title2.bold())
 
                 Text(
                     track.name
                 )
-                .font(
-                    .headline
-                )
-                .lineLimit(
-                    1
-                )
-
+                .font(.headline)
+                .lineLimit(1)
 
                 Text(
                     track.artist
                 )
-                .font(
-                    .subheadline
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .lineLimit(
-                    1
-                )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
             }
 
-
             Label(
-    "Keep Echo open until the download is complete.",
-    systemImage:
-        "iphone"
-)
-.font(
-    .caption
-)
-.foregroundStyle(
-    .secondary
-)
-.multilineTextAlignment(
-    .center
-)
-
+                "spotifytrackdetailview_keep_open",
+                systemImage:
+                    "iphone"
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
 
             if let progress =
                 item?
                     .status
-                    .progress {
+                    .progress
+            {
 
                 VStack(
-                    spacing:
-                        6
+                    spacing: 6
                 ) {
 
                     HStack {
 
                         Text(
                             item?.status.title
-                            ?? "Downloading"
+                            ??
+                            String(
+                                localized:
+                                    "spotifytrackdetailview_downloading"
+                            )
                         )
 
-
                         Spacer()
-
 
                         Text(
                             "\(Int(progress * 100))%"
                         )
                         .monospacedDigit()
                     }
-                    .font(
-                        .caption
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
-
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                     ProgressView(
                         value:
                             progress
                     )
                 }
+
             } else {
 
                 switch item?.status {
@@ -612,59 +487,37 @@ private struct DownloadStartedSheet: View {
                 case .completed:
 
                     Text(
-                        "The song has been added to Echo."
+                        "spotifytrackdetailview_added_to_echo"
                     )
-                    .font(
-                        .caption
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
-
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                 case .failed(let message):
 
-                    Text(
-                        message
-                    )
-                    .font(
-                        .caption
-                    )
-                    .foregroundStyle(
-                        .red
-                    )
-                    .multilineTextAlignment(
-                        .center
-                    )
-
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
 
                 default:
 
                     HStack(
-                        spacing:
-                            8
+                        spacing: 8
                     ) {
 
                         ProgressView()
 
-
                         Text(
-                            "Starting download…"
+                            "spotifytrackdetailview_starting_download"
                         )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     }
                 }
             }
 
-
             HStack(
-                spacing:
-                    12
+                spacing: 12
             ) {
 
                 Button {
@@ -674,17 +527,13 @@ private struct DownloadStartedSheet: View {
                 } label: {
 
                     Text(
-                        "OK"
+                        "spotifytrackdetailview_ok"
                     )
                     .frame(
-                        maxWidth:
-                            .infinity
+                        maxWidth: .infinity
                     )
                 }
-                .buttonStyle(
-                    .bordered
-                )
-
+                .buttonStyle(.bordered)
 
                 Button {
 
@@ -693,11 +542,10 @@ private struct DownloadStartedSheet: View {
                 } label: {
 
                     Text(
-                        "View Downloads"
+                        "spotifytrackdetailview_view_downloads"
                     )
                     .frame(
-                        maxWidth:
-                            .infinity
+                        maxWidth: .infinity
                     )
                 }
                 .buttonStyle(
@@ -705,11 +553,8 @@ private struct DownloadStartedSheet: View {
                 )
             }
         }
-        .padding(
-            24
-        )
+        .padding(24)
     }
-
 
     private var statusTitle:
         String {
@@ -717,16 +562,27 @@ private struct DownloadStartedSheet: View {
         switch item?.status {
 
         case .completed:
-            return "Downloaded"
+
+            return String(
+                localized:
+                    "spotifytrackdetailview_downloaded"
+            )
 
         case .failed:
-            return "Download Failed"
+
+            return String(
+                localized:
+                    "spotifytrackdetailview_download_failed"
+            )
 
         default:
-            return "Downloading"
+
+            return String(
+                localized:
+                    "spotifytrackdetailview_downloading"
+            )
         }
     }
-
 
     private var statusIcon:
         String {
@@ -743,7 +599,6 @@ private struct DownloadStartedSheet: View {
             return "arrow.down.circle.fill"
         }
     }
-
 
     private var statusColor:
         Color {
