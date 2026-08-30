@@ -445,15 +445,15 @@ struct LibraryNavigationRow: View {
 
 
 
-// MARK: - Artists
-
 struct ArtistsView: View {
 
     @Environment(MusicLibraryManager.self)
     private var library
 
+    @State private var searchText = ""
 
-    private var artists: [ArtistGroup] {
+
+    private var allArtists: [ArtistGroup] {
 
         Dictionary(
             grouping: library.songs
@@ -466,8 +466,8 @@ struct ArtistsView: View {
                     )
 
             return value.isEmpty
-            ? "Onbekende artiest"
-            : value
+                ? "Onbekende artiest"
+                : value
         }
 
         .map {
@@ -483,6 +483,24 @@ struct ArtistsView: View {
             $0.name.localizedCaseInsensitiveCompare(
                 $1.name
             ) == .orderedAscending
+        }
+    }
+
+
+    private var artists: [ArtistGroup] {
+
+        guard !searchText.isEmpty
+        else {
+            return allArtists
+        }
+
+
+        return allArtists.filter {
+
+            $0.name
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
         }
     }
 
@@ -506,11 +524,15 @@ struct ArtistsView: View {
                     ArtistArtworkView(
                         songs: artist.songs
                     )
+
                     .frame(
                         width: 55,
                         height: 55
                     )
-                    .clipShape(Circle())
+
+                    .clipShape(
+                        Circle()
+                    )
 
 
                     VStack(
@@ -531,8 +553,14 @@ struct ArtistsView: View {
                 }
             }
         }
+
         .navigationTitle(
             "Artiesten"
+        )
+
+        .searchable(
+            text: $searchText,
+            prompt: "Zoek artiesten"
         )
     }
 }
@@ -672,24 +700,25 @@ struct ArtistDetailView: View {
 
 
 
-// MARK: - Albums
-
 struct AlbumsView: View {
 
     @Environment(MusicLibraryManager.self)
     private var library
 
+    @State private var searchText = ""
 
-    private var albums: [AlbumGroup] {
+
+    private var allAlbums: [AlbumGroup] {
 
         let songs =
             library.songs.filter {
 
                 guard
-                    let album = $0.album?
-                        .trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        )
+                    let album =
+                        $0.album?
+                            .trimmingCharacters(
+                                in: .whitespacesAndNewlines
+                            )
                 else {
                     return false
                 }
@@ -734,6 +763,31 @@ struct AlbumsView: View {
     }
 
 
+    private var albums: [AlbumGroup] {
+
+        guard !searchText.isEmpty
+        else {
+            return allAlbums
+        }
+
+
+        return allAlbums.filter {
+
+            $0.name
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
+
+            ||
+
+            $0.artist
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
+        }
+    }
+
+
     var body: some View {
 
         List(albums) { album in
@@ -751,12 +805,14 @@ struct AlbumsView: View {
                 ) {
 
                     if let first =
-                        album.songs.first {
+                        album.songs.first
+                    {
 
                         SongArtworkView(
                             song: first,
                             cornerRadius: 12
                         )
+
                         .frame(
                             width: 58,
                             height: 58
@@ -775,17 +831,24 @@ struct AlbumsView: View {
 
                         Text(album.artist)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(
+                                .secondary
+                            )
                     }
                 }
             }
         }
+
         .navigationTitle(
             "Albums"
         )
+
+        .searchable(
+            text: $searchText,
+            prompt: "Zoek albums"
+        )
     }
 }
-
 
 
 // MARK: - Album Detail
@@ -1081,8 +1144,6 @@ struct LibrarySongRow: View {
 
 
 
-// MARK: - Song Artwork
-
 struct SongArtworkView: View {
 
     let song: Song
@@ -1091,34 +1152,41 @@ struct SongArtworkView: View {
 
     var body: some View {
 
-        Group {
+        GeometryReader { geometry in
 
-            if
-                let data = song.coverData,
-                let image =
-                    UIImage(data: data)
-            {
+            Group {
 
-                Image(
-                    uiImage: image
-                )
-                .resizable()
-                .scaledToFill()
+                if
+                    let data = song.coverData,
+                    let image = UIImage(data: data)
+                {
 
-            } else {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
 
-                Image(
-                    systemName: "music.note"
-                )
-                .font(.title2)
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity
-                )
-                .background(
-                    .thinMaterial
-                )
+                } else {
+
+                    Image(
+                        systemName: "music.note"
+                    )
+                    .font(.title2)
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity
+                    )
+                    .background(
+                        .thinMaterial
+                    )
+                }
             }
+
+            .frame(
+                width: geometry.size.width,
+                height: geometry.size.height
+            )
+
+            .clipped()
         }
 
         .clipShape(
@@ -1129,7 +1197,6 @@ struct SongArtworkView: View {
         )
     }
 }
-
 
 
 // MARK: - Artist Artwork
