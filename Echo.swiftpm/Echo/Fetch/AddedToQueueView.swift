@@ -20,8 +20,10 @@ struct AddedToQueueView: View {
 
             VStack(spacing: 5) {
 
-                Text("Added to Queue")
-                    .font(.title2.bold())
+                Text(
+                    "addedtoqueueview_added_to_queue"
+                )
+                .font(.title2.bold())
 
                 Text(track.name)
                     .font(.headline)
@@ -39,22 +41,27 @@ struct AddedToQueueView: View {
                     dismiss()
                 } label: {
 
-                    Text("Close")
-                        .frame(
-                            maxWidth: .infinity
-                        )
+                    Text(
+                        "addedtoqueueview_close"
+                    )
+                    .frame(
+                        maxWidth: .infinity
+                    )
                 }
                 .buttonStyle(.bordered)
 
-
                 NavigationLink {
+
                     FetchQueueView()
+
                 } label: {
 
-                    Text("View Downloads")
-                        .frame(
-                            maxWidth: .infinity
-                        )
+                    Text(
+                        "addedtoqueueview_view_downloads"
+                    )
+                    .frame(
+                        maxWidth: .infinity
+                    )
                 }
                 .buttonStyle(
                     .borderedProminent
