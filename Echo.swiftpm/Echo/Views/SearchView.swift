@@ -267,6 +267,49 @@ struct SearchView: View {
 
         NavigationStack {
 
+            VStack(
+                    spacing: 0
+                ) {
+
+        // MARK: - Header
+
+        HStack {
+
+            Text("Zoeken")
+                .font(.largeTitle.bold())
+
+            Spacer()
+
+            Button {
+
+                showSettings = true
+
+            } label: {
+
+                Image(
+                    systemName: "gearshape"
+                )
+                .font(
+                    .title3.weight(.medium)
+                )
+                .foregroundStyle(.primary)
+                .frame(
+                    width: 42,
+                    height: 42
+                )
+                .background(
+                    .thinMaterial,
+                    in: Circle()
+                )
+            }
+
+            .buttonStyle(.plain)
+        }
+
+        .padding(.horizontal)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+
             Group {
 
                 if searchText.isEmpty {
@@ -579,36 +622,7 @@ struct SearchView: View {
                 }
             }
 
-            .navigationTitle(
-                "Zoeken"
-            )
-
-            .navigationBarTitleDisplayMode(
-                .large
-            )
-
-
-            // MARK: Settings
-
-            .toolbar {
-
-                ToolbarItem(
-                    placement: .topBarTrailing
-                ) {
-
-                    Button {
-
-                        showSettings = true
-
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "gearshape"
-                        )
-                    }
-                }
-            }
+          
 
 
             .sheet(
