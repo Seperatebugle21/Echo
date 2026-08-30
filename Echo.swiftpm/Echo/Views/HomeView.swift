@@ -8,25 +8,13 @@ struct HomeView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
+    @State private var recentlyPlayedSnapshot: [Song] = []
+    @State private var showSettings = false
+
 
     // MARK: - Data
 
-    private var recentlyPlayed: [Song] {
-
-        Array(
-            library.songs
-                .filter { $0.lastPlayed != nil }
-                .sorted {
-                    ($0.lastPlayed ?? .distantPast) >
-                    ($1.lastPlayed ?? .distantPast)
-                }
-                .prefix(10)
-        )
-    }
-
-
     private var recentlyAdded: [Song] {
-
         Array(
             library.songs
                 .sorted {
@@ -38,7 +26,6 @@ struct HomeView: View {
 
 
     private var favorites: [Song] {
-
         Array(
             library.favoriteSongs
                 .prefix(10)
@@ -59,8 +46,8 @@ struct HomeView: View {
                     )
 
             return artist.isEmpty
-            ? "Onbekende artiest"
-            : artist
+                ? "Onbekende artiest"
+                : artist
         }
 
 
@@ -92,11 +79,11 @@ struct HomeView: View {
                     spacing: 30
                 ) {
 
-                    if !recentlyPlayed.isEmpty {
+                    if !recentlyPlayedSnapshot.isEmpty {
 
                         songSection(
                             title: "Recent afgespeeld",
-                            songs: recentlyPlayed
+                            songs: recentlyPlayedSnapshot
                         )
                     }
 
@@ -134,22 +121,80 @@ struct HomeView: View {
                                 "Voeg muziek toe via Fetch of je bibliotheek."
                             )
                         )
-                        .frame(
-                            maxWidth: .infinity
-                        )
+                        .frame(maxWidth: .infinity)
                         .padding(.top, 80)
                     }
                 }
+
                 .padding(.vertical)
                 .padding(.bottom, 120)
             }
 
             .navigationTitle("Home")
+
+
+            // MARK: Settings
+
+            .toolbar {
+
+                ToolbarItem(
+                    placement: .topBarTrailing
+                ) {
+
+                    Button {
+
+                        showSettings = true
+
+                    } label: {
+
+                        Image(
+                            systemName: "gearshape"
+                        )
+                    }
+                }
+            }
+
+
+            .sheet(
+                isPresented: $showSettings
+            ) {
+
+                SettingsView()
+            }
+
+
+            // Snapshot wordt alleen opnieuw geladen
+            // wanneer Home opnieuw verschijnt.
+
+            .onAppear {
+
+                refreshRecentlyPlayed()
+            }
         }
     }
 
 
-    // MARK: - Songs section
+    // MARK: - Refresh Recent
+
+    private func refreshRecentlyPlayed() {
+
+        recentlyPlayedSnapshot =
+            Array(
+                library.songs
+                    .filter {
+                        $0.lastPlayed != nil
+                    }
+                    .sorted {
+                        ($0.lastPlayed ?? .distantPast)
+                        >
+                        ($1.lastPlayed ?? .distantPast)
+                    }
+                    .prefix(10)
+            )
+    }
+
+
+    // MARK: - Song Section
 
     @ViewBuilder
     private func songSection(
@@ -211,14 +256,19 @@ struct HomeView: View {
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
+
                             .frame(
                                 width: 150,
                                 alignment: .leading
                             )
+
+                            .clipped()
                         }
+
                         .buttonStyle(.plain)
                     }
                 }
+
                 .padding(.horizontal)
             }
         }
@@ -240,7 +290,9 @@ struct HomeView: View {
                     .font(.title2)
                     .bold()
 
+
                 Spacer()
+
 
                 NavigationLink {
 
@@ -252,6 +304,7 @@ struct HomeView: View {
                         .font(.subheadline)
                 }
             }
+
             .padding(.horizontal)
 
 
@@ -265,7 +318,9 @@ struct HomeView: View {
                 ) {
 
                     ForEach(
-                        Array(artists.prefix(12))
+                        Array(
+                            artists.prefix(12)
+                        )
                     ) { artist in
 
                         NavigationLink {
@@ -283,11 +338,15 @@ struct HomeView: View {
                                 ArtistArtworkView(
                                     songs: artist.songs
                                 )
+
                                 .frame(
                                     width: 112,
                                     height: 112
                                 )
-                                .clipShape(Circle())
+
+                                .clipShape(
+                                    Circle()
+                                )
 
 
                                 Text(artist.name)
@@ -300,9 +359,11 @@ struct HomeView: View {
                                     .frame(width: 112)
                             }
                         }
+
                         .buttonStyle(.plain)
                     }
                 }
+
                 .padding(.horizontal)
             }
         }
@@ -315,7 +376,8 @@ struct HomeView: View {
         _ song: Song
     ) {
 
-        guard let url =
+        guard
+            let url =
                 library.getURL(
                     for: song
                 )
@@ -329,14 +391,17 @@ struct HomeView: View {
         audioPlayer.lastPlaybackDirection =
             .fade
 
+
         audioPlayer.play(
             song: song,
             url: url,
             queue: library.songs
         )
 
+
         audioPlayer.allSongs =
             library.songs
+
 
         audioPlayer.fillAutoNext(
             from: library.songs
