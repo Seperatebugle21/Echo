@@ -4,6 +4,9 @@ import PhotosUI
 struct PlaylistsView: View {
     
     @Environment(MusicLibraryManager.self) private var library
+
+    @Environment(\.dismiss)
+    private var dismiss
     
     @State private var showCreatePlaylist = false
     @State private var selectedPlaylist: Playlist?
@@ -108,12 +111,41 @@ struct PlaylistsView: View {
             }
             .navigationTitle(LocalizedStringKey("playlists_title"))
             .toolbar {
-                Button {
-                    showCreatePlaylist = true
-                } label: {
-                    Image(systemName: "plus")
+
+                ToolbarItem(
+                    placement: .topBarLeading
+                ) {
+
+                    Button {
+
+                        dismiss()
+    
+                    } label: {
+
+                        Image(
+                            systemName: "chevron.left"
+                        )
+                    }
+            }
+
+
+                ToolbarItem(
+                    placement: .topBarTrailing
+                ) {
+
+                    Button {
+
+                        showCreatePlaylist = true
+
+                    } label: {
+
+                        Image(
+                            systemName: "plus"
+                        )
+                    }
                 }
             }
+            
             .sheet(isPresented: $showCreatePlaylist) {
                 CreatePlaylistView()
             }
