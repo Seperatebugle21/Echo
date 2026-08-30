@@ -67,9 +67,6 @@ struct SongPickerView: View {
         var songs = library.songs
 
 
-        // Voor playlists tonen we alleen nummers
-        // die nog niet in de playlist zitten.
-
         if !isFavorites {
 
             songs = songs.filter {
@@ -79,10 +76,6 @@ struct SongPickerView: View {
             }
         }
 
-
-        // Voor favorieten idem:
-        // reeds favoriete nummers hoeven
-        // niet opnieuw toegevoegd te worden.
 
         if isFavorites {
 
@@ -149,9 +142,15 @@ struct SongPickerView: View {
                         Label(
                             searchText.isEmpty
                             ?
-                            "Geen nummers beschikbaar"
+                            String(
+                                localized:
+                                    "songpickerview_no_songs_available"
+                            )
                             :
-                            "Geen resultaten",
+                            String(
+                                localized:
+                                    "songpickerview_no_results"
+                            ),
                             systemImage:
                                 searchText.isEmpty
                                 ?
@@ -167,15 +166,22 @@ struct SongPickerView: View {
                             Text(
                                 isFavorites
                                 ?
-                                "Alle beschikbare nummers staan al in je favorieten."
+                                "songpickerview_all_in_favorites"
                                 :
-                                "Alle beschikbare nummers staan al in deze playlist."
+                                "songpickerview_all_in_playlist"
                             )
 
                         } else {
 
                             Text(
-                                "Geen nummers gevonden voor “\(searchText)”."
+                                String(
+                                    format:
+                                        String(
+                                            localized:
+                                                "songpickerview_no_results_for_query"
+                                        ),
+                                    searchText
+                                )
                             )
                         }
                     }
@@ -198,8 +204,6 @@ struct SongPickerView: View {
                         ) {
 
 
-                            // MARK: Cover
-
                             SongArtworkView(
                                 song: song,
                                 cornerRadius: 10
@@ -211,8 +215,6 @@ struct SongPickerView: View {
                             )
 
 
-
-                            // MARK: Info
 
                             VStack(
                                 alignment: .leading,
@@ -256,9 +258,6 @@ struct SongPickerView: View {
             }
 
 
-            // Hierdoor gebruikt List de native
-            // multi-selection UI van iOS.
-
             .environment(
                 \.editMode,
                 $editMode
@@ -276,7 +275,7 @@ struct SongPickerView: View {
                     ),
                 prompt:
                     Text(
-                        "search_prompt"
+                        "songpickerview_search_prompt"
                     )
             )
 
@@ -287,11 +286,11 @@ struct SongPickerView: View {
                 isFavorites
                 ?
                 LocalizedStringKey(
-                    "picker_add_favorites_title"
+                    "songpickerview_add_favorites_title"
                 )
                 :
                 LocalizedStringKey(
-                    "picker_add_songs_title"
+                    "songpickerview_add_songs_title"
                 )
             )
 
@@ -312,7 +311,7 @@ struct SongPickerView: View {
 
                     Button(
                         LocalizedStringKey(
-                            "action_cancel"
+                            "songpickerview_cancel"
                         )
                     ) {
 
@@ -335,15 +334,20 @@ struct SongPickerView: View {
                         if selectedSongs.isEmpty {
 
                             Text(
-                                LocalizedStringKey(
-                                    "action_add"
-                                )
+                                "songpickerview_add"
                             )
 
                         } else {
 
                             Text(
-                                "Voeg toe (\(selectedSongs.count))"
+                                String(
+                                    format:
+                                        String(
+                                            localized:
+                                                "songpickerview_add_selected"
+                                        ),
+                                    selectedSongs.count
+                                )
                             )
                             .fontWeight(
                                 .semibold
@@ -384,7 +388,14 @@ struct SongPickerView: View {
                         ) {
 
                             Text(
-                                "\(selectedSongs.count) geselecteerd"
+                                String(
+                                    format:
+                                        String(
+                                            localized:
+                                                "songpickerview_selected_count"
+                                        ),
+                                    selectedSongs.count
+                                )
                             )
                             .font(
                                 .headline
@@ -394,9 +405,9 @@ struct SongPickerView: View {
                             Text(
                                 isFavorites
                                 ?
-                                "Worden toegevoegd aan Favorieten"
+                                "songpickerview_add_to_favorites"
                                 :
-                                "Worden toegevoegd aan de playlist"
+                                "songpickerview_add_to_playlist"
                             )
                             .font(.caption)
                             .foregroundStyle(
