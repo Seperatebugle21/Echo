@@ -1864,44 +1864,56 @@ struct SongCollectionView: View {
     }
 
 
-    private func play(
-        _ song: Song
-    ) {
+   private func play(
+    _ song: Song
+) {
 
-        guard
-            let url =
-                library.getURL(
-                    for: song
-                )
-        else {
-            return
-        }
-
-
-        // Exact hetzelfde als SongsView
-
-        library.markAsPlayed(
-            song
-        )
+    guard
+        let url =
+            library.getURL(
+                for: song
+            )
+    else {
+        return
+    }
 
 
-        audioPlayer.lastPlaybackDirection =
-            .fade
+    library.markAsPlayed(
+        song
+    )
 
 
-        audioPlayer.play(
-            song: song,
-            url: url,
-            queue: [song]
-        )
+    audioPlayer.lastPlaybackDirection =
+        .fade
 
 
-        audioPlayer.allSongs =
-            library.songs
+    // Oude gewone queue volledig vervangen
+    // door alleen het huidige nummer.
+    //
+    // QueueView toont alles NA currentIndex,
+    // dus de gewone "Volgende"-lijst blijft leeg.
+    audioPlayer.play(
+        song: song,
+        url: url,
+        queue: [song]
+    )
 
 
-        audioPlayer.fillAutoNext(
-            from: library.songs
+    // Volledige library instellen als bron
+    // voor aanbevolen nummers.
+    audioPlayer.allSongs =
+        library.songs
+
+
+    // BELANGRIJK:
+    // oude Auto Next volledig resetten.
+    audioPlayer.autoNextQueue.removeAll()
+    audioPlayer.autoNextIndex = 0
+
+
+    // Nieuwe aanbevolen nummers genereren.
+    audioPlayer.fillAutoNext(
+        from: library.songs
         )
     }
 }
