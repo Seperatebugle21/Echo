@@ -46,7 +46,9 @@ struct HomeView: View {
                     )
 
             return artist.isEmpty
-                ? "Onbekende artiest"
+                ? String(
+                    localized: "homeview_unknown_artist"
+                )
                 : artist
         }
 
@@ -72,97 +74,107 @@ struct HomeView: View {
 
         NavigationStack {
 
-           ScrollView {
+            ScrollView {
 
-    LazyVStack(
-        alignment: .leading,
-        spacing: 32
-    ) {
+                LazyVStack(
+                    alignment: .leading,
+                    spacing: 32
+                ) {
 
-        // MARK: - Header
+                    // MARK: Header
 
-        HStack(alignment: .center) {
+                    HStack(alignment: .center) {
 
-            Text("Home")
-                .font(.largeTitle.bold())
+                        Text("homeview_title")
+                            .font(.largeTitle.bold())
 
-            Spacer()
+                        Spacer()
 
-            Button {
+                        Button {
 
-                showSettings = true
+                            showSettings = true
 
-            } label: {
+                        } label: {
 
-                Image(systemName: "gearshape")
-                    .font(.title3.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .frame(
-                        width: 42,
-                        height: 42
-                    )
-                    .background(
-                        .thinMaterial,
-                        in: Circle()
-                    )
+                            Image(systemName: "gearshape")
+                                .font(.title3.weight(.medium))
+                                .foregroundStyle(.primary)
+                                .frame(
+                                    width: 42,
+                                    height: 42
+                                )
+                                .background(
+                                    .thinMaterial,
+                                    in: Circle()
+                                )
+                        }
+
+                        .buttonStyle(.plain)
+                    }
+
+                    .padding(.horizontal)
+                    .padding(.top, 6)
+
+
+                    // MARK: Sections
+
+                    if !recentlyPlayedSnapshot.isEmpty {
+
+                        songSection(
+                            title: String(
+                                localized:
+                                    "homeview_recent_played"
+                            ),
+                            songs: recentlyPlayedSnapshot
+                        )
+                    }
+
+                    if !recentlyAdded.isEmpty {
+
+                        songSection(
+                            title: String(
+                                localized:
+                                    "homeview_recent_added"
+                            ),
+                            songs: recentlyAdded
+                        )
+                    }
+
+                    if !favorites.isEmpty {
+
+                        songSection(
+                            title: String(
+                                localized:
+                                    "homeview_favorites"
+                            ),
+                            songs: favorites
+                        )
+                    }
+
+                    if !artists.isEmpty {
+
+                        artistSection
+                    }
+
+                    if library.songs.isEmpty {
+
+                        ContentUnavailableView(
+                            "homeview_empty_title",
+                            systemImage: "music.note",
+                            description:
+                                Text(
+                                    "homeview_empty_description"
+                                )
+                        )
+                        .frame(
+                            maxWidth: .infinity
+                        )
+                        .padding(.top, 80)
+                    }
+                }
+
+                .padding(.bottom, 120)
             }
-
-            .buttonStyle(.plain)
-        }
-
-        .padding(.horizontal)
-        .padding(.top, 6)
-
-
-        // MARK: - Existing Home sections
-
-        if !recentlyPlayedSnapshot.isEmpty {
-
-            songSection(
-                title: "Recent afgespeeld",
-                songs: recentlyPlayedSnapshot
-            )
-        }
-
-        if !recentlyAdded.isEmpty {
-
-            songSection(
-                title: "Recent toegevoegd",
-                songs: recentlyAdded
-            )
-        }
-
-        if !favorites.isEmpty {
-
-            songSection(
-                title: "Favorieten",
-                songs: favorites
-            )
-        }
-
-        if !artists.isEmpty {
-
-            artistSection
-        }
-
-        if library.songs.isEmpty {
-
-            ContentUnavailableView(
-                "Nog geen muziek",
-                systemImage: "music.note",
-                description: Text(
-                    "Voeg muziek toe via Fetch of je bibliotheek."
-                )
-            )
-            .frame(maxWidth: .infinity)
-            .padding(.top, 80)
-        }
-    }
-
-    .padding(.bottom, 120)
-}
-
-            
 
 
             .sheet(
@@ -172,9 +184,6 @@ struct HomeView: View {
                 SettingsView()
             }
 
-
-            // Recent afgespeeld wordt alleen vernieuwd
-            // wanneer Home opnieuw verschijnt.
 
             .onAppear {
 
@@ -293,7 +302,7 @@ struct HomeView: View {
 
             HStack {
 
-                Text("Jouw artiesten")
+                Text("homeview_your_artists")
                     .font(.title2.bold())
 
 
@@ -306,8 +315,11 @@ struct HomeView: View {
 
                 } label: {
 
-                    Text("Toon alles")
-                        .font(.subheadline.weight(.medium))
+                    Text("homeview_show_all")
+                        .font(
+                            .subheadline
+                                .weight(.medium)
+                        )
                 }
             }
 
