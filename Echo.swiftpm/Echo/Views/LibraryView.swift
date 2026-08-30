@@ -38,8 +38,7 @@ struct LibraryView: View {
     private var library
 
 
-    @State private var showSongs = false
-    @State private var showPlaylists = false
+   
 
 
     private var artists: [ArtistGroup] {
@@ -167,53 +166,35 @@ struct LibraryView: View {
                             ) {
 
 
-                                // MARK: Songs
-
-                                Button {
-
-                                    showSongs = true
-
-                                } label: {
-
-                                    LibraryFeatureCard(
-                                        title: "Nummers",
-                                        subtitle:
-                                            "\(library.songs.count) nummers"
-                                    ) {
-
-                                        SongsMosaicArtwork(
-                                            songs:
-                                                library.songs
-                                        )
-                                    }
-                                }
-
-                                .buttonStyle(.plain)
+                                NavigationLink {
+    SongsView()
+} label: {
+    LibraryFeatureCard(
+        title: "Nummers",
+        subtitle: "\(library.songs.count) nummers"
+    ) {
+        SongsMosaicArtwork(
+            songs: library.songs
+        )
+    }
+}
+.buttonStyle(.plain)
 
 
 
-                                // MARK: Playlists
-
-                                Button {
-
-                                    showPlaylists = true
-
-                                } label: {
-
-                                    LibraryFeatureCard(
-                                        title: "Playlists",
-                                        subtitle:
-                                            "\(library.playlists.count) playlists"
-                                    ) {
-
-                                        PlaylistStackArtwork(
-                                            playlists:
-                                                library.playlists
-                                        )
-                                    }
-                                }
-
-                                .buttonStyle(.plain)
+                                NavigationLink {
+                PlaylistsView()
+                    } label: {
+                        LibraryFeatureCard(
+                            title: "Playlists",
+                           subtitle: "\(library.playlists.count) playlists"
+                    ) {
+                            PlaylistStackArtwork(
+                            playlists: library.playlists
+                        )
+                }
+            }
+                        .buttonStyle(.plain)
 
 
 
