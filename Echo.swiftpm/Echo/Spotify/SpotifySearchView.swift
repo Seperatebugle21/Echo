@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct SpotifySearchView: View {
 
     @State private var query =
@@ -9,17 +8,14 @@ struct SpotifySearchView: View {
     @State private var results:
         [SpotifyTrack] = []
 
-
     @State private var isLoading =
         false
 
     @State private var errorMessage:
         String?
 
-
     @State private var selectedTrack:
         SpotifyTrack?
-
 
     var body: some View {
 
@@ -37,7 +33,6 @@ struct SpotifySearchView: View {
                 }
             }
 
-
             if let errorMessage {
 
                 Text(
@@ -51,12 +46,9 @@ struct SpotifySearchView: View {
                 )
             }
 
-
             ForEach(
                 results
-            ) {
-                track in
-
+            ) { track in
 
                 Button {
 
@@ -77,14 +69,14 @@ struct SpotifySearchView: View {
         }
 
         .navigationTitle(
-            "Search Spotify"
+            "spotifysearchview_title"
         )
 
         .searchable(
             text:
                 $query,
             prompt:
-                "Search songs"
+                "spotifysearchview_search_songs"
         )
 
         .onSubmit(
@@ -101,9 +93,7 @@ struct SpotifySearchView: View {
         .sheet(
             item:
                 $selectedTrack
-        ) {
-            track in
-
+        ) { track in
 
             SpotifyTrackDetailView(
 
@@ -121,7 +111,6 @@ struct SpotifySearchView: View {
                     selectedTrack =
                         nil
 
-
                     DispatchQueue.main.async {
 
                         NotificationCenter
@@ -138,9 +127,9 @@ struct SpotifySearchView: View {
         }
     }
 
-
     private func search()
-        async {
+        async
+    {
 
         let text =
             query
@@ -149,18 +138,15 @@ struct SpotifySearchView: View {
                         .whitespacesAndNewlines
                 )
 
-
         guard !text.isEmpty else {
             return
         }
-
 
         isLoading =
             true
 
         errorMessage =
             nil
-
 
         do {
 
@@ -178,7 +164,6 @@ struct SpotifySearchView: View {
                 error
                     .localizedDescription
         }
-
 
         isLoading =
             false
