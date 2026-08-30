@@ -16,13 +16,11 @@ struct ApifyAccountRow: View {
     @State private var errorMessage:
         String?
 
-
     private var isActive: Bool {
 
         settings.activeAccountID ==
         account.id
     }
-
 
     var body: some View {
 
@@ -52,24 +50,19 @@ struct ApifyAccountRow: View {
                     )
                 }
 
-
                 Spacer()
-
 
                 if isActive {
 
                     Label(
-                        "Active",
+                        "apifyaccountrow_active",
                         systemImage:
                             "checkmark.circle.fill"
                     )
                     .font(.caption)
-                    .foregroundStyle(
-                        .green
-                    )
+                    .foregroundStyle(.green)
                 }
             }
-
 
             if loading {
 
@@ -84,7 +77,9 @@ struct ApifyAccountRow: View {
 
                     HStack {
 
-                        Text("Usage")
+                        Text(
+                            "apifyaccountrow_usage"
+                        )
 
                         Spacer()
 
@@ -101,15 +96,13 @@ struct ApifyAccountRow: View {
                         )
                     }
 
-
                     ProgressView(
                         value:
                             usage.usageFraction
                     )
 
-
                     LabeledContent(
-                        "Compute"
+                        "apifyaccountrow_compute"
                     ) {
 
                         Text(
@@ -121,9 +114,8 @@ struct ApifyAccountRow: View {
                         )
                     }
 
-
                     LabeledContent(
-                        "Data Transfer"
+                        "apifyaccountrow_data_transfer"
                     ) {
 
                         Text(
@@ -136,9 +128,8 @@ struct ApifyAccountRow: View {
                         )
                     }
 
-
                     LabeledContent(
-                        "RAM"
+                        "apifyaccountrow_ram"
                     ) {
 
                         Text(
@@ -159,7 +150,6 @@ struct ApifyAccountRow: View {
                     .foregroundStyle(.red)
             }
 
-
             if !isActive {
 
                 Button {
@@ -171,7 +161,7 @@ struct ApifyAccountRow: View {
                 } label: {
 
                     Label(
-                        "Use this account",
+                        "apifyaccountrow_use_account",
                         systemImage:
                             "arrow.triangle.2.circlepath"
                     )
@@ -186,7 +176,7 @@ struct ApifyAccountRow: View {
             } else {
 
                 Label(
-                    "Echo is using this API token",
+                    "apifyaccountrow_echo_using_token",
                     systemImage:
                         "checkmark.circle"
                 )
@@ -196,18 +186,20 @@ struct ApifyAccountRow: View {
                 )
             }
         }
+
         .padding(
             .vertical,
             6
         )
+
         .task {
             await loadUsage()
         }
+
         .refreshable {
             await loadUsage()
         }
     }
-
 
     private func loadUsage() async {
 
@@ -232,7 +224,6 @@ struct ApifyAccountRow: View {
 
         loading = false
     }
-
 
     private func maskedToken(
         _ token: String
