@@ -1434,42 +1434,44 @@ struct ArtistDetailView: View {
     }
 
 
-    private func play(
-        _ song: Song,
-        queue: [Song]
-    ) {
+   private func play(
+    _ song: Song
+) {
 
-        guard
-            let url =
-                library.getURL(
-                    for: song
-                )
-        else {
-            return
-        }
-
-
-        library.markAsPlayed(song)
-
-        audioPlayer.lastPlaybackDirection =
-            .fade
-
-
-        audioPlayer.play(
-            song: song,
-            url: url,
-            queue: queue
-        )
-
-
-        audioPlayer.allSongs =
-            library.songs
-
-
-        audioPlayer.fillAutoNext(
-            from: library.songs
-        )
+    guard
+        let url =
+            library.getURL(
+                for: song
+            )
+    else {
+        return
     }
+
+
+    library.markAsPlayed(song)
+
+    audioPlayer.lastPlaybackDirection =
+        .fade
+
+
+    // Alleen het gekozen nummer in de gewone queue.
+    audioPlayer.play(
+        song: song,
+        url: url,
+        queue: [song]
+    )
+
+
+    // Volledige bibliotheek blijft beschikbaar
+    // voor automatische volgende nummers.
+    audioPlayer.allSongs =
+        library.songs
+
+
+    // Auto Next blijft dus gewoon werken.
+    audioPlayer.fillAutoNext(
+        from: library.songs
+    )
 }
 
 
