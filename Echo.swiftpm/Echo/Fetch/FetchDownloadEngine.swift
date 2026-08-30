@@ -38,7 +38,9 @@ private struct ParallelDownloadProbe:
     Sendable {
 
     let totalBytes: Int64
-    let response: HTTPURLResponse
+
+    let response:
+        HTTPURLResponse
 }
 
 
@@ -46,6 +48,7 @@ private struct ParallelChunkResult:
     Sendable {
 
     let index: Int
+
     let fileURL: URL
 }
 
@@ -56,6 +59,63 @@ private enum ParallelDownloadError:
     case invalidProbe
     case invalidRangeResponse
     case invalidChunkLength
+}
+
+
+// MARK: - Live Parallel Progress
+
+private actor ParallelByteProgress {
+
+    private let totalBytes:
+        Int64
+
+
+    private var downloadedBytes:
+        Int64 =
+        0
+
+
+    init(
+        totalBytes: Int64
+    ) {
+
+        self.totalBytes =
+            max(
+                totalBytes,
+                1
+            )
+    }
+
+
+    func add(
+        _ bytes: Int64
+    ) {
+
+        downloadedBytes +=
+            max(
+                bytes,
+                0
+            )
+    }
+
+
+    func fraction()
+        -> Double {
+
+        min(
+            max(
+                Double(
+                    downloadedBytes
+                )
+                /
+                Double(
+                    totalBytes
+                ),
+                0
+            ),
+            1
+        )
+    }
 }
 
 
@@ -79,32 +139,34 @@ final class FetchDownloadEngine:
         "echo.fetch.background.records"
 
 
-    // Six simultaneous byte ranges.
+    // MARK: - Chunk Count
 
-    private var parallelChunkCount: Int {
+    private var parallelChunkCount:
+        Int {
 
-    let stored =
-        UserDefaults.standard
-            .integer(
-                forKey:
-                    "developerMaxDownloadChunks"
-            )
+        let stored =
+            UserDefaults.standard
+                .integer(
+                    forKey:
+                        "developerMaxDownloadChunks"
+                )
 
 
-    if stored <= 0 {
+        if stored <=
+            0 {
 
-        return 4
+            return 4
+        }
+
+
+        return min(
+            max(
+                stored,
+                1
+            ),
+            16
+        )
     }
-
-
-    return min(
-        max(
-            stored,
-            1
-        ),
-        16
-    )
-}
 
 
     // Tiny files don't benefit much.
@@ -239,7 +301,7 @@ final class FetchDownloadEngine:
             60 * 60
 
 
-     configuration.httpMaximumConnectionsPerHost =
+        configuration.httpMaximumConnectionsPerHost =
             16
 
 
@@ -277,6 +339,14 @@ final class FetchDownloadEngine:
     ) async throws -> URL {
 
         prepare()
+
+
+        // Tell UI immediately that transfer setup
+        // has begun.
+
+        progress(
+            0
+        )
 
 
         let record =
@@ -328,7 +398,8 @@ final class FetchDownloadEngine:
         )
 
 
-        // Try accelerated mode only while app is active.
+        // Try accelerated mode only while
+        // app is active.
 
         if UIApplication.shared
             .applicationState ==
@@ -337,7 +408,8 @@ final class FetchDownloadEngine:
             do {
 
                 if let probe =
-                    try await probeParallelDownload(
+                    try await
+                    probeParallelDownload(
                         url:
                             result.downloadURL
                     ),
@@ -381,7 +453,7 @@ final class FetchDownloadEngine:
         }
 
 
-        // Fall back to old reliable background downloader.
+        // Fall back to background downloader.
 
         return try await
             startBackgroundDownload(
@@ -422,8 +494,12 @@ final class FetchDownloadEngine:
         )
 
 
-        let (_, response) =
-            try await parallelSession
+        let (
+            _,
+            response
+        ) =
+            try await
+            parallelSession
                 .data(
                     for:
                         request
@@ -431,7 +507,8 @@ final class FetchDownloadEngine:
 
 
         guard let http =
-            response as?
+            response
+                as?
                 HTTPURLResponse
         else {
 
@@ -447,17 +524,19 @@ final class FetchDownloadEngine:
         }
 
 
-        guard let contentRange =
-            http.value(
-                forHTTPHeaderField:
-                    "Content-Range"
-            ),
+        guard
+            let contentRange =
+                http.value(
+                    forHTTPHeaderField:
+                        "Content-Range"
+                ),
 
-              let slashIndex =
-            contentRange.lastIndex(
-                of:
-                    "/"
-            )
+            let slashIndex =
+                contentRange.lastIndex(
+                    of:
+                        "/"
+                )
+
         else {
 
             return nil
@@ -473,13 +552,15 @@ final class FetchDownloadEngine:
             ]
 
 
-        guard let totalBytes =
-            Int64(
-                totalString
-            ),
+        guard
+            let totalBytes =
+                Int64(
+                    totalString
+                ),
 
-              totalBytes >
-            0
+            totalBytes >
+                0
+
         else {
 
             return nil
@@ -496,17 +577,24 @@ final class FetchDownloadEngine:
     }
 
 
-    // MARK: - Six-Part Download
+    // MARK: - Parallel Download
 
     @MainActor
     private func downloadInParallel(
-        record originalRecord: BackgroundFetchRecord,
-        downloadURL: URL,
-        probe: ParallelDownloadProbe,
+        record originalRecord:
+            BackgroundFetchRecord,
+
+        downloadURL:
+            URL,
+
+        probe:
+            ParallelDownloadProbe,
+
         progress:
             @escaping
             @MainActor
             (Double) -> Void
+
     ) async throws -> URL {
 
         let directory =
@@ -517,6 +605,7 @@ final class FetchDownloadEngine:
             directory
                 .appendingPathComponent(
                     "\(originalRecord.id.uuidString).parts",
+
                     isDirectory:
                         true
                 )
@@ -570,6 +659,7 @@ final class FetchDownloadEngine:
         let chunkCount =
             min(
                 parallelChunkCount,
+
                 max(
                     1,
                     Int(
@@ -651,22 +741,67 @@ final class FetchDownloadEngine:
 
         do {
 
-            var completedBytes:
-                Int64 =
-                0
-
-
             var chunkResults:
                 [ParallelChunkResult] =
                 []
 
 
+            let byteProgress =
+                ParallelByteProgress(
+                    totalBytes:
+                        totalBytes
+                )
+
+
+            // Update UI about 12 times per second.
+            // Enough for smooth progress without
+            // spamming the main actor.
+
+            let liveProgressTask =
+                Task {
+                    @MainActor in
+
+
+                    while !Task.isCancelled {
+
+                        let value =
+                            await byteProgress
+                                .fraction()
+
+
+                        emitParallelProgress(
+                            id:
+                                originalRecord.id,
+
+                            value:
+                                value,
+
+                            progress:
+                                progress
+                        )
+
+
+                        try? await
+                            Task.sleep(
+                                for:
+                                    .milliseconds(
+                                        80
+                                    )
+                            )
+                    }
+                }
+
+
+            defer {
+
+                liveProgressTask
+                    .cancel()
+            }
+
+
             try await withThrowingTaskGroup(
                 of:
-                    (
-                        ParallelChunkResult,
-                        Int64
-                    ).self
+                    ParallelChunkResult.self
             ) {
                 group in
 
@@ -704,109 +839,227 @@ final class FetchDownloadEngine:
                         )
 
 
-                        let (data, response) =
-                            try await parallelSession
-                                .data(
+                        // Stream this range instead
+                        // of storing the entire chunk
+                        // in memory.
+
+                        let (
+                            bytes,
+                            response
+                        ) =
+                            try await
+                            parallelSession
+                                .bytes(
                                     for:
                                         request
                                 )
 
 
-                        guard let http =
-                            response as?
-                                HTTPURLResponse,
+                        guard
+                            let http =
+                                response
+                                    as?
+                                    HTTPURLResponse,
 
-                              http.statusCode ==
-                            206
+                            http.statusCode ==
+                                206
+
                         else {
 
-                            throw ParallelDownloadError
-                                .invalidRangeResponse
+                            throw
+                                ParallelDownloadError
+                                    .invalidRangeResponse
                         }
 
 
-                        guard Int64(
-                            data.count
-                        ) ==
-                            range.expected
-                        else {
+                        let fileManager =
+                            FileManager.default
 
-                            throw ParallelDownloadError
-                                .invalidChunkLength
+
+                        if fileManager
+                            .fileExists(
+                                atPath:
+                                    partURL.path
+                            ) {
+
+                            try fileManager
+                                .removeItem(
+                                    at:
+                                        partURL
+                                )
                         }
 
 
-                        try data.write(
-                            to:
-                                partURL,
+                        guard fileManager
+                            .createFile(
+                                atPath:
+                                    partURL.path,
 
-                            options:
-                                .atomic
+                                contents:
+                                    nil
+                            )
+                        else {
+
+                            throw
+                                ParallelDownloadError
+                                    .invalidChunkLength
+                        }
+
+
+                        let output =
+                            try FileHandle(
+                                forWritingTo:
+                                    partURL
+                            )
+
+
+                        defer {
+
+                            try? output
+                                .close()
+                        }
+
+
+                        var buffer =
+                            Data()
+
+
+                        // 64 KB disk-write blocks.
+
+                        buffer.reserveCapacity(
+                            64 * 1024
                         )
 
 
-                        return (
+                        var receivedBytes:
+                            Int64 =
+                            0
+
+
+                        for try await byte
+                            in bytes {
+
+                            buffer.append(
+                                byte
+                            )
+
+
+                            if buffer.count >=
+                                64 * 1024 {
+
+                                let count =
+                                    Int64(
+                                        buffer.count
+                                    )
+
+
+                                try output.write(
+                                    contentsOf:
+                                        buffer
+                                )
+
+
+                                receivedBytes +=
+                                    count
+
+
+                                await byteProgress
+                                    .add(
+                                        count
+                                    )
+
+
+                                buffer.removeAll(
+                                    keepingCapacity:
+                                        true
+                                )
+                            }
+                        }
+
+
+                        // Write remaining bytes.
+
+                        if !buffer.isEmpty {
+
+                            let count =
+                                Int64(
+                                    buffer.count
+                                )
+
+
+                            try output.write(
+                                contentsOf:
+                                    buffer
+                            )
+
+
+                            receivedBytes +=
+                                count
+
+
+                            await byteProgress
+                                .add(
+                                    count
+                                )
+                        }
+
+
+                        guard receivedBytes ==
+                            range.expected
+                        else {
+
+                            throw
+                                ParallelDownloadError
+                                    .invalidChunkLength
+                        }
+
+
+                        return
                             ParallelChunkResult(
+
                                 index:
                                     range.index,
 
                                 fileURL:
                                     partURL
-                            ),
-                            range.expected
-                        )
+                            )
                     }
                 }
 
 
-                for try await result in
-                    group {
+                for try await result
+                    in group {
 
                     chunkResults.append(
-                        result.0
-                    )
-
-
-                    completedBytes +=
-                        result.1
-
-
-                    let value =
-                        min(
-                            max(
-                                Double(
-                                    completedBytes
-                                )
-                                /
-                                Double(
-                                    totalBytes
-                                ),
-                                0
-                            ),
-                            1
-                        )
-
-
-                    emitParallelProgress(
-                        id:
-                            originalRecord.id,
-
-                        value:
-                            value,
-
-                        progress:
-                            progress
+                        result
                     )
                 }
             }
+
+
+            liveProgressTask
+                .cancel()
+
+
+            emitParallelProgress(
+                id:
+                    originalRecord.id,
+
+                value:
+                    1,
+
+                progress:
+                    progress
+            )
 
 
             guard chunkResults.count ==
                 chunkCount
             else {
 
-                throw ParallelDownloadError
-                    .invalidChunkLength
+                throw
+                    ParallelDownloadError
+                        .invalidChunkLength
             }
 
 
@@ -836,7 +1089,8 @@ final class FetchDownloadEngine:
 
             defer {
 
-                try? output.close()
+                try? output
+                    .close()
             }
 
 
@@ -850,12 +1104,6 @@ final class FetchDownloadEngine:
                         forReadingFrom:
                             chunk.fileURL
                     )
-
-
-                defer {
-
-                    try? input.close()
-                }
 
 
                 while true {
@@ -880,6 +1128,10 @@ final class FetchDownloadEngine:
                             data
                     )
                 }
+
+
+                try? input
+                    .close()
             }
 
 
@@ -895,8 +1147,9 @@ final class FetchDownloadEngine:
                 (
                     attributes[
                         .size
-                    ] as?
-                        NSNumber
+                    ]
+                    as?
+                    NSNumber
                 )?
                 .int64Value
                 ??
@@ -907,8 +1160,9 @@ final class FetchDownloadEngine:
                 totalBytes
             else {
 
-                throw ParallelDownloadError
-                    .invalidChunkLength
+                throw
+                    ParallelDownloadError
+                        .invalidChunkLength
             }
 
 
@@ -1035,12 +1289,17 @@ final class FetchDownloadEngine:
 
     @MainActor
     private func startBackgroundDownload(
-        record: BackgroundFetchRecord,
-        downloadURL: URL,
+        record:
+            BackgroundFetchRecord,
+
+        downloadURL:
+            URL,
+
         progress:
             @escaping
             @MainActor
             (Double) -> Void
+
     ) async throws -> URL {
 
         var request =
@@ -1115,7 +1374,8 @@ final class FetchDownloadEngine:
     ) {
 
         guard
-            totalBytesExpectedToWrite > 0,
+            totalBytesExpectedToWrite >
+                0,
 
             let id =
                 recordID(
@@ -1414,7 +1674,8 @@ final class FetchDownloadEngine:
 
 
     func urlSessionDidFinishEvents(
-        forBackgroundURLSession session: URLSession
+        forBackgroundURLSession session:
+            URLSession
     ) {
 
         stateLock.lock()
@@ -1454,9 +1715,11 @@ final class FetchDownloadEngine:
 
                     $0.completed
                     &&
-                    $0.localFilePath != nil
+                    $0.localFilePath !=
+                        nil
                     &&
-                    $0.errorMessage == nil
+                    $0.errorMessage ==
+                        nil
                 }
 
 
