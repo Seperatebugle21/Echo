@@ -1,8 +1,5 @@
 import SwiftUI
 
-
-// MARK: - Artist Model
-
 struct ArtistGroup: Identifiable {
 
     var id: String {
@@ -12,10 +9,6 @@ struct ArtistGroup: Identifiable {
     let name: String
     let songs: [Song]
 }
-
-
-
-// MARK: - Album Model
 
 struct AlbumGroup: Identifiable {
 
@@ -28,18 +21,10 @@ struct AlbumGroup: Identifiable {
     let songs: [Song]
 }
 
-
-
-// MARK: - Library
-
 struct LibraryView: View {
 
     @Environment(MusicLibraryManager.self)
     private var library
-
-
-   
-
 
     private var artists: [ArtistGroup] {
 
@@ -54,26 +39,26 @@ struct LibraryView: View {
                     )
 
             return artist.isEmpty
-                ? "Onbekende artiest"
+                ? String(
+                    localized:
+                        "libraryview_unknown_artist"
+                )
                 : artist
         }
-
         .map {
-
             ArtistGroup(
                 name: $0.key,
                 songs: $0.value
             )
         }
-
         .sorted {
-
-            $0.name.localizedCaseInsensitiveCompare(
-                $1.name
-            ) == .orderedAscending
+            $0.name
+                .localizedCaseInsensitiveCompare(
+                    $1.name
+                )
+            == .orderedAscending
         }
     }
-
 
     private var albumGroups: [AlbumGroup] {
 
@@ -84,7 +69,8 @@ struct LibraryView: View {
                     let album =
                         $0.album?
                             .trimmingCharacters(
-                                in: .whitespacesAndNewlines
+                                in:
+                                    .whitespacesAndNewlines
                             )
                 else {
                     return false
@@ -93,26 +79,24 @@ struct LibraryView: View {
                 return !album.isEmpty
             }
 
-
         let grouped =
             Dictionary(
                 grouping: songs
             ) {
-
                 "\($0.artist)|\($0.album ?? "")"
             }
-
 
         return grouped
             .compactMap { _, songs in
 
                 guard
-                    let first = songs.first,
-                    let album = first.album
+                    let first =
+                        songs.first,
+                    let album =
+                        first.album
                 else {
                     return nil
                 }
-
 
                 return AlbumGroup(
                     name: album,
@@ -120,274 +104,14 @@ struct LibraryView: View {
                     songs: songs
                 )
             }
-
             .sorted {
-
-                $0.name.localizedCaseInsensitiveCompare(
-                    $1.name
-                ) == .orderedAscending
+                $0.name
+                    .localizedCaseInsensitiveCompare(
+                        $1.name
+                    )
+                == .orderedAscending
             }
     }
-
-
-    // MARK: - Body
-
-    var body: some View {
-
-        NavigationStack {
-
-            ScrollView {
-
-                LazyVStack(
-                    alignment: .leading,
-                    spacing: 34
-                ) {
-
-
-                    // MARK: Your Library
-
-                    VStack(
-                        alignment: .leading,
-                        spacing: 14
-                    ) {
-
-                        Text("Jouw bibliotheek")
-                            .font(.title2.bold())
-                            .padding(.horizontal)
-
-
-                        ScrollView(
-                            .horizontal,
-                            showsIndicators: false
-                        ) {
-
-                            LazyHStack(
-                                spacing: 16
-                            ) {
-
-
-                                NavigationLink {
-    SongsView()
-} label: {
-    LibraryFeatureCard(
-        title: "Nummers",
-        subtitle: "\(library.songs.count) nummers"
-    ) {
-        SongsMosaicArtwork(
-            songs: library.songs
-        )
-    }
-}
-.buttonStyle(.plain)
-
-
-
-                                NavigationLink {
-                PlaylistsView()
-                    } label: {
-                        LibraryFeatureCard(
-                            title: "Playlists",
-                           subtitle: "\(library.playlists.count) playlists"
-                    ) {
-                            PlaylistStackArtwork(
-                            playlists: library.playlists
-                        )
-                }
-            }
-                        .buttonStyle(.plain)
-
-
-
-                                // MARK: Favorites
-
-                                NavigationLink {
-
-                                    FavoritesView()
-
-                                } label: {
-
-                                    LibraryFeatureCard(
-                                        title: "Favorieten",
-                                        subtitle:
-                                            "\(library.favoriteSongs.count) nummers"
-                                    ) {
-
-                                        FavoritesFeatureArtwork(
-                                            songs:
-                                                library.favoriteSongs
-                                        )
-                                    }
-                                }
-
-                                .buttonStyle(.plain)
-                            }
-
-                            .padding(.horizontal)
-                        }
-                    }
-
-
-
-                    // MARK: Collections
-
-                    VStack(
-                        alignment: .leading,
-                        spacing: 14
-                    ) {
-
-                        Text("Collecties")
-                            .font(.title2.bold())
-                            .padding(.horizontal)
-
-
-                        LazyVGrid(
-                            columns: [
-                                GridItem(
-                                    .flexible(),
-                                    spacing: 12
-                                ),
-
-                                GridItem(
-                                    .flexible(),
-                                    spacing: 12
-                                )
-                            ],
-                            spacing: 12
-                        ) {
-
-
-                            // Artists
-
-                            NavigationLink {
-
-                                ArtistsView()
-
-                            } label: {
-
-                                CollectionCard(
-                                    title: "Artiesten",
-                                    subtitle:
-                                        "\(artists.count) artiesten",
-                                    symbol:
-                                        "person.2.fill"
-                                ) {
-
-                                    ArtistCollectionArtwork(
-                                        artists:
-                                            artists
-                                    )
-                                }
-                            }
-
-                            .buttonStyle(.plain)
-
-
-
-                            // Albums
-
-                            NavigationLink {
-
-                                AlbumsView()
-
-                            } label: {
-
-                                CollectionCard(
-                                    title: "Albums",
-                                    subtitle:
-                                        "\(albumGroups.count) albums",
-                                    symbol:
-                                        "square.stack.fill"
-                                ) {
-
-                                    AlbumCollectionArtwork(
-                                        albums:
-                                            albumGroups
-                                    )
-                                }
-                            }
-
-                            .buttonStyle(.plain)
-
-
-
-                            // Recent Added
-
-                            NavigationLink {
-
-                                RecentAddedView()
-
-                            } label: {
-
-                                CollectionCard(
-                                    title:
-                                        "Recent toegevoegd",
-                                    subtitle:
-                                        recentAddedSubtitle,
-                                    symbol:
-                                        "plus"
-                                ) {
-
-                                    CoverStackArtwork(
-                                        songs:
-                                            recentlyAddedSongs
-                                    )
-                                }
-                            }
-
-                            .buttonStyle(.plain)
-
-
-
-                            // Recent Played
-
-                            NavigationLink {
-
-                                RecentPlayedView()
-
-                            } label: {
-
-                                CollectionCard(
-                                    title:
-                                        "Recent afgespeeld",
-                                    subtitle:
-                                        recentPlayedSubtitle,
-                                    symbol:
-                                        "clock.arrow.circlepath"
-                                ) {
-
-                                    CoverStackArtwork(
-                                        songs:
-                                            recentlyPlayedSongs
-                                    )
-                                }
-                            }
-
-                            .buttonStyle(.plain)
-                        }
-
-                        .padding(.horizontal)
-                    }
-                }
-
-                .padding(.top, 8)
-                .padding(.bottom, 120)
-            }
-
-            .navigationTitle(
-                "Bibliotheek"
-            )
-
-            .navigationBarTitleDisplayMode(
-                .large
-            )
-
-
-          
-        }
-    }
-
-
-    // MARK: - Recent Data
 
     private var recentlyAddedSongs: [Song] {
 
@@ -399,7 +123,6 @@ struct LibraryView: View {
                 .prefix(4)
         )
     }
-
 
     private var recentlyPlayedSongs: [Song] {
 
@@ -417,21 +140,20 @@ struct LibraryView: View {
         )
     }
 
-
     private var recentAddedSubtitle: String {
 
         guard
             let first =
                 recentlyAddedSongs.first
         else {
-
-            return "Nog geen nummers"
+            return String(
+                localized:
+                    "libraryview_no_songs"
+            )
         }
-
 
         return first.title
     }
-
 
     private var recentPlayedSubtitle: String {
 
@@ -439,18 +161,300 @@ struct LibraryView: View {
             let first =
                 recentlyPlayedSongs.first
         else {
-
-            return "Nog niets afgespeeld"
+            return String(
+                localized:
+                    "libraryview_nothing_played"
+            )
         }
-
 
         return first.title
     }
+
+    var body: some View {
+
+        NavigationStack {
+
+            ScrollView {
+
+                LazyVStack(
+                    alignment: .leading,
+                    spacing: 34
+                ) {
+
+                    VStack(
+                        alignment: .leading,
+                        spacing: 14
+                    ) {
+
+                        Text(
+                            "libraryview_your_library"
+                        )
+                        .font(.title2.bold())
+                        .padding(.horizontal)
+
+                        ScrollView(
+                            .horizontal,
+                            showsIndicators: false
+                        ) {
+
+                            LazyHStack(
+                                spacing: 16
+                            ) {
+
+                                NavigationLink {
+
+                                    SongsView()
+
+                                } label: {
+
+                                    LibraryFeatureCard(
+                                        title:
+                                            String(
+                                                localized:
+                                                    "libraryview_songs"
+                                            ),
+                                        subtitle:
+                                            String(
+                                                format:
+                                                    String(
+                                                        localized:
+                                                            "libraryview_songs_count"
+                                                    ),
+                                                library.songs.count
+                                            )
+                                    ) {
+
+                                        SongsMosaicArtwork(
+                                            songs:
+                                                library.songs
+                                        )
+                                    }
+                                }
+                                .buttonStyle(.plain)
+
+                                NavigationLink {
+
+                                    PlaylistsView()
+
+                                } label: {
+
+                                    LibraryFeatureCard(
+                                        title:
+                                            String(
+                                                localized:
+                                                    "libraryview_playlists"
+                                            ),
+                                        subtitle:
+                                            String(
+                                                format:
+                                                    String(
+                                                        localized:
+                                                            "libraryview_playlists_count"
+                                                    ),
+                                                library.playlists.count
+                                            )
+                                    ) {
+
+                                        PlaylistStackArtwork(
+                                            playlists:
+                                                library.playlists
+                                        )
+                                    }
+                                }
+                                .buttonStyle(.plain)
+
+                                NavigationLink {
+
+                                    FavoritesView()
+
+                                } label: {
+
+                                    LibraryFeatureCard(
+                                        title:
+                                            String(
+                                                localized:
+                                                    "libraryview_favorites"
+                                            ),
+                                        subtitle:
+                                            String(
+                                                format:
+                                                    String(
+                                                        localized:
+                                                            "libraryview_songs_count"
+                                                    ),
+                                                library.favoriteSongs.count
+                                            )
+                                    ) {
+
+                                        FavoritesFeatureArtwork(
+                                            songs:
+                                                library.favoriteSongs
+                                        )
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+
+                    VStack(
+                        alignment: .leading,
+                        spacing: 14
+                    ) {
+
+                        Text(
+                            "libraryview_collections"
+                        )
+                        .font(.title2.bold())
+                        .padding(.horizontal)
+
+                        LazyVGrid(
+                            columns: [
+                                GridItem(
+                                    .flexible(),
+                                    spacing: 12
+                                ),
+                                GridItem(
+                                    .flexible(),
+                                    spacing: 12
+                                )
+                            ],
+                            spacing: 12
+                        ) {
+
+                            NavigationLink {
+
+                                ArtistsView()
+
+                            } label: {
+
+                                CollectionCard(
+                                    title:
+                                        String(
+                                            localized:
+                                                "libraryview_artists"
+                                        ),
+                                    subtitle:
+                                        String(
+                                            format:
+                                                String(
+                                                    localized:
+                                                        "libraryview_artists_count"
+                                                ),
+                                            artists.count
+                                        ),
+                                    symbol:
+                                        "person.2.fill"
+                                ) {
+
+                                    ArtistCollectionArtwork(
+                                        artists: artists
+                                    )
+                                }
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink {
+
+                                AlbumsView()
+
+                            } label: {
+
+                                CollectionCard(
+                                    title:
+                                        String(
+                                            localized:
+                                                "libraryview_albums"
+                                        ),
+                                    subtitle:
+                                        String(
+                                            format:
+                                                String(
+                                                    localized:
+                                                        "libraryview_albums_count"
+                                                ),
+                                            albumGroups.count
+                                        ),
+                                    symbol:
+                                        "square.stack.fill"
+                                ) {
+
+                                    AlbumCollectionArtwork(
+                                        albums:
+                                            albumGroups
+                                    )
+                                }
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink {
+
+                                RecentAddedView()
+
+                            } label: {
+
+                                CollectionCard(
+                                    title:
+                                        String(
+                                            localized:
+                                                "libraryview_recent_added"
+                                        ),
+                                    subtitle:
+                                        recentAddedSubtitle,
+                                    symbol: "plus"
+                                ) {
+
+                                    CoverStackArtwork(
+                                        songs:
+                                            recentlyAddedSongs
+                                    )
+                                }
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink {
+
+                                RecentPlayedView()
+
+                            } label: {
+
+                                CollectionCard(
+                                    title:
+                                        String(
+                                            localized:
+                                                "libraryview_recent_played"
+                                        ),
+                                    subtitle:
+                                        recentPlayedSubtitle,
+                                    symbol:
+                                        "clock.arrow.circlepath"
+                                ) {
+
+                                    CoverStackArtwork(
+                                        songs:
+                                            recentlyPlayedSongs
+                                    )
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.top, 8)
+                .padding(.bottom, 120)
+            }
+
+            .navigationTitle(
+                "libraryview_title"
+            )
+            .navigationBarTitleDisplayMode(
+                .large
+            )
+        }
+    }
 }
-
-
-
-// MARK: - Main Feature Card
 
 struct LibraryFeatureCard<
     Artwork: View
@@ -462,19 +466,16 @@ struct LibraryFeatureCard<
     @ViewBuilder
     let artwork: Artwork
 
-
     init(
         title: String,
         subtitle: String,
         @ViewBuilder artwork:
             () -> Artwork
     ) {
-
         self.title = title
         self.subtitle = subtitle
         self.artwork = artwork()
     }
-
 
     var body: some View {
 
@@ -484,12 +485,10 @@ struct LibraryFeatureCard<
         ) {
 
             artwork
-
                 .frame(
                     width: 168,
                     height: 168
                 )
-
                 .clipShape(
                     RoundedRectangle(
                         cornerRadius: 22,
@@ -497,19 +496,16 @@ struct LibraryFeatureCard<
                     )
                 )
 
-
             Text(title)
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .lineLimit(1)
-
 
             Text(subtitle)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-
         .frame(
             width: 168,
             alignment: .leading
@@ -517,36 +513,27 @@ struct LibraryFeatureCard<
     }
 }
 
-
-
-// MARK: - Songs Mosaic Artwork
-
 struct SongsMosaicArtwork: View {
 
     let songs: [Song]
 
-
     private var displayedSongs: [Song] {
-
         Array(
             songs.prefix(4)
         )
     }
-
 
     var body: some View {
 
         GeometryReader { geometry in
 
             let gap: CGFloat = 2
-
             let side =
                 (
                     geometry.size.width
                     - gap
                 )
                 / 2
-
 
             ZStack {
 
@@ -556,12 +543,10 @@ struct SongsMosaicArtwork: View {
                 )
                 .fill(.thinMaterial)
 
-
                 if displayedSongs.isEmpty {
 
                     Image(
-                        systemName:
-                            "music.note"
+                        systemName: "music.note"
                     )
                     .font(
                         .system(
@@ -592,7 +577,8 @@ struct SongsMosaicArtwork: View {
                         ) { index in
 
                             if
-                                displayedSongs.indices
+                                displayedSongs
+                                    .indices
                                     .contains(index)
                             {
 
@@ -618,20 +604,14 @@ struct SongsMosaicArtwork: View {
                     }
                 }
             }
-
             .clipped()
         }
     }
 }
 
-
-
-// MARK: - Playlist Stack Artwork
-
 struct PlaylistStackArtwork: View {
 
     let playlists: [Playlist]
-
 
     var body: some View {
 
@@ -644,7 +624,6 @@ struct PlaylistStackArtwork: View {
                     style: .continuous
                 )
                 .fill(.thinMaterial)
-
 
                 if playlists.isEmpty {
 
@@ -669,14 +648,8 @@ struct PlaylistStackArtwork: View {
                                 geometry.size.width
                                 * 0.59
                         )
-                        .rotationEffect(
-                            .degrees(9)
-                        )
-                        .offset(
-                            x: 19,
-                            y: -4
-                        )
-
+                        .rotationEffect(.degrees(9))
+                        .offset(x: 19, y: -4)
 
                         playlistCard(
                             index: 1,
@@ -684,14 +657,8 @@ struct PlaylistStackArtwork: View {
                                 geometry.size.width
                                 * 0.65
                         )
-                        .rotationEffect(
-                            .degrees(-7)
-                        )
-                        .offset(
-                            x: -17,
-                            y: 7
-                        )
-
+                        .rotationEffect(.degrees(-7))
+                        .offset(x: -17, y: 7)
 
                         playlistCard(
                             index: 0,
@@ -705,21 +672,16 @@ struct PlaylistStackArtwork: View {
         }
     }
 
-
     @ViewBuilder
     private func playlistCard(
         index: Int,
         size: CGFloat
     ) -> some View {
 
-        if
-            playlists.indices
-                .contains(index)
-        {
+        if playlists.indices.contains(index) {
 
             let playlist =
                 playlists[index]
-
 
             ZStack {
 
@@ -744,10 +706,7 @@ struct PlaylistStackArtwork: View {
                     )
                     .fill(.regularMaterial)
 
-
-                    VStack(
-                        spacing: 6
-                    ) {
+                    VStack(spacing: 6) {
 
                         Image(
                             systemName:
@@ -755,29 +714,26 @@ struct PlaylistStackArtwork: View {
                         )
                         .font(.title2)
 
-
-                        Text(
-                            playlist.name
-                        )
-                        .font(.caption.bold())
-                        .lineLimit(1)
-                        .padding(.horizontal, 6)
+                        Text(playlist.name)
+                            .font(.caption.bold())
+                            .lineLimit(1)
+                            .padding(
+                                .horizontal,
+                                6
+                            )
                     }
                 }
             }
-
             .frame(
                 width: size,
                 height: size
             )
-
             .clipShape(
                 RoundedRectangle(
                     cornerRadius: 18,
                     style: .continuous
                 )
             )
-
             .shadow(
                 radius: 8,
                 y: 4
@@ -798,22 +754,15 @@ struct PlaylistStackArtwork: View {
     }
 }
 
-
-
-// MARK: - Favorites Feature Artwork
-
 struct FavoritesFeatureArtwork: View {
 
     let songs: [Song]
 
-
     private var covers: [Song] {
-
         Array(
             songs.prefix(4)
         )
     }
-
 
     var body: some View {
 
@@ -826,7 +775,6 @@ struct FavoritesFeatureArtwork: View {
                     style: .continuous
                 )
                 .fill(.thinMaterial)
-
 
                 if !covers.isEmpty {
 
@@ -843,7 +791,6 @@ struct FavoritesFeatureArtwork: View {
                             RawSongArtwork(
                                 song: song
                             )
-
                             .frame(
                                 width:
                                     geometry.size.width
@@ -852,26 +799,21 @@ struct FavoritesFeatureArtwork: View {
                                     geometry.size.width
                                     * 0.44
                             )
-
                             .clipShape(
                                 RoundedRectangle(
                                     cornerRadius: 13,
-                                    style:
-                                        .continuous
+                                    style: .continuous
                                 )
                             )
-
                             .shadow(
                                 radius: 5,
                                 y: 3
                             )
                         }
                     }
-
                     .opacity(0.72)
                     .offset(y: 14)
                 }
-
 
                 Circle()
                     .fill(.regularMaterial)
@@ -879,12 +821,10 @@ struct FavoritesFeatureArtwork: View {
                         width: 72,
                         height: 72
                     )
-
                     .shadow(
                         radius: 10,
                         y: 4
                     )
-
 
                 Image(
                     systemName: "heart.fill"
@@ -901,10 +841,6 @@ struct FavoritesFeatureArtwork: View {
     }
 }
 
-
-
-// MARK: - Collection Card
-
 struct CollectionCard<
     Artwork: View
 >: View {
@@ -916,7 +852,6 @@ struct CollectionCard<
     @ViewBuilder
     let artwork: Artwork
 
-
     init(
         title: String,
         subtitle: String,
@@ -924,13 +859,11 @@ struct CollectionCard<
         @ViewBuilder artwork:
             () -> Artwork
     ) {
-
         self.title = title
         self.subtitle = subtitle
         self.symbol = symbol
         self.artwork = artwork()
     }
-
 
     var body: some View {
 
@@ -944,40 +877,28 @@ struct CollectionCard<
             ) {
 
                 artwork
-
-                .frame(
-                    maxWidth: .infinity
-                )
-
-                .frame(
-                    height: 105
-                )
-
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 105)
 
                 Image(
                     systemName: symbol
                 )
-
                 .font(
                     .system(
                         size: 15,
                         weight: .semibold
                     )
                 )
-
                 .frame(
                     width: 32,
                     height: 32
                 )
-
                 .background(
                     .regularMaterial,
                     in: Circle()
                 )
-
                 .padding(10)
             }
-
             .clipShape(
                 RoundedRectangle(
                     cornerRadius: 18,
@@ -985,26 +906,21 @@ struct CollectionCard<
                 )
             )
 
-
             Text(title)
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .lineLimit(1)
-
 
             Text(subtitle)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-
         .frame(
             maxWidth: .infinity,
             alignment: .leading
         )
-
         .padding(10)
-
         .background(
             .thinMaterial,
             in: RoundedRectangle(
@@ -1015,28 +931,20 @@ struct CollectionCard<
     }
 }
 
-
-
-// MARK: - Artist Collection Artwork
-
 struct ArtistCollectionArtwork: View {
 
     let artists: [ArtistGroup]
 
-
     var body: some View {
 
-        GeometryReader { geometry in
+        GeometryReader { _ in
 
             ZStack {
 
                 Rectangle()
                     .fill(.thinMaterial)
 
-
-                HStack(
-                    spacing: -16
-                ) {
+                HStack(spacing: -16) {
 
                     ForEach(
                         Array(
@@ -1045,18 +953,14 @@ struct ArtistCollectionArtwork: View {
                     ) { artist in
 
                         ArtistArtworkView(
-                            songs: artist.songs
+                            songs:
+                                artist.songs
                         )
-
                         .frame(
                             width: 66,
                             height: 66
                         )
-
-                        .clipShape(
-                            Circle()
-                        )
-
+                        .clipShape(Circle())
                         .overlay {
 
                             Circle()
@@ -1072,14 +976,9 @@ struct ArtistCollectionArtwork: View {
     }
 }
 
-
-
-// MARK: - Album Collection Artwork
-
 struct AlbumCollectionArtwork: View {
 
     let albums: [AlbumGroup]
-
 
     var body: some View {
 
@@ -1087,7 +986,6 @@ struct AlbumCollectionArtwork: View {
 
             Rectangle()
                 .fill(.thinMaterial)
-
 
             if
                 albums.count > 1,
@@ -1099,22 +997,10 @@ struct AlbumCollectionArtwork: View {
                     song: second,
                     cornerRadius: 13
                 )
-
-                .frame(
-                    width: 70,
-                    height: 70
-                )
-
-                .rotationEffect(
-                    .degrees(8)
-                )
-
-                .offset(
-                    x: 20,
-                    y: -4
-                )
+                .frame(width: 70, height: 70)
+                .rotationEffect(.degrees(8))
+                .offset(x: 20, y: -4)
             }
-
 
             if
                 let firstAlbum =
@@ -1127,33 +1013,17 @@ struct AlbumCollectionArtwork: View {
                     song: song,
                     cornerRadius: 13
                 )
-
-                .frame(
-                    width: 75,
-                    height: 75
-                )
-
-                .rotationEffect(
-                    .degrees(-5)
-                )
-
-                .offset(
-                    x: -15,
-                    y: 7
-                )
+                .frame(width: 75, height: 75)
+                .rotationEffect(.degrees(-5))
+                .offset(x: -15, y: 7)
             }
         }
     }
 }
 
-
-
-// MARK: - Cover Stack
-
 struct CoverStackArtwork: View {
 
     let songs: [Song]
-
 
     var body: some View {
 
@@ -1161,7 +1031,6 @@ struct CoverStackArtwork: View {
 
             Rectangle()
                 .fill(.thinMaterial)
-
 
             ForEach(
                 Array(
@@ -1175,19 +1044,13 @@ struct CoverStackArtwork: View {
                     song: song,
                     cornerRadius: 12
                 )
-
-                .frame(
-                    width: 68,
-                    height: 68
-                )
-
+                .frame(width: 68, height: 68)
                 .rotationEffect(
                     .degrees(
                         Double(index - 1)
                         * 6
                     )
                 )
-
                 .offset(
                     x:
                         CGFloat(index - 1)
@@ -1201,17 +1064,12 @@ struct CoverStackArtwork: View {
     }
 }
 
-
-
-// MARK: - Artists
-
 struct ArtistsView: View {
 
     @Environment(MusicLibraryManager.self)
     private var library
 
     @State private var searchText = ""
-
 
     private var allArtists: [ArtistGroup] {
 
@@ -1222,50 +1080,46 @@ struct ArtistsView: View {
             let value =
                 $0.artist
                     .trimmingCharacters(
-                        in: .whitespacesAndNewlines
+                        in:
+                            .whitespacesAndNewlines
                     )
 
             return value.isEmpty
-                ? "Onbekende artiest"
+                ? String(
+                    localized:
+                        "libraryview_unknown_artist"
+                )
                 : value
         }
-
         .map {
-
             ArtistGroup(
                 name: $0.key,
                 songs: $0.value
             )
         }
-
         .sorted {
-
-            $0.name.localizedCaseInsensitiveCompare(
-                $1.name
-            ) == .orderedAscending
+            $0.name
+                .localizedCaseInsensitiveCompare(
+                    $1.name
+                )
+            == .orderedAscending
         }
     }
 
-
     private var artists: [ArtistGroup] {
 
-        guard
-            !searchText.isEmpty
+        guard !searchText.isEmpty
         else {
-
             return allArtists
         }
 
-
         return allArtists.filter {
-
             $0.name
                 .localizedCaseInsensitiveContains(
                     searchText
                 )
         }
     }
-
 
     var body: some View {
 
@@ -1279,21 +1133,13 @@ struct ArtistsView: View {
 
             } label: {
 
-                HStack(
-                    spacing: 12
-                ) {
+                HStack(spacing: 12) {
 
                     ArtistArtworkView(
                         songs: artist.songs
                     )
-                    .frame(
-                        width: 55,
-                        height: 55
-                    )
-                    .clipShape(
-                        Circle()
-                    )
-
+                    .frame(width: 55, height: 55)
+                    .clipShape(Circle())
 
                     VStack(
                         alignment: .leading,
@@ -1303,9 +1149,15 @@ struct ArtistsView: View {
                         Text(artist.name)
                             .font(.headline)
 
-
                         Text(
-                            "\(artist.songs.count) nummers"
+                            String(
+                                format:
+                                    String(
+                                        localized:
+                                            "libraryview_songs_count"
+                                    ),
+                                artist.songs.count
+                            )
                         )
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -1315,19 +1167,16 @@ struct ArtistsView: View {
         }
 
         .navigationTitle(
-            "Artiesten"
+            "libraryview_artists"
         )
 
         .searchable(
             text: $searchText,
-            prompt: "Zoek artiesten"
+            prompt:
+                "libraryview_search_artists"
         )
     }
 }
-
-
-
-// MARK: - Artist Detail
 
 struct ArtistDetailView: View {
 
@@ -1337,9 +1186,7 @@ struct ArtistDetailView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
-
     let artist: ArtistGroup
-
 
     var body: some View {
 
@@ -1351,57 +1198,49 @@ struct ArtistDetailView: View {
 
                     Spacer()
 
-
-                    VStack(
-                        spacing: 12
-                    ) {
+                    VStack(spacing: 12) {
 
                         ArtistArtworkView(
                             songs: artist.songs
                         )
-                        .frame(
-                            width: 160,
-                            height: 160
-                        )
-                        .clipShape(
-                            Circle()
-                        )
-
+                        .frame(width: 160, height: 160)
+                        .clipShape(Circle())
 
                         Text(artist.name)
                             .font(.title2.bold())
 
-
                         Text(
-                            "\(artist.songs.count) nummers"
+                            String(
+                                format:
+                                    String(
+                                        localized:
+                                            "libraryview_songs_count"
+                                    ),
+                                artist.songs.count
+                            )
                         )
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     }
 
-
                     Spacer()
                 }
-
                 .listRowBackground(
                     Color.clear
                 )
             }
 
-
             Section(
-                "Nummers"
+                "libraryview_songs"
             ) {
 
                 ForEach(
                     artist.songs.sorted {
-
                         $0.title
                             .localizedCaseInsensitiveCompare(
                                 $1.title
                             )
-                        ==
-                        .orderedAscending
+                        == .orderedAscending
                     }
                 ) { song in
 
@@ -1418,58 +1257,48 @@ struct ArtistDetailView: View {
                             song: song
                         )
                     }
-
                     .buttonStyle(.plain)
                 }
             }
         }
 
-        .navigationTitle(
-            artist.name
-        )
-
-        .navigationBarTitleDisplayMode(
-            .inline
-        )
+        .navigationTitle(artist.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
+    private func play(
+        _ song: Song,
+        queue: [Song]
+    ) {
 
-   private func play(
-    _ song: Song,
-    queue: [Song]
-) {
+        guard
+            let url =
+                library.getURL(
+                    for: song
+                )
+        else {
+            return
+        }
 
-    guard
-        let url =
-            library.getURL(
-                for: song
-            )
-    else {
-        return
+        library.markAsPlayed(song)
+
+        audioPlayer.lastPlaybackDirection =
+            .fade
+
+        audioPlayer.play(
+            song: song,
+            url: url,
+            queue: queue
+        )
+
+        audioPlayer.allSongs =
+            library.songs
+
+        audioPlayer.fillAutoNext(
+            from: library.songs
+        )
     }
-
-    library.markAsPlayed(song)
-
-    audioPlayer.lastPlaybackDirection =
-        .fade
-
-    audioPlayer.play(
-        song: song,
-        url: url,
-        queue: queue
-    )
-
-    audioPlayer.allSongs =
-        library.songs
-
-    audioPlayer.fillAutoNext(
-        from: library.songs
-    )
 }
-}
-
-
-// MARK: - Albums
 
 struct AlbumsView: View {
 
@@ -1477,7 +1306,6 @@ struct AlbumsView: View {
     private var library
 
     @State private var searchText = ""
-
 
     private var allAlbums: [AlbumGroup] {
 
@@ -1488,26 +1316,22 @@ struct AlbumsView: View {
                     let album =
                         $0.album?
                             .trimmingCharacters(
-                                in: .whitespacesAndNewlines
+                                in:
+                                    .whitespacesAndNewlines
                             )
                 else {
-
                     return false
                 }
 
-
                 return !album.isEmpty
             }
-
 
         let grouped =
             Dictionary(
                 grouping: songs
             ) {
-
                 "\($0.artist)|\($0.album ?? "")"
             }
-
 
         return grouped
             .compactMap { _, songs in
@@ -1518,10 +1342,8 @@ struct AlbumsView: View {
                     let album =
                         first.album
                 else {
-
                     return nil
                 }
-
 
                 return AlbumGroup(
                     name: album,
@@ -1529,28 +1351,21 @@ struct AlbumsView: View {
                     songs: songs
                 )
             }
-
             .sorted {
-
                 $0.name
                     .localizedCaseInsensitiveCompare(
                         $1.name
                     )
-                ==
-                .orderedAscending
+                == .orderedAscending
             }
     }
 
-
     private var albums: [AlbumGroup] {
 
-        guard
-            !searchText.isEmpty
+        guard !searchText.isEmpty
         else {
-
             return allAlbums
         }
-
 
         return allAlbums.filter {
 
@@ -1568,7 +1383,6 @@ struct AlbumsView: View {
         }
     }
 
-
     var body: some View {
 
         List(albums) { album in
@@ -1581,9 +1395,7 @@ struct AlbumsView: View {
 
             } label: {
 
-                HStack(
-                    spacing: 12
-                ) {
+                HStack(spacing: 12) {
 
                     if
                         let first =
@@ -1594,12 +1406,8 @@ struct AlbumsView: View {
                             song: first,
                             cornerRadius: 12
                         )
-                        .frame(
-                            width: 58,
-                            height: 58
-                        )
+                        .frame(width: 58, height: 58)
                     }
-
 
                     VStack(
                         alignment: .leading,
@@ -1609,31 +1417,25 @@ struct AlbumsView: View {
                         Text(album.name)
                             .font(.headline)
 
-
                         Text(album.artist)
                             .font(.caption)
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
         }
 
         .navigationTitle(
-            "Albums"
+            "libraryview_albums"
         )
 
         .searchable(
             text: $searchText,
-            prompt: "Zoek albums"
+            prompt:
+                "libraryview_search_albums"
         )
     }
 }
-
-
-
-// MARK: - Album Detail
 
 struct AlbumDetailView: View {
 
@@ -1643,9 +1445,7 @@ struct AlbumDetailView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
-
     let album: AlbumGroup
-
 
     var body: some View {
 
@@ -1657,10 +1457,7 @@ struct AlbumDetailView: View {
 
                     Spacer()
 
-
-                    VStack(
-                        spacing: 12
-                    ) {
+                    VStack(spacing: 12) {
 
                         if
                             let first =
@@ -1677,31 +1474,22 @@ struct AlbumDetailView: View {
                             )
                         }
 
-
                         Text(album.name)
-                            .font(
-                                .title2.bold()
-                            )
-
+                            .font(.title2.bold())
 
                         Text(album.artist)
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .foregroundStyle(.secondary)
                     }
-
 
                     Spacer()
                 }
-
                 .listRowBackground(
                     Color.clear
                 )
             }
 
-
             Section(
-                "Nummers"
+                "libraryview_songs"
             ) {
 
                 ForEach(
@@ -1718,21 +1506,14 @@ struct AlbumDetailView: View {
                             song: song
                         )
                     }
-
                     .buttonStyle(.plain)
                 }
             }
         }
 
-        .navigationTitle(
-            album.name
-        )
-
-        .navigationBarTitleDisplayMode(
-            .inline
-        )
+        .navigationTitle(album.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
-
 
     private func play(
         _ song: Song
@@ -1744,16 +1525,13 @@ struct AlbumDetailView: View {
                     for: song
                 )
         else {
-
             return
         }
-
 
         library.markAsPlayed(song)
 
         audioPlayer.lastPlaybackDirection =
             .fade
-
 
         audioPlayer.play(
             song: song,
@@ -1761,10 +1539,8 @@ struct AlbumDetailView: View {
             queue: album.songs
         )
 
-
         audioPlayer.allSongs =
             library.songs
-
 
         audioPlayer.fillAutoNext(
             from: library.songs
@@ -1772,49 +1548,48 @@ struct AlbumDetailView: View {
     }
 }
 
-
-
-// MARK: - Recently Added
-
 struct RecentAddedView: View {
 
     @Environment(MusicLibraryManager.self)
     private var library
 
-
     var body: some View {
 
         SongCollectionView(
-            title: "Recent toegevoegd",
+            title:
+                String(
+                    localized:
+                        "libraryview_recent_added"
+                ),
             songs:
                 library.songs.sorted {
-                    $0.dateAdded > $1.dateAdded
+                    $0.dateAdded
+                    >
+                    $1.dateAdded
                 }
         )
     }
 }
-
-
-
-// MARK: - Recently Played
 
 struct RecentPlayedView: View {
 
     @Environment(MusicLibraryManager.self)
     private var library
 
-
     var body: some View {
 
         SongCollectionView(
-            title: "Recent afgespeeld",
+            title:
+                String(
+                    localized:
+                        "libraryview_recent_played"
+                ),
             songs:
                 library.songs
                     .filter {
                         $0.lastPlayed != nil
                     }
                     .sorted {
-
                         ($0.lastPlayed ?? .distantPast)
                         >
                         ($1.lastPlayed ?? .distantPast)
@@ -1822,10 +1597,6 @@ struct RecentPlayedView: View {
         )
     }
 }
-
-
-
-// MARK: - Generic Song Collection
 
 struct SongCollectionView: View {
 
@@ -1835,10 +1606,8 @@ struct SongCollectionView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
-
     let title: String
     let songs: [Song]
-
 
     var body: some View {
 
@@ -1854,94 +1623,60 @@ struct SongCollectionView: View {
                     song: song
                 )
             }
-
             .buttonStyle(.plain)
         }
+        .navigationTitle(title)
+    }
 
-        .navigationTitle(
-            title
+    private func play(
+        _ song: Song
+    ) {
+
+        guard
+            let url =
+                library.getURL(
+                    for: song
+                )
+        else {
+            return
+        }
+
+        library.markAsPlayed(song)
+
+        audioPlayer.lastPlaybackDirection =
+            .fade
+
+        audioPlayer.play(
+            song: song,
+            url: url,
+            queue: [song]
         )
-    }
 
+        audioPlayer.allSongs =
+            library.songs
 
-   private func play(
-    _ song: Song
-) {
+        audioPlayer.autoNextQueue.removeAll()
+        audioPlayer.autoNextIndex = 0
 
-    guard
-        let url =
-            library.getURL(
-                for: song
-            )
-    else {
-        return
-    }
-
-
-    library.markAsPlayed(
-        song
-    )
-
-
-    audioPlayer.lastPlaybackDirection =
-        .fade
-
-
-    // Oude gewone queue volledig vervangen
-    // door alleen het huidige nummer.
-    //
-    // QueueView toont alles NA currentIndex,
-    // dus de gewone "Volgende"-lijst blijft leeg.
-    audioPlayer.play(
-        song: song,
-        url: url,
-        queue: [song]
-    )
-
-
-    // Volledige library instellen als bron
-    // voor aanbevolen nummers.
-    audioPlayer.allSongs =
-        library.songs
-
-
-    // BELANGRIJK:
-    // oude Auto Next volledig resetten.
-    audioPlayer.autoNextQueue.removeAll()
-    audioPlayer.autoNextIndex = 0
-
-
-    // Nieuwe aanbevolen nummers genereren.
-    audioPlayer.fillAutoNext(
-        from: library.songs
+        audioPlayer.fillAutoNext(
+            from: library.songs
         )
     }
 }
-
-
-
-// MARK: - Song Row
 
 struct LibrarySongRow: View {
 
     let song: Song
 
-
     var body: some View {
 
-        HStack(
-            spacing: 12
-        ) {
+        HStack(spacing: 12) {
 
             SongArtworkView(
                 song: song,
                 cornerRadius: 10
             )
-            .frame(
-                width: 50,
-                height: 50
-            )
-
+            .frame(width: 50, height: 50)
 
             VStack(
                 alignment: .leading,
@@ -1953,28 +1688,21 @@ struct LibrarySongRow: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-
                 Text(song.artist)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
 
-
             Spacer()
         }
     }
 }
 
-
-
-// MARK: - Song Artwork
-
 struct SongArtworkView: View {
 
     let song: Song
     let cornerRadius: CGFloat
-
 
     var body: some View {
 
@@ -1983,32 +1711,25 @@ struct SongArtworkView: View {
             RawSongArtwork(
                 song: song
             )
-
             .frame(
                 width: geometry.size.width,
                 height: geometry.size.height
             )
-
             .clipped()
         }
-
         .clipShape(
             RoundedRectangle(
-                cornerRadius: cornerRadius,
+                cornerRadius:
+                    cornerRadius,
                 style: .continuous
             )
         )
     }
 }
 
-
-
-// MARK: - Raw Song Artwork
-
 struct RawSongArtwork: View {
 
     let song: Song
-
 
     var body: some View {
 
@@ -2021,11 +1742,9 @@ struct RawSongArtwork: View {
                     UIImage(data: data)
             {
 
-                Image(
-                    uiImage: image
-                )
-                .resizable()
-                .scaledToFill()
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
 
             } else {
 
@@ -2033,7 +1752,6 @@ struct RawSongArtwork: View {
 
                     Rectangle()
                         .fill(.thinMaterial)
-
 
                     Image(
                         systemName:
@@ -2046,14 +1764,9 @@ struct RawSongArtwork: View {
     }
 }
 
-
-
-// MARK: - Artist Artwork
-
 struct ArtistArtworkView: View {
 
     let songs: [Song]
-
 
     var body: some View {
 
@@ -2075,11 +1788,9 @@ struct ArtistArtworkView: View {
                         UIImage(data: data)
                 {
 
-                    Image(
-                        uiImage: image
-                    )
-                    .resizable()
-                    .scaledToFill()
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
 
                 } else {
 
@@ -2087,7 +1798,6 @@ struct ArtistArtworkView: View {
 
                         Rectangle()
                             .fill(.thinMaterial)
-
 
                         Image(
                             systemName:
@@ -2102,12 +1812,10 @@ struct ArtistArtworkView: View {
                     }
                 }
             }
-
             .frame(
                 width: geometry.size.width,
                 height: geometry.size.height
             )
-
             .clipped()
         }
     }
