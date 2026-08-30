@@ -1,208 +1,163 @@
 import SwiftUI
 
-
 struct MusicBrainzSearchView:
-    View {
+    View
+{
 
     @State private var query =
         ""
 
-
     @State private var results:
         [MusicBrainzTrack] = []
-
 
     @State private var isLoading =
         false
 
-
     @State private var errorMessage:
         String?
 
-
     @State private var selectedTrack:
         MusicBrainzTrack?
-
 
     var body: some View {
 
         List {
 
-           Section {
+            Section {
 
-    HStack(
-        spacing: 10
-    ) {
+                HStack(
+                    spacing: 10
+                ) {
 
-        Image(
-            systemName: "magnifyingglass"
-        )
-        .foregroundStyle(
-            .secondary
-        )
+                    Image(
+                        systemName:
+                            "magnifyingglass"
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
 
+                    TextField(
+                        String(
+                            localized:
+                                "musicbrainzsearchview_placeholder"
+                        ),
+                        text:
+                            $query
+                    )
+                    .textInputAutocapitalization(
+                        .never
+                    )
+                    .autocorrectionDisabled()
+                    .submitLabel(
+                        .search
+                    )
+                    .onSubmit {
 
-        TextField(
-            "Song, artist or album",
-            text: $query
-        )
-        .textInputAutocapitalization(
-            .never
-        )
-        .autocorrectionDisabled()
-        .submitLabel(
-            .search
-        )
-        .onSubmit {
+                        Task {
 
-            Task {
+                            await search()
+                        }
+                    }
 
-                await search()
+                    if !query.isEmpty {
+
+                        Button {
+
+                            query = ""
+                            results = []
+                            errorMessage = nil
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "xmark.circle.fill"
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
-        }
-
-
-        if !query.isEmpty {
-
-            Button {
-
-                query = ""
-                results = []
-                errorMessage = nil
-
-            } label: {
-
-                Image(
-                    systemName:
-                        "xmark.circle.fill"
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-            }
-            .buttonStyle(
-                .plain
-            )
-        }
-    }
-} 
-
-            // MARK: - Intro
 
             if
                 results.isEmpty,
                 !isLoading,
-                errorMessage == nil {
-
-                    
+                errorMessage == nil
+            {
 
                 Section {
 
                     VStack(
-                        alignment:
-                            .leading,
-                        spacing:
-                            8
+                        alignment: .leading,
+                        spacing: 8
                     ) {
 
                         Label(
-                            "Search without Spotify",
+                            "musicbrainzsearchview_search_without_spotify",
                             systemImage:
                                 "magnifyingglass"
                         )
-                        .font(
-                            .headline
-                        )
-
+                        .font(.headline)
 
                         Text(
-                            "Search songs using MusicBrainz. No Spotify account is required."
+                            "musicbrainzsearchview_intro_description"
                         )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     }
-                    .padding(
-                        .vertical,
-                        5
-                    )
+                    .padding(.vertical, 5)
                 }
             }
-
-
-            // MARK: - Loading
 
             if isLoading {
 
                 Section {
 
                     HStack(
-                        spacing:
-                            10
+                        spacing: 10
                     ) {
 
                         Spacer()
 
-
                         ProgressView()
 
-
                         Text(
-                            "Searching MusicBrainz…"
+                            "musicbrainzsearchview_searching"
                         )
-                        .font(
-                            .subheadline
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
 
                         Spacer()
                     }
                 }
             }
 
-
-            // MARK: - Error
-
             if let errorMessage {
 
                 Section {
 
                     VStack(
-                        alignment:
-                            .leading,
-                        spacing:
-                            8
+                        alignment: .leading,
+                        spacing: 8
                     ) {
 
                         Label(
-                            "Search Failed",
+                            "musicbrainzsearchview_search_failed",
                             systemImage:
                                 "exclamationmark.triangle"
                         )
-                        .font(
-                            .headline
-                        )
+                        .font(.headline)
 
-
-                        Text(
-                            errorMessage
-                        )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
                         Button(
-                            "Try Again"
+                            "musicbrainzsearchview_try_again"
                         ) {
 
                             Task {
@@ -211,27 +166,19 @@ struct MusicBrainzSearchView:
                             }
                         }
                     }
-                    .padding(
-                        .vertical,
-                        4
-                    )
+                    .padding(.vertical, 4)
                 }
             }
-
-
-            // MARK: - Results
 
             if !results.isEmpty {
 
                 Section(
-                    "Songs"
+                    "musicbrainzsearchview_songs"
                 ) {
 
                     ForEach(
                         results
-                    ) {
-                        track in
-
+                    ) { track in
 
                         Button {
 
@@ -241,37 +188,27 @@ struct MusicBrainzSearchView:
                         } label: {
 
                             MusicBrainzTrackRow(
-                                track:
-                                    track
+                                track: track
                             )
                         }
-                        .buttonStyle(
-                            .plain
-                        )
+                        .buttonStyle(.plain)
                     }
                 }
             }
         }
 
         .navigationTitle(
-            "Search Music"
+            "musicbrainzsearchview_title"
         )
 
         .navigationBarTitleDisplayMode(
             .inline
         )
 
-    
-
         .sheet(
             item:
                 $selectedTrack
-        ) {
-            track in
-
-
-            // Reuse Echo's complete existing
-            // track detail + download UI.
+        ) { track in
 
             SpotifyTrackDetailView(
 
@@ -289,7 +226,6 @@ struct MusicBrainzSearchView:
                     selectedTrack =
                         nil
 
-
                     DispatchQueue.main.async {
 
                         NotificationCenter
@@ -306,11 +242,9 @@ struct MusicBrainzSearchView:
         }
     }
 
-
-    // MARK: - Search
-
     private func search()
-        async {
+        async
+    {
 
         let text =
             query
@@ -319,23 +253,14 @@ struct MusicBrainzSearchView:
                         .whitespacesAndNewlines
                 )
 
-
         guard !text.isEmpty else {
 
-            results =
-                []
-
+            results = []
             return
         }
 
-
-        isLoading =
-            true
-
-
-        errorMessage =
-            nil
-
+        isLoading = true
+        errorMessage = nil
 
         do {
 
@@ -349,163 +274,120 @@ struct MusicBrainzSearchView:
                             30
                     )
 
-
             if results.isEmpty {
 
                 errorMessage =
-                    "No songs were found for \"\(text)\"."
+                    String(
+                        format:
+                            String(
+                                localized:
+                                    "musicbrainzsearchview_no_results_for_query"
+                            ),
+                        text
+                    )
             }
-
 
         } catch {
 
-            results =
-                []
-
+            results = []
 
             errorMessage =
                 error.localizedDescription
         }
 
-
-        isLoading =
-            false
+        isLoading = false
     }
 }
 
-
-// MARK: - Track Row
-
 private struct MusicBrainzTrackRow:
-    View {
+    View
+{
 
     let track:
         MusicBrainzTrack
 
-
     var body: some View {
 
         HStack(
-            spacing:
-                12
+            spacing: 12
         ) {
 
             artwork
 
-
             VStack(
-                alignment:
-                    .leading,
-                spacing:
-                    3
+                alignment: .leading,
+                spacing: 3
             ) {
 
                 Text(
                     track.title
                 )
-                .font(
-                    .headline
-                )
-                .foregroundStyle(
-                    .primary
-                )
-                .lineLimit(
-                    1
-                )
-
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
 
                 Text(
                     track.artist
                 )
-                .font(
-                    .subheadline
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .lineLimit(
-                    1
-                )
-
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
 
                 HStack(
-                    spacing:
-                        6
+                    spacing: 6
                 ) {
 
                     if track.album !=
-                        "Unknown Album" {
+                        "Unknown Album"
+                    {
 
                         Text(
                             track.album
                         )
-                        .lineLimit(
-                            1
-                        )
+                        .lineLimit(1)
                     }
 
-
-                    if track.durationMS >
-                        0 {
+                    if track.durationMS > 0 {
 
                         if track.album !=
-                            "Unknown Album" {
+                            "Unknown Album"
+                        {
 
-                            Text(
-                                "•"
-                            )
+                            Text("•")
                         }
-
 
                         Text(
                             durationText
                         )
                     }
                 }
-                .font(
-                    .caption
-                )
-                .foregroundStyle(
-                    .tertiary
-                )
+                .font(.caption)
+                .foregroundStyle(.tertiary)
             }
 
-
             Spacer()
-
 
             Image(
                 systemName:
                     "chevron.right"
             )
-            .font(
-                .caption
-            )
-            .foregroundStyle(
-                .tertiary
-            )
+            .font(.caption)
+            .foregroundStyle(.tertiary)
         }
         .contentShape(
             Rectangle()
         )
-        .padding(
-            .vertical,
-            3
-        )
+        .padding(.vertical, 3)
     }
 
-
-    // MARK: - Artwork
-
     private var artwork:
-        some View {
+        some View
+    {
 
         AsyncImage(
             url:
                 track.artworkURL
-        ) {
-            image in
-
+        ) { image in
 
             image
                 .resizable()
@@ -514,8 +396,7 @@ private struct MusicBrainzTrackRow:
         } placeholder: {
 
             RoundedRectangle(
-                cornerRadius:
-                    8
+                cornerRadius: 8
             )
             .fill(
                 .secondary.opacity(
@@ -528,48 +409,38 @@ private struct MusicBrainzTrackRow:
                     systemName:
                         "music.note"
                 )
-                .foregroundStyle(
-                    .secondary
-                )
+                .foregroundStyle(.secondary)
             }
         }
         .frame(
-            width:
-                54,
-            height:
-                54
+            width: 54,
+            height: 54
         )
         .clipShape(
             RoundedRectangle(
-                cornerRadius:
-                    8
+                cornerRadius: 8
             )
         )
     }
 
-
-    // MARK: - Duration
-
     private var durationText:
-        String {
+        String
+    {
 
         let totalSeconds =
             track.durationMS
             /
             1000
 
-
         let minutes =
             totalSeconds
             /
             60
 
-
         let seconds =
             totalSeconds
             %
             60
-
 
         return String(
             format:
