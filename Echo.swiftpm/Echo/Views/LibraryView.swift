@@ -382,24 +382,7 @@ struct LibraryView: View {
             )
 
 
-            // MARK: - Songs
-
-            .fullScreenCover(
-                isPresented: $showSongs
-            ) {
-
-                SongsView()
-            }
-
-
-            // MARK: - Playlists
-
-            .fullScreenCover(
-                isPresented: $showPlaylists
-            ) {
-
-                PlaylistsView()
-            }
+          
         }
     }
 
