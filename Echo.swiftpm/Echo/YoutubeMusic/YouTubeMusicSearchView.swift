@@ -1,34 +1,27 @@
 import SwiftUI
 
-
 struct YouTubeMusicSearchView:
-    View {
+    View
+{
 
     @State private var query =
         ""
 
-
     @State private var results:
         [YouTubeSearchResult] = []
-
 
     @State private var loading =
         false
 
-
     @State private var errorMessage:
         String?
-
 
     @State private var selectedResult:
         YouTubeSearchResult?
 
-
     var body: some View {
 
         List {
-
-            // MARK: - Search Bar
 
             Section {
 
@@ -40,13 +33,13 @@ struct YouTubeMusicSearchView:
                         systemName:
                             "magnifyingglass"
                     )
-                    .foregroundStyle(
-                        .secondary
-                    )
-
+                    .foregroundStyle(.secondary)
 
                     TextField(
-                        "Song, artist or album",
+                        String(
+                            localized:
+                                "youtubemusicsearchview_placeholder"
+                        ),
                         text:
                             $query
                     )
@@ -54,9 +47,7 @@ struct YouTubeMusicSearchView:
                         .never
                     )
                     .autocorrectionDisabled()
-                    .submitLabel(
-                        .search
-                    )
+                    .submitLabel(.search)
                     .onSubmit {
 
                         Task {
@@ -65,19 +56,13 @@ struct YouTubeMusicSearchView:
                         }
                     }
 
-
                     if !query.isEmpty {
 
                         Button {
 
-                            query =
-                                ""
-
-                            results =
-                                []
-
-                            errorMessage =
-                                nil
+                            query = ""
+                            results = []
+                            errorMessage = nil
 
                         } label: {
 
@@ -85,62 +70,42 @@ struct YouTubeMusicSearchView:
                                 systemName:
                                     "xmark.circle.fill"
                             )
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .foregroundStyle(.secondary)
                         }
-                        .buttonStyle(
-                            .plain
-                        )
+                        .buttonStyle(.plain)
                     }
                 }
             }
-
-
-            // MARK: - Intro
 
             if
                 results.isEmpty,
                 !loading,
-                errorMessage == nil {
+                errorMessage == nil
+            {
 
                 Section {
 
                     VStack(
-                        alignment:
-                            .leading,
+                        alignment: .leading,
                         spacing: 6
                     ) {
 
                         Label(
-                            "YouTube Music",
+                            "youtubemusicsearchview_youtube_music",
                             systemImage:
                                 "music.note"
                         )
-                        .font(
-                            .headline
-                        )
-
+                        .font(.headline)
 
                         Text(
-                            "Search music without a Spotify account or YouTube Premium subscription."
+                            "youtubemusicsearchview_intro_description"
                         )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     }
-                    .padding(
-                        .vertical,
-                        4
-                    )
+                    .padding(.vertical, 4)
                 }
             }
-
-
-            // MARK: - Loading
 
             if loading {
 
@@ -149,47 +114,31 @@ struct YouTubeMusicSearchView:
                     HStack {
 
                         Spacer()
-
                         ProgressView()
-
                         Spacer()
                     }
                 }
             }
 
-
-            // MARK: - Error
-
             if let errorMessage {
 
                 Section {
 
-                    Text(
-                        errorMessage
-                    )
-                    .foregroundStyle(
-                        .red
-                    )
-                    .font(
-                        .caption
-                    )
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .font(.caption)
                 }
             }
-
-
-            // MARK: - Results
 
             if !results.isEmpty {
 
                 Section(
-                    "Songs"
+                    "youtubemusicsearchview_songs"
                 ) {
 
                     ForEach(
                         results
-                    ) {
-                        result in
-
+                    ) { result in
 
                         Button {
 
@@ -205,9 +154,7 @@ struct YouTubeMusicSearchView:
                                 AsyncImage(
                                     url:
                                         result.thumbnailURL
-                                ) {
-                                    image in
-
+                                ) { image in
 
                                     image
                                         .resizable()
@@ -220,9 +167,7 @@ struct YouTubeMusicSearchView:
                                     )
                                     .fill(
                                         .secondary
-                                            .opacity(
-                                                0.12
-                                            )
+                                            .opacity(0.12)
                                     )
                                 }
                                 .frame(
@@ -235,70 +180,45 @@ struct YouTubeMusicSearchView:
                                     )
                                 )
 
-
                                 VStack(
-                                    alignment:
-                                        .leading,
+                                    alignment: .leading,
                                     spacing: 4
                                 ) {
 
                                     Text(
                                         result.title
                                     )
-                                    .font(
-                                        .headline
-                                    )
-                                    .foregroundStyle(
-                                        .primary
-                                    )
-                                    .lineLimit(
-                                        2
-                                    )
-
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(2)
 
                                     Text(
                                         result.channelTitle
                                     )
-                                    .font(
-                                        .caption
-                                    )
-                                    .foregroundStyle(
-                                        .secondary
-                                    )
-                                    .lineLimit(
-                                        1
-                                    )
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
                                 }
 
-
                                 Spacer()
-
 
                                 Image(
                                     systemName:
                                         "chevron.right"
                                 )
-                                .font(
-                                    .caption
-                                )
-                                .foregroundStyle(
-                                    .tertiary
-                                )
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
                             }
-                            .contentShape(
-                                Rectangle()
-                            )
+                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(
-                            .plain
-                        )
+                        .buttonStyle(.plain)
                     }
                 }
             }
         }
 
         .navigationTitle(
-            "YouTube Music"
+            "youtubemusicsearchview_title"
         )
 
         .navigationBarTitleDisplayMode(
@@ -308,9 +228,7 @@ struct YouTubeMusicSearchView:
         .sheet(
             item:
                 $selectedResult
-        ) {
-            result in
-
+        ) { result in
 
             YouTubeMusicResultView(
                 result:
@@ -326,7 +244,6 @@ struct YouTubeMusicSearchView:
 
                     selectedResult =
                         nil
-
 
                     DispatchQueue.main.async {
 
@@ -344,11 +261,9 @@ struct YouTubeMusicSearchView:
         }
     }
 
-
-    // MARK: - Search
-
     private func search()
-        async {
+        async
+    {
 
         let text =
             query
@@ -357,19 +272,12 @@ struct YouTubeMusicSearchView:
                         .whitespacesAndNewlines
                 )
 
-
         guard !text.isEmpty else {
-
             return
         }
 
-
-        loading =
-            true
-
-        errorMessage =
-            nil
-
+        loading = true
+        errorMessage = nil
 
         do {
 
@@ -383,25 +291,23 @@ struct YouTubeMusicSearchView:
                             25
                     )
 
-
             if results.isEmpty {
 
                 errorMessage =
-                    "No music was found."
+                    String(
+                        localized:
+                            "youtubemusicsearchview_no_music_found"
+                    )
             }
-
 
         } catch {
 
-            results =
-                []
+            results = []
 
             errorMessage =
                 error.localizedDescription
         }
 
-
-        loading =
-            false
+        loading = false
     }
 }
