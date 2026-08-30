@@ -274,10 +274,7 @@ struct SearchView: View {
                         )
 
                         TextField(
-                            String(
-                                localized:
-                                    "searchview_placeholder"
-                            ),
+                            "searchview_placeholder",
                             text: $searchText
                         )
                         .textInputAutocapitalization(
@@ -426,11 +423,7 @@ struct SearchView: View {
                         if !matchingSongs.isEmpty {
 
                             SearchSection(
-                                title:
-                                    String(
-                                        localized:
-                                            "searchview_searched_songs"
-                                    )
+                                title: "searchview_searched_songs"
                             ) {
 
                                 VStack(spacing: 0) {
@@ -529,11 +522,7 @@ struct SearchView: View {
                         if !matchingArtists.isEmpty {
 
                             SearchSection(
-                                title:
-                                    String(
-                                        localized:
-                                            "searchview_searched_artists"
-                                    )
+                                title: "searchview_searched_artists"
                             ) {
 
                                 VStack(spacing: 0) {
@@ -633,11 +622,7 @@ struct SearchView: View {
                         if !matchingAlbums.isEmpty {
 
                             SearchSection(
-                                title:
-                                    String(
-                                        localized:
-                                            "searchview_searched_albums"
-                                    )
+                                title: "searchview_searched_albums"
                             ) {
 
                                 VStack(spacing: 0) {
@@ -754,11 +739,7 @@ struct SearchView: View {
                         if !matchingPlaylists.isEmpty {
 
                             SearchSection(
-                                title:
-                                    String(
-                                        localized:
-                                            "searchview_searched_playlists"
-                                    )
+                                title: "searchview_searched_playlists"
                             ) {
 
                                 VStack(spacing: 0) {
@@ -902,13 +883,13 @@ private struct SearchSection<
     Content: View
 >: View {
 
-    let title: String
+    let title: LocalizedStringKey
 
     @ViewBuilder
     let content: Content
 
     init(
-        title: String,
+        title: LocalizedStringKey,
         @ViewBuilder content:
             () -> Content
     ) {
