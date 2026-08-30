@@ -1,147 +1,501 @@
 import SwiftUI
 
+
 struct SongPickerView: View {
-    
-    @Environment(MusicLibraryManager.self) private var library
-    @Environment(\.dismiss) private var dismiss
-    
+
+    @Environment(MusicLibraryManager.self)
+    private var library
+
+    @Environment(\.dismiss)
+    private var dismiss
+
+
     let playlist: Playlist?
     let isFavorites: Bool
-    
+
+
     @State private var searchText = ""
-    @State private var selectedSongs: Set<UUID> = []
-    
-    
+
+    @State private var selectedSongs:
+        Set<UUID> = []
+
+    @State private var editMode:
+        EditMode = .active
+
+
+
     init(
         playlist: Playlist? = nil,
         isFavorites: Bool = false
     ) {
+
         self.playlist = playlist
         self.isFavorites = isFavorites
     }
-    
-    
-    var filteredSongs: [Song] {
-        
-        if searchText.isEmpty {
-            return library.songs
+
+
+
+    // MARK: - Current Playlist IDs
+
+    private var existingSongIDs: Set<UUID> {
+
+        guard
+            let playlist,
+            let currentPlaylist =
+                library.playlists.first(
+                    where: {
+                        $0.id == playlist.id
+                    }
+                )
+        else {
+
+            return []
         }
-        
-        return library.songs.filter {
-            
-            $0.title.localizedCaseInsensitiveContains(searchText) ||
-            $0.artist.localizedCaseInsensitiveContains(searchText)
+
+
+        return Set(
+            currentPlaylist.songIDs
+        )
+    }
+
+
+
+    // MARK: - Songs
+
+    private var filteredSongs: [Song] {
+
+        var songs = library.songs
+
+
+        // Voor playlists tonen we alleen nummers
+        // die nog niet in de playlist zitten.
+
+        if !isFavorites {
+
+            songs = songs.filter {
+
+                !existingSongIDs
+                    .contains($0.id)
+            }
+        }
+
+
+        // Voor favorieten idem:
+        // reeds favoriete nummers hoeven
+        // niet opnieuw toegevoegd te worden.
+
+        if isFavorites {
+
+            songs = songs.filter {
+
+                !library.isFavorite($0)
+            }
+        }
+
+
+        guard !searchText.isEmpty
+        else {
+
+            return songs
+        }
+
+
+        return songs.filter { song in
+
+            song.title
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
+
+            ||
+
+            song.artist
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
+
+            ||
+
+            (
+                song.album?
+                    .localizedCaseInsensitiveContains(
+                        searchText
+                    )
+                ?? false
+            )
         }
     }
-    
-    
+
+
+
+    // MARK: - Body
+
     var body: some View {
-        
+
         NavigationStack {
-            
-            List {
-                
-                ForEach(filteredSongs) { song in
-                    
-                    Button {
-                        
-                        if selectedSongs.contains(song.id) {
-                            
-                            selectedSongs.remove(song.id)
-                            
+
+            List(
+                selection:
+                    $selectedSongs
+            ) {
+
+
+                // MARK: - Empty
+
+                if filteredSongs.isEmpty {
+
+                    ContentUnavailableView {
+
+                        Label(
+                            searchText.isEmpty
+                            ?
+                            "Geen nummers beschikbaar"
+                            :
+                            "Geen resultaten",
+                            systemImage:
+                                searchText.isEmpty
+                                ?
+                                "music.note"
+                                :
+                                "magnifyingglass"
+                        )
+
+                    } description: {
+
+                        if searchText.isEmpty {
+
+                            Text(
+                                isFavorites
+                                ?
+                                "Alle beschikbare nummers staan al in je favorieten."
+                                :
+                                "Alle beschikbare nummers staan al in deze playlist."
+                            )
+
                         } else {
-                            
-                            selectedSongs.insert(song.id)
-                        }
-                        
-                    } label: {
-                        
-                        HStack {
-                            
-                            VStack(alignment: .leading) {
-                                
-                                Text(song.title)
-                                    .foregroundStyle(.primary)
-                                
-                                Text(song.artist)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            if selectedSongs.contains(song.id) {
-                                
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.blue)
-                                
-                            } else {
-                                
-                                Image(systemName: "circle")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-            }
-            
-            .searchable(text: $searchText, prompt: Text("search_prompt"))
-            
-            .navigationTitle(
-                isFavorites
-                ? LocalizedStringKey("picker_add_favorites_title")
-                : LocalizedStringKey("picker_add_songs_title")
-            )
-            
-            .toolbar {
-                
-                ToolbarItem(placement: .topBarLeading) {
-                    
-                    Button(LocalizedStringKey("action_cancel")) {
-                        dismiss()
-                    }
-                }
-            }
-            
-            .safeAreaInset(edge: .bottom) {
-                
-                Button {
-                    
-                    for song in filteredSongs
-                    where selectedSongs.contains(song.id) {
-                        
-                        if isFavorites {
-                            
-                            if !library.isFavorite(song) {
-                                library.toggleFavorite(song)
-                            }
-                            
-                        } else if let playlist {
-                            
-                            library.addSong(
-                                song,
-                                to: playlist
+
+                            Text(
+                                "Geen nummers gevonden voor “\(searchText)”."
                             )
                         }
                     }
-                    
-                    dismiss()
-                    
-                } label: {
-                    
-                    Text(
-                        isFavorites
-                        ? "button_add_favorites_count \(selectedSongs.count)"
-                        : "button_add_songs_count \(selectedSongs.count)"
+
+                    .selectionDisabled(
+                        true
                     )
-                    .bold()
-                    .frame(maxWidth: .infinity)
-                    .padding()
+
+                } else {
+
+
+                    // MARK: - Songs
+
+                    ForEach(
+                        filteredSongs
+                    ) { song in
+
+                        HStack(
+                            spacing: 12
+                        ) {
+
+
+                            // MARK: Cover
+
+                            SongArtworkView(
+                                song: song,
+                                cornerRadius: 10
+                            )
+
+                            .frame(
+                                width: 52,
+                                height: 52
+                            )
+
+
+
+                            // MARK: Info
+
+                            VStack(
+                                alignment: .leading,
+                                spacing: 3
+                            ) {
+
+                                Text(
+                                    song.title
+                                )
+                                .font(.headline)
+                                .foregroundStyle(
+                                    .primary
+                                )
+                                .lineLimit(1)
+
+
+                                Text(
+                                    song.artist
+                                )
+                                .font(.caption)
+                                .foregroundStyle(
+                                    .secondary
+                                )
+                                .lineLimit(1)
+                            }
+
+
+                            Spacer()
+                        }
+
+                        .padding(
+                            .vertical,
+                            3
+                        )
+
+                        .tag(
+                            song.id
+                        )
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .padding()
-                .disabled(selectedSongs.isEmpty)
+            }
+
+
+            // Hierdoor gebruikt List de native
+            // multi-selection UI van iOS.
+
+            .environment(
+                \.editMode,
+                $editMode
+            )
+
+
+            // MARK: Search
+
+            .searchable(
+                text: $searchText,
+                placement:
+                    .navigationBarDrawer(
+                        displayMode:
+                            .always
+                    ),
+                prompt:
+                    Text(
+                        "search_prompt"
+                    )
+            )
+
+
+            // MARK: Title
+
+            .navigationTitle(
+                isFavorites
+                ?
+                LocalizedStringKey(
+                    "picker_add_favorites_title"
+                )
+                :
+                LocalizedStringKey(
+                    "picker_add_songs_title"
+                )
+            )
+
+            .navigationBarTitleDisplayMode(
+                .inline
+            )
+
+
+
+            // MARK: Toolbar
+
+            .toolbar {
+
+                ToolbarItem(
+                    placement:
+                        .topBarLeading
+                ) {
+
+                    Button(
+                        LocalizedStringKey(
+                            "action_cancel"
+                        )
+                    ) {
+
+                        dismiss()
+                    }
+                }
+
+
+                ToolbarItem(
+                    placement:
+                        .topBarTrailing
+                ) {
+
+                    Button {
+
+                        addSelectedSongs()
+
+                    } label: {
+
+                        if selectedSongs.isEmpty {
+
+                            Text(
+                                LocalizedStringKey(
+                                    "action_add"
+                                )
+                            )
+
+                        } else {
+
+                            Text(
+                                "Voeg toe (\(selectedSongs.count))"
+                            )
+                            .fontWeight(
+                                .semibold
+                            )
+                        }
+                    }
+
+                    .disabled(
+                        selectedSongs.isEmpty
+                    )
+                }
+            }
+
+
+
+            // MARK: Selection Bar
+
+            .safeAreaInset(
+                edge: .bottom
+            ) {
+
+                if !selectedSongs.isEmpty {
+
+                    HStack(
+                        spacing: 12
+                    ) {
+
+                        Image(
+                            systemName:
+                                "checkmark.circle.fill"
+                        )
+                        .font(.title2)
+
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 2
+                        ) {
+
+                            Text(
+                                "\(selectedSongs.count) geselecteerd"
+                            )
+                            .font(
+                                .headline
+                            )
+
+
+                            Text(
+                                isFavorites
+                                ?
+                                "Worden toegevoegd aan Favorieten"
+                                :
+                                "Worden toegevoegd aan de playlist"
+                            )
+                            .font(.caption)
+                            .foregroundStyle(
+                                .secondary
+                            )
+                        }
+
+
+                        Spacer()
+
+
+                        Button {
+
+                            addSelectedSongs()
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "plus"
+                            )
+                            .font(
+                                .headline
+                            )
+
+                            .frame(
+                                width: 40,
+                                height: 40
+                            )
+                        }
+
+                        .buttonStyle(
+                            .borderedProminent
+                        )
+                    }
+
+                    .padding(
+                        .horizontal
+                    )
+
+                    .padding(
+                        .vertical,
+                        10
+                    )
+
+                    .background(
+                        .regularMaterial
+                    )
+                }
             }
         }
+    }
+
+
+
+    // MARK: - Add
+
+    private func addSelectedSongs() {
+
+        let songs =
+            library.songs.filter {
+
+                selectedSongs
+                    .contains(
+                        $0.id
+                    )
+            }
+
+
+        if isFavorites {
+
+            for song in songs {
+
+                if
+                    !library.isFavorite(
+                        song
+                    )
+                {
+
+                    library.toggleFavorite(
+                        song
+                    )
+                }
+            }
+
+        } else if
+            let playlist
+        {
+
+            for song in songs {
+
+                library.addSong(
+                    song,
+                    to: playlist
+                )
+            }
+        }
+
+
+        dismiss()
     }
 }
