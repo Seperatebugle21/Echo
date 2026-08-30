@@ -4,27 +4,42 @@ struct YouTubeSearchView: View {
 
     let track: SpotifyTrack
 
-    @State private var results: [YouTubeSearchResult] = []
-    @State private var loading = false
-    @State private var errorMessage: String?
+    @State private var results:
+        [YouTubeSearchResult] = []
+
+    @State private var loading =
+        false
+
+    @State private var errorMessage:
+        String?
 
     var body: some View {
 
         List {
 
             Section {
-                VStack(alignment: .leading, spacing: 4) {
+
+                VStack(
+                    alignment: .leading,
+                    spacing: 4
+                ) {
+
                     Text(track.name)
                         .font(.headline)
 
                     Text(track.artist)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(
+                            .secondary
+                        )
                 }
             }
 
-            Section("YouTube Results") {
+            Section(
+                "youtubesearchview_results"
+            ) {
 
                 if loading {
+
                     HStack {
                         Spacer()
                         ProgressView()
@@ -35,22 +50,31 @@ struct YouTubeSearchView: View {
                 ForEach(results) { result in
 
                     NavigationLink {
+
                         YouTubeResultView(
                             track: track,
                             result: result
                         )
+
                     } label: {
 
-                        HStack(spacing: 12) {
+                        HStack(
+                            spacing: 12
+                        ) {
 
                             AsyncImage(
-                                url: result.thumbnailURL
+                                url:
+                                    result.thumbnailURL
                             ) { image in
+
                                 image
                                     .resizable()
                                     .scaledToFill()
+
                             } placeholder: {
-                                Color.secondary.opacity(0.15)
+
+                                Color.secondary
+                                    .opacity(0.15)
                             }
                             .frame(
                                 width: 90,
@@ -70,21 +94,30 @@ struct YouTubeSearchView: View {
                                 Text(result.title)
                                     .lineLimit(2)
 
-                                Text(result.channelTitle)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Text(
+                                    result.channelTitle
+                                )
+                                .font(.caption)
+                                .foregroundStyle(
+                                    .secondary
+                                )
                             }
                         }
                     }
                 }
 
                 if let errorMessage {
+
                     Text(errorMessage)
                         .foregroundStyle(.red)
                 }
             }
         }
-        .navigationTitle("Find Audio")
+
+        .navigationTitle(
+            "youtubesearchview_find_audio"
+        )
+
         .task {
             await search()
         }
@@ -97,10 +130,12 @@ struct YouTubeSearchView: View {
 
         do {
 
-            results = try await YouTubeAPI.shared.search(
-                title: track.name,
-                artist: track.artist
-            )
+            results =
+                try await
+                YouTubeAPI.shared.search(
+                    title: track.name,
+                    artist: track.artist
+                )
 
         } catch {
 
