@@ -1,28 +1,23 @@
 import SwiftUI
 
-
 struct YouTubeMusicResultView:
-    View {
+    View
+{
 
     let result:
         YouTubeSearchResult
 
-
     let onClose:
         () -> Void
-
 
     let onViewDownloads:
         () -> Void
 
-
     @State private var fetch =
         FetchManager.shared
 
-
     @State private var showStarted =
         false
-
 
     var body: some View {
 
@@ -35,9 +30,7 @@ struct YouTubeMusicResultView:
                 AsyncImage(
                     url:
                         result.thumbnailURL
-                ) {
-                    image in
-
+                ) { image in
 
                     image
                         .resizable()
@@ -76,7 +69,6 @@ struct YouTubeMusicResultView:
                     )
                 )
 
-
                 VStack(
                     spacing: 6
                 ) {
@@ -84,25 +76,16 @@ struct YouTubeMusicResultView:
                     Text(
                         result.title
                     )
-                    .font(
-                        .title2.bold()
-                    )
-                    .multilineTextAlignment(
-                        .center
-                    )
-
+                    .font(.title2.bold())
+                    .multilineTextAlignment(.center)
 
                     Text(
                         result.channelTitle
                     )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    .foregroundStyle(.secondary)
                 }
 
-
                 Spacer()
-
 
                 Button {
 
@@ -111,31 +94,24 @@ struct YouTubeMusicResultView:
                 } label: {
 
                     Label(
-                        "Download",
+                        "youtubemusicresultview_download",
                         systemImage:
                             "arrow.down.circle.fill"
                     )
-                    .font(
-                        .headline
-                    )
+                    .font(.headline)
                     .frame(
-                        maxWidth:
-                            .infinity
+                        maxWidth: .infinity
                     )
                 }
                 .buttonStyle(
                     .borderedProminent
                 )
-                .controlSize(
-                    .large
-                )
+                .controlSize(.large)
             }
-            .padding(
-                24
-            )
+            .padding(24)
 
             .navigationTitle(
-                "Song"
+                "youtubemusicresultview_song"
             )
 
             .navigationBarTitleDisplayMode(
@@ -150,7 +126,7 @@ struct YouTubeMusicResultView:
                 ) {
 
                     Button(
-                        "Done"
+                        "youtubemusicresultview_done"
                     ) {
 
                         onClose()
@@ -160,21 +136,20 @@ struct YouTubeMusicResultView:
         }
 
         .alert(
-            "Download Started",
+            "youtubemusicresultview_download_started",
             isPresented:
                 $showStarted
         ) {
 
             Button(
-                "OK"
+                "youtubemusicresultview_ok"
             ) {
 
                 onClose()
             }
 
-
             Button(
-                "View Downloads"
+                "youtubemusicresultview_view_downloads"
             ) {
 
                 onViewDownloads()
@@ -183,19 +158,15 @@ struct YouTubeMusicResultView:
         } message: {
 
             Text(
-                "The song has been added to the download queue."
+                "youtubemusicresultview_added_to_queue"
             )
         }
     }
-
-
-    // MARK: - Download
 
     private func download() {
 
         let pseudoURL =
             result.videoURL
-
 
         let item =
             FetchItem(
@@ -221,25 +192,20 @@ struct YouTubeMusicResultView:
                     true
             )
 
-
         fetch.addPreparedItem(
             item
         )
-
 
         showStarted =
             true
     }
 
-
-    // MARK: - Title
-
     private var cleanedTitle:
-        String {
+        String
+    {
 
         var title =
             result.title
-
 
         let removable = [
 
@@ -251,7 +217,6 @@ struct YouTubeMusicResultView:
             "Official Video",
             "Official Audio"
         ]
-
 
         for value in removable {
 
@@ -265,7 +230,6 @@ struct YouTubeMusicResultView:
                         .caseInsensitive
                 )
         }
-
 
         return title
             .trimmingCharacters(
