@@ -77,26 +77,26 @@ struct LibraryView: View {
     }
 
 
-    private var albumCount: Int {
+   private var albumCount: Int {
 
-        Set(
-            library.songs.compactMap {
+    let albumKeys: [String] =
+        library.songs.compactMap { song in
 
-                guard
-                    let album = $0.album?
-                        .trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ),
-                    !album.isEmpty
-                else {
-                    return nil
-                }
-
-                return "\($0.artist)-\(album)"
+            guard
+                let album = song.album?
+                    .trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ),
+                !album.isEmpty
+            else {
+                return nil
             }
-        )
-        .count
-    }
+
+            return "\(song.artist)|\(album)"
+        }
+
+    return Set<String>(albumKeys).count
+}
 
 
     var body: some View {
