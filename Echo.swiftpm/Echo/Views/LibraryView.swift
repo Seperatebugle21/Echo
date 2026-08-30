@@ -1874,12 +1874,16 @@ struct SongCollectionView: View {
                     for: song
                 )
         else {
-
             return
         }
 
 
-        library.markAsPlayed(song)
+        // Exact hetzelfde als SongsView
+
+        library.markAsPlayed(
+            song
+        )
+
 
         audioPlayer.lastPlaybackDirection =
             .fade
@@ -1888,7 +1892,7 @@ struct SongCollectionView: View {
         audioPlayer.play(
             song: song,
             url: url,
-            queue: songs
+            queue: [song]
         )
 
 
