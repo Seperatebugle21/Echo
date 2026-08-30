@@ -1,15 +1,12 @@
 import SwiftUI
 import UIKit
 
-
-// MARK: - Inline URL Section
-
 struct FetchURLInlineSection:
-    View {
+    View
+{
 
     let onResolved:
         (FetchURLResolvedContent) -> Void
-
 
     @State private var urlText =
         ""
@@ -20,18 +17,19 @@ struct FetchURLInlineSection:
     @State private var errorMessage:
         String?
 
-
     var body: some View {
 
         Section {
 
             HStack(
-                spacing:
-                    8
+                spacing: 8
             ) {
 
                 TextField(
-                    "Spotify or YouTube Music URL",
+                    String(
+                        localized:
+                            "fetchurlviews_spotify_or_youtube_music_url"
+                    ),
                     text:
                         $urlText
                 )
@@ -39,17 +37,13 @@ struct FetchURLInlineSection:
                     .never
                 )
                 .autocorrectionDisabled()
-                .keyboardType(
-                    .URL
-                )
-
+                .keyboardType(.URL)
 
                 if !urlText.isEmpty {
 
                     Button {
 
-                        urlText =
-                            ""
+                        urlText = ""
 
                     } label: {
 
@@ -61,11 +55,8 @@ struct FetchURLInlineSection:
                             .secondary
                         )
                     }
-                    .buttonStyle(
-                        .plain
-                    )
+                    .buttonStyle(.plain)
                 }
-
 
                 Button {
 
@@ -78,11 +69,8 @@ struct FetchURLInlineSection:
                             "doc.on.clipboard"
                     )
                 }
-                .buttonStyle(
-                    .plain
-                )
+                .buttonStyle(.plain)
             }
-
 
             Button {
 
@@ -94,28 +82,23 @@ struct FetchURLInlineSection:
 
                     Spacer()
 
-
                     if isResolving {
 
                         ProgressView()
-                            .controlSize(
-                                .small
-                            )
-
+                            .controlSize(.small)
 
                         Text(
-                            "Loading..."
+                            "fetchurlviews_loading"
                         )
 
                     } else {
 
                         Label(
-                            "Fetch URL",
+                            "fetchurlviews_fetch_url",
                             systemImage:
                                 "arrow.down.circle"
                         )
                     }
-
 
                     Spacer()
                 }
@@ -134,41 +117,35 @@ struct FetchURLInlineSection:
         } header: {
 
             Text(
-                "URL"
+                "fetchurlviews_url"
             )
 
         } footer: {
 
             Text(
-                "Paste a Spotify or YouTube Music song or playlist link."
+                "fetchurlviews_inline_footer"
             )
         }
 
         .alert(
-            "Could Not Open URL",
+            "fetchurlviews_could_not_open_url",
             isPresented:
                 Binding(
                     get: {
-
-                        errorMessage !=
-                            nil
+                        errorMessage != nil
                     },
-                    set: {
-                        newValue in
+                    set: { newValue in
 
                         if !newValue {
-
-                            errorMessage =
-                                nil
+                            errorMessage = nil
                         }
                     }
                 )
         ) {
 
             Button(
-                "OK",
-                role:
-                    .cancel
+                "fetchurlviews_ok",
+                role: .cancel
             ) {}
 
         } message: {
@@ -176,32 +153,25 @@ struct FetchURLInlineSection:
             Text(
                 errorMessage
                 ??
-                "Unknown error."
+                String(
+                    localized:
+                        "fetchurlviews_unknown_error"
+                )
             )
         }
     }
 
-
-    // MARK: - Resolve
-
     private func resolve() {
 
         guard !isResolving else {
-
             return
         }
 
-
-        isResolving =
-            true
-
-        errorMessage =
-            nil
-
+        isResolving = true
+        errorMessage = nil
 
         let input =
             urlText
-
 
         Task {
 
@@ -210,31 +180,17 @@ struct FetchURLInlineSection:
                 let result =
                     try await
                     FetchURLResolver.shared
-                        .resolve(
-                            input
-                        )
+                        .resolve(input)
 
-
-                isResolving =
-                    false
-
-
-                // Let the List/Section finish its update
-                // before FetchView presents the sheet.
+                isResolving = false
 
                 await Task.yield()
 
-
-                onResolved(
-                    result
-                )
-
+                onResolved(result)
 
             } catch {
 
-                isResolving =
-                    false
-
+                isResolving = false
 
                 errorMessage =
                     error.localizedDescription
@@ -242,36 +198,25 @@ struct FetchURLInlineSection:
         }
     }
 
-
-    // MARK: - Paste
-
     private func paste() {
 
         guard let string =
             UIPasteboard.general
                 .string
         else {
-
             return
         }
 
-
-        urlText =
-            string
+        urlText = string
     }
 }
 
-
-// MARK: - Navigation Bar URL Input
-
 struct FetchURLInputSheet:
-    View {
+    View
+{
 
-    @Environment(
-        \.dismiss
-    )
+    @Environment(\.dismiss)
     private var dismiss
-
 
     @State private var urlText =
         ""
@@ -285,7 +230,6 @@ struct FetchURLInputSheet:
     @State private var errorMessage:
         String?
 
-
     var body: some View {
 
         NavigationStack {
@@ -295,12 +239,14 @@ struct FetchURLInputSheet:
                 Section {
 
                     HStack(
-                        spacing:
-                            8
+                        spacing: 8
                     ) {
 
                         TextField(
-                            "Paste URL",
+                            String(
+                                localized:
+                                    "fetchurlviews_paste_url"
+                            ),
                             text:
                                 $urlText
                         )
@@ -308,17 +254,13 @@ struct FetchURLInputSheet:
                             .never
                         )
                         .autocorrectionDisabled()
-                        .keyboardType(
-                            .URL
-                        )
-
+                        .keyboardType(.URL)
 
                         if !urlText.isEmpty {
 
                             Button {
 
-                                urlText =
-                                    ""
+                                urlText = ""
 
                             } label: {
 
@@ -330,11 +272,8 @@ struct FetchURLInputSheet:
                                     .secondary
                                 )
                             }
-                            .buttonStyle(
-                                .plain
-                            )
+                            .buttonStyle(.plain)
                         }
-
 
                         Button {
 
@@ -347,11 +286,8 @@ struct FetchURLInputSheet:
                                     "doc.on.clipboard"
                             )
                         }
-                        .buttonStyle(
-                            .plain
-                        )
+                        .buttonStyle(.plain)
                     }
-
 
                     Button {
 
@@ -363,28 +299,23 @@ struct FetchURLInputSheet:
 
                             Spacer()
 
-
                             if isResolving {
 
                                 ProgressView()
-                                    .controlSize(
-                                        .small
-                                    )
-
+                                    .controlSize(.small)
 
                                 Text(
-                                    "Loading..."
+                                    "fetchurlviews_loading"
                                 )
 
                             } else {
 
                                 Label(
-                                    "Fetch URL",
+                                    "fetchurlviews_fetch_url",
                                     systemImage:
                                         "arrow.down.circle"
                                 )
                             }
-
 
                             Spacer()
                         }
@@ -403,19 +334,19 @@ struct FetchURLInputSheet:
                 } header: {
 
                     Text(
-                        "URL"
+                        "fetchurlviews_url"
                     )
 
                 } footer: {
 
                     Text(
-                        "Spotify and YouTube Music songs and playlists are supported."
+                        "fetchurlviews_sheet_footer"
                     )
                 }
             }
 
             .navigationTitle(
-                "Fetch URL"
+                "fetchurlviews_fetch_url"
             )
 
             .navigationBarTitleDisplayMode(
@@ -430,7 +361,7 @@ struct FetchURLInputSheet:
                 ) {
 
                     Button(
-                        "Done"
+                        "fetchurlviews_done"
                     ) {
 
                         dismiss()
@@ -438,23 +369,16 @@ struct FetchURLInputSheet:
                 }
             }
 
-
-            // MARK: - Preview Navigation
-
             .navigationDestination(
                 isPresented:
                     Binding(
                         get: {
-
                             resolved != nil
                         },
-                        set: {
-                            isPresented in
+                        set: { isPresented in
 
                             if !isPresented {
-
-                                resolved =
-                                    nil
+                                resolved = nil
                             }
                         }
                     )
@@ -463,38 +387,31 @@ struct FetchURLInputSheet:
                 if let resolved {
 
                     FetchURLPreviewView(
-                        content:
-                            resolved
+                        content: resolved
                     )
                 }
             }
         }
 
         .alert(
-            "Could Not Open URL",
+            "fetchurlviews_could_not_open_url",
             isPresented:
                 Binding(
                     get: {
-
-                        errorMessage !=
-                            nil
+                        errorMessage != nil
                     },
-                    set: {
-                        newValue in
+                    set: { newValue in
 
                         if !newValue {
-
-                            errorMessage =
-                                nil
+                            errorMessage = nil
                         }
                     }
                 )
         ) {
 
             Button(
-                "OK",
-                role:
-                    .cancel
+                "fetchurlviews_ok",
+                role: .cancel
             ) {}
 
         } message: {
@@ -502,32 +419,25 @@ struct FetchURLInputSheet:
             Text(
                 errorMessage
                 ??
-                "Unknown error."
+                String(
+                    localized:
+                        "fetchurlviews_unknown_error"
+                )
             )
         }
     }
 
-
-    // MARK: - Resolve
-
     private func resolve() {
 
         guard !isResolving else {
-
             return
         }
 
-
-        isResolving =
-            true
-
-        errorMessage =
-            nil
-
+        isResolving = true
+        errorMessage = nil
 
         let input =
             urlText
-
 
         Task {
 
@@ -536,27 +446,17 @@ struct FetchURLInputSheet:
                 let result =
                     try await
                     FetchURLResolver.shared
-                        .resolve(
-                            input
-                        )
+                        .resolve(input)
 
-
-                isResolving =
-                    false
-
+                isResolving = false
 
                 await Task.yield()
 
-
-                resolved =
-                    result
-
+                resolved = result
 
             } catch {
 
-                isResolving =
-                    false
-
+                isResolving = false
 
                 errorMessage =
                     error.localizedDescription
@@ -564,85 +464,64 @@ struct FetchURLInputSheet:
         }
     }
 
-
-    // MARK: - Paste
-
     private func paste() {
 
         guard let string =
             UIPasteboard.general
                 .string
         else {
-
             return
         }
 
-
-        urlText =
-            string
+        urlText = string
     }
 }
 
-
-// MARK: - Preview
-
 struct FetchURLPreviewView:
-    View {
+    View
+{
 
     let content:
         FetchURLResolvedContent
 
-
-    @Environment(
-        \.dismiss
-    )
+    @Environment(\.dismiss)
     private var dismiss
-
 
     @State private var manager =
         FetchManager.shared
 
-
     @State private var isStarting =
         false
-
 
     @State private var showStarted =
         false
 
-
     @State private var errorMessage:
         String?
-
 
     var body: some View {
 
         ScrollView {
 
             VStack(
-                spacing:
-                    20
+                spacing: 20
             ) {
 
                 artwork
 
-
                 VStack(
-                    spacing:
-                        5
+                    spacing: 5
                 ) {
 
                     Text(
                         content.title
                     )
                     .font(
-                        .title2
-                            .bold()
+                        .title2.bold()
                     )
                     .multilineTextAlignment(
                         .center
                     )
-
 
                     Text(
                         subtitle
@@ -654,10 +533,8 @@ struct FetchURLPreviewView:
                         .center
                     )
 
-
                     HStack(
-                        spacing:
-                            5
+                        spacing: 5
                     ) {
 
                         Image(
@@ -665,30 +542,19 @@ struct FetchURLPreviewView:
                                 sourceIcon
                         )
 
-
                         Text(
-                            content
-                                .sourceTitle
+                            content.sourceTitle
                         )
                     }
-                    .font(
-                        .caption
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
-                    .padding(
-                        .top,
-                        2
-                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
                 }
-
 
                 if content.isPlaylist {
 
                     playlistTracks
                 }
-
 
                 Button {
 
@@ -700,13 +566,10 @@ struct FetchURLPreviewView:
 
                         Spacer()
 
-
                         if isStarting {
 
                             ProgressView()
-                                .tint(
-                                    .white
-                                )
+                                .tint(.white)
 
                         } else {
 
@@ -717,31 +580,24 @@ struct FetchURLPreviewView:
                             )
                         }
 
-
                         Spacer()
                     }
                 }
                 .buttonStyle(
                     .borderedProminent
                 )
-                .controlSize(
-                    .large
-                )
-                .disabled(
-                    isStarting
-                )
+                .controlSize(.large)
+                .disabled(isStarting)
             }
-            .padding(
-                20
-            )
+            .padding(20)
         }
 
         .navigationTitle(
             content.isPlaylist
             ?
-            "Playlist"
+            "fetchurlviews_playlist"
             :
-            "Song"
+            "fetchurlviews_song"
         )
 
         .navigationBarTitleDisplayMode(
@@ -756,7 +612,7 @@ struct FetchURLPreviewView:
             ) {
 
                 Button(
-                    "Done"
+                    "fetchurlviews_done"
                 ) {
 
                     dismiss()
@@ -765,25 +621,23 @@ struct FetchURLPreviewView:
         }
 
         .alert(
-            "Added to Fetch",
+            "fetchurlviews_added_to_fetch",
             isPresented:
                 $showStarted
         ) {
 
             Button(
-                "Done"
+                "fetchurlviews_done"
             ) {
 
                 dismiss()
             }
 
-
             Button(
-                "View Downloads"
+                "fetchurlviews_view_downloads"
             ) {
 
                 dismiss()
-
 
                 DispatchQueue.main
                     .async {
@@ -793,8 +647,7 @@ struct FetchURLPreviewView:
                             .post(
                                 name:
                                     .echoOpenFetchDownloads,
-                                object:
-                                    nil
+                                object: nil
                             )
                     }
             }
@@ -804,42 +657,43 @@ struct FetchURLPreviewView:
             if content.isPlaylist {
 
                 Text(
-                    "\(content.trackCount) songs were added to the download queue."
+                    String(
+                        format:
+                            String(
+                                localized:
+                                    "fetchurlviews_playlist_added_message"
+                            ),
+                        content.trackCount
+                    )
                 )
 
             } else {
 
                 Text(
-                    "The song was added to the download queue."
+                    "fetchurlviews_song_added_message"
                 )
             }
         }
 
         .alert(
-            "Download Failed",
+            "fetchurlviews_download_failed",
             isPresented:
                 Binding(
                     get: {
-
-                        errorMessage !=
-                            nil
+                        errorMessage != nil
                     },
-                    set: {
-                        value in
+                    set: { value in
 
                         if !value {
-
-                            errorMessage =
-                                nil
+                            errorMessage = nil
                         }
                     }
                 )
         ) {
 
             Button(
-                "OK",
-                role:
-                    .cancel
+                "fetchurlviews_ok",
+                role: .cancel
             ) {}
 
         } message: {
@@ -847,13 +701,13 @@ struct FetchURLPreviewView:
             Text(
                 errorMessage
                 ??
-                "Unknown error."
+                String(
+                    localized:
+                        "fetchurlviews_unknown_error"
+                )
             )
         }
     }
-
-
-    // MARK: - Artwork
 
     private var artwork:
         some View {
@@ -861,8 +715,7 @@ struct FetchURLPreviewView:
         AsyncImage(
             url:
                 content.artworkURL
-        ) {
-            image in
+        ) { image in
 
             image
                 .resizable()
@@ -871,14 +724,11 @@ struct FetchURLPreviewView:
         } placeholder: {
 
             RoundedRectangle(
-                cornerRadius:
-                    22
+                cornerRadius: 22
             )
             .fill(
                 .secondary
-                    .opacity(
-                        0.12
-                    )
+                    .opacity(0.12)
             )
             .overlay {
 
@@ -891,10 +741,7 @@ struct FetchURLPreviewView:
                         "music.note"
                 )
                 .font(
-                    .system(
-                        size:
-                            52
-                    )
+                    .system(size: 52)
                 )
                 .foregroundStyle(
                     .secondary
@@ -902,79 +749,56 @@ struct FetchURLPreviewView:
             }
         }
         .frame(
-            width:
-                230,
-            height:
-                230
+            width: 230,
+            height: 230
         )
         .clipShape(
             RoundedRectangle(
-                cornerRadius:
-                    22
+                cornerRadius: 22
             )
         )
     }
-
-
-    // MARK: - Playlist Tracks
 
     @ViewBuilder
     private var playlistTracks:
         some View {
 
         VStack(
-            alignment:
-                .leading,
-            spacing:
-                0
+            alignment: .leading,
+            spacing: 0
         ) {
 
             HStack {
 
                 Text(
-                    "Songs"
+                    "fetchurlviews_songs"
                 )
-                .font(
-                    .headline
-                )
-
+                .font(.headline)
 
                 Spacer()
-
 
                 Text(
                     "\(content.trackCount)"
                 )
-                .foregroundStyle(
-                    .secondary
-                )
+                .foregroundStyle(.secondary)
             }
-            .padding(
-                .bottom,
-                10
-            )
-
+            .padding(.bottom, 10)
 
             ForEach(
                 Array(
                     playlistRows
-                        .prefix(
-                            12
-                        )
+                        .prefix(12)
                 )
-            ) {
-                row in
+            ) { row in
 
                 HStack(
-                    spacing:
-                        10
+                    spacing: 10
                 ) {
 
                     AsyncImage(
                         url:
                             row.artworkURL
-                    ) {
-                        image in
+                    ) { image in
 
                         image
                             .resizable()
@@ -983,108 +807,75 @@ struct FetchURLPreviewView:
                     } placeholder: {
 
                         RoundedRectangle(
-                            cornerRadius:
-                                6
+                            cornerRadius: 6
                         )
                         .fill(
                             .secondary
-                                .opacity(
-                                    0.12
-                                )
+                                .opacity(0.12)
                         )
                     }
                     .frame(
-                        width:
-                            42,
-                        height:
-                            42
+                        width: 42,
+                        height: 42
                     )
                     .clipShape(
                         RoundedRectangle(
-                            cornerRadius:
-                                6
+                            cornerRadius: 6
                         )
                     )
 
-
                     VStack(
-                        alignment:
-                            .leading,
-                        spacing:
-                            2
+                        alignment: .leading,
+                        spacing: 2
                     ) {
 
                         Text(
                             row.title
                         )
-                        .lineLimit(
-                            1
-                        )
-
+                        .lineLimit(1)
 
                         Text(
                             row.artist
                         )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
-                        .lineLimit(
-                            1
-                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                     }
-
 
                     Spacer()
                 }
-                .padding(
-                    .vertical,
-                    6
-                )
-
+                .padding(.vertical, 6)
 
                 Divider()
             }
 
-
-            if playlistRows.count >
-                12 {
+            if playlistRows.count > 12 {
 
                 Text(
-                    "+ \(playlistRows.count - 12) more songs"
+                    String(
+                        format:
+                            String(
+                                localized:
+                                    "fetchurlviews_more_songs"
+                            ),
+                        playlistRows.count - 12
+                    )
                 )
-                .font(
-                    .caption
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .padding(
-                    .top,
-                    10
-                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.top, 10)
             }
         }
-        .padding(
-            14
-        )
+        .padding(14)
         .background(
             .secondary
-                .opacity(
-                    0.07
-                ),
+                .opacity(0.07),
             in:
                 RoundedRectangle(
-                    cornerRadius:
-                        16
+                    cornerRadius: 16
                 )
         )
     }
-
-
-    // MARK: - Presentation
 
     private var subtitle:
         String {
@@ -1098,15 +889,20 @@ struct FetchURLPreviewView:
             return
                 "\(track.artist) • \(track.album)"
 
-
         case .spotifyPlaylist(
             _,
             let tracks
         ):
 
             return
-                "\(tracks.count) songs"
-
+                String(
+                    format:
+                        String(
+                            localized:
+                                "fetchurlviews_songs_count"
+                        ),
+                    tracks.count
+                )
 
         case .youtubeTrack(
             let track
@@ -1115,16 +911,21 @@ struct FetchURLPreviewView:
             return
                 track.artist
 
-
         case .youtubePlaylist(
             let playlist
         ):
 
             return
-                "\(playlist.tracks.count) songs"
+                String(
+                    format:
+                        String(
+                            localized:
+                                "fetchurlviews_songs_count"
+                        ),
+                    playlist.tracks.count
+                )
         }
     }
-
 
     private var sourceIcon:
         String {
@@ -1137,7 +938,6 @@ struct FetchURLPreviewView:
             return
                 "music.note"
 
-
         case .youtubeTrack,
              .youtubePlaylist:
 
@@ -1146,27 +946,34 @@ struct FetchURLPreviewView:
         }
     }
 
-
     private var downloadButtonTitle:
         String {
 
         if content.isPlaylist {
 
             return
-                "Download \(content.trackCount) Songs"
+                String(
+                    format:
+                        String(
+                            localized:
+                                "fetchurlviews_download_songs"
+                        ),
+                    content.trackCount
+                )
 
         } else {
 
             return
-                "Download"
+                String(
+                    localized:
+                        "fetchurlviews_download"
+                )
         }
     }
 
-
-    // MARK: - Rows
-
     private struct PreviewRow:
-        Identifiable {
+        Identifiable
+    {
 
         let id:
             String
@@ -1181,9 +988,9 @@ struct FetchURLPreviewView:
             URL?
     }
 
-
     private var playlistRows:
-        [PreviewRow] {
+        [PreviewRow]
+    {
 
         switch content {
 
@@ -1192,47 +999,37 @@ struct FetchURLPreviewView:
             let tracks
         ):
 
-            return tracks.map {
-                track in
+            return tracks.map { track in
 
                 PreviewRow(
                     id:
                         track.id,
-
                     title:
                         track.name,
-
                     artist:
                         track.artist,
-
                     artworkURL:
                         track.artworkURL
                 )
             }
-
 
         case .youtubePlaylist(
             let playlist
         ):
 
-            return playlist.tracks.map {
-                track in
+            return playlist.tracks.map { track in
 
                 PreviewRow(
                     id:
                         track.id,
-
                     title:
                         track.title,
-
                     artist:
                         track.artist,
-
                     artworkURL:
                         track.artworkURL
                 )
             }
-
 
         default:
 
@@ -1240,28 +1037,19 @@ struct FetchURLPreviewView:
         }
     }
 
-
-    // MARK: - Download
-
     private func startDownload() {
 
         guard !isStarting else {
-
             return
         }
 
-
-        isStarting =
-            true
-
+        isStarting = true
 
         Task {
 
             do {
 
                 switch content {
-
-                // MARK: Spotify Track
 
                 case .spotifyTrack(
                     let track
@@ -1271,9 +1059,6 @@ struct FetchURLPreviewView:
                         addSpotifyTrack(
                             track
                         )
-
-
-                // MARK: Spotify Playlist
 
                 case .spotifyPlaylist(
                     _,
@@ -1285,9 +1070,6 @@ struct FetchURLPreviewView:
                             tracks
                         )
 
-
-                // MARK: YouTube Track
-
                 case .youtubeTrack(
                     let track
                 ):
@@ -1296,15 +1078,13 @@ struct FetchURLPreviewView:
                         track
                     )
 
-
-                // MARK: YouTube Playlist
-
                 case .youtubePlaylist(
                     let playlist
                 ):
 
                     for track
-                        in playlist.tracks {
+                        in playlist.tracks
+                    {
 
                         addYouTubeTrack(
                             track
@@ -1312,10 +1092,7 @@ struct FetchURLPreviewView:
                     }
                 }
 
-
-                showStarted =
-                    true
-
+                showStarted = true
 
             } catch {
 
@@ -1323,14 +1100,9 @@ struct FetchURLPreviewView:
                     error.localizedDescription
             }
 
-
-            isStarting =
-                false
+            isStarting = false
         }
     }
-
-
-    // MARK: - Spotify Track Download
 
     private func addSpotifyTrack(
         _ track: SpotifyTrack
@@ -1338,7 +1110,8 @@ struct FetchURLPreviewView:
 
         switch
             ApifySettings.shared
-                .downloadMethod {
+                .downloadMethod
+        {
 
         case .spotify:
 
@@ -1346,7 +1119,6 @@ struct FetchURLPreviewView:
                 .addAuthorizedSpotifyTrack(
                     track
                 )
-
 
         case .youtube:
 
@@ -1356,14 +1128,11 @@ struct FetchURLPreviewView:
                     .search(
                         title:
                             track.name,
-
                         artist:
                             track.artist,
-
                         maxResults:
                             1
                     )
-
 
             guard let result =
                 results.first
@@ -1374,20 +1143,15 @@ struct FetchURLPreviewView:
                         .noYouTubeMatch
             }
 
-
             manager
                 .addAuthorizedMatch(
                     track:
                         track,
-
                     youtubeResult:
                         result
                 )
         }
     }
-
-
-    // MARK: - YouTube Track Download
 
     private func addYouTubeTrack(
         _ track:
@@ -1398,37 +1162,27 @@ struct FetchURLPreviewView:
             FetchItem(
                 spotifyURL:
                     track.sourceURL,
-
                 title:
                     cleanedYouTubeTitle(
                         track.title
                     ),
-
                 artist:
                     track.artist,
-
                 album:
                     nil,
-
                 artworkURL:
                     track.artworkURL,
-
                 youtubeURL:
                     track.sourceURL,
-
                 permissionConfirmed:
                     true
             )
-
 
         manager
             .addPreparedItem(
                 item
             )
     }
-
-
-    // MARK: - Clean YouTube Title
 
     private func cleanedYouTubeTitle(
         _ value: String
@@ -1437,37 +1191,27 @@ struct FetchURLPreviewView:
         var title =
             value
 
-
         let removable = [
-
             "(Official Video)",
             "(Official Music Video)",
             "(Official Audio)",
-
             "[Official Video]",
             "[Official Audio]",
-
             "Official Video",
             "Official Audio"
         ]
-
 
         for part in removable {
 
             title =
                 title
                     .replacingOccurrences(
-                        of:
-                            part,
-
-                        with:
-                            "",
-
+                        of: part,
+                        with: "",
                         options:
                             .caseInsensitive
                     )
         }
-
 
         return title
             .trimmingCharacters(
