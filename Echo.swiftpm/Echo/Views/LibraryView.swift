@@ -22,10 +22,6 @@ struct AlbumGroup: Identifiable {
 }
 
 struct LibraryView: View {
-
-    @Environment(\.locale)
-    private var locale
-
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -43,8 +39,7 @@ struct LibraryView: View {
 
             return artist.isEmpty
                 ? String(
-                                    localized: "libraryview_unknown_artist",
-                                    locale: locale
+                                    localized: "libraryview_unknown_artist"
                                 )
                 : artist
         }
@@ -150,8 +145,7 @@ struct LibraryView: View {
                 recentlyAddedSongs.first
         else {
             return String(
-                                    localized: "libraryview_no_songs",
-                                    locale: locale
+                                    localized: "libraryview_no_songs"
                                 )
         }
 
@@ -165,8 +159,7 @@ struct LibraryView: View {
                 recentlyPlayedSongs.first
         else {
             return String(
-                                    localized: "libraryview_nothing_played",
-                                    locale: locale
+                                    localized: "libraryview_nothing_played"
                                 )
         }
 
@@ -211,17 +204,12 @@ struct LibraryView: View {
                                 } label: {
 
                                     LibraryFeatureCard(
-                                        title:
-                                            String(
-                                    localized: "libraryview_songs",
-                                    locale: locale
-                                ),
+                                        title: "libraryview_songs",
                                         subtitle:
                                             String(
                                                 format:
                                                     String(
-                                    localized: "libraryview_songs_count",
-                                    locale: locale
+                                    localized: "libraryview_songs_count"
                                 ),
                                                 library.songs.count
                                             )
@@ -242,17 +230,12 @@ struct LibraryView: View {
                                 } label: {
 
                                     LibraryFeatureCard(
-                                        title:
-                                            String(
-                                    localized: "libraryview_playlists",
-                                    locale: locale
-                                ),
+                                        title: "libraryview_playlists",
                                         subtitle:
                                             String(
                                                 format:
                                                     String(
-                                    localized: "libraryview_playlists_count",
-                                    locale: locale
+                                    localized: "libraryview_playlists_count"
                                 ),
                                                 library.playlists.count
                                             )
@@ -273,17 +256,12 @@ struct LibraryView: View {
                                 } label: {
 
                                     LibraryFeatureCard(
-                                        title:
-                                            String(
-                                    localized: "libraryview_favorites",
-                                    locale: locale
-                                ),
+                                        title: "libraryview_favorites",
                                         subtitle:
                                             String(
                                                 format:
                                                     String(
-                                    localized: "libraryview_songs_count",
-                                    locale: locale
+                                    localized: "libraryview_songs_count"
                                 ),
                                                 library.favoriteSongs.count
                                             )
@@ -333,17 +311,12 @@ struct LibraryView: View {
                             } label: {
 
                                 CollectionCard(
-                                    title:
-                                        String(
-                                    localized: "libraryview_artists",
-                                    locale: locale
-                                ),
+                                    title: "libraryview_artists",
                                     subtitle:
                                         String(
                                             format:
                                                 String(
-                                    localized: "libraryview_artists_count",
-                                    locale: locale
+                                    localized: "libraryview_artists_count"
                                 ),
                                             artists.count
                                         ),
@@ -365,17 +338,12 @@ struct LibraryView: View {
                             } label: {
 
                                 CollectionCard(
-                                    title:
-                                        String(
-                                    localized: "libraryview_albums",
-                                    locale: locale
-                                ),
+                                    title: "libraryview_albums",
                                     subtitle:
                                         String(
                                             format:
                                                 String(
-                                    localized: "libraryview_albums_count",
-                                    locale: locale
+                                    localized: "libraryview_albums_count"
                                 ),
                                             albumGroups.count
                                         ),
@@ -398,11 +366,7 @@ struct LibraryView: View {
                             } label: {
 
                                 CollectionCard(
-                                    title:
-                                        String(
-                                    localized: "libraryview_recent_added",
-                                    locale: locale
-                                ),
+                                    title: "libraryview_recent_added",
                                     subtitle:
                                         recentAddedSubtitle,
                                     symbol: "plus"
@@ -423,11 +387,7 @@ struct LibraryView: View {
                             } label: {
 
                                 CollectionCard(
-                                    title:
-                                        String(
-                                    localized: "libraryview_recent_played",
-                                    locale: locale
-                                ),
+                                    title: "libraryview_recent_played",
                                     subtitle:
                                         recentPlayedSubtitle,
                                     symbol:
@@ -463,14 +423,14 @@ struct LibraryFeatureCard<
     Artwork: View
 >: View {
 
-    let title: String
+    let title: LocalizedStringKey
     let subtitle: String
 
     @ViewBuilder
     let artwork: Artwork
 
     init(
-        title: String,
+        title: LocalizedStringKey,
         subtitle: String,
         @ViewBuilder artwork:
             () -> Artwork
@@ -848,7 +808,7 @@ struct CollectionCard<
     Artwork: View
 >: View {
 
-    let title: String
+    let title: LocalizedStringKey
     let subtitle: String
     let symbol: String
 
@@ -856,7 +816,7 @@ struct CollectionCard<
     let artwork: Artwork
 
     init(
-        title: String,
+        title: LocalizedStringKey,
         subtitle: String,
         symbol: String,
         @ViewBuilder artwork:
@@ -1068,10 +1028,6 @@ struct CoverStackArtwork: View {
 }
 
 struct ArtistsView: View {
-
-    @Environment(\.locale)
-    private var locale
-
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -1092,8 +1048,7 @@ struct ArtistsView: View {
 
             return value.isEmpty
                 ? String(
-                                    localized: "libraryview_unknown_artist",
-                                    locale: locale
+                                    localized: "libraryview_unknown_artist"
                                 )
                 : value
         }
@@ -1159,8 +1114,7 @@ struct ArtistsView: View {
                             String(
                                 format:
                                     String(
-                                    localized: "libraryview_songs_count",
-                                    locale: locale
+                                    localized: "libraryview_songs_count"
                                 ),
                                 artist.songs.count
                             )
@@ -1178,17 +1132,12 @@ struct ArtistsView: View {
 
         .searchable(
             text: $searchText,
-            prompt:
-                "libraryview_search_artists"
+            prompt: "libraryview_search_artists"
         )
     }
 }
 
 struct ArtistDetailView: View {
-
-    @Environment(\.locale)
-    private var locale
-
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -1222,8 +1171,7 @@ struct ArtistDetailView: View {
                             String(
                                 format:
                                     String(
-                                    localized: "libraryview_songs_count",
-                                    locale: locale
+                                    localized: "libraryview_songs_count"
                                 ),
                                 artist.songs.count
                             )
@@ -1440,8 +1388,7 @@ struct AlbumsView: View {
 
         .searchable(
             text: $searchText,
-            prompt:
-                "libraryview_search_albums"
+            prompt: "libraryview_search_albums"
         )
     }
 }
@@ -1558,21 +1505,13 @@ struct AlbumDetailView: View {
 }
 
 struct RecentAddedView: View {
-
-    @Environment(\.locale)
-    private var locale
-
     @Environment(MusicLibraryManager.self)
     private var library
 
     var body: some View {
 
         SongCollectionView(
-            title:
-                String(
-                                    localized: "libraryview_recent_added",
-                                    locale: locale
-                                ),
+            title: "libraryview_recent_added",
             songs:
                 library.songs.sorted {
                     $0.dateAdded
@@ -1584,21 +1523,13 @@ struct RecentAddedView: View {
 }
 
 struct RecentPlayedView: View {
-
-    @Environment(\.locale)
-    private var locale
-
     @Environment(MusicLibraryManager.self)
     private var library
 
     var body: some View {
 
         SongCollectionView(
-            title:
-                String(
-                                    localized: "libraryview_recent_played",
-                                    locale: locale
-                                ),
+            title: "libraryview_recent_played",
             songs:
                 library.songs
                     .filter {
