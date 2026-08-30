@@ -1471,9 +1471,9 @@ struct ArtistDetailView: View {
     // Auto Next blijft dus gewoon werken.
     audioPlayer.fillAutoNext(
         from: library.songs
-    )
+        )
+    }
 }
-
 
 
 // MARK: - Albums
