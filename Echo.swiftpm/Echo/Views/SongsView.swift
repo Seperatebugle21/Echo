@@ -1,26 +1,19 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum SongSortOption:
-    String,
-    CaseIterable
-{
-    case name =
-        "songsview_sort_name"
 
-    case dateAdded =
-        "songsview_sort_date_added"
-
-    case lastPlayed =
-        "songsview_sort_last_played"
+enum SongSortOption: String, CaseIterable {
+    case name = "sort_name"
+    case dateAdded = "sort_date_added"
+    case lastPlayed = "sort_last_played"
 }
 
-struct SelectedSongsSheetItem:
-    Identifiable
-{
+
+struct SelectedSongsSheetItem: Identifiable {
     let id = UUID()
     let songs: [Song]
 }
+
 
 struct SongsView: View {
 
@@ -30,16 +23,17 @@ struct SongsView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
+
     @State private var showImporter = false
     @State private var searchText = ""
-    @State private var sortOption:
-        SongSortOption = .name
+    @State private var sortOption: SongSortOption = .name
 
-    @State private var selectedSong:
-        Song?
+    @State private var selectedSong: Song?
 
-    @State private var editMode:
-        EditMode = .inactive
+
+    // MARK: - Edit
+
+    @State private var editMode: EditMode = .inactive
 
     @State private var selectedSongIDs =
         Set<Song.ID>()
@@ -47,12 +41,22 @@ struct SongsView: View {
     @State private var showDeleteConfirmation =
         false
 
+
+    // MARK: - Playlist Sheet
+
     @State private var playlistSheetItem:
         SelectedSongsSheetItem?
+
+
+    // MARK: - Import
 
     @State private var isImporting = false
     @State private var importProgress = 0
     @State private var importTotal = 0
+
+
+
+    // MARK: - Filter
 
     private var filteredSongs: [Song] {
 
@@ -60,6 +64,7 @@ struct SongsView: View {
         else {
             return library.songs
         }
+
 
         return library.songs.filter { song in
 
@@ -87,6 +92,10 @@ struct SongsView: View {
         }
     }
 
+
+
+    // MARK: - Sort
+
     private var sortedSongs: [Song] {
 
         switch sortOption {
@@ -94,28 +103,39 @@ struct SongsView: View {
         case .name:
 
             return filteredSongs.sorted {
+
                 $0.title
                     .localizedCaseInsensitiveCompare(
                         $1.title
                     )
-                == .orderedAscending
+                ==
+                .orderedAscending
             }
+
 
         case .dateAdded:
 
             return filteredSongs.sorted {
-                $0.dateAdded > $1.dateAdded
+
+                $0.dateAdded >
+                $1.dateAdded
             }
+
 
         case .lastPlayed:
 
             return filteredSongs.sorted {
+
                 ($0.lastPlayed ?? .distantPast)
                 >
                 ($1.lastPlayed ?? .distantPast)
             }
         }
     }
+
+
+
+    // MARK: - Body
 
     var body: some View {
 
@@ -130,14 +150,16 @@ struct SongsView: View {
                 songRow(song)
             }
 
+
+            // Zorgt dat de laatste nummers
+            // niet achter MiniPlayer verdwijnen.
+
             Color.clear
                 .frame(height: 105)
                 .listRowBackground(
                     Color.clear
                 )
-                .listRowSeparator(
-                    .hidden
-                )
+                .listRowSeparator(.hidden)
         }
 
         .environment(
@@ -147,13 +169,16 @@ struct SongsView: View {
 
         .navigationTitle(
             LocalizedStringKey(
-                "songsview_title"
+                "songs_title"
             )
         )
 
         .navigationBarTitleDisplayMode(
             .large
         )
+
+
+        // MARK: - Search
 
         .searchable(
             text: $searchText,
@@ -163,11 +188,18 @@ struct SongsView: View {
                 ),
             prompt:
                 Text(
-                    "songsview_search_prompt"
+                    "search_prompt"
                 )
         )
 
+
+        // MARK: - Toolbar
+
         .toolbar {
+
+            // De native back-knop wordt automatisch
+            // door LibraryView / NavigationStack geplaatst.
+
 
             ToolbarItem(
                 placement: .topBarLeading
@@ -177,11 +209,11 @@ struct SongsView: View {
                     editMode == .active
                     ?
                     LocalizedStringKey(
-                        "songsview_done"
+                        "action_done"
                     )
                     :
                     LocalizedStringKey(
-                        "songsview_edit"
+                        "action_edit"
                     )
                 ) {
 
@@ -190,7 +222,9 @@ struct SongsView: View {
                         if editMode == .active {
 
                             editMode = .inactive
-                            selectedSongIDs.removeAll()
+
+                            selectedSongIDs
+                                .removeAll()
 
                         } else {
 
@@ -199,6 +233,8 @@ struct SongsView: View {
                     }
                 }
             }
+
+
 
             if editMode == .active {
 
@@ -211,11 +247,13 @@ struct SongsView: View {
 
                         let songsToAdd =
                             library.songs.filter {
+
                                 selectedSongIDs
                                     .contains(
                                         $0.id
                                     )
                             }
+
 
                         playlistSheetItem =
                             SelectedSongsSheetItem(
@@ -230,23 +268,29 @@ struct SongsView: View {
                                 "music.note.list"
                         )
                     }
+
                     .disabled(
                         selectedSongIDs.isEmpty
                     )
+
 
                     Button(
                         role: .destructive
                     ) {
 
-                        showDeleteConfirmation = true
+                        showDeleteConfirmation =
+                            true
 
                     } label: {
 
                         Image(
-                            systemName: "trash"
+                            systemName:
+                                "trash"
                         )
                     }
+
                     .tint(.red)
+
                     .disabled(
                         selectedSongIDs.isEmpty
                     )
@@ -261,6 +305,9 @@ struct SongsView: View {
 
                     Menu {
 
+
+                        // MARK: Name
+
                         Button {
 
                             sortOption = .name
@@ -269,46 +316,62 @@ struct SongsView: View {
 
                             Label(
                                 LocalizedStringKey(
-                                    "songsview_sort_name"
+                                    "sort_name"
                                 ),
                                 systemImage:
                                     sortOption == .name
-                                    ? "checkmark"
-                                    : ""
+                                    ?
+                                    "checkmark"
+                                    :
+                                    ""
                             )
                         }
 
+
+
+                        // MARK: Date
+
                         Button {
 
-                            sortOption = .dateAdded
+                            sortOption =
+                                .dateAdded
 
                         } label: {
 
                             Label(
                                 LocalizedStringKey(
-                                    "songsview_sort_date_added"
+                                    "sort_date_added"
                                 ),
                                 systemImage:
                                     sortOption == .dateAdded
-                                    ? "checkmark"
-                                    : ""
+                                    ?
+                                    "checkmark"
+                                    :
+                                    ""
                             )
                         }
 
+
+
+                        // MARK: Played
+
                         Button {
 
-                            sortOption = .lastPlayed
+                            sortOption =
+                                .lastPlayed
 
                         } label: {
 
                             Label(
                                 LocalizedStringKey(
-                                    "songsview_sort_last_played"
+                                    "sort_last_played"
                                 ),
                                 systemImage:
                                     sortOption == .lastPlayed
-                                    ? "checkmark"
-                                    : ""
+                                    ?
+                                    "checkmark"
+                                    :
+                                    ""
                             )
                         }
 
@@ -320,6 +383,9 @@ struct SongsView: View {
                         )
                     }
 
+
+                    // MARK: Add
+
                     Button {
 
                         showImporter = true
@@ -327,13 +393,19 @@ struct SongsView: View {
                     } label: {
 
                         Image(
-                            systemName: "plus"
+                            systemName:
+                                "plus"
                         )
                     }
+
                     .disabled(isImporting)
                 }
             }
         }
+
+
+
+        // MARK: - File Import
 
         .fileImporter(
             isPresented: $showImporter,
@@ -350,10 +422,15 @@ struct SongsView: View {
                 Task {
 
                     await MainActor.run {
-                        importTotal = files.count
+
+                        importTotal =
+                            files.count
+
                         importProgress = 0
+
                         isImporting = true
                     }
+
 
                     for file in files {
 
@@ -361,9 +438,12 @@ struct SongsView: View {
                             from: file
                         )
 
+
                         await MainActor.run {
+
                             importProgress += 1
                         }
+
 
                         try?
                             await Task.sleep(
@@ -372,19 +452,26 @@ struct SongsView: View {
                             )
                     }
 
+
                     await MainActor.run {
+
                         isImporting = false
                     }
                 }
 
+
             case .failure(let error):
 
                 print(
-                    "Import error:",
+                    "Import fout:",
                     error.localizedDescription
                 )
             }
         }
+
+
+
+        // MARK: - Import Overlay
 
         .overlay {
 
@@ -395,6 +482,7 @@ struct SongsView: View {
                     Color.black
                         .opacity(0.4)
                         .ignoresSafeArea()
+
 
                     VStack(
                         spacing: 16
@@ -410,30 +498,26 @@ struct SongsView: View {
                                     importTotal
                                 )
                         )
+
                         .progressViewStyle(
                             .circular
                         )
+
                         .scaleEffect(1.5)
+
 
                         VStack(
                             spacing: 4
                         ) {
 
                             Text(
-                                "songsview_importing"
+                                "Nummers importeren..."
                             )
                             .font(.headline)
 
+
                             Text(
-                                String(
-                                    format:
-                                        String(
-                                            localized:
-                                                "songsview_import_progress"
-                                        ),
-                                    importProgress,
-                                    importTotal
-                                )
+                                "\(importProgress) van \(importTotal) geüpload"
                             )
                             .font(.subheadline)
                             .foregroundStyle(
@@ -441,23 +525,31 @@ struct SongsView: View {
                             )
                         }
                     }
+
                     .padding(24)
+
                     .background(
                         .regularMaterial
                     )
+
                     .clipShape(
                         RoundedRectangle(
                             cornerRadius: 16
                         )
                     )
+
                     .shadow(radius: 10)
                 }
             }
         }
 
+
+
+        // MARK: - Delete
+
         .alert(
             LocalizedStringKey(
-                "songsview_delete_title"
+                "alert_delete_songs_title"
             ),
             isPresented:
                 $showDeleteConfirmation
@@ -465,30 +557,39 @@ struct SongsView: View {
 
             Button(
                 LocalizedStringKey(
-                    "songsview_delete"
+                    "action_delete"
                 ),
                 role: .destructive
             ) {
 
                 let songsToDelete =
                     library.songs.filter {
+
                         selectedSongIDs
                             .contains(
                                 $0.id
                             )
                     }
 
+
                 for song in songsToDelete {
-                    library.deleteSong(song)
+
+                    library.deleteSong(
+                        song
+                    )
                 }
 
-                selectedSongIDs.removeAll()
+
+                selectedSongIDs
+                    .removeAll()
+
                 editMode = .inactive
             }
 
+
             Button(
                 LocalizedStringKey(
-                    "songsview_cancel"
+                    "action_cancel"
                 ),
                 role: .cancel
             ) {}
@@ -496,20 +597,17 @@ struct SongsView: View {
         } message: {
 
             Text(
-                String(
-                    format:
-                        String(
-                            localized:
-                                "songsview_delete_message"
-                        ),
-                    selectedSongIDs.count
-                )
+                "alert_delete_songs_message \(selectedSongIDs.count)"
             )
         }
 
+
+
+        // MARK: - Duplicate
+
         .alert(
             Text(
-                "songsview_duplicate_title"
+                "alert_duplicate_title"
             ),
             isPresented:
                 Bindable(library)
@@ -519,7 +617,7 @@ struct SongsView: View {
             Button(
                 String(
                     localized:
-                        "songsview_skip"
+                        "action_skip"
                 )
             ) {
 
@@ -529,10 +627,11 @@ struct SongsView: View {
                 )
             }
 
+
             Button(
                 String(
                     localized:
-                        "songsview_replace"
+                        "action_replace"
                 ),
                 role: .destructive
             ) {
@@ -543,10 +642,11 @@ struct SongsView: View {
                 )
             }
 
+
             Button(
                 String(
                     localized:
-                        "songsview_skip_all"
+                        "action_skip_all"
                 )
             ) {
 
@@ -556,10 +656,11 @@ struct SongsView: View {
                 )
             }
 
+
             Button(
                 String(
                     localized:
-                        "songsview_replace_all"
+                        "action_replace_all"
                 ),
                 role: .destructive
             ) {
@@ -570,10 +671,11 @@ struct SongsView: View {
                 )
             }
 
+
             Button(
                 String(
                     localized:
-                        "songsview_cancel"
+                        "action_cancel"
                 ),
                 role: .cancel
             ) {}
@@ -581,16 +683,13 @@ struct SongsView: View {
         } message: {
 
             Text(
-                String(
-                    format:
-                        String(
-                            localized:
-                                "songsview_duplicate_message"
-                        ),
-                    library.duplicateSongName
-                )
+                "alert_duplicate_message \(library.duplicateSongName)"
             )
         }
+
+
+
+        // MARK: - Sheets
 
         .sheet(
             item:
@@ -603,6 +702,7 @@ struct SongsView: View {
             )
         }
 
+
         .sheet(
             item: $playlistSheetItem,
             onDismiss: {
@@ -610,7 +710,9 @@ struct SongsView: View {
                 withAnimation {
 
                     editMode = .inactive
-                    selectedSongIDs.removeAll()
+
+                    selectedSongIDs
+                        .removeAll()
                 }
             }
         ) { item in
@@ -619,6 +721,7 @@ struct SongsView: View {
                 songs: item.songs
             )
         }
+
 
         .sheet(
             item: $selectedSong
@@ -629,14 +732,16 @@ struct SongsView: View {
             )
         }
 
+
         .sheet(
             isPresented:
                 Bindable(library)
                     .showEditSheet
         ) {
 
-            if let song =
-                library.editingSong
+            if
+                let song =
+                    library.editingSong
             {
 
                 EditSongView(
@@ -645,6 +750,10 @@ struct SongsView: View {
             }
         }
     }
+
+
+
+    // MARK: - Song Row
 
     @ViewBuilder
     private func songRow(
@@ -659,10 +768,12 @@ struct SongsView: View {
                 song: song,
                 cornerRadius: 10
             )
+
             .frame(
                 width: 50,
                 height: 50
             )
+
 
             VStack(
                 alignment: .leading,
@@ -671,33 +782,46 @@ struct SongsView: View {
 
                 Text(song.title)
                     .font(.headline)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(
+                        .primary
+                    )
                     .lineLimit(1)
+
 
                 Text(song.artist)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(
+                        .secondary
+                    )
                     .lineLimit(1)
             }
 
+
             Spacer()
+
 
             if editMode == .inactive {
 
                 Button {
+
                     selectedSong = song
+
                 } label: {
 
                     Image(
-                        systemName: "ellipsis"
+                        systemName:
+                            "ellipsis"
                     )
                     .font(.title3)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(
+                        .secondary
+                    )
                     .frame(
                         width: 30,
                         height: 30
                     )
                 }
+
                 .buttonStyle(.plain)
             }
         }
@@ -706,6 +830,7 @@ struct SongsView: View {
             Rectangle()
         )
 
+
         .onTapGesture {
 
             guard
@@ -713,6 +838,7 @@ struct SongsView: View {
             else {
                 return
             }
+
 
             guard
                 let url =
@@ -723,12 +849,15 @@ struct SongsView: View {
                 return
             }
 
+
             library.markAsPlayed(
                 song
             )
 
+
             audioPlayer.lastPlaybackDirection =
                 .fade
+
 
             audioPlayer.play(
                 song: song,
@@ -736,13 +865,16 @@ struct SongsView: View {
                 queue: [song]
             )
 
+
             audioPlayer.allSongs =
                 library.songs
+
 
             audioPlayer.fillAutoNext(
                 from: library.songs
             )
         }
+
 
         .swipeActions(
             edge: .trailing,
@@ -761,20 +893,23 @@ struct SongsView: View {
                     library.isFavorite(song)
                     ?
                     LocalizedStringKey(
-                        "songsview_remove_favorite"
+                        "action_remove"
                     )
                     :
                     LocalizedStringKey(
-                        "songsview_add_favorite"
+                        "action_favorite"
                     ),
+
                     systemImage:
                         library.isFavorite(song)
-                        ? "heart.slash"
-                        : "heart.fill"
+                        ?
+                        "heart.slash"
+                        :
+                        "heart.fill"
                 )
             }
+
             .tint(.red)
         }
     }
 }
-s
