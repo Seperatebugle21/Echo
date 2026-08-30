@@ -19,32 +19,28 @@ struct SearchView: View {
 
     private var matchingSongs: [Song] {
 
-        guard
-            !searchText.isEmpty
+        guard !searchText.isEmpty
         else {
-
             return []
         }
 
 
-        return library.songs.filter {
+        return library.songs.filter { song in
 
-            $0.title
-                .localizedCaseInsensitiveContains(
-                    searchText
-                )
+            song.title.localizedCaseInsensitiveContains(
+                searchText
+            )
 
             ||
 
-            $0.artist
-                .localizedCaseInsensitiveContains(
-                    searchText
-                )
+            song.artist.localizedCaseInsensitiveContains(
+                searchText
+            )
 
             ||
 
             (
-                $0.album?
+                song.album?
                     .localizedCaseInsensitiveContains(
                         searchText
                     )
@@ -57,7 +53,6 @@ struct SearchView: View {
     private var displayedSongs: [Song] {
 
         if showAllSongs {
-
             return matchingSongs
         }
 
@@ -73,10 +68,8 @@ struct SearchView: View {
 
     private var matchingArtists: [ArtistGroup] {
 
-        guard
-            !searchText.isEmpty
+        guard !searchText.isEmpty
         else {
-
             return []
         }
 
@@ -84,10 +77,10 @@ struct SearchView: View {
         let grouped =
             Dictionary(
                 grouping: library.songs
-            ) {
+            ) { song in
 
                 let artist =
-                    $0.artist
+                    song.artist
                         .trimmingCharacters(
                             in: .whitespacesAndNewlines
                         )
@@ -134,16 +127,15 @@ struct SearchView: View {
     private var allAlbums: [AlbumGroup] {
 
         let validSongs =
-            library.songs.filter {
+            library.songs.filter { song in
 
                 guard
                     let album =
-                        $0.album?
+                        song.album?
                             .trimmingCharacters(
                                 in: .whitespacesAndNewlines
                             )
                 else {
-
                     return false
                 }
 
@@ -155,9 +147,9 @@ struct SearchView: View {
         let grouped =
             Dictionary(
                 grouping: validSongs
-            ) {
+            ) { song in
 
-                "\($0.artist)|\($0.album ?? "")"
+                "\(song.artist)|\(song.album ?? "")"
             }
 
 
@@ -165,12 +157,9 @@ struct SearchView: View {
             .compactMap { _, songs in
 
                 guard
-                    let first =
-                        songs.first,
-                    let album =
-                        first.album
+                    let first = songs.first,
+                    let album = first.album
                 else {
-
                     return nil
                 }
 
@@ -186,25 +175,23 @@ struct SearchView: View {
 
     private var matchingAlbums: [AlbumGroup] {
 
-        guard
-            !searchText.isEmpty
+        guard !searchText.isEmpty
         else {
-
             return []
         }
 
 
         return allAlbums
-            .filter {
+            .filter { album in
 
-                $0.name
+                album.name
                     .localizedCaseInsensitiveContains(
                         searchText
                     )
 
                 ||
 
-                $0.artist
+                album.artist
                     .localizedCaseInsensitiveContains(
                         searchText
                     )
@@ -227,10 +214,8 @@ struct SearchView: View {
 
     private var matchingPlaylists: [Playlist] {
 
-        guard
-            !searchText.isEmpty
+        guard !searchText.isEmpty
         else {
-
             return []
         }
 
@@ -267,135 +252,344 @@ struct SearchView: View {
 
         NavigationStack {
 
-            VStack(
-                    spacing: 0
+            ScrollView {
+
+                LazyVStack(
+                    alignment: .leading,
+                    spacing: 22
                 ) {
 
-        // MARK: - Header
 
-        HStack {
+                    // MARK: - Header
 
-            Text("Zoeken")
-                .font(.largeTitle.bold())
+                    HStack(
+                        alignment: .center
+                    ) {
 
-            Spacer()
+                        Text("Zoeken")
+                            .font(
+                                .largeTitle.bold()
+                            )
 
-            Button {
 
-                showSettings = true
+                        Spacer()
 
-            } label: {
 
-                Image(
-                    systemName: "gearshape"
-                )
-                .font(
-                    .title3.weight(.medium)
-                )
-                .foregroundStyle(.primary)
-                .frame(
-                    width: 42,
-                    height: 42
-                )
-                .background(
-                    .thinMaterial,
-                    in: Circle()
-                )
-            }
+                        Button {
 
-            .buttonStyle(.plain)
-        }
+                            showSettings = true
 
-        .padding(.horizontal)
-        .padding(.top, 6)
-        .padding(.bottom, 4)
+                        } label: {
 
-            Group {
+                            Image(
+                                systemName:
+                                    "gearshape"
+                            )
+                            .font(
+                                .title3.weight(
+                                    .medium
+                                )
+                            )
+                            .foregroundStyle(
+                                .primary
+                            )
 
-                if searchText.isEmpty {
+                            .frame(
+                                width: 42,
+                                height: 42
+                            )
 
-                    ContentUnavailableView(
-                        "Zoeken",
-                        systemImage:
-                            "magnifyingglass",
-                        description: Text(
-                            "Zoek naar nummers, artiesten, albums en playlists in Echo."
+                            .background(
+                                .thinMaterial,
+                                in: Circle()
+                            )
+                        }
+
+                        .buttonStyle(.plain)
+                    }
+
+                    .padding(.horizontal)
+                    .padding(.top, 6)
+
+
+
+                    // MARK: - Search Bar
+
+                    HStack(
+                        spacing: 10
+                    ) {
+
+                        Image(
+                            systemName:
+                                "magnifyingglass"
+                        )
+                        .foregroundStyle(
+                            .secondary
+                        )
+
+
+                        TextField(
+                            "Nummers, artiesten, albums en playlists",
+                            text: $searchText
+                        )
+
+                        .textInputAutocapitalization(
+                            .never
+                        )
+
+                        .autocorrectionDisabled()
+
+
+                        if !searchText.isEmpty {
+
+                            Button {
+
+                                searchText = ""
+
+                            } label: {
+
+                                Image(
+                                    systemName:
+                                        "xmark.circle.fill"
+                                )
+                                .foregroundStyle(
+                                    .secondary
+                                )
+                            }
+
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    .padding(.horizontal, 14)
+                    .frame(height: 42)
+
+                    .background(
+                        .thinMaterial,
+                        in: RoundedRectangle(
+                            cornerRadius: 13,
+                            style: .continuous
                         )
                     )
 
-                } else if !hasResults {
+                    .padding(.horizontal)
 
-                    ContentUnavailableView.search(
-                        text: searchText
-                    )
 
-                } else {
 
-                    List {
+                    // MARK: - Empty Search
+
+                    if searchText.isEmpty {
+
+                        VStack(
+                            spacing: 12
+                        ) {
+
+                            Image(
+                                systemName:
+                                    "magnifyingglass"
+                            )
+                            .font(
+                                .system(
+                                    size: 38,
+                                    weight: .medium
+                                )
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+
+
+                            Text(
+                                "Zoek in Echo"
+                            )
+                            .font(
+                                .title3.bold()
+                            )
+
+
+                            Text(
+                                "Zoek naar nummers, artiesten, albums en playlists."
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(
+                                .secondary
+                            )
+                            .multilineTextAlignment(
+                                .center
+                            )
+                        }
+
+                        .frame(
+                            maxWidth: .infinity
+                        )
+
+                        .padding(.horizontal, 30)
+                        .padding(.top, 70)
+                    }
+
+
+
+                    // MARK: - No Results
+
+                    else if !hasResults {
+
+                        VStack(
+                            spacing: 12
+                        ) {
+
+                            Image(
+                                systemName:
+                                    "magnifyingglass"
+                            )
+                            .font(
+                                .system(
+                                    size: 38,
+                                    weight: .medium
+                                )
+                            )
+                            .foregroundStyle(
+                                .secondary
+                            )
+
+
+                            Text(
+                                "Geen resultaten"
+                            )
+                            .font(
+                                .title3.bold()
+                            )
+
+
+                            Text(
+                                "Geen resultaten gevonden voor “\(searchText)”."
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(
+                                .secondary
+                            )
+                            .multilineTextAlignment(
+                                .center
+                            )
+                        }
+
+                        .frame(
+                            maxWidth: .infinity
+                        )
+
+                        .padding(.horizontal, 30)
+                        .padding(.top, 70)
+                    }
+
+
+
+                    // MARK: - Results
+
+                    else {
 
 
                         // MARK: Songs
 
                         if !matchingSongs.isEmpty {
 
-                            Section(
-                                "Nummers"
+                            SearchSection(
+                                title: "Nummers"
                             ) {
 
-                                ForEach(
-                                    displayedSongs
-                                ) { song in
+                                VStack(
+                                    spacing: 0
+                                ) {
 
-                                    Button {
+                                    ForEach(
+                                        displayedSongs
+                                    ) { song in
 
-                                        play(song)
+                                        Button {
 
-                                    } label: {
+                                            play(song)
 
-                                        LibrarySongRow(
-                                            song: song
-                                        )
+                                        } label: {
+
+                                            LibrarySongRow(
+                                                song: song
+                                            )
+                                            .padding(
+                                                .vertical,
+                                                9
+                                            )
+                                        }
+
+                                        .buttonStyle(.plain)
+
+
+                                        if
+                                            song.id
+                                            !=
+                                            displayedSongs.last?.id
+                                        {
+
+                                            Divider()
+                                                .padding(
+                                                    .leading,
+                                                    62
+                                                )
+                                        }
                                     }
 
-                                    .buttonStyle(.plain)
-                                }
+
+                                    if
+                                        matchingSongs.count > 10,
+                                        !showAllSongs
+                                    {
+
+                                        Divider()
+                                            .padding(
+                                                .leading,
+                                                62
+                                            )
 
 
-                                if
-                                    matchingSongs.count > 10,
-                                    !showAllSongs
-                                {
+                                        Button {
 
-                                    Button {
+                                            withAnimation {
 
-                                        withAnimation {
+                                                showAllSongs =
+                                                    true
+                                            }
 
-                                            showAllSongs =
-                                                true
+                                        } label: {
+
+                                            HStack {
+
+                                                Text(
+                                                    "Toon alle \(matchingSongs.count) resultaten"
+                                                )
+                                                .font(
+                                                    .subheadline
+                                                        .weight(
+                                                            .medium
+                                                        )
+                                                )
+
+
+                                                Spacer()
+
+
+                                                Image(
+                                                    systemName:
+                                                        "chevron.down"
+                                                )
+                                                .font(
+                                                    .caption.bold()
+                                                )
+                                            }
+
+                                            .padding(
+                                                .vertical,
+                                                13
+                                            )
                                         }
 
-                                    } label: {
-
-                                        HStack {
-
-                                            Text(
-                                                "Toon alle \(matchingSongs.count) resultaten"
-                                            )
-                                            .font(
-                                                .subheadline
-                                                    .weight(.medium)
-                                            )
-
-
-                                            Spacer()
-
-
-                                            Image(
-                                                systemName:
-                                                    "chevron.down"
-                                            )
-                                            .font(.caption)
-                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
                             }
@@ -407,66 +601,108 @@ struct SearchView: View {
 
                         if !matchingArtists.isEmpty {
 
-                            Section(
-                                "Artiesten"
+                            SearchSection(
+                                title: "Artiesten"
                             ) {
 
-                                ForEach(
-                                    matchingArtists
-                                ) { artist in
+                                VStack(
+                                    spacing: 0
+                                ) {
 
-                                    NavigationLink {
+                                    ForEach(
+                                        matchingArtists
+                                    ) { artist in
 
-                                        ArtistDetailView(
-                                            artist:
-                                                artist
-                                        )
+                                        NavigationLink {
 
-                                    } label: {
-
-                                        HStack(
-                                            spacing: 12
-                                        ) {
-
-                                            ArtistArtworkView(
-                                                songs:
-                                                    artist.songs
+                                            ArtistDetailView(
+                                                artist:
+                                                    artist
                                             )
 
-                                            .frame(
-                                                width: 50,
-                                                height: 50
-                                            )
+                                        } label: {
 
-                                            .clipShape(
-                                                Circle()
-                                            )
-
-
-                                            VStack(
-                                                alignment:
-                                                    .leading,
-                                                spacing: 2
+                                            HStack(
+                                                spacing: 12
                                             ) {
 
-                                                Text(
-                                                    artist.name
+                                                ArtistArtworkView(
+                                                    songs:
+                                                        artist.songs
                                                 )
-                                                .font(
-                                                    .headline
+                                                .frame(
+                                                    width: 52,
+                                                    height: 52
+                                                )
+                                                .clipShape(
+                                                    Circle()
                                                 )
 
 
-                                                Text(
-                                                    "\(artist.songs.count) nummers"
+                                                VStack(
+                                                    alignment:
+                                                        .leading,
+                                                    spacing: 2
+                                                ) {
+
+                                                    Text(
+                                                        artist.name
+                                                    )
+                                                    .font(
+                                                        .headline
+                                                    )
+                                                    .foregroundStyle(
+                                                        .primary
+                                                    )
+
+
+                                                    Text(
+                                                        "\(artist.songs.count) nummers"
+                                                    )
+                                                    .font(
+                                                        .caption
+                                                    )
+                                                    .foregroundStyle(
+                                                        .secondary
+                                                    )
+                                                }
+
+
+                                                Spacer()
+
+
+                                                Image(
+                                                    systemName:
+                                                        "chevron.right"
                                                 )
                                                 .font(
-                                                    .caption
+                                                    .caption.bold()
                                                 )
                                                 .foregroundStyle(
-                                                    .secondary
+                                                    .tertiary
                                                 )
                                             }
+
+                                            .padding(
+                                                .vertical,
+                                                8
+                                            )
+                                        }
+
+                                        .buttonStyle(.plain)
+
+
+                                        if
+                                            artist.id
+                                            !=
+                                            matchingArtists.last?.id
+                                        {
+
+                                            Divider()
+                                                .padding(
+                                                    .leading,
+                                                    64
+                                                )
                                         }
                                     }
                                 }
@@ -479,72 +715,135 @@ struct SearchView: View {
 
                         if !matchingAlbums.isEmpty {
 
-                            Section(
-                                "Albums"
+                            SearchSection(
+                                title: "Albums"
                             ) {
 
-                                ForEach(
-                                    matchingAlbums
-                                ) { album in
+                                VStack(
+                                    spacing: 0
+                                ) {
 
-                                    NavigationLink {
+                                    ForEach(
+                                        matchingAlbums
+                                    ) { album in
 
-                                        AlbumDetailView(
-                                            album:
-                                                album
-                                        )
+                                        NavigationLink {
 
-                                    } label: {
-
-                                        HStack(
-                                            spacing: 12
-                                        ) {
-
-                                            if
-                                                let song =
+                                            AlbumDetailView(
+                                                album:
                                                     album
-                                                        .songs
-                                                        .first
-                                            {
+                                            )
 
-                                                SongArtworkView(
-                                                    song:
-                                                        song,
-                                                    cornerRadius:
-                                                        10
-                                                )
+                                        } label: {
 
-                                                .frame(
-                                                    width: 52,
-                                                    height: 52
-                                                )
-                                            }
-
-
-                                            VStack(
-                                                alignment:
-                                                    .leading,
-                                                spacing: 2
+                                            HStack(
+                                                spacing: 12
                                             ) {
 
-                                                Text(
-                                                    album.name
-                                                )
-                                                .font(
-                                                    .headline
-                                                )
+                                                if
+                                                    let song =
+                                                        album
+                                                            .songs
+                                                            .first
+                                                {
+
+                                                    SongArtworkView(
+                                                        song:
+                                                            song,
+                                                        cornerRadius:
+                                                            10
+                                                    )
+                                                    .frame(
+                                                        width: 52,
+                                                        height: 52
+                                                    )
+
+                                                } else {
+
+                                                    Image(
+                                                        systemName:
+                                                            "square.stack"
+                                                    )
+                                                    .frame(
+                                                        width: 52,
+                                                        height: 52
+                                                    )
+                                                    .background(
+                                                        .thinMaterial
+                                                    )
+                                                    .clipShape(
+                                                        RoundedRectangle(
+                                                            cornerRadius:
+                                                                10
+                                                        )
+                                                    )
+                                                }
 
 
-                                                Text(
-                                                    album.artist
+                                                VStack(
+                                                    alignment:
+                                                        .leading,
+                                                    spacing: 2
+                                                ) {
+
+                                                    Text(
+                                                        album.name
+                                                    )
+                                                    .font(
+                                                        .headline
+                                                    )
+                                                    .foregroundStyle(
+                                                        .primary
+                                                    )
+
+
+                                                    Text(
+                                                        album.artist
+                                                    )
+                                                    .font(
+                                                        .caption
+                                                    )
+                                                    .foregroundStyle(
+                                                        .secondary
+                                                    )
+                                                }
+
+
+                                                Spacer()
+
+
+                                                Image(
+                                                    systemName:
+                                                        "chevron.right"
                                                 )
                                                 .font(
-                                                    .caption
+                                                    .caption.bold()
                                                 )
                                                 .foregroundStyle(
-                                                    .secondary
+                                                    .tertiary
                                                 )
                                             }
+
+                                            .padding(
+                                                .vertical,
+                                                8
+                                            )
+                                        }
+
+                                        .buttonStyle(.plain)
+
+
+                                        if
+                                            album.id
+                                            !=
+                                            matchingAlbums.last?.id
+                                        {
+
+                                            Divider()
+                                                .padding(
+                                                    .leading,
+                                                    64
+                                                )
                                         }
                                     }
                                 }
@@ -557,92 +856,117 @@ struct SearchView: View {
 
                         if !matchingPlaylists.isEmpty {
 
-                            Section(
-                                "Playlists"
+                            SearchSection(
+                                title: "Playlists"
                             ) {
 
-                                ForEach(
-                                    matchingPlaylists
-                                ) { playlist in
+                                VStack(
+                                    spacing: 0
+                                ) {
 
-                                    NavigationLink {
+                                    ForEach(
+                                        matchingPlaylists
+                                    ) { playlist in
 
-                                        PlaylistDetailView(
-                                            playlist:
-                                                playlist
-                                        )
+                                        NavigationLink {
 
-                                    } label: {
-
-                                        HStack(
-                                            spacing: 12
-                                        ) {
-
-                                            PlaylistSearchArtwork(
+                                            PlaylistDetailView(
                                                 playlist:
                                                     playlist
                                             )
 
-                                            .frame(
-                                                width: 52,
-                                                height: 52
-                                            )
+                                        } label: {
 
-
-                                            VStack(
-                                                alignment:
-                                                    .leading,
-                                                spacing: 2
+                                            HStack(
+                                                spacing: 12
                                             ) {
 
-                                                Text(
-                                                    playlist.name
+                                                PlaylistSearchArtwork(
+                                                    playlist:
+                                                        playlist
                                                 )
-                                                .font(
-                                                    .headline
+                                                .frame(
+                                                    width: 52,
+                                                    height: 52
                                                 )
 
 
-                                                Text(
-                                                    "\(playlist.songIDs.count) nummers"
+                                                VStack(
+                                                    alignment:
+                                                        .leading,
+                                                    spacing: 2
+                                                ) {
+
+                                                    Text(
+                                                        playlist.name
+                                                    )
+                                                    .font(
+                                                        .headline
+                                                    )
+                                                    .foregroundStyle(
+                                                        .primary
+                                                    )
+
+
+                                                    Text(
+                                                        "\(playlist.songIDs.count) nummers"
+                                                    )
+                                                    .font(
+                                                        .caption
+                                                    )
+                                                    .foregroundStyle(
+                                                        .secondary
+                                                    )
+                                                }
+
+
+                                                Spacer()
+
+
+                                                Image(
+                                                    systemName:
+                                                        "chevron.right"
                                                 )
                                                 .font(
-                                                    .caption
+                                                    .caption.bold()
                                                 )
                                                 .foregroundStyle(
-                                                    .secondary
+                                                    .tertiary
                                                 )
                                             }
+
+                                            .padding(
+                                                .vertical,
+                                                8
+                                            )
                                         }
+
+                                        .buttonStyle(.plain)
                                     }
                                 }
                             }
                         }
                     }
                 }
+
+                .padding(.bottom, 120)
             }
 
-          
+
+            // Geen normale navigation title.
+            // Daardoor komt er bovenaan geen tweede
+            // lege navigation-bar ruimte.
+
+            .toolbar(.hidden, for: .navigationBar)
 
 
             .sheet(
-                isPresented: $showSettings
+                isPresented:
+                    $showSettings
             ) {
 
                 SettingsView()
             }
-
-
-            .searchable(
-                text: $searchText,
-                placement:
-                    .navigationBarDrawer(
-                        displayMode:
-                            .always
-                    ),
-                prompt:
-                    "Nummers, artiesten, albums en playlists"
-            )
 
 
             .onChange(
@@ -655,7 +979,8 @@ struct SearchView: View {
     }
 
 
-    // MARK: - Play
+
+    // MARK: - Playback
 
     private func play(
         _ song: Song
@@ -667,7 +992,6 @@ struct SearchView: View {
                     for: song
                 )
         else {
-
             return
         }
 
@@ -697,6 +1021,61 @@ struct SearchView: View {
 
 
 
+// MARK: - Search Section
+
+private struct SearchSection<
+    Content: View
+>: View {
+
+    let title: String
+
+    @ViewBuilder
+    let content: Content
+
+
+    init(
+        title: String,
+        @ViewBuilder content:
+            () -> Content
+    ) {
+
+        self.title = title
+        self.content = content()
+    }
+
+
+    var body: some View {
+
+        VStack(
+            alignment: .leading,
+            spacing: 9
+        ) {
+
+            Text(title)
+                .font(
+                    .title2.bold()
+                )
+                .padding(.horizontal)
+
+
+            content
+                .padding(.horizontal, 14)
+                .background(
+                    .thinMaterial,
+                    in:
+                        RoundedRectangle(
+                            cornerRadius: 18,
+                            style:
+                                .continuous
+                        )
+                )
+                .padding(.horizontal)
+        }
+    }
+}
+
+
+
 // MARK: - Playlist Artwork
 
 struct PlaylistSearchArtwork: View {
@@ -714,7 +1093,9 @@ struct PlaylistSearchArtwork: View {
                     let data =
                         playlist.imageData,
                     let image =
-                        UIImage(data: data)
+                        UIImage(
+                            data: data
+                        )
                 {
 
                     Image(
