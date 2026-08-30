@@ -1,11 +1,9 @@
 import SwiftUI
 
-
 struct SpotifyPlaylistDetailView: View {
 
     let playlist:
         SpotifyPlaylist
-
 
     @State private var tracks:
         [SpotifyTrack] = []
@@ -28,15 +26,12 @@ struct SpotifyPlaylistDetailView: View {
     @State private var showFetchConfirmation =
         false
 
-
     var filteredTracks:
         [SpotifyTrack] {
 
         guard !searchText.isEmpty else {
-
             return tracks
         }
-
 
         return tracks.filter { track in
 
@@ -44,16 +39,12 @@ struct SpotifyPlaylistDetailView: View {
                 .localizedCaseInsensitiveContains(
                     searchText
                 )
-
             ||
-
             track.artist
                 .localizedCaseInsensitiveContains(
                     searchText
                 )
-
             ||
-
             track.album
                 .localizedCaseInsensitiveContains(
                     searchText
@@ -61,71 +52,56 @@ struct SpotifyPlaylistDetailView: View {
         }
     }
 
-
     var body: some View {
 
         List {
-
-            // MARK: - Loading
 
             if isLoading {
 
                 HStack {
 
                     Spacer()
-
                     ProgressView()
-
                     Spacer()
                 }
             }
-
-
-            // MARK: - Preparing Playlist
 
             if isFetchingPlaylist {
 
                 Section {
 
                     HStack(
-                        spacing:
-                            12
+                        spacing: 12
                     ) {
 
                         ProgressView()
 
-
                         VStack(
-                            alignment:
-                                .leading,
-                            spacing:
-                                3
+                            alignment: .leading,
+                            spacing: 3
                         ) {
 
                             Text(
-                                "Adding playlist to Fetch"
+                                "spotifyplaylistdetailview_adding_playlist"
                             )
-                            .font(
-                                .headline
-                            )
-
+                            .font(.headline)
 
                             Text(
-                                "\(tracks.count) songs"
+                                String(
+                                    format:
+                                        String(
+                                            localized:
+                                                "spotifyplaylistdetailview_songs_count"
+                                        ),
+                                    tracks.count
+                                )
                             )
-                            .font(
-                                .caption
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
                     }
                 }
             }
-
-
-            // MARK: - Error
 
             if let errorMessage {
 
@@ -134,32 +110,25 @@ struct SpotifyPlaylistDetailView: View {
                     Text(
                         errorMessage
                     )
-                    .foregroundStyle(
-                        .red
-                    )
+                    .foregroundStyle(.red)
                 }
             }
 
-
-            // MARK: - Empty
-
             if !isLoading &&
                 errorMessage == nil &&
-                tracks.isEmpty {
+                tracks.isEmpty
+            {
 
                 ContentUnavailableView(
-                    "No Songs",
+                    "spotifyplaylistdetailview_no_songs",
                     systemImage:
                         "music.note.list",
                     description:
                         Text(
-                            "No songs were found in this playlist."
+                            "spotifyplaylistdetailview_no_songs_description"
                         )
                 )
             }
-
-
-            // MARK: - Tracks
 
             ForEach(
                 filteredTracks
@@ -177,9 +146,7 @@ struct SpotifyPlaylistDetailView: View {
                             track
                     )
                 }
-                .buttonStyle(
-                    .plain
-                )
+                .buttonStyle(.plain)
             }
         }
 
@@ -228,7 +195,7 @@ struct SpotifyPlaylistDetailView: View {
                     tracks.isEmpty
                 )
                 .accessibilityLabel(
-                    "Fetch Entire Playlist"
+                    "spotifyplaylistdetailview_fetch_entire_playlist"
                 )
             }
         }
@@ -237,7 +204,7 @@ struct SpotifyPlaylistDetailView: View {
             text:
                 $searchText,
             prompt:
-                "Search in playlist"
+                "spotifyplaylistdetailview_search_in_playlist"
         )
 
         .task {
@@ -251,7 +218,7 @@ struct SpotifyPlaylistDetailView: View {
         }
 
         .confirmationDialog(
-            "Fetch Entire Playlist?",
+            "spotifyplaylistdetailview_fetch_entire_playlist_confirmation",
             isPresented:
                 $showFetchConfirmation,
             titleVisibility:
@@ -259,15 +226,21 @@ struct SpotifyPlaylistDetailView: View {
         ) {
 
             Button(
-                "Fetch \(tracks.count) Songs"
+                String(
+                    format:
+                        String(
+                            localized:
+                                "spotifyplaylistdetailview_fetch_songs"
+                        ),
+                    tracks.count
+                )
             ) {
 
                 fetchEntirePlaylist()
             }
 
-
             Button(
-                "Cancel",
+                "spotifyplaylistdetailview_cancel",
                 role:
                     .cancel
             ) {}
@@ -275,7 +248,7 @@ struct SpotifyPlaylistDetailView: View {
         } message: {
 
             Text(
-                "Every song will be added to Fetch and processed one after another."
+                "spotifyplaylistdetailview_fetch_entire_playlist_message"
             )
         }
 
@@ -300,7 +273,6 @@ struct SpotifyPlaylistDetailView: View {
                     selectedTrack =
                         nil
 
-
                     DispatchQueue.main.async {
 
                         NotificationCenter
@@ -317,23 +289,16 @@ struct SpotifyPlaylistDetailView: View {
         }
     }
 
-
-    // MARK: - Fetch Entire Playlist
-
     @MainActor
     private func fetchEntirePlaylist() {
 
         guard !isFetchingPlaylist else {
-
             return
         }
-
 
         guard !tracks.isEmpty else {
-
             return
         }
-
 
         isFetchingPlaylist =
             true
@@ -341,10 +306,8 @@ struct SpotifyPlaylistDetailView: View {
         errorMessage =
             nil
 
-
         let playlistTracks =
             tracks
-
 
         Task {
 
@@ -353,10 +316,8 @@ struct SpotifyPlaylistDetailView: View {
                     playlistTracks
                 )
 
-
             isFetchingPlaylist =
                 false
-
 
             NotificationCenter
                 .default
@@ -369,25 +330,20 @@ struct SpotifyPlaylistDetailView: View {
         }
     }
 
-
-    // MARK: - Load Tracks
-
     @MainActor
     private func loadTracks()
-        async {
+        async
+    {
 
         guard !isLoading else {
-
             return
         }
-
 
         isLoading =
             true
 
         errorMessage =
             nil
-
 
         do {
 
@@ -404,7 +360,6 @@ struct SpotifyPlaylistDetailView: View {
             errorMessage =
                 error.localizedDescription
 
-
             print(
                 "Failed loading playlist:",
                 playlist.name,
@@ -412,26 +367,20 @@ struct SpotifyPlaylistDetailView: View {
             )
         }
 
-
         isLoading =
             false
     }
 }
-
-
-// MARK: - Track Row
 
 struct SpotifyPlaylistTrackRow: View {
 
     let track:
         SpotifyTrack
 
-
     var body: some View {
 
         HStack(
-            spacing:
-                12
+            spacing: 12
         ) {
 
             AsyncImage(
@@ -446,8 +395,7 @@ struct SpotifyPlaylistTrackRow: View {
             } placeholder: {
 
                 RoundedRectangle(
-                    cornerRadius:
-                        7
+                    cornerRadius: 7
                 )
                 .fill(
                     .secondary.opacity(
@@ -466,82 +414,44 @@ struct SpotifyPlaylistTrackRow: View {
                 }
             }
             .frame(
-                width:
-                    50,
-                height:
-                    50
+                width: 50,
+                height: 50
             )
             .clipShape(
                 RoundedRectangle(
-                    cornerRadius:
-                        7
+                    cornerRadius: 7
                 )
             )
 
-
             VStack(
-                alignment:
-                    .leading,
-                spacing:
-                    3
+                alignment: .leading,
+                spacing: 3
             ) {
 
-                Text(
-                    track.name
-                )
-                .font(
-                    .headline
-                )
-                .foregroundStyle(
-                    .primary
-                )
-                .lineLimit(
-                    1
-                )
+                Text(track.name)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
 
+                Text(track.artist)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
 
-                Text(
-                    track.artist
-                )
-                .font(
-                    .subheadline
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .lineLimit(
-                    1
-                )
-
-
-                Text(
-                    track.album
-                )
-                .font(
-                    .caption
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .lineLimit(
-                    1
-                )
+                Text(track.album)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
 
-
             Spacer()
-
 
             Image(
                 systemName:
                     "chevron.right"
             )
-            .font(
-                .caption
-            )
-            .foregroundStyle(
-                .tertiary
-            )
+            .font(.caption)
+            .foregroundStyle(.tertiary)
         }
     }
 }
