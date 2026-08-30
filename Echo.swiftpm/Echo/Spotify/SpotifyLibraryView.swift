@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct SpotifyLibraryView: View {
 
     @State private var likedSongs:
@@ -9,17 +8,14 @@ struct SpotifyLibraryView: View {
     @State private var playlists:
         [SpotifyPlaylist] = []
 
-
     @State private var isLoading =
         false
 
     @State private var errorMessage:
         String?
 
-
     @State private var selectedTrack:
         SpotifyTrack?
-
 
     var body: some View {
 
@@ -34,25 +30,23 @@ struct SpotifyLibraryView: View {
                 } label: {
 
                     Label(
-                        "Search Spotify",
+                        "spotifylibraryview_search_spotify",
                         systemImage:
                             "magnifyingglass"
                     )
                 }
             }
 
-
-            // MARK: - Playlists
-
             Section(
-                "Playlists"
+                "spotifylibraryview_playlists"
             ) {
 
                 if playlists.isEmpty &&
-                    !isLoading {
+                    !isLoading
+                {
 
                     Text(
-                        "No playlists"
+                        "spotifylibraryview_no_playlists"
                     )
                     .foregroundStyle(
                         .secondary
@@ -62,9 +56,7 @@ struct SpotifyLibraryView: View {
 
                     ForEach(
                         playlists
-                    ) {
-                        playlist in
-
+                    ) { playlist in
 
                         NavigationLink {
 
@@ -84,18 +76,16 @@ struct SpotifyLibraryView: View {
                 }
             }
 
-
-            // MARK: - Liked Songs
-
             Section(
-                "Liked Songs"
+                "spotifylibraryview_liked_songs"
             ) {
 
                 if likedSongs.isEmpty &&
-                    !isLoading {
+                    !isLoading
+                {
 
                     Text(
-                        "No liked songs"
+                        "spotifylibraryview_no_liked_songs"
                     )
                     .foregroundStyle(
                         .secondary
@@ -105,9 +95,7 @@ struct SpotifyLibraryView: View {
 
                     ForEach(
                         likedSongs
-                    ) {
-                        track in
-
+                    ) { track in
 
                         Button {
 
@@ -128,7 +116,6 @@ struct SpotifyLibraryView: View {
                 }
             }
 
-
             if let errorMessage {
 
                 Section {
@@ -147,7 +134,7 @@ struct SpotifyLibraryView: View {
         }
 
         .navigationTitle(
-            "Spotify"
+            "spotifylibraryview_title"
         )
 
         .overlay {
@@ -155,7 +142,7 @@ struct SpotifyLibraryView: View {
             if isLoading {
 
                 ProgressView(
-                    "Loading Spotify…"
+                    "spotifylibraryview_loading"
                 )
             }
         }
@@ -173,9 +160,7 @@ struct SpotifyLibraryView: View {
         .sheet(
             item:
                 $selectedTrack
-        ) {
-            track in
-
+        ) { track in
 
             SpotifyTrackDetailView(
 
@@ -193,7 +178,6 @@ struct SpotifyLibraryView: View {
                     selectedTrack =
                         nil
 
-
                     DispatchQueue.main.async {
 
                         NotificationCenter
@@ -210,9 +194,9 @@ struct SpotifyLibraryView: View {
         }
     }
 
-
     private func loadLibrary()
-        async {
+        async
+    {
 
         isLoading =
             true
@@ -220,18 +204,15 @@ struct SpotifyLibraryView: View {
         errorMessage =
             nil
 
-
         do {
 
             async let songs =
                 SpotifyAPI.shared
                     .getLikedSongs()
 
-
             async let userPlaylists =
                 SpotifyAPI.shared
                     .getPlaylists()
-
 
             let (
                 loadedSongs,
@@ -242,34 +223,34 @@ struct SpotifyLibraryView: View {
                     userPlaylists
                 )
 
-
             likedSongs =
                 loadedSongs
 
             playlists =
                 loadedPlaylists
 
-
         } catch {
 
             errorMessage =
-                "Spotify error: \(error.localizedDescription)"
+                String(
+                    format:
+                        String(
+                            localized:
+                                "spotifylibraryview_error"
+                        ),
+                    error.localizedDescription
+                )
         }
-
 
         isLoading =
             false
     }
 }
 
-
-// MARK: - Track Row
-
 struct SpotifyTrackRow: View {
 
     let track:
         SpotifyTrack
-
 
     var body: some View {
 
@@ -281,8 +262,7 @@ struct SpotifyTrackRow: View {
             AsyncImage(
                 url:
                     track.artworkURL
-            ) {
-                image in
+            ) { image in
 
                 image
                     .resizable()
@@ -311,7 +291,6 @@ struct SpotifyTrackRow: View {
                 )
             )
 
-
             VStack(
                 alignment:
                     .leading,
@@ -332,7 +311,6 @@ struct SpotifyTrackRow: View {
                     1
                 )
 
-
                 Text(
                     track.artist
                 )
@@ -345,7 +323,6 @@ struct SpotifyTrackRow: View {
                 .lineLimit(
                     1
                 )
-
 
                 Text(
                     track.album
@@ -361,9 +338,7 @@ struct SpotifyTrackRow: View {
                 )
             }
 
-
             Spacer()
-
 
             Image(
                 systemName:
@@ -379,14 +354,10 @@ struct SpotifyTrackRow: View {
     }
 }
 
-
-// MARK: - Playlist Row
-
 struct SpotifyPlaylistRow: View {
 
     let playlist:
         SpotifyPlaylist
-
 
     var body: some View {
 
@@ -398,8 +369,7 @@ struct SpotifyPlaylistRow: View {
             AsyncImage(
                 url:
                     playlist.artworkURL
-            ) {
-                image in
+            ) { image in
 
                 image
                     .resizable()
@@ -428,7 +398,6 @@ struct SpotifyPlaylistRow: View {
                 )
             )
 
-
             VStack(
                 alignment:
                     .leading,
@@ -446,9 +415,15 @@ struct SpotifyPlaylistRow: View {
                     1
                 )
 
-
                 Text(
-                    "\(playlist.trackCount) songs"
+                    String(
+                        format:
+                            String(
+                                localized:
+                                    "spotifylibraryview_songs_count"
+                            ),
+                        playlist.trackCount
+                    )
                 )
                 .font(
                     .subheadline
