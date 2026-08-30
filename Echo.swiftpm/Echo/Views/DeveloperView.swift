@@ -5,26 +5,24 @@ struct DeveloperView: View {
     @AppStorage("developerMaxDownloadChunks")
     private var maxDownloadChunks: Int = 4
 
-
-    // MARK: - Storage
-
     @State private var totalStorage: Int64 = 0
     @State private var availableStorage: Int64 = 0
     @State private var echoStorage: Int64 = 0
     @State private var isLoadingStorage = false
 
-
     var body: some View {
 
         Form {
 
-            // MARK: Downloads
-
             Section {
 
                 Picker(
-                    "Max Download Chunks",
-                    selection: $maxDownloadChunks
+                    String(
+                        localized:
+                            "developerview_max_download_chunks"
+                    ),
+                    selection:
+                        $maxDownloadChunks
                 ) {
 
                     Text("1").tag(1)
@@ -39,41 +37,41 @@ struct DeveloperView: View {
 
             } header: {
 
-                Text("Downloads")
+                Text(
+                    "developerview_downloads"
+                )
 
             } footer: {
 
                 Text(
-                    "Higher values may improve download speed, but can also cause throttling or unstable downloads. Default is 4."
+                    "developerview_downloads_description"
                 )
             }
-
 
             Section {
 
                 HStack {
 
-                    Text("Current value")
+                    Text(
+                        "developerview_current_value"
+                    )
 
                     Spacer()
 
-                    Text("\(maxDownloadChunks)")
-                        .foregroundStyle(.secondary)
+                    Text(
+                        "\(maxDownloadChunks)"
+                    )
+                    .foregroundStyle(.secondary)
                 }
 
-
-                Button("Reset to Default") {
-
+                Button(
+                    "developerview_reset_default"
+                ) {
                     maxDownloadChunks = 4
                 }
             }
 
-
-            // MARK: - Storage
-
             Section {
-
-                // Storage overview
 
                 VStack(
                     alignment: .leading,
@@ -82,7 +80,9 @@ struct DeveloperView: View {
 
                     HStack {
 
-                        Text("iPhone Storage")
+                        Text(
+                            "developerview_iphone_storage"
+                        )
 
                         Spacer()
 
@@ -93,11 +93,10 @@ struct DeveloperView: View {
                         }
                     }
 
-
                     ProgressView(
-                        value: usedStorageFraction
+                        value:
+                            usedStorageFraction
                     )
-
 
                     HStack {
 
@@ -109,58 +108,67 @@ struct DeveloperView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-
                         Spacer()
 
-
                         Text(
-                            "\(formatBytes(availableStorage)) free"
+                            String(
+                                format:
+                                    String(
+                                        localized:
+                                            "developerview_free_storage"
+                                    ),
+                                formatBytes(
+                                    availableStorage
+                                )
+                            )
                         )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     }
                 }
-                .padding(
-                    .vertical,
-                    4
-                )
-
-
-                // Total storage
+                .padding(.vertical, 4)
 
                 storageRow(
-                    title: "Total",
-                    systemImage: "internaldrive",
-                    value: totalStorage
+                    title:
+                        String(
+                            localized:
+                                "developerview_total"
+                        ),
+                    systemImage:
+                        "internaldrive",
+                    value:
+                        totalStorage
                 )
-
-
-                // Used storage
 
                 storageRow(
-                    title: "Used",
-                    systemImage: "chart.pie",
-                    value: usedStorage
+                    title:
+                        String(
+                            localized:
+                                "developerview_used"
+                        ),
+                    systemImage:
+                        "chart.pie",
+                    value:
+                        usedStorage
                 )
-
-
-                // Available storage
 
                 storageRow(
-                    title: "Available",
-                    systemImage: "externaldrive.badge.checkmark",
-                    value: availableStorage
+                    title:
+                        String(
+                            localized:
+                                "developerview_available"
+                        ),
+                    systemImage:
+                        "externaldrive.badge.checkmark",
+                    value:
+                        availableStorage
                 )
-
-
-                // Echo storage
 
                 storageRow(
                     title: "Echo",
                     systemImage: "waveform",
                     value: echoStorage
                 )
-
 
                 Button {
 
@@ -169,8 +177,9 @@ struct DeveloperView: View {
                 } label: {
 
                     Label(
-                        "Refresh Storage",
-                        systemImage: "arrow.clockwise"
+                        "developerview_refresh_storage",
+                        systemImage:
+                            "arrow.clockwise"
                     )
                 }
                 .disabled(
@@ -179,27 +188,28 @@ struct DeveloperView: View {
 
             } header: {
 
-                Text("Storage")
+                Text(
+                    "developerview_storage"
+                )
 
             } footer: {
 
                 Text(
-                    "Echo storage includes downloaded music, app documents, caches and temporary files."
+                    "developerview_storage_description"
                 )
             }
         }
 
-        .navigationTitle("Developer")
-        .navigationBarTitleDisplayMode(.inline)
-
+        .navigationTitle(
+            "developerview_title"
+        )
+        .navigationBarTitleDisplayMode(
+            .inline
+        )
         .task {
-
             refreshStorage()
         }
     }
-
-
-    // MARK: - Storage Row
 
     private func storageRow(
         title: String,
@@ -215,16 +225,11 @@ struct DeveloperView: View {
                 systemName: systemImage
             )
             .foregroundStyle(.secondary)
-            .frame(
-                width: 24
-            )
-
+            .frame(width: 24)
 
             Text(title)
 
-
             Spacer()
-
 
             Text(
                 formatBytes(value)
@@ -234,9 +239,6 @@ struct DeveloperView: View {
         }
     }
 
-
-    // MARK: - Storage Calculations
-
     private var usedStorage: Int64 {
 
         max(
@@ -245,14 +247,12 @@ struct DeveloperView: View {
         )
     }
 
-
     private var usedStorageFraction: Double {
 
-        guard totalStorage > 0 else {
-
+        guard totalStorage > 0
+        else {
             return 0
         }
-
 
         return min(
             max(
@@ -265,19 +265,14 @@ struct DeveloperView: View {
         )
     }
 
-
-    // MARK: - Refresh
-
     private func refreshStorage() {
 
-        guard !isLoadingStorage else {
-
+        guard !isLoadingStorage
+        else {
             return
         }
 
-
         isLoadingStorage = true
-
 
         Task.detached(
             priority: .utility
@@ -286,10 +281,8 @@ struct DeveloperView: View {
             let deviceStorage =
                 Self.deviceStorageInfo()
 
-
             let appStorage =
                 Self.calculateEchoStorage()
-
 
             await MainActor.run {
 
@@ -302,27 +295,23 @@ struct DeveloperView: View {
                 echoStorage =
                     appStorage
 
-                isLoadingStorage =
-                    false
+                isLoadingStorage = false
             }
         }
     }
-
-
-    // MARK: - Device Storage
 
     private nonisolated static func deviceStorageInfo()
         -> (
             total: Int64,
             available: Int64
-        ) {
+        )
+    {
 
         let homeURL =
             URL(
                 fileURLWithPath:
                     NSHomeDirectory()
             )
-
 
         do {
 
@@ -335,25 +324,22 @@ struct DeveloperView: View {
                         ]
                     )
 
-
             let total =
                 Int64(
-                    values.volumeTotalCapacity
+                    values
+                        .volumeTotalCapacity
                     ?? 0
                 )
-
 
             let available =
                 values
                     .volumeAvailableCapacityForImportantUsage
                 ?? 0
 
-
             return (
                 total,
                 available
             )
-
 
         } catch {
 
@@ -362,7 +348,6 @@ struct DeveloperView: View {
                 error
             )
 
-
             return (
                 0,
                 0
@@ -370,33 +355,25 @@ struct DeveloperView: View {
         }
     }
 
-
-    // MARK: - Echo Storage
-
     private nonisolated static func calculateEchoStorage()
-        -> Int64 {
+        -> Int64
+    {
 
         let fileManager =
             FileManager.default
-
 
         let homeURL =
             URL(
                 fileURLWithPath:
                     NSHomeDirectory(),
-                isDirectory:
-                    true
+                isDirectory: true
             )
-
 
         return directorySize(
             at: homeURL,
             fileManager: fileManager
         )
     }
-
-
-    // MARK: - Directory Size
 
     private nonisolated static func directorySize(
         at directoryURL: URL,
@@ -405,12 +382,10 @@ struct DeveloperView: View {
 
         let keys:
             [URLResourceKey] = [
-
                 .isRegularFileKey,
                 .fileAllocatedSizeKey,
                 .totalFileAllocatedSizeKey
             ]
-
 
         guard let enumerator =
             fileManager.enumerator(
@@ -422,17 +397,14 @@ struct DeveloperView: View {
                 ]
             )
         else {
-
             return 0
         }
 
-
-        var totalSize:
-            Int64 = 0
-
+        var totalSize: Int64 = 0
 
         for case let fileURL as URL
-            in enumerator {
+            in enumerator
+        {
 
             autoreleasepool {
 
@@ -445,68 +417,51 @@ struct DeveloperView: View {
                                     Set(keys)
                             )
 
-
                     guard
                         values.isRegularFile
-                            == true
+                        == true
                     else {
-
                         return
                     }
 
-
                     let size =
-                        values.totalFileAllocatedSize
+                        values
+                            .totalFileAllocatedSize
                         ??
                         values.fileAllocatedSize
                         ??
                         0
 
-
-                    totalSize +=
-                        Int64(size)
-
+                    totalSize += Int64(size)
 
                 } catch {
-
-                    // Ignore individual files
-                    // that cannot be inspected.
                 }
             }
         }
 
-
         return totalSize
     }
-
-
-    // MARK: - Formatting
 
     private func formatBytes(
         _ bytes: Int64
     ) -> String {
 
-        guard bytes > 0 else {
-
+        guard bytes > 0
+        else {
             return "0 B"
         }
 
-
         return ByteCountFormatter
             .string(
-                fromByteCount:
-                    bytes,
-                countStyle:
-                    .file
+                fromByteCount: bytes,
+                countStyle: .file
             )
     }
 }
 
-
 #Preview {
 
     NavigationStack {
-
         DeveloperView()
     }
 }
