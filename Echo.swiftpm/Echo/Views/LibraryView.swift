@@ -1435,7 +1435,8 @@ struct ArtistDetailView: View {
 
 
    private func play(
-    _ song: Song
+    _ song: Song,
+    queue: [Song]
 ) {
 
     guard
@@ -1447,32 +1448,24 @@ struct ArtistDetailView: View {
         return
     }
 
-
     library.markAsPlayed(song)
 
     audioPlayer.lastPlaybackDirection =
         .fade
 
-
-    // Alleen het gekozen nummer in de gewone queue.
     audioPlayer.play(
         song: song,
         url: url,
-        queue: [song]
+        queue: queue
     )
 
-
-    // Volledige bibliotheek blijft beschikbaar
-    // voor automatische volgende nummers.
     audioPlayer.allSongs =
         library.songs
 
-
-    // Auto Next blijft dus gewoon werken.
     audioPlayer.fillAutoNext(
         from: library.songs
-        )
-    }
+    )
+}
 }
 
 
