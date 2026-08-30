@@ -5,9 +5,11 @@ struct YouTubeResultView: View {
     let track: SpotifyTrack
     let result: YouTubeSearchResult
 
-    @State private var hasPermission = false
+    @State private var hasPermission =
+        false
 
-    @State private var showAddedConfirmation = false
+    @State private var showAddedConfirmation =
+        false
 
     var body: some View {
 
@@ -35,10 +37,12 @@ struct YouTubeResultView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Section("Permission") {
+            Section(
+                "youtuberesultview_permission"
+            ) {
 
                 Toggle(
-                    "I have permission to download this audio",
+                    "youtuberesultview_permission_toggle",
                     isOn: $hasPermission
                 )
             }
@@ -46,36 +50,47 @@ struct YouTubeResultView: View {
             Section {
 
                 Button {
-                       FetchManager.shared.addAuthorizedMatch(
-        track: track,
-        youtubeResult: result
-    )
 
-    showAddedConfirmation = true
+                    FetchManager.shared
+                        .addAuthorizedMatch(
+                            track: track,
+                            youtubeResult:
+                                result
+                        )
+
+                    showAddedConfirmation =
+                        true
+
                 } label: {
 
                     Label(
-                        "Fetch to Echo",
-                        systemImage: "arrow.down.circle.fill"
+                        "youtuberesultview_fetch_to_echo",
+                        systemImage:
+                            "arrow.down.circle.fill"
                     )
                 }
                 .disabled(!hasPermission)
             }
         }
-        .navigationTitle("Fetch")
-      .sheet(
-    isPresented: $showAddedConfirmation
-) {
 
-    NavigationStack {
-
-        AddedToQueueView(
-            track: track
+        .navigationTitle(
+            "youtuberesultview_title"
         )
-    }
-    .presentationDetents([
-        .height(260)
-    ])
-}
+
+        .sheet(
+            isPresented:
+                $showAddedConfirmation
+        ) {
+
+            NavigationStack {
+
+                AddedToQueueView(
+                    track: track
+                )
+            }
+            .presentationDetents([
+                .height(260)
+            ])
+        }
     }
 }
