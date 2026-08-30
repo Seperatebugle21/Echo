@@ -11,9 +11,6 @@ struct HomeView: View {
     @State private var recentlyPlayedSnapshot: [Song] = []
     @State private var showSettings = false
 
-
-    // MARK: - Data
-
     private var recentlyAdded: [Song] {
         Array(
             library.songs
@@ -24,7 +21,6 @@ struct HomeView: View {
         )
     }
 
-
     private var favorites: [Song] {
         Array(
             library.favoriteSongs
@@ -32,26 +28,26 @@ struct HomeView: View {
         )
     }
 
-
     private var artists: [ArtistGroup] {
 
-        let grouped = Dictionary(
-            grouping: library.songs
-        ) { song in
+        let grouped =
+            Dictionary(
+                grouping: library.songs
+            ) { song in
 
-            let artist =
-                song.artist
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
+                let artist =
+                    song.artist
+                        .trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        )
+
+                return artist.isEmpty
+                    ? String(
+                        localized:
+                            "homeview_unknown_artist"
                     )
-
-            return artist.isEmpty
-                ? String(
-                    localized: "homeview_unknown_artist"
-                )
-                : artist
-        }
-
+                    : artist
+            }
 
         return grouped
             .map {
@@ -61,14 +57,13 @@ struct HomeView: View {
                 )
             }
             .sorted {
-                $0.name.localizedCaseInsensitiveCompare(
-                    $1.name
-                ) == .orderedAscending
+                $0.name
+                    .localizedCaseInsensitiveCompare(
+                        $1.name
+                    )
+                == .orderedAscending
             }
     }
-
-
-    // MARK: - Body
 
     var body: some View {
 
@@ -81,8 +76,6 @@ struct HomeView: View {
                     spacing: 32
                 ) {
 
-                    // MARK: Header
-
                     HStack(alignment: .center) {
 
                         Text("homeview_title")
@@ -91,68 +84,58 @@ struct HomeView: View {
                         Spacer()
 
                         Button {
-
                             showSettings = true
-
                         } label: {
 
                             Image(systemName: "gearshape")
                                 .font(.title3.weight(.medium))
                                 .foregroundStyle(.primary)
-                                .frame(
-                                    width: 42,
-                                    height: 42
-                                )
+                                .frame(width: 42, height: 42)
                                 .background(
                                     .thinMaterial,
                                     in: Circle()
                                 )
                         }
-
                         .buttonStyle(.plain)
                     }
-
                     .padding(.horizontal)
                     .padding(.top, 6)
 
-
-                    // MARK: Sections
-
                     if !recentlyPlayedSnapshot.isEmpty {
-
                         songSection(
-                            title: String(
-                                localized:
-                                    "homeview_recent_played"
-                            ),
-                            songs: recentlyPlayedSnapshot
+                            title:
+                                String(
+                                    localized:
+                                        "homeview_recent_played"
+                                ),
+                            songs:
+                                recentlyPlayedSnapshot
                         )
                     }
 
                     if !recentlyAdded.isEmpty {
-
                         songSection(
-                            title: String(
-                                localized:
-                                    "homeview_recent_added"
-                            ),
+                            title:
+                                String(
+                                    localized:
+                                        "homeview_recent_added"
+                                ),
                             songs: recentlyAdded
                         )
                     }
 
                     if !favorites.isEmpty {
-
                         songSection(
-                            title: String(
-                                localized:
-                                    "homeview_favorites"
-                            ),
+                            title:
+                                String(
+                                    localized:
+                                        "homeview_favorites"
+                                ),
                             songs: favorites
                         )
                     }
 
                     if !artists.isEmpty {
-
                         artistSection
                     }
 
@@ -166,34 +149,24 @@ struct HomeView: View {
                                     "homeview_empty_description"
                                 )
                         )
-                        .frame(
-                            maxWidth: .infinity
-                        )
+                        .frame(maxWidth: .infinity)
                         .padding(.top, 80)
                     }
                 }
-
                 .padding(.bottom, 120)
             }
-
 
             .sheet(
                 isPresented: $showSettings
             ) {
-
                 SettingsView()
             }
 
-
             .onAppear {
-
                 refreshRecentlyPlayed()
             }
         }
     }
-
-
-    // MARK: - Recent Snapshot
 
     private func refreshRecentlyPlayed() {
 
@@ -212,9 +185,6 @@ struct HomeView: View {
             )
     }
 
-
-    // MARK: - Songs Section
-
     @ViewBuilder
     private func songSection(
         title: String,
@@ -230,22 +200,17 @@ struct HomeView: View {
                 .font(.title2.bold())
                 .padding(.horizontal)
 
-
             ScrollView(
                 .horizontal,
                 showsIndicators: false
             ) {
 
-                LazyHStack(
-                    spacing: 15
-                ) {
+                LazyHStack(spacing: 15) {
 
                     ForEach(songs) { song in
 
                         Button {
-
                             play(song)
-
                         } label: {
 
                             VStack(
@@ -257,41 +222,30 @@ struct HomeView: View {
                                     song: song,
                                     cornerRadius: 16
                                 )
-                                .frame(
-                                    width: 150,
-                                    height: 150
-                                )
-
+                                .frame(width: 150, height: 150)
 
                                 Text(song.title)
                                     .font(.headline)
                                     .foregroundStyle(.primary)
                                     .lineLimit(1)
 
-
                                 Text(song.artist)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
-
                             .frame(
                                 width: 150,
                                 alignment: .leading
                             )
                         }
-
                         .buttonStyle(.plain)
                     }
                 }
-
                 .padding(.horizontal)
             }
         }
     }
-
-
-    // MARK: - Artists
 
     private var artistSection: some View {
 
@@ -305,9 +259,7 @@ struct HomeView: View {
                 Text("homeview_your_artists")
                     .font(.title2.bold())
 
-
                 Spacer()
-
 
                 NavigationLink {
 
@@ -322,18 +274,14 @@ struct HomeView: View {
                         )
                 }
             }
-
             .padding(.horizontal)
-
 
             ScrollView(
                 .horizontal,
                 showsIndicators: false
             ) {
 
-                LazyHStack(
-                    spacing: 18
-                ) {
+                LazyHStack(spacing: 18) {
 
                     ForEach(
                         Array(
@@ -349,21 +297,13 @@ struct HomeView: View {
 
                         } label: {
 
-                            VStack(
-                                spacing: 8
-                            ) {
+                            VStack(spacing: 8) {
 
                                 ArtistArtworkView(
                                     songs: artist.songs
                                 )
-                                .frame(
-                                    width: 112,
-                                    height: 112
-                                )
-                                .clipShape(
-                                    Circle()
-                                )
-
+                                .frame(width: 112, height: 112)
+                                .clipShape(Circle())
 
                                 Text(artist.name)
                                     .font(
@@ -375,18 +315,13 @@ struct HomeView: View {
                                     .frame(width: 112)
                             }
                         }
-
                         .buttonStyle(.plain)
                     }
                 }
-
                 .padding(.horizontal)
             }
         }
     }
-
-
-    // MARK: - Playback
 
     private func play(
         _ song: Song
@@ -401,12 +336,10 @@ struct HomeView: View {
             return
         }
 
-
         library.markAsPlayed(song)
 
         audioPlayer.lastPlaybackDirection =
             .fade
-
 
         audioPlayer.play(
             song: song,
@@ -414,10 +347,8 @@ struct HomeView: View {
             queue: library.songs
         )
 
-
         audioPlayer.allSongs =
             library.songs
-
 
         audioPlayer.fillAutoNext(
             from: library.songs
