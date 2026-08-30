@@ -1,10 +1,6 @@
 import SwiftUI
 
 struct HomeView: View {
-
-    @Environment(\.locale)
-    private var locale
-
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -46,8 +42,7 @@ struct HomeView: View {
 
                 return artist.isEmpty
                     ? String(
-                                    localized: "homeview_unknown_artist",
-                                    locale: locale
+                                    localized: "homeview_unknown_artist"
                                 )
                     : artist
             }
@@ -106,11 +101,7 @@ struct HomeView: View {
 
                     if !recentlyPlayedSnapshot.isEmpty {
                         songSection(
-                            title:
-                                String(
-                                    localized: "homeview_recent_played",
-                                    locale: locale
-                                ),
+                            title: "homeview_recent_played",
                             songs:
                                 recentlyPlayedSnapshot
                         )
@@ -118,22 +109,14 @@ struct HomeView: View {
 
                     if !recentlyAdded.isEmpty {
                         songSection(
-                            title:
-                                String(
-                                    localized: "homeview_recent_added",
-                                    locale: locale
-                                ),
+                            title: "homeview_recent_added",
                             songs: recentlyAdded
                         )
                     }
 
                     if !favorites.isEmpty {
                         songSection(
-                            title:
-                                String(
-                                    localized: "homeview_favorites",
-                                    locale: locale
-                                ),
+                            title: "homeview_favorites",
                             songs: favorites
                         )
                     }
@@ -190,7 +173,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private func songSection(
-        title: String,
+        title: LocalizedStringKey,
         songs: [Song]
     ) -> some View {
 
