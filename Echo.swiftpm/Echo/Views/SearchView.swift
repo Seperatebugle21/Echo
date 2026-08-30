@@ -11,6 +11,19 @@ struct SearchView: View {
 
 
     @State private var searchText = ""
+    @State private var showAllSongs = false
+
+
+    private var displayedSongs: [Song] {
+
+    if showAllSongs {
+        return matchingSongs
+    }
+
+    return Array(
+        matchingSongs.prefix(10)
+    )
+}
 
 
     // MARK: - Songs
@@ -162,9 +175,9 @@ struct SearchView: View {
                                 "Nummers"
                             ) {
 
-                                ForEach(
-                                    matchingSongs
-                                ) { song in
+                              ForEach(
+                                  displayedSongs
+                              ) { song in
 
                                     Button {
 
@@ -178,6 +191,38 @@ struct SearchView: View {
                                     }
                                     .buttonStyle(.plain)
                                 }
+                                if
+    matchingSongs.count > 10,
+    !showAllSongs
+{
+
+    Button {
+
+        withAnimation {
+            showAllSongs = true
+        }
+
+    } label: {
+
+        HStack {
+
+            Text(
+                "Toon alle \(matchingSongs.count) resultaten"
+            )
+            .font(.subheadline)
+            .fontWeight(.medium)
+
+
+            Spacer()
+
+
+            Image(
+                systemName: "chevron.down"
+            )
+            .font(.caption)
+        }
+    }
+}
                             }
                         }
 
@@ -322,6 +367,13 @@ struct SearchView: View {
                     "Nummers, artiesten en playlists"
             )
 
+            .onChange(
+                of: searchText
+            ) {
+
+                showAllSongs = false
+            }
+    
             .padding(
                 .bottom,
                 searchText.isEmpty
