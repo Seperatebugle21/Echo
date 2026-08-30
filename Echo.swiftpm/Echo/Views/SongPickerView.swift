@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct SongPickerView: View {
 
     @Environment(MusicLibraryManager.self)
@@ -9,33 +8,20 @@ struct SongPickerView: View {
     @Environment(\.dismiss)
     private var dismiss
 
-
     let playlist: Playlist?
     let isFavorites: Bool
 
-
     @State private var searchText = ""
-
-    @State private var selectedSongs:
-        Set<UUID> = []
-
-    @State private var editMode:
-        EditMode = .active
-
-
+    @State private var selectedSongs: Set<UUID> = []
+    @State private var editMode: EditMode = .active
 
     init(
         playlist: Playlist? = nil,
         isFavorites: Bool = false
     ) {
-
         self.playlist = playlist
         self.isFavorites = isFavorites
     }
-
-
-
-    // MARK: - Current Playlist IDs
 
     private var existingSongIDs: Set<UUID> {
 
@@ -48,50 +34,36 @@ struct SongPickerView: View {
                     }
                 )
         else {
-
             return []
         }
-
 
         return Set(
             currentPlaylist.songIDs
         )
     }
 
-
-
-    // MARK: - Songs
-
     private var filteredSongs: [Song] {
 
         var songs = library.songs
 
-
         if !isFavorites {
 
             songs = songs.filter {
-
-                !existingSongIDs
-                    .contains($0.id)
+                !existingSongIDs.contains($0.id)
             }
         }
-
 
         if isFavorites {
 
             songs = songs.filter {
-
                 !library.isFavorite($0)
             }
         }
 
-
         guard !searchText.isEmpty
         else {
-
             return songs
         }
-
 
         return songs.filter { song in
 
@@ -119,21 +91,13 @@ struct SongPickerView: View {
         }
     }
 
-
-
-    // MARK: - Body
-
     var body: some View {
 
         NavigationStack {
 
             List(
-                selection:
-                    $selectedSongs
+                selection: $selectedSongs
             ) {
-
-
-                // MARK: - Empty
 
                 if filteredSongs.isEmpty {
 
@@ -153,10 +117,8 @@ struct SongPickerView: View {
                             ),
                             systemImage:
                                 searchText.isEmpty
-                                ?
-                                "music.note"
-                                :
-                                "magnifyingglass"
+                                ? "music.note"
+                                : "magnifyingglass"
                         )
 
                     } description: {
@@ -185,15 +147,9 @@ struct SongPickerView: View {
                             )
                         }
                     }
-
-                    .selectionDisabled(
-                        true
-                    )
+                    .selectionDisabled(true)
 
                 } else {
-
-
-                    // MARK: - Songs
 
                     ForEach(
                         filteredSongs
@@ -203,84 +159,55 @@ struct SongPickerView: View {
                             spacing: 12
                         ) {
 
-
                             SongArtworkView(
                                 song: song,
                                 cornerRadius: 10
                             )
-
                             .frame(
                                 width: 52,
                                 height: 52
                             )
-
-
 
                             VStack(
                                 alignment: .leading,
                                 spacing: 3
                             ) {
 
-                                Text(
-                                    song.title
-                                )
-                                .font(.headline)
-                                .foregroundStyle(
-                                    .primary
-                                )
-                                .lineLimit(1)
+                                Text(song.title)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
 
-
-                                Text(
-                                    song.artist
-                                )
-                                .font(.caption)
-                                .foregroundStyle(
-                                    .secondary
-                                )
-                                .lineLimit(1)
+                                Text(song.artist)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
                             }
-
 
                             Spacer()
                         }
-
-                        .padding(
-                            .vertical,
-                            3
-                        )
-
-                        .tag(
-                            song.id
-                        )
+                        .padding(.vertical, 3)
+                        .tag(song.id)
                     }
                 }
             }
-
 
             .environment(
                 \.editMode,
                 $editMode
             )
 
-
-            // MARK: Search
-
             .searchable(
                 text: $searchText,
                 placement:
                     .navigationBarDrawer(
-                        displayMode:
-                            .always
+                        displayMode: .always
                     ),
                 prompt:
                     Text(
                         "songpickerview_search_prompt"
                     )
             )
-
-
-            // MARK: Title
 
             .navigationTitle(
                 isFavorites
@@ -298,10 +225,6 @@ struct SongPickerView: View {
                 .inline
             )
 
-
-
-            // MARK: Toolbar
-
             .toolbar {
 
                 ToolbarItem(
@@ -314,11 +237,9 @@ struct SongPickerView: View {
                             "songpickerview_cancel"
                         )
                     ) {
-
                         dismiss()
                     }
                 }
-
 
                 ToolbarItem(
                     placement:
@@ -354,16 +275,11 @@ struct SongPickerView: View {
                             )
                         }
                     }
-
                     .disabled(
                         selectedSongs.isEmpty
                     )
                 }
             }
-
-
-
-            // MARK: Selection Bar
 
             .safeAreaInset(
                 edge: .bottom
@@ -381,7 +297,6 @@ struct SongPickerView: View {
                         )
                         .font(.title2)
 
-
                         VStack(
                             alignment: .leading,
                             spacing: 2
@@ -397,10 +312,7 @@ struct SongPickerView: View {
                                     selectedSongs.count
                                 )
                             )
-                            .font(
-                                .headline
-                            )
-
+                            .font(.headline)
 
                             Text(
                                 isFavorites
@@ -410,49 +322,30 @@ struct SongPickerView: View {
                                 "songpickerview_add_to_playlist"
                             )
                             .font(.caption)
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .foregroundStyle(.secondary)
                         }
-
 
                         Spacer()
 
-
                         Button {
-
                             addSelectedSongs()
-
                         } label: {
 
                             Image(
-                                systemName:
-                                    "plus"
+                                systemName: "plus"
                             )
-                            .font(
-                                .headline
-                            )
-
+                            .font(.headline)
                             .frame(
                                 width: 40,
                                 height: 40
                             )
                         }
-
                         .buttonStyle(
                             .borderedProminent
                         )
                     }
-
-                    .padding(
-                        .horizontal
-                    )
-
-                    .padding(
-                        .vertical,
-                        10
-                    )
-
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
                     .background(
                         .regularMaterial
                     )
@@ -461,51 +354,31 @@ struct SongPickerView: View {
         }
     }
 
-
-
-    // MARK: - Add
-
     private func addSelectedSongs() {
 
         let songs =
             library.songs.filter {
-
-                selectedSongs
-                    .contains(
-                        $0.id
-                    )
+                selectedSongs.contains($0.id)
             }
-
 
         if isFavorites {
 
             for song in songs {
 
-                if
-                    !library.isFavorite(
-                        song
-                    )
-                {
-
-                    library.toggleFavorite(
-                        song
-                    )
+                if !library.isFavorite(song) {
+                    library.toggleFavorite(song)
                 }
             }
 
-        } else if
-            let playlist
-        {
+        } else if let playlist {
 
             for song in songs {
-
                 library.addSong(
                     song,
                     to: playlist
                 )
             }
         }
-
 
         dismiss()
     }
