@@ -47,10 +47,14 @@ struct SettingsView: View {
                             $appearanceMode
                     ) {
 
-                        Text("English").tag("en")
-                        Text("Nederlands").tag("nl")
-                        Text("Français").tag("fr")
-                        Text("Deutsch").tag("de")
+                        Text(LocalizedStringKey("appearance_system"))
+                            .tag("system")
+                        
+                        Text(LocalizedStringKey("appearance_light"))
+                            .tag("light")
+                        
+                        Text(LocalizedStringKey("appearance_dark"))
+                            .tag("dark")
                     }
                 }
 
@@ -68,25 +72,10 @@ struct SettingsView: View {
                             $selectedLanguage
                     ) {
 
-                        Text(
-                            "settingsview_language_english"
-                        )
-                        .tag("en")
-
-                        Text(
-                            "settingsview_language_dutch"
-                        )
-                        .tag("nl")
-
-                        Text(
-                            "settingsview_language_french"
-                        )
-                        .tag("fr")
-
-                        Text(
-                            "settingsview_language_german"
-                        )
-                        .tag("de")
+                        Text("English").tag("en")
+                        Text("Nederlands").tag("nl")
+                        Text("Français").tag("fr")
+                        Text("Deutsch").tag("de")
 
                     } label: {
 
