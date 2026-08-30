@@ -270,39 +270,45 @@ final class FetchManager {
         _ track: SpotifyTrack
     ) async {
 
-        // Don't add exactly the same Spotify track twice
-        // when it is already waiting or being processed.
-if items.contains(
-    where: { item in
+        if items.contains(
+            where: {
+                item in
 
-        guard item.spotifyURL == track.spotifyURL else {
-            return false
+
+                guard
+                    item.spotifyURL ==
+                        track.spotifyURL
+                else {
+
+                    return false
+                }
+
+
+                switch item.status {
+
+                case .queued,
+                     .preparing,
+                     .downloading,
+                     .processing:
+
+                    return true
+
+
+                case .completed,
+                     .failed:
+
+                    return false
+                }
+            }
+        ) {
+
+            print(
+                "Playlist track already in Fetch:",
+                track.name
+            )
+
+            return
         }
-
-        switch item.status {
-
-        case .queued,
-             .preparing,
-             .downloading,
-             .processing:
-
-            return true
-
-        case .completed,
-             .failed:
-
-            return false
-        }
-    }
-) {
-
-    print(
-        "Playlist track already in Fetch:",
-        track.name
-    )
-
-    return
-}
 
 
         do {
@@ -673,14 +679,6 @@ if items.contains(
     private func processQueue()
         async {
 
-        // Intentionally ONE worker.
-        //
-        // Song 1 completely finishes
-        // before Song 2 starts.
-        //
-        // The HTTP downloader may still use
-        // multiple chunks INSIDE one song.
-
         while let next =
             claimNextQueuedItem() {
 
@@ -823,17 +821,17 @@ if items.contains(
             }
 
 
-            // Ready to start actual transfer.
+            // MARK: - Download Starts
+            //
+            // Switch immediately to Downloading.
+            // The download engine may still perform
+            // its tiny range-support probe first.
 
             item.status =
-                .preparing(
+                .downloading(
                     0.70
                 )
 
-
-            // MARK: - HTTP Download
-            //
-            // 6% → 94%
 
             let downloadedFile =
                 try await
