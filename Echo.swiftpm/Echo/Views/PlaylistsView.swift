@@ -7,9 +7,6 @@ struct PlaylistsView: View {
     @Environment(MusicLibraryManager.self)
     private var library
 
-    @Environment(\.dismiss)
-    private var dismiss
-
 
     @State private var showCreatePlaylist =
         false
@@ -23,8 +20,7 @@ struct PlaylistsView: View {
     @State private var showRenameSheet =
         false
 
-    @State private var renameText =
-        ""
+    @State private var renameText = ""
 
 
     @State private var selectedImage:
@@ -42,16 +38,86 @@ struct PlaylistsView: View {
 
     var body: some View {
 
-        NavigationStack {
-
-            List {
+        List {
 
 
-                // MARK: Favorites
+            // MARK: Favorites
+
+            NavigationLink {
+
+                FavoritesView()
+
+            } label: {
+
+                HStack(
+                    spacing: 12
+                ) {
+
+                    ZStack {
+
+                        RoundedRectangle(
+                            cornerRadius: 12,
+                            style: .continuous
+                        )
+                        .fill(.thinMaterial)
+
+
+                        Image(
+                            systemName:
+                                "heart.fill"
+                        )
+                        .font(.title2)
+                        .foregroundStyle(
+                            .red
+                        )
+                    }
+
+                    .frame(
+                        width: 50,
+                        height: 50
+                    )
+
+
+                    VStack(
+                        alignment: .leading
+                    ) {
+
+                        Text(
+                            LocalizedStringKey(
+                                "favorites_title"
+                            )
+                        )
+                        .font(.headline)
+
+
+                        Text(
+                            "songs_count_format \(library.favoriteSongs.count)"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(
+                            .secondary
+                        )
+                    }
+
+
+                    Spacer()
+                }
+            }
+
+
+
+            // MARK: Playlists
+
+            ForEach(
+                library.playlists
+            ) { playlist in
 
                 NavigationLink {
 
-                    FavoritesView()
+                    PlaylistDetailView(
+                        playlist:
+                            playlist
+                    )
 
                 } label: {
 
@@ -59,47 +125,24 @@ struct PlaylistsView: View {
                         spacing: 12
                     ) {
 
-                        ZStack {
-
-                            RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
-                            )
-                            .fill(
-                                .thinMaterial
-                            )
-
-
-                            Image(
-                                systemName:
-                                    "heart.fill"
-                            )
-                            .font(.title2)
-                            .foregroundStyle(
-                                .red
-                            )
-                        }
-
-                        .frame(
-                            width: 50,
-                            height: 50
+                        playlistArtwork(
+                            playlist
                         )
 
 
                         VStack(
-                            alignment: .leading
+                            alignment: .leading,
+                            spacing: 4
                         ) {
 
                             Text(
-                                LocalizedStringKey(
-                                    "favorites_title"
-                                )
+                                playlist.name
                             )
                             .font(.headline)
 
 
                             Text(
-                                "songs_count_format \(library.favoriteSongs.count)"
+                                "songs_count_format \(playlist.songIDs.count)"
                             )
                             .font(.caption)
                             .foregroundStyle(
@@ -110,527 +153,471 @@ struct PlaylistsView: View {
 
                         Spacer()
                     }
+
+                    .padding(
+                        .vertical,
+                        4
+                    )
                 }
 
 
+                .contextMenu {
 
-                // MARK: Playlists
 
-                ForEach(
-                    library.playlists
-                ) { playlist in
+                    // MARK: Edit
 
-                    NavigationLink {
+                    Button {
 
-                        PlaylistDetailView(
-                            playlist:
-                                playlist
-                        )
+                        renameText =
+                            playlist.name
+
+                        selectedPlaylist =
+                            playlist
+
+
+                        if
+                            let data =
+                                playlist.imageData,
+                            let image =
+                                UIImage(
+                                    data: data
+                                )
+                        {
+
+                            playlistImage =
+                                image
+
+                            imageData =
+                                data
+
+                        } else {
+
+                            playlistImage =
+                                nil
+
+                            imageData =
+                                nil
+                        }
+
+
+                        selectedImage = nil
+
+                        showRenameSheet =
+                            true
 
                     } label: {
 
-                        HStack(
-                            spacing: 12
-                        ) {
-
-                            if
-                                let data =
-                                    playlist.imageData,
-                                let image =
-                                    UIImage(
-                                        data: data
-                                    )
-                            {
-
-                                Image(
-                                    uiImage: image
-                                )
-                                .resizable()
-                                .scaledToFill()
-                                .frame(
-                                    width: 55,
-                                    height: 55
-                                )
-                                .clipped()
-                                .clipShape(
-                                    RoundedRectangle(
-                                        cornerRadius: 14
-                                    )
-                                )
-
-                            } else {
-
-                                Image(
-                                    systemName:
-                                        "music.note.list"
-                                )
-                                .font(.title2)
-                                .frame(
-                                    width: 55,
-                                    height: 55
-                                )
-                                .background(
-                                    .thinMaterial
-                                )
-                                .clipShape(
-                                    RoundedRectangle(
-                                        cornerRadius: 14
-                                    )
-                                )
-                            }
+                        Label(
+                            LocalizedStringKey(
+                                "action_edit_playlist"
+                            ),
+                            systemImage:
+                                "pencil"
+                        )
+                    }
 
 
-                            VStack(
-                                alignment: .leading,
-                                spacing: 4
+
+                    // MARK: Delete
+
+                    Button(
+                        role: .destructive
+                    ) {
+
+                        selectedPlaylist =
+                            playlist
+
+                        showDeleteConfirmation =
+                            true
+
+                    } label: {
+
+                        Label(
+                            LocalizedStringKey(
+                                "action_delete_playlist"
+                            ),
+                            systemImage:
+                                "trash"
+                        )
+                    }
+                }
+            }
+
+
+            // MiniPlayer ruimte
+
+            Color.clear
+                .frame(height: 105)
+                .listRowBackground(
+                    Color.clear
+                )
+                .listRowSeparator(
+                    .hidden
+                )
+        }
+
+
+        .navigationTitle(
+            LocalizedStringKey(
+                "playlists_title"
+            )
+        )
+
+        .navigationBarTitleDisplayMode(
+            .large
+        )
+
+
+        // MARK: Toolbar
+
+        .toolbar {
+
+            ToolbarItem(
+                placement:
+                    .topBarTrailing
+            ) {
+
+                Button {
+
+                    showCreatePlaylist =
+                        true
+
+                } label: {
+
+                    Image(
+                        systemName: "plus"
+                    )
+                }
+            }
+        }
+
+
+
+        // MARK: Create
+
+        .sheet(
+            isPresented:
+                $showCreatePlaylist
+        ) {
+
+            CreatePlaylistView()
+        }
+
+
+
+        // MARK: Rename
+
+        .sheet(
+            isPresented:
+                $showRenameSheet
+        ) {
+
+            NavigationStack {
+
+                Form {
+
+                    Section {
+
+                        HStack {
+
+                            Spacer()
+
+
+                            PhotosPicker(
+                                selection:
+                                    $selectedImage,
+                                matching:
+                                    .images
                             ) {
 
-                                Text(
-                                    playlist.name
-                                )
-                                .font(.headline)
+                                ZStack(
+                                    alignment:
+                                        .bottomTrailing
+                                ) {
+
+                                    if
+                                        let playlistImage
+                                    {
+
+                                        Image(
+                                            uiImage:
+                                                playlistImage
+                                        )
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(
+                                            width: 140,
+                                            height: 140
+                                        )
+                                        .clipped()
+                                        .clipShape(
+                                            RoundedRectangle(
+                                                cornerRadius:
+                                                    20
+                                            )
+                                        )
+
+                                    } else {
+
+                                        Image(
+                                            systemName:
+                                                "music.note"
+                                        )
+                                        .font(
+                                            .system(
+                                                size: 60
+                                            )
+                                        )
+                                        .frame(
+                                            width: 140,
+                                            height: 140
+                                        )
+                                        .background(
+                                            .thinMaterial
+                                        )
+                                        .clipShape(
+                                            RoundedRectangle(
+                                                cornerRadius:
+                                                    20
+                                            )
+                                        )
+                                    }
 
 
-                                Text(
-                                    "songs_count_format \(playlist.songIDs.count)"
-                                )
-                                .font(.caption)
-                                .foregroundStyle(
-                                    .secondary
-                                )
+                                    Image(
+                                        systemName:
+                                            "camera.fill"
+                                    )
+                                    .font(.title3)
+                                    .foregroundStyle(
+                                        .white
+                                    )
+                                    .padding(8)
+                                    .background(
+                                        .gray
+                                    )
+                                    .clipShape(
+                                        Circle()
+                                    )
+                                    .offset(
+                                        x: -6,
+                                        y: -6
+                                    )
+                                }
                             }
 
 
                             Spacer()
                         }
-
-                        .padding(
-                            .vertical,
-                            4
-                        )
                     }
 
 
-                    // MARK: Context Menu
+                    Section(
+                        LocalizedStringKey(
+                            "playlist_name_section"
+                        )
+                    ) {
 
-                    .contextMenu {
+                        TextField(
+                            LocalizedStringKey(
+                                "playlist_name_placeholder"
+                            ),
+                            text:
+                                $renameText
+                        )
+                    }
+                }
 
-                        Button {
 
-                            renameText =
-                                playlist.name
+                .onChange(
+                    of: selectedImage
+                ) {
 
-                            selectedPlaylist =
-                                playlist
+                    Task {
 
+                        if
+                            let data =
+                                try?
+                                await selectedImage?
+                                    .loadTransferable(
+                                        type:
+                                            Data.self
+                                    ),
+                            let image =
+                                UIImage(
+                                    data: data
+                                )
+                        {
+
+                            playlistImage =
+                                image
+
+                            imageData =
+                                data
+                        }
+                    }
+                }
+
+
+                .navigationTitle(
+                    LocalizedStringKey(
+                        "edit_info_title"
+                    )
+                )
+
+
+                .toolbar {
+
+                    ToolbarItem(
+                        placement:
+                            .topBarTrailing
+                    ) {
+
+                        Button(
+                            LocalizedStringKey(
+                                "action_save"
+                            )
+                        ) {
 
                             if
-                                let data =
-                                    playlist.imageData,
-                                let image =
-                                    UIImage(
-                                        data: data
-                                    )
+                                let index =
+                                    library
+                                        .playlists
+                                        .firstIndex(
+                                            where: {
+
+                                                $0.id
+                                                ==
+                                                selectedPlaylist?
+                                                    .id
+                                            }
+                                        )
                             {
 
-                                playlistImage =
-                                    image
+                                library
+                                    .playlists[index]
+                                    .name =
+                                        renameText
 
-                                imageData =
-                                    data
 
-                            } else {
-
-                                playlistImage =
-                                    nil
-
-                                imageData =
-                                    nil
+                                library
+                                    .playlists[index]
+                                    .imageData =
+                                        imageData
                             }
 
 
-                            selectedImage =
-                                nil
-
                             showRenameSheet =
-                                true
-
-                        } label: {
-
-                            Label(
-                                LocalizedStringKey(
-                                    "action_edit_playlist"
-                                ),
-                                systemImage:
-                                    "pencil"
-                            )
-                        }
-
-
-                        Button(
-                            role:
-                                .destructive
-                        ) {
-
-                            selectedPlaylist =
-                                playlist
-
-                            showDeleteConfirmation =
-                                true
-
-                        } label: {
-
-                            Label(
-                                LocalizedStringKey(
-                                    "action_delete_playlist"
-                                ),
-                                systemImage:
-                                    "trash"
-                            )
+                                false
                         }
                     }
                 }
             }
+        }
 
 
-            .navigationTitle(
+
+        // MARK: Delete
+
+        .alert(
+            LocalizedStringKey(
+                "delete_playlist_alert_title"
+            ),
+            isPresented:
+                $showDeleteConfirmation
+        ) {
+
+            Button(
                 LocalizedStringKey(
-                    "playlists_title"
+                    "action_cancel"
+                ),
+                role: .cancel
+            ) {}
+
+
+            Button(
+                LocalizedStringKey(
+                    "action_delete"
+                ),
+                role: .destructive
+            ) {
+
+                if
+                    let playlist =
+                        selectedPlaylist
+                {
+
+                    library.playlists
+                        .removeAll {
+
+                            $0.id
+                            ==
+                            playlist.id
+                        }
+                }
+            }
+
+        } message: {
+
+            Text(
+                LocalizedStringKey(
+                    "delete_playlist_alert_message"
+                )
+            )
+        }
+    }
+
+
+
+    // MARK: Artwork
+
+    @ViewBuilder
+    private func playlistArtwork(
+        _ playlist: Playlist
+    ) -> some View {
+
+        if
+            let data =
+                playlist.imageData,
+            let image =
+                UIImage(data: data)
+        {
+
+            Image(
+                uiImage: image
+            )
+            .resizable()
+            .scaledToFill()
+            .frame(
+                width: 55,
+                height: 55
+            )
+            .clipped()
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: 14
                 )
             )
 
-
-
-            // MARK: Toolbar
-
-            .toolbar {
-
-
-                // Back
-
-                ToolbarItem(
-                    placement:
-                        .topBarLeading
-                ) {
-
-                    Button {
-
-                        dismiss()
-
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "chevron.left"
-                        )
-                    }
-                }
-
-
-                // Add
-
-                ToolbarItem(
-                    placement:
-                        .topBarTrailing
-                ) {
-
-                    Button {
-
-                        showCreatePlaylist =
-                            true
-
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "plus"
-                        )
-                    }
-                }
-            }
-
-
-
-            // MARK: Create Playlist
-
-            .sheet(
-                isPresented:
-                    $showCreatePlaylist
-            ) {
-
-                CreatePlaylistView()
-            }
-
-
-
-            // MARK: Rename
-
-            .sheet(
-                isPresented:
-                    $showRenameSheet
-            ) {
-
-                NavigationStack {
-
-                    Form {
-
-                        Section {
-
-                            HStack {
-
-                                Spacer()
-
-
-                                PhotosPicker(
-                                    selection:
-                                        $selectedImage,
-                                    matching:
-                                        .images
-                                ) {
-
-                                    ZStack(
-                                        alignment:
-                                            .bottomTrailing
-                                    ) {
-
-                                        if
-                                            let playlistImage
-                                        {
-
-                                            Image(
-                                                uiImage:
-                                                    playlistImage
-                                            )
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(
-                                                width: 140,
-                                                height: 140
-                                            )
-                                            .clipped()
-                                            .clipShape(
-                                                RoundedRectangle(
-                                                    cornerRadius:
-                                                        20
-                                                )
-                                            )
-
-                                        } else {
-
-                                            Image(
-                                                systemName:
-                                                    "music.note"
-                                            )
-                                            .font(
-                                                .system(
-                                                    size: 60
-                                                )
-                                            )
-                                            .frame(
-                                                width: 140,
-                                                height: 140
-                                            )
-                                            .background(
-                                                .thinMaterial
-                                            )
-                                            .clipShape(
-                                                RoundedRectangle(
-                                                    cornerRadius:
-                                                        20
-                                                )
-                                            )
-                                        }
-
-
-                                        Image(
-                                            systemName:
-                                                "camera.fill"
-                                        )
-                                        .font(.title3)
-                                        .foregroundStyle(
-                                            .white
-                                        )
-                                        .padding(8)
-                                        .background(
-                                            .gray
-                                        )
-                                        .clipShape(
-                                            Circle()
-                                        )
-                                        .offset(
-                                            x: -6,
-                                            y: -6
-                                        )
-                                    }
-                                }
-
-
-                                Spacer()
-                            }
-                        }
-
-
-                        Section(
-                            LocalizedStringKey(
-                                "playlist_name_section"
-                            )
-                        ) {
-
-                            TextField(
-                                LocalizedStringKey(
-                                    "playlist_name_placeholder"
-                                ),
-                                text:
-                                    $renameText
-                            )
-                        }
-                    }
-
-
-                    .onChange(
-                        of: selectedImage
-                    ) {
-
-                        Task {
-
-                            if
-                                let data =
-                                    try?
-                                    await selectedImage?
-                                        .loadTransferable(
-                                            type:
-                                                Data.self
-                                        ),
-                                let image =
-                                    UIImage(
-                                        data: data
-                                    )
-                            {
-
-                                playlistImage =
-                                    image
-
-                                imageData =
-                                    data
-                            }
-                        }
-                    }
-
-
-                    .navigationTitle(
-                        LocalizedStringKey(
-                            "edit_info_title"
-                        )
-                    )
-
-
-                    .toolbar {
-
-                        ToolbarItem(
-                            placement:
-                                .topBarTrailing
-                        ) {
-
-                            Button(
-                                LocalizedStringKey(
-                                    "action_save"
-                                )
-                            ) {
-
-                                if
-                                    let index =
-                                        library.playlists
-                                            .firstIndex(
-                                                where: {
-                                                    $0.id
-                                                    ==
-                                                    selectedPlaylist?
-                                                        .id
-                                                }
-                                            )
-                                {
-
-                                    library
-                                        .playlists[index]
-                                        .name =
-                                            renameText
-
-
-                                    library
-                                        .playlists[index]
-                                        .imageData =
-                                            imageData
-                                }
-
-
-                                showRenameSheet =
-                                    false
-                            }
-                        }
-                    }
-                }
-            }
-
-
-
-            // MARK: Delete
-
-            .alert(
-                LocalizedStringKey(
-                    "delete_playlist_alert_title"
-                ),
-                isPresented:
-                    $showDeleteConfirmation
-            ) {
-
-                Button(
-                    LocalizedStringKey(
-                        "action_cancel"
-                    ),
-                    role: .cancel
-                ) {}
-
-
-                Button(
-                    LocalizedStringKey(
-                        "action_delete"
-                    ),
-                    role: .destructive
-                ) {
-
-                    if
-                        let playlist =
-                            selectedPlaylist
-                    {
-
-                        library.playlists
-                            .removeAll {
-
-                                $0.id
-                                ==
-                                playlist.id
-                            }
-                    }
-                }
-
-            } message: {
-
-                Text(
-                    LocalizedStringKey(
-                        "delete_playlist_alert_message"
-                    )
+        } else {
+
+            Image(
+                systemName:
+                    "music.note.list"
+            )
+            .font(.title2)
+            .frame(
+                width: 55,
+                height: 55
+            )
+            .background(
+                .thinMaterial
+            )
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: 14
                 )
-            }
+            )
         }
     }
-}
-
-
-
-#Preview {
-
-    PlaylistsView()
-        .environment(
-            MusicLibraryManager()
-        )
 }
