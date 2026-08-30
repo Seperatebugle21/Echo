@@ -1069,6 +1069,9 @@ struct CoverStackArtwork: View {
 
 struct ArtistsView: View {
 
+    @Environment(\.locale)
+    private var locale
+
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -1182,6 +1185,9 @@ struct ArtistsView: View {
 }
 
 struct ArtistDetailView: View {
+
+    @Environment(\.locale)
+    private var locale
 
     @Environment(MusicLibraryManager.self)
     private var library
@@ -1553,6 +1559,9 @@ struct AlbumDetailView: View {
 
 struct RecentAddedView: View {
 
+    @Environment(\.locale)
+    private var locale
+
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -1575,6 +1584,9 @@ struct RecentAddedView: View {
 }
 
 struct RecentPlayedView: View {
+
+    @Environment(\.locale)
+    private var locale
 
     @Environment(MusicLibraryManager.self)
     private var library
