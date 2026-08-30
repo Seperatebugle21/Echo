@@ -2,6 +2,9 @@ import SwiftUI
 
 struct HomeView: View {
 
+    @Environment(\.locale)
+    private var locale
+
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -43,9 +46,9 @@ struct HomeView: View {
 
                 return artist.isEmpty
                     ? String(
-                        localized:
-                            "homeview_unknown_artist"
-                    )
+                                    localized: "homeview_unknown_artist",
+                                    locale: locale
+                                )
                     : artist
             }
 
@@ -105,8 +108,8 @@ struct HomeView: View {
                         songSection(
                             title:
                                 String(
-                                    localized:
-                                        "homeview_recent_played"
+                                    localized: "homeview_recent_played",
+                                    locale: locale
                                 ),
                             songs:
                                 recentlyPlayedSnapshot
@@ -117,8 +120,8 @@ struct HomeView: View {
                         songSection(
                             title:
                                 String(
-                                    localized:
-                                        "homeview_recent_added"
+                                    localized: "homeview_recent_added",
+                                    locale: locale
                                 ),
                             songs: recentlyAdded
                         )
@@ -128,8 +131,8 @@ struct HomeView: View {
                         songSection(
                             title:
                                 String(
-                                    localized:
-                                        "homeview_favorites"
+                                    localized: "homeview_favorites",
+                                    locale: locale
                                 ),
                             songs: favorites
                         )
