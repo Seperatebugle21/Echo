@@ -17,6 +17,9 @@ struct SongsView: View {
     @Environment(MusicLibraryManager.self) private var library
     @Environment(AudioPlayerManager.self) private var audioPlayer
     
+    @Environment(\.dismiss)
+    private var dismiss
+    
     @State private var showImporter = false
     @State private var searchText = ""
     @State private var sortOption: SongSortOption = .name
@@ -154,6 +157,20 @@ struct SongsView: View {
             // Toolbar
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+
+                 // Back Button
+
+                    Button {
+    
+                        dismiss()
+
+                        } label: {
+
+                            Image(
+                                systemName: "chevron.left"
+                                )
+                        }
+                    
                     Button(editMode == .active ? LocalizedStringKey("action_done") : LocalizedStringKey("action_edit")) {
                         withAnimation {
                             if editMode == .active {
