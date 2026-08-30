@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct SearchView: View {
 
     @Environment(MusicLibraryManager.self)
@@ -9,13 +8,9 @@ struct SearchView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
-
     @State private var searchText = ""
     @State private var showAllSongs = false
     @State private var showSettings = false
-
-
-    // MARK: - Songs
 
     private var matchingSongs: [Song] {
 
@@ -24,18 +19,19 @@ struct SearchView: View {
             return []
         }
 
-
         return library.songs.filter { song in
 
-            song.title.localizedCaseInsensitiveContains(
-                searchText
-            )
+            song.title
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
 
             ||
 
-            song.artist.localizedCaseInsensitiveContains(
-                searchText
-            )
+            song.artist
+                .localizedCaseInsensitiveContains(
+                    searchText
+                )
 
             ||
 
@@ -49,22 +45,16 @@ struct SearchView: View {
         }
     }
 
-
     private var displayedSongs: [Song] {
 
         if showAllSongs {
             return matchingSongs
         }
 
-
         return Array(
             matchingSongs.prefix(10)
         )
     }
-
-
-
-    // MARK: - Artists
 
     private var matchingArtists: [ArtistGroup] {
 
@@ -72,7 +62,6 @@ struct SearchView: View {
         else {
             return []
         }
-
 
         let grouped =
             Dictionary(
@@ -82,47 +71,39 @@ struct SearchView: View {
                 let artist =
                     song.artist
                         .trimmingCharacters(
-                            in: .whitespacesAndNewlines
+                            in:
+                                .whitespacesAndNewlines
                         )
 
-
                 return artist.isEmpty
-                    ? "Onbekende artiest"
+                    ? String(
+                        localized:
+                            "searchview_unknown_artist"
+                    )
                     : artist
             }
 
-
         return grouped
             .filter {
-
                 $0.key
                     .localizedCaseInsensitiveContains(
                         searchText
                     )
             }
-
             .map {
-
                 ArtistGroup(
                     name: $0.key,
                     songs: $0.value
                 )
             }
-
             .sorted {
-
                 $0.name
                     .localizedCaseInsensitiveCompare(
                         $1.name
                     )
-                ==
-                .orderedAscending
+                == .orderedAscending
             }
     }
-
-
-
-    // MARK: - Albums
 
     private var allAlbums: [AlbumGroup] {
 
@@ -133,36 +114,34 @@ struct SearchView: View {
                     let album =
                         song.album?
                             .trimmingCharacters(
-                                in: .whitespacesAndNewlines
+                                in:
+                                    .whitespacesAndNewlines
                             )
                 else {
                     return false
                 }
 
-
                 return !album.isEmpty
             }
-
 
         let grouped =
             Dictionary(
                 grouping: validSongs
             ) { song in
-
                 "\(song.artist)|\(song.album ?? "")"
             }
-
 
         return grouped
             .compactMap { _, songs in
 
                 guard
-                    let first = songs.first,
-                    let album = first.album
+                    let first =
+                        songs.first,
+                    let album =
+                        first.album
                 else {
                     return nil
                 }
-
 
                 return AlbumGroup(
                     name: album,
@@ -172,14 +151,12 @@ struct SearchView: View {
             }
     }
 
-
     private var matchingAlbums: [AlbumGroup] {
 
         guard !searchText.isEmpty
         else {
             return []
         }
-
 
         return allAlbums
             .filter { album in
@@ -196,21 +173,14 @@ struct SearchView: View {
                         searchText
                     )
             }
-
             .sorted {
-
                 $0.name
                     .localizedCaseInsensitiveCompare(
                         $1.name
                     )
-                ==
-                .orderedAscending
+                == .orderedAscending
             }
     }
-
-
-
-    // MARK: - Playlists
 
     private var matchingPlaylists: [Playlist] {
 
@@ -219,19 +189,13 @@ struct SearchView: View {
             return []
         }
 
-
         return library.playlists.filter {
-
             $0.name
                 .localizedCaseInsensitiveContains(
                     searchText
                 )
         }
     }
-
-
-
-    // MARK: - Results
 
     private var hasResults: Bool {
 
@@ -244,10 +208,6 @@ struct SearchView: View {
         !matchingPlaylists.isEmpty
     }
 
-
-
-    // MARK: - Body
-
     var body: some View {
 
         NavigationStack {
@@ -259,26 +219,21 @@ struct SearchView: View {
                     spacing: 22
                 ) {
 
-
-                    // MARK: - Header
-
                     HStack(
                         alignment: .center
                     ) {
 
-                        Text("Zoeken")
-                            .font(
-                                .largeTitle.bold()
-                            )
-
+                        Text(
+                            "searchview_title"
+                        )
+                        .font(
+                            .largeTitle.bold()
+                        )
 
                         Spacer()
 
-
                         Button {
-
                             showSettings = true
-
                         } label: {
 
                             Image(
@@ -286,34 +241,25 @@ struct SearchView: View {
                                     "gearshape"
                             )
                             .font(
-                                .title3.weight(
-                                    .medium
-                                )
+                                .title3
+                                    .weight(.medium)
                             )
                             .foregroundStyle(
                                 .primary
                             )
-
                             .frame(
                                 width: 42,
                                 height: 42
                             )
-
                             .background(
                                 .thinMaterial,
                                 in: Circle()
                             )
                         }
-
                         .buttonStyle(.plain)
                     }
-
                     .padding(.horizontal)
                     .padding(.top, 6)
-
-
-
-                    // MARK: - Search Bar
 
                     HStack(
                         spacing: 10
@@ -327,25 +273,22 @@ struct SearchView: View {
                             .secondary
                         )
 
-
                         TextField(
-                            "Nummers, artiesten, albums en playlists",
+                            String(
+                                localized:
+                                    "searchview_placeholder"
+                            ),
                             text: $searchText
                         )
-
                         .textInputAutocapitalization(
                             .never
                         )
-
                         .autocorrectionDisabled()
-
 
                         if !searchText.isEmpty {
 
                             Button {
-
                                 searchText = ""
-
                             } label: {
 
                                 Image(
@@ -356,27 +299,20 @@ struct SearchView: View {
                                     .secondary
                                 )
                             }
-
                             .buttonStyle(.plain)
                         }
                     }
-
                     .padding(.horizontal, 14)
                     .frame(height: 42)
-
                     .background(
                         .thinMaterial,
-                        in: RoundedRectangle(
-                            cornerRadius: 13,
-                            style: .continuous
-                        )
+                        in:
+                            RoundedRectangle(
+                                cornerRadius: 13,
+                                style: .continuous
+                            )
                     )
-
                     .padding(.horizontal)
-
-
-
-                    // MARK: - Empty Search
 
                     if searchText.isEmpty {
 
@@ -398,17 +334,15 @@ struct SearchView: View {
                                 .secondary
                             )
 
-
                             Text(
-                                "Zoek in Echo"
+                                "searchview_empty_title"
                             )
                             .font(
                                 .title3.bold()
                             )
 
-
                             Text(
-                                "Zoek naar nummers, artiesten, albums en playlists."
+                                "searchview_empty_description"
                             )
                             .font(.subheadline)
                             .foregroundStyle(
@@ -418,20 +352,19 @@ struct SearchView: View {
                                 .center
                             )
                         }
-
                         .frame(
                             maxWidth: .infinity
                         )
+                        .padding(
+                            .horizontal,
+                            30
+                        )
+                        .padding(
+                            .top,
+                            70
+                        )
 
-                        .padding(.horizontal, 30)
-                        .padding(.top, 70)
-                    }
-
-
-
-                    // MARK: - No Results
-
-                    else if !hasResults {
+                    } else if !hasResults {
 
                         VStack(
                             spacing: 12
@@ -451,17 +384,22 @@ struct SearchView: View {
                                 .secondary
                             )
 
-
                             Text(
-                                "Geen resultaten"
+                                "searchview_no_results"
                             )
                             .font(
                                 .title3.bold()
                             )
 
-
                             Text(
-                                "Geen resultaten gevonden voor “\(searchText)”."
+                                String(
+                                    format:
+                                        String(
+                                            localized:
+                                                "searchview_no_results_for_query"
+                                        ),
+                                    searchText
+                                )
                             )
                             .font(.subheadline)
                             .foregroundStyle(
@@ -471,33 +409,31 @@ struct SearchView: View {
                                 .center
                             )
                         }
-
                         .frame(
                             maxWidth: .infinity
                         )
+                        .padding(
+                            .horizontal,
+                            30
+                        )
+                        .padding(
+                            .top,
+                            70
+                        )
 
-                        .padding(.horizontal, 30)
-                        .padding(.top, 70)
-                    }
-
-
-
-                    // MARK: - Results
-
-                    else {
-
-
-                        // MARK: Songs
+                    } else {
 
                         if !matchingSongs.isEmpty {
 
                             SearchSection(
-                                title: "Nummers"
+                                title:
+                                    String(
+                                        localized:
+                                            "searchview_searched_songs"
+                                    )
                             ) {
 
-                                VStack(
-                                    spacing: 0
-                                ) {
+                                VStack(spacing: 0) {
 
                                     ForEach(
                                         displayedSongs
@@ -517,9 +453,7 @@ struct SearchView: View {
                                                 9
                                             )
                                         }
-
                                         .buttonStyle(.plain)
-
 
                                         if
                                             song.id
@@ -535,7 +469,6 @@ struct SearchView: View {
                                         }
                                     }
 
-
                                     if
                                         matchingSongs.count > 10,
                                         !showAllSongs
@@ -547,13 +480,10 @@ struct SearchView: View {
                                                 62
                                             )
 
-
                                         Button {
 
                                             withAnimation {
-
-                                                showAllSongs =
-                                                    true
+                                                showAllSongs = true
                                             }
 
                                         } label: {
@@ -561,18 +491,21 @@ struct SearchView: View {
                                             HStack {
 
                                                 Text(
-                                                    "Toon alle \(matchingSongs.count) resultaten"
+                                                    String(
+                                                        format:
+                                                            String(
+                                                                localized:
+                                                                    "searchview_show_all_results"
+                                                            ),
+                                                        matchingSongs.count
+                                                    )
                                                 )
                                                 .font(
                                                     .subheadline
-                                                        .weight(
-                                                            .medium
-                                                        )
+                                                        .weight(.medium)
                                                 )
 
-
                                                 Spacer()
-
 
                                                 Image(
                                                     systemName:
@@ -582,32 +515,28 @@ struct SearchView: View {
                                                     .caption.bold()
                                                 )
                                             }
-
                                             .padding(
                                                 .vertical,
                                                 13
                                             )
                                         }
-
                                         .buttonStyle(.plain)
                                     }
                                 }
                             }
                         }
 
-
-
-                        // MARK: Artists
-
                         if !matchingArtists.isEmpty {
 
                             SearchSection(
-                                title: "Artiesten"
+                                title:
+                                    String(
+                                        localized:
+                                            "searchview_searched_artists"
+                                    )
                             ) {
 
-                                VStack(
-                                    spacing: 0
-                                ) {
+                                VStack(spacing: 0) {
 
                                     ForEach(
                                         matchingArtists
@@ -616,8 +545,7 @@ struct SearchView: View {
                                         NavigationLink {
 
                                             ArtistDetailView(
-                                                artist:
-                                                    artist
+                                                artist: artist
                                             )
 
                                         } label: {
@@ -634,42 +562,38 @@ struct SearchView: View {
                                                     width: 52,
                                                     height: 52
                                                 )
-                                                .clipShape(
-                                                    Circle()
-                                                )
-
+                                                .clipShape(Circle())
 
                                                 VStack(
-                                                    alignment:
-                                                        .leading,
+                                                    alignment: .leading,
                                                     spacing: 2
                                                 ) {
 
                                                     Text(
                                                         artist.name
                                                     )
-                                                    .font(
-                                                        .headline
-                                                    )
+                                                    .font(.headline)
                                                     .foregroundStyle(
                                                         .primary
                                                     )
 
-
                                                     Text(
-                                                        "\(artist.songs.count) nummers"
+                                                        String(
+                                                            format:
+                                                                String(
+                                                                    localized:
+                                                                        "searchview_songs_count"
+                                                                ),
+                                                            artist.songs.count
+                                                        )
                                                     )
-                                                    .font(
-                                                        .caption
-                                                    )
+                                                    .font(.caption)
                                                     .foregroundStyle(
                                                         .secondary
                                                     )
                                                 }
 
-
                                                 Spacer()
-
 
                                                 Image(
                                                     systemName:
@@ -682,15 +606,12 @@ struct SearchView: View {
                                                     .tertiary
                                                 )
                                             }
-
                                             .padding(
                                                 .vertical,
                                                 8
                                             )
                                         }
-
                                         .buttonStyle(.plain)
-
 
                                         if
                                             artist.id
@@ -709,19 +630,17 @@ struct SearchView: View {
                             }
                         }
 
-
-
-                        // MARK: Albums
-
                         if !matchingAlbums.isEmpty {
 
                             SearchSection(
-                                title: "Albums"
+                                title:
+                                    String(
+                                        localized:
+                                            "searchview_searched_albums"
+                                    )
                             ) {
 
-                                VStack(
-                                    spacing: 0
-                                ) {
+                                VStack(spacing: 0) {
 
                                     ForEach(
                                         matchingAlbums
@@ -730,8 +649,7 @@ struct SearchView: View {
                                         NavigationLink {
 
                                             AlbumDetailView(
-                                                album:
-                                                    album
+                                                album: album
                                             )
 
                                         } label: {
@@ -742,16 +660,12 @@ struct SearchView: View {
 
                                                 if
                                                     let song =
-                                                        album
-                                                            .songs
-                                                            .first
+                                                        album.songs.first
                                                 {
 
                                                     SongArtworkView(
-                                                        song:
-                                                            song,
-                                                        cornerRadius:
-                                                            10
+                                                        song: song,
+                                                        cornerRadius: 10
                                                     )
                                                     .frame(
                                                         width: 52,
@@ -773,44 +687,34 @@ struct SearchView: View {
                                                     )
                                                     .clipShape(
                                                         RoundedRectangle(
-                                                            cornerRadius:
-                                                                10
+                                                            cornerRadius: 10
                                                         )
                                                     )
                                                 }
 
-
                                                 VStack(
-                                                    alignment:
-                                                        .leading,
+                                                    alignment: .leading,
                                                     spacing: 2
                                                 ) {
 
                                                     Text(
                                                         album.name
                                                     )
-                                                    .font(
-                                                        .headline
-                                                    )
+                                                    .font(.headline)
                                                     .foregroundStyle(
                                                         .primary
                                                     )
 
-
                                                     Text(
                                                         album.artist
                                                     )
-                                                    .font(
-                                                        .caption
-                                                    )
+                                                    .font(.caption)
                                                     .foregroundStyle(
                                                         .secondary
                                                     )
                                                 }
 
-
                                                 Spacer()
-
 
                                                 Image(
                                                     systemName:
@@ -823,15 +727,12 @@ struct SearchView: View {
                                                     .tertiary
                                                 )
                                             }
-
                                             .padding(
                                                 .vertical,
                                                 8
                                             )
                                         }
-
                                         .buttonStyle(.plain)
-
 
                                         if
                                             album.id
@@ -850,19 +751,17 @@ struct SearchView: View {
                             }
                         }
 
-
-
-                        // MARK: Playlists
-
                         if !matchingPlaylists.isEmpty {
 
                             SearchSection(
-                                title: "Playlists"
+                                title:
+                                    String(
+                                        localized:
+                                            "searchview_searched_playlists"
+                                    )
                             ) {
 
-                                VStack(
-                                    spacing: 0
-                                ) {
+                                VStack(spacing: 0) {
 
                                     ForEach(
                                         matchingPlaylists
@@ -871,8 +770,7 @@ struct SearchView: View {
                                         NavigationLink {
 
                                             PlaylistDetailView(
-                                                playlist:
-                                                    playlist
+                                                playlist: playlist
                                             )
 
                                         } label: {
@@ -890,38 +788,36 @@ struct SearchView: View {
                                                     height: 52
                                                 )
 
-
                                                 VStack(
-                                                    alignment:
-                                                        .leading,
+                                                    alignment: .leading,
                                                     spacing: 2
                                                 ) {
 
                                                     Text(
                                                         playlist.name
                                                     )
-                                                    .font(
-                                                        .headline
-                                                    )
+                                                    .font(.headline)
                                                     .foregroundStyle(
                                                         .primary
                                                     )
 
-
                                                     Text(
-                                                        "\(playlist.songIDs.count) nummers"
+                                                        String(
+                                                            format:
+                                                                String(
+                                                                    localized:
+                                                                        "searchview_songs_count"
+                                                                ),
+                                                            playlist.songIDs.count
+                                                        )
                                                     )
-                                                    .font(
-                                                        .caption
-                                                    )
+                                                    .font(.caption)
                                                     .foregroundStyle(
                                                         .secondary
                                                     )
                                                 }
 
-
                                                 Spacer()
-
 
                                                 Image(
                                                     systemName:
@@ -934,13 +830,11 @@ struct SearchView: View {
                                                     .tertiary
                                                 )
                                             }
-
                                             .padding(
                                                 .vertical,
                                                 8
                                             )
                                         }
-
                                         .buttonStyle(.plain)
                                     }
                                 }
@@ -948,39 +842,28 @@ struct SearchView: View {
                         }
                     }
                 }
-
                 .padding(.bottom, 120)
             }
 
-
-            // Geen normale navigation title.
-            // Daardoor komt er bovenaan geen tweede
-            // lege navigation-bar ruimte.
-
-            .toolbar(.hidden, for: .navigationBar)
-
+            .toolbar(
+                .hidden,
+                for: .navigationBar
+            )
 
             .sheet(
                 isPresented:
                     $showSettings
             ) {
-
                 SettingsView()
             }
-
 
             .onChange(
                 of: searchText
             ) {
-
                 showAllSongs = false
             }
         }
     }
-
-
-
-    // MARK: - Playback
 
     private func play(
         _ song: Song
@@ -995,12 +878,10 @@ struct SearchView: View {
             return
         }
 
-
         library.markAsPlayed(song)
 
         audioPlayer.lastPlaybackDirection =
             .fade
-
 
         audioPlayer.play(
             song: song,
@@ -1008,20 +889,14 @@ struct SearchView: View {
             queue: library.songs
         )
 
-
         audioPlayer.allSongs =
             library.songs
-
 
         audioPlayer.fillAutoNext(
             from: library.songs
         )
     }
 }
-
-
-
-// MARK: - Search Section
 
 private struct SearchSection<
     Content: View
@@ -1032,17 +907,14 @@ private struct SearchSection<
     @ViewBuilder
     let content: Content
 
-
     init(
         title: String,
         @ViewBuilder content:
             () -> Content
     ) {
-
         self.title = title
         self.content = content()
     }
-
 
     var body: some View {
 
@@ -1052,21 +924,20 @@ private struct SearchSection<
         ) {
 
             Text(title)
-                .font(
-                    .title2.bold()
-                )
+                .font(.title2.bold())
                 .padding(.horizontal)
 
-
             content
-                .padding(.horizontal, 14)
+                .padding(
+                    .horizontal,
+                    14
+                )
                 .background(
                     .thinMaterial,
                     in:
                         RoundedRectangle(
                             cornerRadius: 18,
-                            style:
-                                .continuous
+                            style: .continuous
                         )
                 )
                 .padding(.horizontal)
@@ -1074,14 +945,9 @@ private struct SearchSection<
     }
 }
 
-
-
-// MARK: - Playlist Artwork
-
 struct PlaylistSearchArtwork: View {
 
     let playlist: Playlist
-
 
     var body: some View {
 
@@ -1093,16 +959,12 @@ struct PlaylistSearchArtwork: View {
                     let data =
                         playlist.imageData,
                     let image =
-                        UIImage(
-                            data: data
-                        )
+                        UIImage(data: data)
                 {
 
-                    Image(
-                        uiImage: image
-                    )
-                    .resizable()
-                    .scaledToFill()
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
 
                 } else {
 
@@ -1113,7 +975,6 @@ struct PlaylistSearchArtwork: View {
                                 .thinMaterial
                             )
 
-
                         Image(
                             systemName:
                                 "music.note.list"
@@ -1122,17 +983,14 @@ struct PlaylistSearchArtwork: View {
                     }
                 }
             }
-
             .frame(
                 width:
                     geometry.size.width,
                 height:
                     geometry.size.height
             )
-
             .clipped()
         }
-
         .clipShape(
             RoundedRectangle(
                 cornerRadius: 12,
