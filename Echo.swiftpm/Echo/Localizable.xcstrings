@@ -10875,6 +10875,65 @@
           }
         }
       }
+    },
+"libraryview_recent_added": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Zuletzt hinzugefügt"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recently Added"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Ajoutés récemment"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recent toegevoegd"
+      }
     }
+  }
+},
+"libraryview_recent_played": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Zuletzt gespielt"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recently Played"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Écoutés récemment"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recent afgespeeld"
+      }
+    }
+  }
+}
+
   }
 }
