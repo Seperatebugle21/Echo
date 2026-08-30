@@ -8,7 +8,6 @@ struct ApifyAccountsView: View {
     @State private var showAddAccount =
         false
 
-
     var body: some View {
 
         List {
@@ -16,12 +15,12 @@ struct ApifyAccountsView: View {
             if settings.accounts.isEmpty {
 
                 ContentUnavailableView(
-                    "No Apify Accounts",
+                    "apifyaccountsview_empty_title",
                     systemImage:
                         "person.crop.circle.badge.plus",
                     description:
                         Text(
-                            "Add an API token to use Apify with Echo."
+                            "apifyaccountsview_empty_description"
                         )
                 )
 
@@ -31,15 +30,14 @@ struct ApifyAccountsView: View {
                     settings.accounts
                 ) { account in
 
-                   Section {
-                    ApifyAccountRow(
-                        account: account
-                    )
-                   }
-                   
+                    Section {
+
+                        ApifyAccountRow(
+                            account: account
+                        )
+                    }
                 }
-                .onDelete {
-                    offsets in
+                .onDelete { offsets in
 
                     for index in offsets {
 
@@ -56,9 +54,11 @@ struct ApifyAccountsView: View {
                 }
             }
         }
+
         .navigationTitle(
-            "Apify Accounts"
+            "apifyaccountsview_title"
         )
+
         .toolbar {
 
             ToolbarItem(
@@ -78,6 +78,7 @@ struct ApifyAccountsView: View {
                 }
             }
         }
+
         .sheet(
             isPresented:
                 $showAddAccount
