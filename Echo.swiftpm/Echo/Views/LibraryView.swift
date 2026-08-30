@@ -285,10 +285,12 @@ struct LibraryView: View {
             ) {
 
                 PlaylistsView()
+                }
             }
         }
     }
 }
+    
 
 
 
