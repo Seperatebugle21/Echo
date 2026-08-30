@@ -1,10 +1,6 @@
 import SwiftUI
 
 struct DeveloperView: View {
-
-    @Environment(\.locale)
-    private var locale
-
     @AppStorage("developerMaxDownloadChunks")
     private var maxDownloadChunks: Int = 4
 
@@ -20,10 +16,7 @@ struct DeveloperView: View {
             Section {
 
                 Picker(
-                    String(
-                                    localized: "developerview_max_download_chunks",
-                                    locale: locale
-                                ),
+                    "developerview_max_download_chunks",
                     selection:
                         $maxDownloadChunks
                 ) {
@@ -117,8 +110,7 @@ struct DeveloperView: View {
                             String(
                                 format:
                                     String(
-                                    localized: "developerview_free_storage",
-                                    locale: locale
+                                    localized: "developerview_free_storage"
                                 ),
                                 formatBytes(
                                     availableStorage
@@ -132,11 +124,7 @@ struct DeveloperView: View {
                 .padding(.vertical, 4)
 
                 storageRow(
-                    title:
-                        String(
-                                    localized: "developerview_total",
-                                    locale: locale
-                                ),
+                    title: "developerview_total",
                     systemImage:
                         "internaldrive",
                     value:
@@ -144,11 +132,7 @@ struct DeveloperView: View {
                 )
 
                 storageRow(
-                    title:
-                        String(
-                                    localized: "developerview_used",
-                                    locale: locale
-                                ),
+                    title: "developerview_used",
                     systemImage:
                         "chart.pie",
                     value:
@@ -156,11 +140,7 @@ struct DeveloperView: View {
                 )
 
                 storageRow(
-                    title:
-                        String(
-                                    localized: "developerview_available",
-                                    locale: locale
-                                ),
+                    title: "developerview_available",
                     systemImage:
                         "externaldrive.badge.checkmark",
                     value:
@@ -168,7 +148,7 @@ struct DeveloperView: View {
                 )
 
                 storageRow(
-                    title: "Echo",
+                    title: "developerview_echo",
                     systemImage: "waveform",
                     value: echoStorage
                 )
@@ -215,7 +195,7 @@ struct DeveloperView: View {
     }
 
     private func storageRow(
-        title: String,
+        title: LocalizedStringKey,
         systemImage: String,
         value: Int64
     ) -> some View {
