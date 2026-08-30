@@ -105,153 +105,169 @@ struct LibraryView: View {
 
             ScrollView {
 
-                VStack(
-                    alignment: .leading,
-                    spacing: 26
+                LazyVStack(
+    alignment: .leading,
+    spacing: 28
+) {
+
+    // MARK: Snelle toegang
+
+    VStack(
+        alignment: .leading,
+        spacing: 12
+    ) {
+
+        Text("Snelle toegang")
+            .font(.title2.bold())
+            .padding(.horizontal)
+
+
+        ScrollView(
+            .horizontal,
+            showsIndicators: false
+        ) {
+
+            LazyHStack(
+                spacing: 14
+            ) {
+
+                LibraryQuickCard(
+                    title: "Nummers",
+                    subtitle:
+                        "\(library.songs.count) nummers",
+                    icon: "music.note"
                 ) {
 
-                    // MARK: Main
-
-                    LazyVGrid(
-                        columns: [
-                            GridItem(
-                                .flexible(),
-                                spacing: 12
-                            ),
-
-                            GridItem(
-                                .flexible(),
-                                spacing: 12
-                            )
-                        ],
-                        spacing: 12
-                    ) {
-
-
-                        LibraryMainButton(
-                            title: "Nummers",
-                            subtitle:
-                                "\(library.songs.count) nummers",
-                            icon: "music.note"
-                        ) {
-
-                            showSongs = true
-                        }
-
-
-                        LibraryMainButton(
-                            title: "Playlists",
-                            subtitle:
-                                "\(library.playlists.count) playlists",
-                            icon: "music.note.list"
-                        ) {
-
-                            showPlaylists = true
-                        }
-                    }
-                    .padding(.horizontal)
-
-
-
-                    // MARK: Library Categories
-
-                    VStack(
-                        spacing: 0
-                    ) {
-
-                        NavigationLink {
-
-                            FavoritesView()
-
-                        } label: {
-
-                            LibraryNavigationRow(
-                                title: "Favorieten",
-                                subtitle:
-                                    "\(library.favoriteSongs.count) nummers",
-                                icon: "heart.fill"
-                            )
-                        }
-
-
-                        Divider()
-                            .padding(.leading, 58)
-
-
-                        NavigationLink {
-
-                            ArtistsView()
-
-                        } label: {
-
-                            LibraryNavigationRow(
-                                title: "Artiesten",
-                                subtitle:
-                                    "\(artists.count) artiesten",
-                                icon: "person.2.fill"
-                            )
-                        }
-
-
-                        Divider()
-                            .padding(.leading, 58)
-
-
-                        NavigationLink {
-
-                            AlbumsView()
-
-                        } label: {
-
-                            LibraryNavigationRow(
-                                title: "Albums",
-                                subtitle:
-                                    "\(albumCount) albums",
-                                icon: "square.stack.fill"
-                            )
-                        }
-
-
-                        Divider()
-                            .padding(.leading, 58)
-
-
-                        NavigationLink {
-
-                            RecentAddedView()
-
-                        } label: {
-
-                            LibraryNavigationRow(
-                                title: "Recent toegevoegd",
-                                subtitle: nil,
-                                icon: "clock.badge.plus"
-                            )
-                        }
-
-
-                        Divider()
-                            .padding(.leading, 58)
-
-
-                        NavigationLink {
-
-                            RecentPlayedView()
-
-                        } label: {
-
-                            LibraryNavigationRow(
-                                title: "Recent afgespeeld",
-                                subtitle: nil,
-                                icon: "clock.arrow.circlepath"
-                            )
-                        }
-                    }
-                    .padding(.horizontal)
+                    showSongs = true
                 }
-                .padding(.vertical)
-                .padding(.bottom, 120)
+
+
+                LibraryQuickCard(
+                    title: "Playlists",
+                    subtitle:
+                        "\(library.playlists.count) playlists",
+                    icon: "music.note.list"
+                ) {
+
+                    showPlaylists = true
+                }
+
+
+                NavigationLink {
+
+                    FavoritesView()
+
+                } label: {
+
+                    LibraryQuickCardContent(
+                        title: "Favorieten",
+                        subtitle:
+                            "\(library.favoriteSongs.count) nummers",
+                        icon: "heart.fill"
+                    )
+                }
+
+                .buttonStyle(.plain)
             }
+
+            .padding(.horizontal)
+        }
+    }
+
+
+    // MARK: Collecties
+
+    VStack(
+        alignment: .leading,
+        spacing: 8
+    ) {
+
+        Text("Collecties")
+            .font(.title2.bold())
+            .padding(.horizontal)
+
+
+        VStack(
+            spacing: 0
+        ) {
+
+            NavigationLink {
+
+                ArtistsView()
+
+            } label: {
+
+                LibraryNavigationRow(
+                    title: "Artiesten",
+                    subtitle:
+                        "\(artists.count) artiesten",
+                    icon: "person.2.fill"
+                )
+            }
+
+
+            Divider()
+                .padding(.leading, 58)
+
+
+            NavigationLink {
+
+                AlbumsView()
+
+            } label: {
+
+                LibraryNavigationRow(
+                    title: "Albums",
+                    subtitle:
+                        "\(albumCount) albums",
+                    icon: "square.stack.fill"
+                )
+            }
+
+
+            Divider()
+                .padding(.leading, 58)
+
+
+            NavigationLink {
+
+                RecentAddedView()
+
+            } label: {
+
+                LibraryNavigationRow(
+                    title: "Recent toegevoegd",
+                    subtitle: nil,
+                    icon: "clock.badge.plus"
+                )
+            }
+
+
+            Divider()
+                .padding(.leading, 58)
+
+
+            NavigationLink {
+
+                RecentPlayedView()
+
+            } label: {
+
+                LibraryNavigationRow(
+                    title: "Recent afgespeeld",
+                    subtitle: nil,
+                    icon:
+                        "clock.arrow.circlepath"
+                )
+            }
+        }
+
+        .padding(.horizontal)
+    }
+}
+
+            .padding(.vertical)
+            .padding(.bottom, 120)
 
             .navigationTitle(
                 "Bibliotheek"
@@ -261,20 +277,14 @@ struct LibraryView: View {
                 isPresented: $showSongs
             ) {
 
-                LibrarySheetContainer {
-
-                    SongsView()
-                }
+                SongsView()
             }
 
-            .fullScreenCover(
+           .fullScreenCover(
                 isPresented: $showPlaylists
             ) {
 
-                LibrarySheetContainer {
-
-                    PlaylistsView()
-                }
+                PlaylistsView()
             }
         }
     }
@@ -282,46 +292,97 @@ struct LibraryView: View {
 
 
 
-// MARK: - Sheet Container
+    struct LibraryQuickCard: View {
 
-struct LibrarySheetContainer<Content: View>: View {
-
-    @Environment(\.dismiss)
-    private var dismiss
-
-    let content: () -> Content
+    let title: String
+    let subtitle: String
+    let icon: String
+    let action: () -> Void
 
 
     var body: some View {
 
-        ZStack(
-            alignment: .topTrailing
+        Button(
+            action: action
         ) {
 
-            content()
-
-
-            Button {
-
-                dismiss()
-
-            } label: {
-
-                Image(
-                    systemName: "xmark.circle.fill"
-                )
-                .font(.title2)
-                .symbolRenderingMode(
-                    .hierarchical
-                )
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 10)
-            .padding(.trailing, 16)
-            .zIndex(100)
+            LibraryQuickCardContent(
+                title: title,
+                subtitle: subtitle,
+                icon: icon
+            )
         }
+
+        .buttonStyle(.plain)
     }
 }
+
+
+
+struct LibraryQuickCardContent: View {
+
+    let title: String
+    let subtitle: String
+    let icon: String
+
+
+    var body: some View {
+
+        VStack(
+            alignment: .leading,
+            spacing: 8
+        ) {
+
+            ZStack {
+
+                RoundedRectangle(
+                    cornerRadius: 18,
+                    style: .continuous
+                )
+                .fill(
+                    .thinMaterial
+                )
+
+
+                Image(
+                    systemName: icon
+                )
+                .font(
+                    .system(
+                        size: 36,
+                        weight: .medium
+                    )
+                )
+                .foregroundStyle(.primary)
+            }
+
+            .frame(
+                width: 145,
+                height: 145
+            )
+
+
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+
+
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+
+        .frame(
+            width: 145,
+            alignment: .leading
+        )
+    }
+}
+
+
+
 
 
 
