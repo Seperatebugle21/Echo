@@ -14,27 +14,33 @@ struct AddApifyAccountView: View {
     @State private var showToken =
         false
 
-
     var body: some View {
 
         NavigationStack {
 
             Form {
 
-                Section("Account") {
+                Section(
+                    "addapifyaccountview_account"
+                ) {
 
                     TextField(
-                        "Account name",
+                        String(
+                            localized:
+                                "addapifyaccountview_account_name"
+                        ),
                         text: $name
                     )
-
 
                     HStack {
 
                         if showToken {
 
                             TextField(
-                                "API token",
+                                String(
+                                    localized:
+                                        "addapifyaccountview_api_token"
+                                ),
                                 text: $token
                             )
                             .textInputAutocapitalization(
@@ -45,11 +51,13 @@ struct AddApifyAccountView: View {
                         } else {
 
                             SecureField(
-                                "API token",
+                                String(
+                                    localized:
+                                        "addapifyaccountview_api_token"
+                                ),
                                 text: $token
                             )
                         }
-
 
                         Button {
 
@@ -67,9 +75,11 @@ struct AddApifyAccountView: View {
                     }
                 }
             }
+
             .navigationTitle(
-                "Add Apify Account"
+                "addapifyaccountview_title"
             )
+
             .toolbar {
 
                 ToolbarItem(
@@ -77,18 +87,21 @@ struct AddApifyAccountView: View {
                         .cancellationAction
                 ) {
 
-                    Button("Cancel") {
+                    Button(
+                        "addapifyaccountview_cancel"
+                    ) {
                         dismiss()
                     }
                 }
-
 
                 ToolbarItem(
                     placement:
                         .confirmationAction
                 ) {
 
-                    Button("Add") {
+                    Button(
+                        "addapifyaccountview_add"
+                    ) {
 
                         settings.addAccount(
                             name: name,
