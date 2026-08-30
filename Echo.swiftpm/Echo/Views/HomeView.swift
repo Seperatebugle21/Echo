@@ -76,7 +76,7 @@ struct HomeView: View {
 
                 LazyVStack(
                     alignment: .leading,
-                    spacing: 30
+                    spacing: 32
                 ) {
 
                     if !recentlyPlayedSnapshot.isEmpty {
@@ -126,11 +126,12 @@ struct HomeView: View {
                     }
                 }
 
-                .padding(.vertical)
+                .padding(.top, 8)
                 .padding(.bottom, 120)
             }
 
             .navigationTitle("Home")
+            .navigationBarTitleDisplayMode(.large)
 
 
             // MARK: Settings
@@ -163,7 +164,7 @@ struct HomeView: View {
             }
 
 
-            // Snapshot wordt alleen opnieuw geladen
+            // Recent afgespeeld wordt alleen vernieuwd
             // wanneer Home opnieuw verschijnt.
 
             .onAppear {
@@ -174,7 +175,7 @@ struct HomeView: View {
     }
 
 
-    // MARK: - Refresh Recent
+    // MARK: - Recent Snapshot
 
     private func refreshRecentlyPlayed() {
 
@@ -194,7 +195,7 @@ struct HomeView: View {
     }
 
 
-    // MARK: - Song Section
+    // MARK: - Songs Section
 
     @ViewBuilder
     private func songSection(
@@ -204,12 +205,11 @@ struct HomeView: View {
 
         VStack(
             alignment: .leading,
-            spacing: 12
+            spacing: 13
         ) {
 
             Text(title)
-                .font(.title2)
-                .bold()
+                .font(.title2.bold())
                 .padding(.horizontal)
 
 
@@ -261,8 +261,6 @@ struct HomeView: View {
                                 width: 150,
                                 alignment: .leading
                             )
-
-                            .clipped()
                         }
 
                         .buttonStyle(.plain)
@@ -281,14 +279,13 @@ struct HomeView: View {
 
         VStack(
             alignment: .leading,
-            spacing: 12
+            spacing: 13
         ) {
 
             HStack {
 
                 Text("Jouw artiesten")
-                    .font(.title2)
-                    .bold()
+                    .font(.title2.bold())
 
 
                 Spacer()
@@ -301,7 +298,7 @@ struct HomeView: View {
                 } label: {
 
                     Text("Toon alles")
-                        .font(.subheadline)
+                        .font(.subheadline.weight(.medium))
                 }
             }
 
@@ -338,12 +335,10 @@ struct HomeView: View {
                                 ArtistArtworkView(
                                     songs: artist.songs
                                 )
-
                                 .frame(
                                     width: 112,
                                     height: 112
                                 )
-
                                 .clipShape(
                                     Circle()
                                 )
@@ -370,7 +365,7 @@ struct HomeView: View {
     }
 
 
-    // MARK: - Play
+    // MARK: - Playback
 
     private func play(
         _ song: Song
