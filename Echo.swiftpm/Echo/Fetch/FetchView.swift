@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct FetchView: View {
 
     @State private var manager =
@@ -18,9 +17,6 @@ struct FetchView: View {
     @State private var library =
         MusicLibraryManager.shared
 
-
-    // MARK: - Apify Usage
-
     @State private var apifyUsage:
         ApifyUsageInfo?
 
@@ -29,9 +25,6 @@ struct FetchView: View {
 
     @State private var apifyUsageError:
         String?
-
-
-    // MARK: - Navigation
 
     @State private var fetchNavigationID =
         UUID()
@@ -42,12 +35,8 @@ struct FetchView: View {
     @State private var showURLInput =
         false
 
-
-    // MARK: - Inline URL Preview
-
     @State private var inlineURLPreview:
         FetchURLResolvedContent?
-
 
     var body: some View {
 
@@ -57,47 +46,32 @@ struct FetchView: View {
 
                 methodSection
 
-
-                // Existing Spotify integration
-
                 spotifySection
-
-
-                // Login-free search sources
 
                 musicSearchSection
 
-
-                // Inline URL downloader
-
-                FetchURLInlineSection {
-                    content in
-
-                    inlineURLPreview =
-                        content
+                FetchURLInlineSection { content in
+                    inlineURLPreview = content
                 }
 
-
-                if apifySettings.downloadMethod ==
-                    .youtube {
-
+                if
+                    apifySettings.downloadMethod
+                    == .youtube
+                {
                     apifySection
                 }
-
 
                 downloadsSection
 
                 outputSection
 
-
                 if !manager.items.isEmpty {
-
                     recentSection
                 }
             }
 
             .navigationTitle(
-                "Fetch"
+                "fetchview_title"
             )
 
             .toolbar {
@@ -109,24 +83,21 @@ struct FetchView: View {
 
                     Button {
 
-                        showURLInput =
-                            true
+                        showURLInput = true
 
                     } label: {
 
                         Image(
-                            systemName:
-                                "link"
+                            systemName: "link"
                         )
                     }
                     .accessibilityLabel(
-                        "Fetch URL"
+                        "fetchview_fetch_url"
                     )
                 }
             }
 
             .task {
-
                 await refreshForCurrentMethod()
             }
 
@@ -137,35 +108,23 @@ struct FetchView: View {
                 _,
                 newMethod in
 
-
                 Task {
 
-                    if newMethod ==
-                        .youtube {
+                    if newMethod == .youtube {
 
                         await loadApifyUsage()
 
                     } else {
 
-                        apifyUsage =
-                            nil
-
-                        apifyUsageError =
-                            nil
-
-                        apifyUsageLoading =
-                            false
+                        apifyUsage = nil
+                        apifyUsageError = nil
+                        apifyUsageLoading = false
                     }
                 }
             }
         }
 
-        .id(
-            fetchNavigationID
-        )
-
-
-        // MARK: - Open Downloads Notification
+        .id(fetchNavigationID)
 
         .onReceive(
             NotificationCenter.default
@@ -173,23 +132,15 @@ struct FetchView: View {
                     for:
                         .echoOpenFetchDownloads
                 )
-        ) {
-            _ in
+        ) { _ in
 
-
-            fetchNavigationID =
-                UUID()
-
+            fetchNavigationID = UUID()
 
             DispatchQueue.main.async {
 
-                showDownloadsFromTrack =
-                    true
+                showDownloadsFromTrack = true
             }
         }
-
-
-        // MARK: - Duplicate Alert
 
         .alert(
             Text(
@@ -208,31 +159,24 @@ struct FetchView: View {
             ) {
 
                 library.resolveDuplicate(
-                    choice:
-                        .skip,
-                    applyToAll:
-                        false
+                    choice: .skip,
+                    applyToAll: false
                 )
             }
-
 
             Button(
                 String(
                     localized:
                         "action_replace"
                 ),
-                role:
-                    .destructive
+                role: .destructive
             ) {
 
                 library.resolveDuplicate(
-                    choice:
-                        .replace,
-                    applyToAll:
-                        false
+                    choice: .replace,
+                    applyToAll: false
                 )
             }
-
 
             Button(
                 String(
@@ -242,39 +186,31 @@ struct FetchView: View {
             ) {
 
                 library.resolveDuplicate(
-                    choice:
-                        .skip,
-                    applyToAll:
-                        true
+                    choice: .skip,
+                    applyToAll: true
                 )
             }
-
 
             Button(
                 String(
                     localized:
                         "action_replace_all"
                 ),
-                role:
-                    .destructive
+                role: .destructive
             ) {
 
                 library.resolveDuplicate(
-                    choice:
-                        .replace,
-                    applyToAll:
-                        true
+                    choice: .replace,
+                    applyToAll: true
                 )
             }
-
 
             Button(
                 String(
                     localized:
                         "action_cancel"
                 ),
-                role:
-                    .cancel
+                role: .cancel
             ) {}
 
         } message: {
@@ -284,9 +220,6 @@ struct FetchView: View {
             )
         }
 
-
-        // MARK: - Downloads Sheet
-
         .sheet(
             isPresented:
                 $showDownloadsFromTrack
@@ -295,15 +228,12 @@ struct FetchView: View {
             NavigationStack {
 
                 FetchQueueView()
-
                     .navigationTitle(
-                        "Downloads"
+                        "fetchview_downloads"
                     )
-
                     .navigationBarTitleDisplayMode(
                         .inline
                     )
-
                     .toolbar {
 
                         ToolbarItem(
@@ -312,19 +242,15 @@ struct FetchView: View {
                         ) {
 
                             Button(
-                                "Done"
+                                "fetchview_done"
                             ) {
 
-                                showDownloadsFromTrack =
-                                    false
+                                showDownloadsFromTrack = false
                             }
                         }
                     }
             }
         }
-
-
-        // MARK: - Toolbar URL Sheet
 
         .sheet(
             isPresented:
@@ -334,34 +260,19 @@ struct FetchView: View {
             FetchURLInputSheet()
         }
 
-
-        // MARK: - Inline URL Preview Sheet
-        //
-        // Important:
-        // This sheet is presented by FetchView itself,
-        // NOT by the Section inside the List.
-        //
-        // That prevents the sheet from instantly
-        // disappearing during a List refresh.
-
         .sheet(
             item:
                 $inlineURLPreview
-        ) {
-            content in
+        ) { content in
 
             NavigationStack {
 
                 FetchURLPreviewView(
-                    content:
-                        content
+                    content: content
                 )
             }
         }
     }
-
-
-    // MARK: - Download Method
 
     private var methodSection:
         some View {
@@ -369,56 +280,38 @@ struct FetchView: View {
         Section {
 
             Picker(
-                "Method",
+                "fetchview_method",
                 selection:
                     $apifySettings.downloadMethod
             ) {
 
                 ForEach(
                     ApifyDownloadMethod.allCases
-                ) {
-                    method in
-
+                ) { method in
 
                     Text(
                         method.title
                     )
-                    .tag(
-                        method
-                    )
+                    .tag(method)
                 }
             }
-            .pickerStyle(
-                .segmented
-            )
-
+            .pickerStyle(.segmented)
 
             HStack(
-                spacing:
-                    12
+                spacing: 12
             ) {
 
                 Image(
                     systemName:
                         methodIcon
                 )
-                .font(
-                    .title3
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-                .frame(
-                    width:
-                        30
-                )
-
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .frame(width: 30)
 
                 VStack(
-                    alignment:
-                        .leading,
-                    spacing:
-                        2
+                    alignment: .leading,
+                    spacing: 2
                 ) {
 
                     Text(
@@ -428,38 +321,25 @@ struct FetchView: View {
                     )
                     .font(
                         .subheadline
-                            .weight(
-                                .semibold
-                            )
+                            .weight(.semibold)
                     )
-
 
                     Text(
                         methodDescription
                     )
-                    .font(
-                        .caption
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
             }
-            .padding(
-                .vertical,
-                3
-            )
+            .padding(.vertical, 3)
 
         } header: {
 
             Text(
-                "Download Method"
+                "fetchview_download_method"
             )
         }
     }
-
-
-    // MARK: - Spotify
 
     @ViewBuilder
     private var spotifySection:
@@ -472,26 +352,19 @@ struct FetchView: View {
                 HStack {
 
                     Label(
-                        "Spotify",
+                        "fetchview_spotify",
                         systemImage:
                             "checkmark.circle.fill"
                     )
 
-
                     Spacer()
 
-
                     Text(
-                        "Connected"
+                        "fetchview_connected"
                     )
-                    .font(
-                        .subheadline
-                    )
-                    .foregroundStyle(
-                        .green
-                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.green)
                 }
-
 
                 NavigationLink {
 
@@ -500,12 +373,11 @@ struct FetchView: View {
                 } label: {
 
                     Label(
-                        "Your Library",
+                        "fetchview_your_library",
                         systemImage:
                             "music.note.list"
                     )
                 }
-
 
                 NavigationLink {
 
@@ -514,7 +386,7 @@ struct FetchView: View {
                 } label: {
 
                     Label(
-                        "Search Spotify",
+                        "fetchview_search_spotify",
                         systemImage:
                             "magnifyingglass"
                     )
@@ -523,57 +395,38 @@ struct FetchView: View {
             } else {
 
                 VStack(
-                    alignment:
-                        .leading,
-                    spacing:
-                        10
+                    alignment: .leading,
+                    spacing: 10
                 ) {
 
                     HStack(
-                        spacing:
-                            12
+                        spacing: 12
                     ) {
 
                         Image(
                             systemName:
                                 "music.note"
                         )
-                        .font(
-                            .title2
-                        )
-                        .frame(
-                            width:
-                                32
-                        )
-
+                        .font(.title2)
+                        .frame(width: 32)
 
                         VStack(
-                            alignment:
-                                .leading,
-                            spacing:
-                                2
+                            alignment: .leading,
+                            spacing: 2
                         ) {
 
                             Text(
-                                "Connect Spotify"
+                                "fetchview_connect_spotify"
                             )
-                            .font(
-                                .headline
-                            )
-
+                            .font(.headline)
 
                             Text(
-                                "Connect your account to browse your library and search Spotify."
+                                "fetchview_connect_spotify_description"
                             )
-                            .font(
-                                .caption
-                            )
-                            .foregroundStyle(
-                                .secondary
-                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
                     }
-
 
                     Button {
 
@@ -585,31 +438,24 @@ struct FetchView: View {
 
                             Spacer()
 
-
                             Label(
-                                "Connect Spotify",
+                                "fetchview_connect_spotify",
                                 systemImage:
                                     "person.crop.circle.badge.plus"
                             )
 
-
                             Spacer()
                         }
                     }
-                    .buttonStyle(
-                        .borderedProminent
-                    )
+                    .buttonStyle(.borderedProminent)
                 }
-                .padding(
-                    .vertical,
-                    5
-                )
+                .padding(.vertical, 5)
             }
 
         } header: {
 
             Text(
-                "Spotify"
+                "fetchview_spotify"
             )
 
         } footer: {
@@ -617,20 +463,17 @@ struct FetchView: View {
             if spotify.isConnected {
 
                 Text(
-                    "Choose music from your Spotify library or search the Spotify catalog."
+                    "fetchview_spotify_connected_footer"
                 )
 
             } else {
 
                 Text(
-                    "Spotify is optional. You can also search music without an account below."
+                    "fetchview_spotify_optional_footer"
                 )
             }
         }
     }
-
-
-    // MARK: - Music Search
 
     private var musicSearchSection:
         some View {
@@ -644,12 +487,11 @@ struct FetchView: View {
             } label: {
 
                 Label(
-                    "Search MusicBrainz",
+                    "fetchview_search_musicbrainz",
                     systemImage:
                         "music.note.list"
                 )
             }
-
 
             NavigationLink {
 
@@ -658,7 +500,7 @@ struct FetchView: View {
             } label: {
 
                 Label(
-                    "Search YouTube Music",
+                    "fetchview_search_youtube_music",
                     systemImage:
                         "play.rectangle.fill"
                 )
@@ -667,19 +509,16 @@ struct FetchView: View {
         } header: {
 
             Text(
-                "Music"
+                "fetchview_music"
             )
 
         } footer: {
 
             Text(
-                "Search MusicBrainz or YouTube without requiring a Spotify account."
+                "fetchview_music_search_footer"
             )
         }
     }
-
-
-    // MARK: - Apify
 
     @ViewBuilder
     private var apifySection:
@@ -696,94 +535,73 @@ struct FetchView: View {
                 HStack {
 
                     Label(
-                        "Apify Account",
+                        "fetchview_apify_account",
                         systemImage:
                             "person.crop.circle"
                     )
 
-
                     Spacer()
 
-
                     if let account =
-                        apifySettings.activeAccount {
+                        apifySettings.activeAccount
+                    {
 
                         Text(
                             account.name
                         )
-                        .foregroundStyle(
-                            .secondary
-                        )
-                        .lineLimit(
-                            1
-                        )
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
 
                     } else {
 
                         Text(
-                            "Not configured"
+                            "fetchview_not_configured"
                         )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .foregroundStyle(.secondary)
                     }
                 }
             }
 
-
             if !apifySettings.isConfigured {
 
                 Label(
-                    "Add an Apify account to view usage.",
+                    "fetchview_add_apify_account_usage",
                     systemImage:
                         "info.circle"
                 )
-                .font(
-                    .caption
-                )
-                .foregroundStyle(
-                    .secondary
-                )
-
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             } else if apifyUsageLoading {
 
                 HStack(
-                    spacing:
-                        10
+                    spacing: 10
                 ) {
 
                     ProgressView()
 
-
                     Text(
-                        "Loading usage…"
+                        "fetchview_loading_usage"
                     )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    .foregroundStyle(.secondary)
                 }
 
-
             } else if let usage =
-                apifyUsage {
+                apifyUsage
+            {
 
                 VStack(
-                    alignment:
-                        .leading,
-                    spacing:
-                        10
+                    alignment: .leading,
+                    spacing: 10
                 ) {
 
                     HStack {
 
                         Text(
-                            "Usage"
+                            "fetchview_usage"
                         )
 
-
                         Spacer()
-
 
                         Text(
                             String(
@@ -793,18 +611,14 @@ struct FetchView: View {
                                 usage.maxUSD
                             )
                         )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .foregroundStyle(.secondary)
                         .monospacedDigit()
                     }
-
 
                     ProgressView(
                         value:
                             usage.usageFraction
                     )
-
 
                     HStack {
 
@@ -814,13 +628,10 @@ struct FetchView: View {
                                     "%.3f CU",
                                 usage.actorComputeUnits
                             ),
-                            systemImage:
-                                "cpu"
+                            systemImage: "cpu"
                         )
 
-
                         Spacer()
-
 
                         Label(
                             String(
@@ -832,54 +643,36 @@ struct FetchView: View {
                                 "arrow.up.arrow.down"
                         )
                     }
-                    .font(
-                        .caption
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
-                .padding(
-                    .vertical,
-                    3
-                )
-
+                .padding(.vertical, 3)
 
             } else if let apifyUsageError {
 
                 VStack(
-                    alignment:
-                        .leading,
-                    spacing:
-                        8
+                    alignment: .leading,
+                    spacing: 8
                 ) {
 
                     Label(
-                        "Usage unavailable",
+                        "fetchview_usage_unavailable",
                         systemImage:
                             "exclamationmark.triangle"
                     )
                     .font(
                         .subheadline
-                            .weight(
-                                .medium
-                            )
+                            .weight(.medium)
                     )
-
 
                     Text(
                         apifyUsageError
                     )
-                    .font(
-                        .caption
-                    )
-                    .foregroundStyle(
-                        .secondary
-                    )
-
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                     Button(
-                        "Try Again"
+                        "fetchview_try_again"
                     ) {
 
                         Task {
@@ -888,28 +681,22 @@ struct FetchView: View {
                         }
                     }
                 }
-                .padding(
-                    .vertical,
-                    3
-                )
+                .padding(.vertical, 3)
             }
 
         } header: {
 
             Text(
-                "Apify"
+                "fetchview_apify"
             )
 
         } footer: {
 
             Text(
-                "Apify usage is only relevant when the Apify download method is selected."
+                "fetchview_apify_footer"
             )
         }
     }
-
-
-    // MARK: - Downloads
 
     private var downloadsSection:
         some View {
@@ -925,36 +712,34 @@ struct FetchView: View {
                 HStack {
 
                     Label(
-                        "Downloads",
+                        "fetchview_downloads",
                         systemImage:
                             "arrow.down.circle"
                     )
 
-
                     Spacer()
 
-
-                    if activeDownloadCount >
-                        0 {
+                    if activeDownloadCount > 0 {
 
                         Text(
-                            "\(activeDownloadCount) active"
+                            String(
+                                format:
+                                    String(
+                                        localized:
+                                            "fetchview_active_downloads"
+                                    ),
+                                activeDownloadCount
+                            )
                         )
-                        .font(
-                            .caption
-                        )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
 
                     } else if !manager.items.isEmpty {
 
                         Text(
                             "\(manager.items.count)"
                         )
-                        .foregroundStyle(
-                            .secondary
-                        )
+                        .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -962,13 +747,10 @@ struct FetchView: View {
         } header: {
 
             Text(
-                "Downloads"
+                "fetchview_downloads"
             )
         }
     }
-
-
-    // MARK: - Output
 
     private var outputSection:
         some View {
@@ -976,39 +758,21 @@ struct FetchView: View {
         Section {
 
             Picker(
-                "Audio Quality",
+                "fetchview_audio_quality",
                 selection:
                     $fetchSettings.quality
             ) {
 
                 ForEach(
                     FetchQuality.allCases
-                ) {
-                    quality in
-
+                ) { quality in
 
                     Text(
                         quality.title
                     )
-                    .tag(
-                        quality
-                    )
+                    .tag(quality)
                 }
             }
-
-/*
-            Toggle(
-                isOn:
-                    $fetchSettings.embedMetadata
-            ) {
-
-                Label(
-                    "Metadata",
-                    systemImage:
-                        "text.badge.checkmark"
-                )
-            }
-*/
 
             Toggle(
                 isOn:
@@ -1016,28 +780,24 @@ struct FetchView: View {
             ) {
 
                 Label(
-                    "Artwork",
-                    systemImage:
-                        "photo"
+                    "fetchview_artwork",
+                    systemImage: "photo"
                 )
             }
 
         } header: {
 
             Text(
-                "Output"
+                "fetchview_output"
             )
 
         } footer: {
 
             Text(
-                "Downloaded songs are saved as MP3 files in your Echo library."
+                "fetchview_output_footer"
             )
         }
     }
-
-
-    // MARK: - Recent
 
     private var recentSection:
         some View {
@@ -1048,23 +808,16 @@ struct FetchView: View {
                 Array(
                     manager.items
                         .reversed()
-                        .prefix(
-                            4
-                        )
+                        .prefix(4)
                 )
-            ) {
-                item in
-
+            ) { item in
 
                 FetchItemRow(
-                    item:
-                        item
+                    item: item
                 )
             }
 
-
-            if manager.items.count >
-                4 {
+            if manager.items.count > 4 {
 
                 NavigationLink {
 
@@ -1073,7 +826,7 @@ struct FetchView: View {
                 } label: {
 
                     Text(
-                        "View All Downloads"
+                        "fetchview_view_all_downloads"
                     )
                 }
             }
@@ -1081,21 +834,16 @@ struct FetchView: View {
         } header: {
 
             Text(
-                "Recent"
+                "fetchview_recent"
             )
         }
     }
-
-
-    // MARK: - Active Downloads
 
     private var activeDownloadCount:
         Int {
 
         manager.items
-            .filter {
-                item in
-
+            .filter { item in
 
                 switch item.status {
 
@@ -1105,7 +853,6 @@ struct FetchView: View {
 
                     return true
 
-
                 default:
 
                     return false
@@ -1114,25 +861,18 @@ struct FetchView: View {
             .count
     }
 
-
-    // MARK: - Method Presentation
-
     private var methodIcon:
         String {
 
         switch apifySettings.downloadMethod {
 
         case .youtube:
-
             return "cloud"
 
-
         case .spotify:
-
             return "terminal"
         }
     }
-
 
     private var methodDescription:
         String {
@@ -1141,68 +881,56 @@ struct FetchView: View {
 
         case .youtube:
 
-            return
-                "Downloads are processed through your configured Apify account."
-
+            return String(
+                localized:
+                    "fetchview_method_apify_description"
+            )
 
         case .spotify:
 
-            return
-                "Audio is resolved locally with the embedded yt-dlp engine."
+            return String(
+                localized:
+                    "fetchview_method_ytdlp_description"
+            )
         }
     }
 
-
-    // MARK: - Refresh
-
     private func refreshForCurrentMethod()
-        async {
+        async
+    {
 
-        if apifySettings.downloadMethod ==
-            .youtube {
+        if
+            apifySettings.downloadMethod
+            == .youtube
+        {
 
             await loadApifyUsage()
         }
     }
 
-
-    // MARK: - Apify Usage
-
     private func loadApifyUsage()
-        async {
+        async
+    {
 
         guard
-            apifySettings.downloadMethod ==
-                .youtube
+            apifySettings.downloadMethod
+            == .youtube
         else {
-
             return
         }
-
 
         guard
             apifySettings.isConfigured
         else {
 
-            apifyUsage =
-                nil
-
-            apifyUsageLoading =
-                false
-
-            apifyUsageError =
-                nil
-
+            apifyUsage = nil
+            apifyUsageLoading = false
+            apifyUsageError = nil
             return
         }
 
-
-        apifyUsageLoading =
-            true
-
-        apifyUsageError =
-            nil
-
+        apifyUsageLoading = true
+        apifyUsageError = nil
 
         do {
 
@@ -1213,16 +941,11 @@ struct FetchView: View {
 
         } catch {
 
-            apifyUsage =
-                nil
-
-
+            apifyUsage = nil
             apifyUsageError =
                 error.localizedDescription
         }
 
-
-        apifyUsageLoading =
-            false
+        apifyUsageLoading = false
     }
 }
