@@ -1558,7 +1558,7 @@ struct SongCollectionView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
-    let title: String
+    let title: LocalizedStringKey
     let songs: [Song]
 
     var body: some View {
