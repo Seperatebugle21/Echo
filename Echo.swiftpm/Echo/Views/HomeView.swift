@@ -72,88 +72,97 @@ struct HomeView: View {
 
         NavigationStack {
 
-            ScrollView {
+           ScrollView {
 
-                LazyVStack(
-                    alignment: .leading,
-                    spacing: 32
-                ) {
+    LazyVStack(
+        alignment: .leading,
+        spacing: 32
+    ) {
 
-                    if !recentlyPlayedSnapshot.isEmpty {
+        // MARK: - Header
 
-                        songSection(
-                            title: "Recent afgespeeld",
-                            songs: recentlyPlayedSnapshot
-                        )
-                    }
+        HStack(alignment: .center) {
 
+            Text("Home")
+                .font(.largeTitle.bold())
 
-                    if !recentlyAdded.isEmpty {
+            Spacer()
 
-                        songSection(
-                            title: "Recent toegevoegd",
-                            songs: recentlyAdded
-                        )
-                    }
+            Button {
 
+                showSettings = true
 
-                    if !favorites.isEmpty {
+            } label: {
 
-                        songSection(
-                            title: "Favorieten",
-                            songs: favorites
-                        )
-                    }
-
-
-                    if !artists.isEmpty {
-
-                        artistSection
-                    }
-
-
-                    if library.songs.isEmpty {
-
-                        ContentUnavailableView(
-                            "Nog geen muziek",
-                            systemImage: "music.note",
-                            description: Text(
-                                "Voeg muziek toe via Fetch of je bibliotheek."
-                            )
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 80)
-                    }
-                }
-
-                .padding(.top, 8)
-                .padding(.bottom, 120)
+                Image(systemName: "gearshape")
+                    .font(.title3.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .frame(
+                        width: 42,
+                        height: 42
+                    )
+                    .background(
+                        .thinMaterial,
+                        in: Circle()
+                    )
             }
 
-            .navigationTitle("Home")
-            .navigationBarTitleDisplayMode(.large)
+            .buttonStyle(.plain)
+        }
+
+        .padding(.horizontal)
+        .padding(.top, 6)
 
 
-            // MARK: Settings
+        // MARK: - Existing Home sections
 
-            .toolbar {
+        if !recentlyPlayedSnapshot.isEmpty {
 
-                ToolbarItem(
-                    placement: .topBarTrailing
-                ) {
+            songSection(
+                title: "Recent afgespeeld",
+                songs: recentlyPlayedSnapshot
+            )
+        }
 
-                    Button {
+        if !recentlyAdded.isEmpty {
 
-                        showSettings = true
+            songSection(
+                title: "Recent toegevoegd",
+                songs: recentlyAdded
+            )
+        }
 
-                    } label: {
+        if !favorites.isEmpty {
 
-                        Image(
-                            systemName: "gearshape"
-                        )
-                    }
-                }
-            }
+            songSection(
+                title: "Favorieten",
+                songs: favorites
+            )
+        }
+
+        if !artists.isEmpty {
+
+            artistSection
+        }
+
+        if library.songs.isEmpty {
+
+            ContentUnavailableView(
+                "Nog geen muziek",
+                systemImage: "music.note",
+                description: Text(
+                    "Voeg muziek toe via Fetch of je bibliotheek."
+                )
+            )
+            .frame(maxWidth: .infinity)
+            .padding(.top, 80)
+        }
+    }
+
+    .padding(.bottom, 120)
+}
+
+            
 
 
             .sheet(
