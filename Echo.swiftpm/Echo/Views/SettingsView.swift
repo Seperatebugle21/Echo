@@ -47,26 +47,10 @@ struct SettingsView: View {
                             $appearanceMode
                     ) {
 
-                        Text(
-                            LocalizedStringKey(
-                                "appearance_system"
-                            )
-                        )
-                        .tag("system")
-
-                        Text(
-                            LocalizedStringKey(
-                                "appearance_light"
-                            )
-                        )
-                        .tag("light")
-
-                        Text(
-                            LocalizedStringKey(
-                                "appearance_dark"
-                            )
-                        )
-                        .tag("dark")
+                        Text("English").tag("en")
+                        Text("Nederlands").tag("nl")
+                        Text("Français").tag("fr")
+                        Text("Deutsch").tag("de")
                     }
                 }
 
