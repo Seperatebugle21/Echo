@@ -343,7 +343,7 @@ struct LibraryView: View {
                                     subtitle:
                                         recentAddedSubtitle,
                                     symbol:
-                                        "clock.badge.plus"
+                                        "plus"
                                 ) {
 
                                     CoverStackArtwork(
