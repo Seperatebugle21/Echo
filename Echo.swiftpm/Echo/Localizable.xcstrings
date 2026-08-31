@@ -11061,6 +11061,34 @@
       }
     }
   }
+},
+"homeview_recommended_for_you": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Aanbevolen voor jou"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recommended for you"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recommandé pour vous"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Für dich empfohlen"
+      }
+    }
+  }
 }
 
   }
