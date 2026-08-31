@@ -24,13 +24,13 @@ struct NowPlayingView: View {
             
             // MARK: - Content
             
-            VStack(spacing: 25) {
+            VStack(spacing: 0) {
                 
-                // Extra ruimte zodat alles wegblijft
-                // van de Dynamic Island / statusbar
+                // Kleine ruimte zodat het lijntje
+                // dicht tegen de bovenrand zit
                 
                 Spacer()
-                    .frame(height: 38)
+                    .frame(height: 10)
                 
                 
                 // MARK: - Drag Indicator
@@ -43,12 +43,21 @@ struct NowPlayingView: View {
                         width: 38,
                         height: 5
                     )
-                    .padding(.bottom, 2)
+                
+                
+                // Flexibele ruimte duwt de rest
+                // van de content naar onder
+                
+                Spacer()
                 
                 
                 // MARK: - Artwork
                 
                 artwork
+                
+                
+                Spacer()
+                    .frame(height: 34)
                 
                 
                 // MARK: - Song Info
@@ -105,6 +114,10 @@ struct NowPlayingView: View {
                     }
                     .padding(.horizontal, 28)
                 }
+                
+                
+                Spacer()
+                    .frame(height: 25)
                 
                 
                 // MARK: - Progress
@@ -167,6 +180,10 @@ struct NowPlayingView: View {
                     )
                 }
                 .padding(.horizontal, 28)
+                
+                
+                Spacer()
+                    .frame(height: 25)
                 
                 
                 // MARK: - Playback Controls
@@ -306,6 +323,10 @@ struct NowPlayingView: View {
                 }
                 
                 
+                Spacer()
+                    .frame(height: 30)
+                
+                
                 // MARK: - Bottom Actions
                 
                 HStack {
@@ -393,7 +414,8 @@ struct NowPlayingView: View {
                 .padding(.horizontal, 30)
                 
                 
-                Spacer(minLength: 18)
+                Spacer()
+                    .frame(height: 14)
             }
         }
         
@@ -519,12 +541,12 @@ struct NowPlayingView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(
-                    width: 280,
-                    height: 280
+                    width: 340,
+                    height: 340
                 )
                 .clipShape(
                     RoundedRectangle(
-                        cornerRadius: 20,
+                        cornerRadius: 24,
                         style: .continuous
                     )
                 )
@@ -540,7 +562,7 @@ struct NowPlayingView: View {
             ZStack {
                 
                 RoundedRectangle(
-                    cornerRadius: 20,
+                    cornerRadius: 24,
                     style: .continuous
                 )
                 .fill(
@@ -552,15 +574,15 @@ struct NowPlayingView: View {
                         "music.note"
                 )
                 .font(
-                    .system(size: 100)
+                    .system(size: 120)
                 )
                 .foregroundStyle(
                     .white.opacity(0.8)
                 )
             }
             .frame(
-                width: 280,
-                height: 280
+                width: 340,
+                height: 340
             )
         }
     }
