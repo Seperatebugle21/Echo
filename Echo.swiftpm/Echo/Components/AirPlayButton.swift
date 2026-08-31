@@ -7,7 +7,7 @@ struct AirPlayButton: UIViewRepresentable {
         
         let view = AVRoutePickerView()
         
-        view.tintColor = .label
+        view.tintColor = .white
         view.activeTintColor = .systemBlue
         
         return view
