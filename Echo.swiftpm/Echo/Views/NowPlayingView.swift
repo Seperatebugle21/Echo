@@ -442,110 +442,51 @@ struct NowPlayingView: View {
 
                     // MARK: - Bottom Actions
 
-                    HStack(spacing: 0) {
+                    HStack {
 
-                        AirPlayButton()
-                            .frame(
-                                width: 25,
-                                height: 25
-                            )
-                            .frame(
-                                maxWidth: .infinity
-                            )
+    AirPlayButton()
+        .frame(width: 30, height: 30)
 
+    Spacer()
 
-                        Button {
+    Button {
+        showPlaylistPicker = true
+    } label: {
+        Image(systemName: "music.note.list")
+            .font(.title3)
+    }
+    .accessibilityLabel(
+        LocalizedStringKey(
+            "add_to_playlist_action"
+        )
+    )
 
-                            showPlaylistPicker = true
+    Button {
+        showLyrics = true
+    } label: {
+        Image(systemName: "quote.bubble")
+            .font(.title3)
+    }
+    .accessibilityLabel(
+        LocalizedStringKey(
+            "lyrics_action"
+        )
+    )
 
-                        } label: {
-
-                            Image(
-                                systemName:
-                                    "music.note.list"
-                            )
-                            .font(
-                                .system(
-                                    size: 19,
-                                    weight: .medium
-                                )
-                            )
-                            .foregroundStyle(
-                                .primary
-                            )
-                            .frame(
-                                maxWidth: .infinity
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(
-                            LocalizedStringKey(
-                                "add_to_playlist_action"
-                            )
-                        )
-
-
-                        Button {
-
-                            showQueue = true
-
-                        } label: {
-
-                            Image(
-                                systemName:
-                                    "list.bullet"
-                            )
-                            .font(
-                                .system(
-                                    size: 19,
-                                    weight: .medium
-                                )
-                            )
-                            .foregroundStyle(
-                                .primary
-                            )
-                            .frame(
-                                maxWidth: .infinity
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(
-                            LocalizedStringKey(
-                                "queue_action"
-                            )
-                        )
-
-
-                        Button {
-
-                            showLyrics = true
-
-                        } label: {
-
-                            Image(
-                                systemName:
-                                    "quote.bubble"
-                            )
-                            .font(
-                                .system(
-                                    size: 19,
-                                    weight: .medium
-                                )
-                            )
-                            .foregroundStyle(
-                                .primary
-                            )
-                            .frame(
-                                maxWidth: .infinity
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(
-                            LocalizedStringKey(
-                                "lyrics_action"
-                            )
-                        )
-                    }
+    Button {
+        showQueue = true
+    } label: {
+        Image(systemName: "list.bullet")
+            .font(.title3)
+    }
+    .accessibilityLabel(
+        LocalizedStringKey(
+            "queue_action"
+        )
+    )
+}
+.padding(.horizontal)
+.padding(.horizontal)
                     .padding(.vertical, 15)
                     .padding(.horizontal, 8)
                     .background(
