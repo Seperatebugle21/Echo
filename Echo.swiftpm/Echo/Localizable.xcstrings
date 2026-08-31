@@ -11067,25 +11067,25 @@
     "nl": {
       "stringUnit": {
         "state": "translated",
-        "value": "Aanbevolen voor jou"
+        "value": "Snelle keuzes"
       }
     },
     "en": {
       "stringUnit": {
         "state": "translated",
-        "value": "Recommended for you"
+        "value": "Quick picks"
       }
     },
     "fr": {
       "stringUnit": {
         "state": "translated",
-        "value": "Recommandé pour vous"
+        "value": "Choix rapides"
       }
     },
     "de": {
       "stringUnit": {
         "state": "translated",
-        "value": "Für dich empfohlen"
+        "value": "Schnelle Auswahl"
       }
     }
   }
