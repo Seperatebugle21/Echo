@@ -19,47 +19,31 @@ struct NowPlayingView: View {
             // MARK: - Background
             
             nowPlayingBackground
+                .ignoresSafeArea()
             
             
             // MARK: - Content
             
             VStack(spacing: 25) {
                 
-                // MARK: Close Button
+                // Extra ruimte zodat alles wegblijft
+                // van de Dynamic Island / statusbar
                 
-                HStack {
-                    
-                    Spacer()
-                    
-                    Button {
-                        dismiss()
-                    } label: {
-                        
-                        Image(
-                            systemName: "chevron.down"
-                        )
-                        .font(
-                            .system(
-                                size: 24,
-                                weight: .semibold
-                            )
-                        )
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "dismiss_action"
-                        )
+                Spacer()
+                    .frame(height: 38)
+                
+                
+                // MARK: - Drag Indicator
+                
+                Capsule()
+                    .fill(
+                        .white.opacity(0.55)
                     )
-                    
-                    Spacer()
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                
-                
-                Spacer(minLength: 0)
+                    .frame(
+                        width: 38,
+                        height: 5
+                    )
+                    .padding(.bottom, 2)
                 
                 
                 // MARK: - Artwork
@@ -97,7 +81,9 @@ struct NowPlayingView: View {
                         Spacer()
                         
                         Button {
+                            
                             showPlaylistPicker = true
+                            
                         } label: {
                             
                             Image(
@@ -131,6 +117,7 @@ struct NowPlayingView: View {
                                 audioPlayer.currentTime
                             },
                             set: { value in
+                                
                                 audioPlayer.seek(
                                     to: value
                                 )
@@ -155,6 +142,7 @@ struct NowPlayingView: View {
                         }
                     )
                     .tint(.white)
+                    
                     
                     HStack {
                         
@@ -188,7 +176,9 @@ struct NowPlayingView: View {
                     // Shuffle
                     
                     Button {
+                        
                         audioPlayer.toggleShuffle()
+                        
                     } label: {
                         
                         Image(
@@ -212,7 +202,9 @@ struct NowPlayingView: View {
                     // Previous
                     
                     Button {
+                        
                         audioPlayer.previous()
+                        
                     } label: {
                         
                         Image(
@@ -233,7 +225,9 @@ struct NowPlayingView: View {
                     // Play / Pause
                     
                     Button {
+                        
                         audioPlayer.togglePlayPause()
+                        
                     } label: {
                         
                         Image(
@@ -262,7 +256,9 @@ struct NowPlayingView: View {
                     // Next
                     
                     Button {
+                        
                         audioPlayer.next()
+                        
                     } label: {
                         
                         Image(
@@ -283,20 +279,20 @@ struct NowPlayingView: View {
                     // Repeat
                     
                     Button {
+                        
                         audioPlayer.toggleRepeat()
+                        
                     } label: {
                         
                         Image(
                             systemName:
-                                audioPlayer.repeatMode
-                                == .one
+                                audioPlayer.repeatMode == .one
                                 ? "repeat.1"
                                 : "repeat"
                         )
                         .font(.title2)
                         .foregroundStyle(
-                            audioPlayer.repeatMode
-                            == .off
+                            audioPlayer.repeatMode == .off
                             ? Color.white
                             : Color.red
                         )
@@ -329,7 +325,9 @@ struct NowPlayingView: View {
                     // Add to Playlist
                     
                     Button {
+                        
                         showPlaylistPicker = true
+                        
                     } label: {
                         
                         Image(
@@ -350,7 +348,9 @@ struct NowPlayingView: View {
                     // Lyrics
                     
                     Button {
+                        
                         showLyrics = true
+                        
                     } label: {
                         
                         Image(
@@ -371,7 +371,9 @@ struct NowPlayingView: View {
                     // Queue
                     
                     Button {
+                        
                         showQueue = true
+                        
                     } label: {
                         
                         Image(
@@ -391,15 +393,17 @@ struct NowPlayingView: View {
                 .padding(.horizontal, 30)
                 
                 
-                Spacer(minLength: 12)
+                Spacer(minLength: 18)
             }
         }
+        
         
         // MARK: - Queue Sheet
         
         .sheet(
             isPresented: $showQueue
         ) {
+            
             QueueView()
         }
         
@@ -407,13 +411,10 @@ struct NowPlayingView: View {
         // MARK: - Playlist Sheet
         
         .sheet(
-            isPresented:
-                $showPlaylistPicker
+            isPresented: $showPlaylistPicker
         ) {
             
-            if let song =
-                audioPlayer.currentSong
-            {
+            if let song = audioPlayer.currentSong {
                 
                 PlaylistPickerView(
                     song: song
@@ -429,6 +430,7 @@ struct NowPlayingView: View {
         ) {
             
             NavigationStack {
+                
                 LyricsView()
             }
         }
@@ -463,21 +465,27 @@ struct NowPlayingView: View {
                     .scaleEffect(1.35)
                     .blur(radius: 65)
                     .saturation(1.25)
+                    
+                    // Iets lichter dan voordien
                     .overlay {
                         
                         Color.black
-                            .opacity(0.42)
+                            .opacity(0.34)
                     }
+                    
                     .overlay {
                         
                         LinearGradient(
                             colors: [
+                                
                                 Color.black
-                                    .opacity(0.08),
+                                    .opacity(0.04),
+                                
                                 Color.black
-                                    .opacity(0.18),
+                                    .opacity(0.13),
+                                
                                 Color.black
-                                    .opacity(0.58)
+                                    .opacity(0.52)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -485,18 +493,10 @@ struct NowPlayingView: View {
                     }
                     .clipped()
             }
-            .ignoresSafeArea()
             
         } else {
             
-            ZStack {
-                
-                Color.black
-                
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-            }
-            .ignoresSafeArea()
+            Color.black
         }
     }
     
@@ -530,9 +530,9 @@ struct NowPlayingView: View {
                 )
                 .shadow(
                     color:
-                        .black.opacity(0.30),
-                    radius: 22,
-                    y: 12
+                        .black.opacity(0.28),
+                    radius: 20,
+                    y: 10
                 )
             
         } else {
