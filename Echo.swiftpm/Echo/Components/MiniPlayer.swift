@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 
 // MARK: - Custom Full Detent
@@ -10,6 +11,64 @@ extension PresentationDetent {
 private struct FullDetent: CustomPresentationDetent {
     static func height(in context: Context) -> CGFloat? {
         context.maxDetentValue
+    }
+}
+
+
+// MARK: - Transparent Full Screen Cover
+
+extension View {
+    func transparentFullScreenCover<Content: View>(
+        isPresented: Binding<Bool>,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        
+        self.background(
+            TransparentFullScreenCoverHelper(
+                isPresented: isPresented,
+                fullScreenContent: content
+            )
+        )
+    }
+}
+
+private struct TransparentFullScreenCoverHelper<Content: View>: UIViewControllerRepresentable {
+    
+    @Binding var isPresented: Bool
+    let fullScreenContent: () -> Content
+    
+    func makeUIViewController(context: Context) -> UIViewController {
+        UIViewController()
+    }
+    
+    func updateUIViewController(
+        _ uiViewController: UIViewController,
+        context: Context
+    ) {
+        
+        if isPresented {
+            
+            guard uiViewController.presentedViewController == nil else { return }
+            
+            let hostingController = UIHostingController(
+                rootView: fullScreenContent()
+            )
+            
+            hostingController.view.backgroundColor = .clear
+            hostingController.view.isOpaque = false
+            hostingController.modalPresentationStyle = .overFullScreen
+            
+            uiViewController.present(
+                hostingController,
+                animated: true
+            )
+            
+        } else {
+            
+            guard uiViewController.presentedViewController != nil else { return }
+            
+            uiViewController.dismiss(animated: false)
+        }
     }
 }
 
@@ -198,9 +257,9 @@ struct MiniPlayer: View {
             
             // MARK: - Now Playing
             
-            .fullScreenCover(isPresented: $showNowPlaying) {
+            .transparentFullScreenCover(isPresented: $showNowPlaying) {
                 NowPlayingView()
-            .interactiveDismiss(isPresented: $showNowPlaying)
+                    .interactiveDismiss(isPresented: $showNowPlaying)
             }
         }
     }
@@ -305,15 +364,22 @@ struct MiniPlayer: View {
     }
 }
 
+
+// MARK: - Interactive Dismiss
+
 struct InteractiveDismiss: ViewModifier {
     @Binding var isPresented: Bool
     @State private var offset: CGFloat = 0
-    @Environment(\.dismiss) private var dismiss
 
     func body(content: Content) -> some View {
         content
             .offset(y: max(offset, 0))
-           // .background(.black.opacity(1 - min(offset / 400, 0.4)))
+            .clipShape(
+                RoundedRectangle(
+                    cornerRadius: offset > 0 ? 40 : 0,
+                    style: .continuous
+                )
+            )
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -322,9 +388,24 @@ struct InteractiveDismiss: ViewModifier {
                         }
                     }
                     .onEnded { value in
+                        
                         if value.translation.height > 120 {
-                            dismiss()
+                            
+                            withAnimation(
+                                .easeInOut(duration: 0.25)
+                            ) {
+                                offset = UIScreen.main.bounds.height
+                            }
+                            
+                            DispatchQueue.main.asyncAfter(
+                                deadline: .now() + 0.25
+                            ) {
+                                isPresented = false
+                                offset = 0
+                            }
+                            
                         } else {
+                            
                             withAnimation(.spring()) {
                                 offset = 0
                             }
