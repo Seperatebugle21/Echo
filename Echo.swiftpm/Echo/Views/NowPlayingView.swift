@@ -1,251 +1,622 @@
 import SwiftUI
 
 struct NowPlayingView: View {
-    
-    @Environment(AudioPlayerManager.self) private var audioPlayer
-    @Environment(\.dismiss) private var dismiss
-    
+
+    @Environment(AudioPlayerManager.self)
+    private var audioPlayer
+
+    @Environment(\.dismiss)
+    private var dismiss
+
     @State private var showQueue = false
     @State private var showPlaylistPicker = false
     @State private var showLyrics = false
-    
+
     var body: some View {
-        
-        VStack(spacing: 25) {
-            
-            // Sluit knop
-            HStack {
-                Spacer()
-                
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "chevron.down")
-                        .font(.title)
-                }
-                .accessibilityLabel(LocalizedStringKey("dismiss_action"))
-                
-                Spacer()
-            }
-            .padding()
-            
-            Spacer()
-            
-            // Albumhoes
-            if let song = audioPlayer.currentSong,
-               let data = song.coverData,
-               let image = UIImage(data: data) {
-                
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(
-                        width: 260,
-                        height: 260
-                    )
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 20
-                        )
-                    )
-                
-            } else {
-                
-                Image(systemName: "music.note")
-                    .font(.system(size: 100))
-                    .frame(
-                        width: 260,
-                        height: 260
-                    )
-                    .background(.thinMaterial)
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 20
-                        )
-                    )
-            }
-            
-            // Titel + playlist
-            if let song = audioPlayer.currentSong {
-                
-                HStack(alignment: .center) {
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        
-                        Text(song.title)
-                            .font(.title2)
-                            .bold()
-                            .lineLimit(1)
-                        
-                        Text(song.artist)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                    
-                    Spacer()
-                    
-                    Button {
-                        showPlaylistPicker = true
-                    } label: {
-                        Image(systemName: "music.note.list")
-                            .font(.title3)
-                    }
-                    .accessibilityLabel(LocalizedStringKey("add_to_playlist_action"))
-                }
-                .padding(.horizontal)
-            }
-            
-            // Slider
-            VStack {
-                
-                Slider(
-                    value: Binding(
-                        get: {
-                            audioPlayer.currentTime
-                        },
-                        set: { value in
-                            audioPlayer.seek(to: value)
+
+        GeometryReader { geometry in
+
+            let artworkSize =
+                min(
+                    geometry.size.width - 48,
+                    320
+                )
+
+            ScrollView(
+                .vertical,
+                showsIndicators: false
+            ) {
+
+                VStack(spacing: 0) {
+
+                    // MARK: - Top
+
+                    HStack {
+
+                        Spacer()
+
+                        Button {
+                            dismiss()
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "chevron.down"
+                            )
+                            .font(
+                                .system(
+                                    size: 19,
+                                    weight: .semibold
+                                )
+                            )
+                            .foregroundStyle(.primary)
+                            .frame(
+                                width: 42,
+                                height: 42
+                            )
+                            .background(
+                                .thinMaterial,
+                                in: Circle()
+                            )
                         }
-                    ),
-                    in: 0...max(audioPlayer.duration, 1),
-                    onEditingChanged: { editing in
-                        if editing {
-                            audioPlayer.pauseForSeeking()
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "dismiss_action"
+                            )
+                        )
+
+                        Spacer()
+                    }
+                    .padding(.top, 10)
+                    .padding(.bottom, 24)
+
+
+                    // MARK: - Artwork
+
+                    Group {
+
+                        if
+                            let song =
+                                audioPlayer.currentSong,
+                            let data =
+                                song.coverData,
+                            let image =
+                                UIImage(data: data)
+                        {
+
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(
+                                    width: artworkSize,
+                                    height: artworkSize
+                                )
+                                .clipShape(
+                                    RoundedRectangle(
+                                        cornerRadius: 26,
+                                        style: .continuous
+                                    )
+                                )
+
                         } else {
-                            audioPlayer.resumeAfterSeeking()
+
+                            ZStack {
+
+                                RoundedRectangle(
+                                    cornerRadius: 26,
+                                    style: .continuous
+                                )
+                                .fill(.thinMaterial)
+
+                                Image(
+                                    systemName:
+                                        "music.note"
+                                )
+                                .font(
+                                    .system(
+                                        size: 82,
+                                        weight: .medium
+                                    )
+                                )
+                                .foregroundStyle(
+                                    .secondary
+                                )
+                            }
+                            .frame(
+                                width: artworkSize,
+                                height: artworkSize
+                            )
                         }
                     }
-                )
-                
-                HStack {
-                    
-                    Text(formatTime(audioPlayer.currentTime))
-                    
-                    Spacer()
-                    
-                    Text(formatTime(audioPlayer.duration))
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal)
-            
-            // Bedieningsknoppen
-            HStack(spacing: 35) {
-                
-                Button {
-                    audioPlayer.toggleShuffle()
-                } label: {
-                    Image(systemName: "shuffle")
-                        .font(.title2)
-                        .foregroundColor(
-                            audioPlayer.shuffleEnabled
-                            ? .red
-                            : .primary
+                    .frame(maxWidth: .infinity)
+
+
+                    // MARK: - Song Info
+
+                    if
+                        let song =
+                            audioPlayer.currentSong
+                    {
+
+                        VStack(
+                            alignment: .leading,
+                            spacing: 6
+                        ) {
+
+                            Text(song.title)
+                                .font(
+                                    .title2
+                                        .weight(.bold)
+                                )
+                                .foregroundStyle(
+                                    .primary
+                                )
+                                .lineLimit(1)
+
+                            Text(song.artist)
+                                .font(
+                                    .body
+                                        .weight(.medium)
+                                )
+                                .foregroundStyle(
+                                    .secondary
+                                )
+                                .lineLimit(1)
+                        }
+                        .frame(
+                            maxWidth: .infinity,
+                            alignment: .leading
                         )
-                }
-                .accessibilityLabel(LocalizedStringKey("shuffle_action"))
-                
-                Button {
-                    audioPlayer.previous()
-                } label: {
-                    Image(systemName: "backward.fill")
-                        .font(.title2)
-                }
-                .accessibilityLabel(LocalizedStringKey("previous_track_action"))
-                
-                Button {
-                    audioPlayer.togglePlayPause()
-                } label: {
-                    Image(systemName:
+                        .padding(.horizontal, 24)
+                        .padding(.top, 24)
+                    }
+
+
+                    // MARK: - Progress
+
+                    VStack(spacing: 7) {
+
+                        Slider(
+                            value: Binding(
+                                get: {
+                                    audioPlayer
+                                        .currentTime
+                                },
+                                set: { value in
+                                    audioPlayer
+                                        .seek(
+                                            to: value
+                                        )
+                                }
+                            ),
+                            in:
+                                0...
+                                max(
+                                    audioPlayer
+                                        .duration,
+                                    1
+                                ),
+                            onEditingChanged: {
+                                editing in
+
+                                if editing {
+
+                                    audioPlayer
+                                        .pauseForSeeking()
+
+                                } else {
+
+                                    audioPlayer
+                                        .resumeAfterSeeking()
+                                }
+                            }
+                        )
+
+                        HStack {
+
+                            Text(
+                                formatTime(
+                                    audioPlayer
+                                        .currentTime
+                                )
+                            )
+
+                            Spacer()
+
+                            Text(
+                                formatTime(
+                                    audioPlayer
+                                        .duration
+                                )
+                            )
+                        }
+                        .font(.caption)
+                        .foregroundStyle(
+                            .secondary
+                        )
+                        .monospacedDigit()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
+
+
+                    // MARK: - Playback Controls
+
+                    HStack(
+                        alignment: .center,
+                        spacing: 0
+                    ) {
+
+                        Button {
+
+                            audioPlayer
+                                .toggleShuffle()
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "shuffle"
+                            )
+                            .font(
+                                .system(
+                                    size: 19,
+                                    weight: .semibold
+                                )
+                            )
+                            .foregroundStyle(
+                                audioPlayer
+                                    .shuffleEnabled
+                                ? Color.red
+                                : Color.primary
+                            )
+                            .frame(
+                                maxWidth:
+                                    .infinity
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "shuffle_action"
+                            )
+                        )
+
+
+                        Button {
+
+                            audioPlayer
+                                .previous()
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "backward.fill"
+                            )
+                            .font(
+                                .system(
+                                    size: 27,
+                                    weight: .semibold
+                                )
+                            )
+                            .foregroundStyle(
+                                .primary
+                            )
+                            .frame(
+                                maxWidth:
+                                    .infinity
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "previous_track_action"
+                            )
+                        )
+
+
+                        Button {
+
+                            audioPlayer
+                                .togglePlayPause()
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    audioPlayer
+                                        .isPlaying
+                                    ? "pause.fill"
+                                    : "play.fill"
+                            )
+                            .font(
+                                .system(
+                                    size: 27,
+                                    weight: .semibold
+                                )
+                            )
+                            .foregroundStyle(
+                                Color(
+                                    .systemBackground
+                                )
+                            )
+                            .frame(
+                                width: 72,
+                                height: 72
+                            )
+                            .background(
+                                Color.primary,
+                                in: Circle()
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
                             audioPlayer.isPlaying
-                          ? "pause.circle.fill"
-                          : "play.circle.fill"
+                            ? LocalizedStringKey(
+                                "pause_action"
+                            )
+                            : LocalizedStringKey(
+                                "play_action"
+                            )
+                        )
+
+
+                        Button {
+
+                            audioPlayer
+                                .next()
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "forward.fill"
+                            )
+                            .font(
+                                .system(
+                                    size: 27,
+                                    weight: .semibold
+                                )
+                            )
+                            .foregroundStyle(
+                                .primary
+                            )
+                            .frame(
+                                maxWidth:
+                                    .infinity
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "next_track_action"
+                            )
+                        )
+
+
+                        Button {
+
+                            audioPlayer
+                                .toggleRepeat()
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    audioPlayer
+                                        .repeatMode
+                                    == .one
+                                    ? "repeat.1"
+                                    : "repeat"
+                            )
+                            .font(
+                                .system(
+                                    size: 19,
+                                    weight: .semibold
+                                )
+                            )
+                            .foregroundStyle(
+                                audioPlayer
+                                    .repeatMode
+                                == .off
+                                ? Color.primary
+                                : Color.red
+                            )
+                            .frame(
+                                maxWidth:
+                                    .infinity
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "repeat_action"
+                            )
+                        )
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 28)
+
+
+                    // MARK: - Bottom Actions
+
+                    HStack(spacing: 0) {
+
+                        AirPlayButton()
+                            .frame(
+                                width: 25,
+                                height: 25
+                            )
+                            .frame(
+                                maxWidth: .infinity
+                            )
+
+
+                        Button {
+
+                            showPlaylistPicker = true
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "music.note.list"
+                            )
+                            .font(
+                                .system(
+                                    size: 19,
+                                    weight: .medium
+                                )
+                            )
+                            .foregroundStyle(
+                                .primary
+                            )
+                            .frame(
+                                maxWidth: .infinity
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "add_to_playlist_action"
+                            )
+                        )
+
+
+                        Button {
+
+                            showQueue = true
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "list.bullet"
+                            )
+                            .font(
+                                .system(
+                                    size: 19,
+                                    weight: .medium
+                                )
+                            )
+                            .foregroundStyle(
+                                .primary
+                            )
+                            .frame(
+                                maxWidth: .infinity
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "queue_action"
+                            )
+                        )
+
+
+                        Button {
+
+                            showLyrics = true
+
+                        } label: {
+
+                            Image(
+                                systemName:
+                                    "quote.bubble"
+                            )
+                            .font(
+                                .system(
+                                    size: 19,
+                                    weight: .medium
+                                )
+                            )
+                            .foregroundStyle(
+                                .primary
+                            )
+                            .frame(
+                                maxWidth: .infinity
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(
+                            LocalizedStringKey(
+                                "lyrics_action"
+                            )
+                        )
+                    }
+                    .padding(.vertical, 15)
+                    .padding(.horizontal, 8)
+                    .background(
+                        .thinMaterial,
+                        in:
+                            RoundedRectangle(
+                                cornerRadius: 22,
+                                style: .continuous
+                            )
                     )
-                    .font(.system(size: 70))
+                    .padding(.horizontal, 24)
+                    .padding(.top, 32)
+                    .padding(.bottom, 30)
                 }
-                .accessibilityLabel(
-                    audioPlayer.isPlaying
-                    ? LocalizedStringKey("pause_action")
-                    : LocalizedStringKey("play_action")
+            }
+        }
+
+        .sheet(
+            isPresented: $showQueue
+        ) {
+
+            QueueView()
+        }
+
+        .sheet(
+            isPresented:
+                $showPlaylistPicker
+        ) {
+
+            if
+                let song =
+                    audioPlayer.currentSong
+            {
+
+                PlaylistPickerView(
+                    song: song
                 )
-                
-                Button {
-                    audioPlayer.next()
-                } label: {
-                    Image(systemName: "forward.fill")
-                        .font(.title2)
-                }
-                .accessibilityLabel(LocalizedStringKey("next_track_action"))
-                
-                Button {
-                    audioPlayer.toggleRepeat()
-                } label: {
-                    Image(
-                        systemName:
-                            audioPlayer.repeatMode == .one
-                        ? "repeat.1"
-                        : "repeat"
-                    )
-                    .font(.title2)
-                    .foregroundColor(
-                        audioPlayer.repeatMode == .off
-                        ? .primary
-                        : .red
-                    )
-                }
-                .accessibilityLabel(LocalizedStringKey("repeat_action"))
             }
-            
-            // Onderste rij
-            HStack {
-                
-                AirPlayButton()
-                    .frame(width: 30, height: 30)
-                
-                Spacer()
-                
-                Button {
-                    showLyrics = true
-                } label: {
-                    Image(systemName: "quote.bubble")
-                        .font(.title3)
-                }
-                .offset(x: -8)
-                .accessibilityLabel(LocalizedStringKey("lyrics_action"))
-                
-                Button {
-                    showQueue = true
-                } label: {
-                    Image(systemName: "list.bullet")
-                        .font(.title3)
-                }
-                .accessibilityLabel(LocalizedStringKey("queue_action"))
-                .sheet(isPresented: $showQueue) {
-                    QueueView()
-                }
-                .sheet(isPresented: $showPlaylistPicker) {
-                    if let song = audioPlayer.currentSong {
-                        PlaylistPickerView(song: song)
-                    }
-                }
-                .sheet(isPresented: $showLyrics) {
-                    NavigationStack {
-                        LyricsView()
-                    }
-                }
+        }
+
+        .sheet(
+            isPresented: $showLyrics
+        ) {
+
+            NavigationStack {
+
+                LyricsView()
             }
-            .padding(.horizontal)
-            .padding(.horizontal)
-            
-            Spacer()
         }
     }
-    
-    func formatTime(_ time: Double) -> String {
-        let minutes = Int(time) / 60
-        let seconds = Int(time) % 60
-        
+
+
+    // MARK: - Time Formatting
+
+    private func formatTime(
+        _ time: Double
+    ) -> String {
+
+        guard
+            time.isFinite,
+            time >= 0
+        else {
+            return "0:00"
+        }
+
+        let minutes =
+            Int(time) / 60
+
+        let seconds =
+            Int(time) % 60
+
         return String(
             format: "%d:%02d",
             minutes,
