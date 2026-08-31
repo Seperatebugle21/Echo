@@ -3,12 +3,18 @@ import AVKit
 
 struct AirPlayButton: UIViewRepresentable {
     
-    func makeUIView(context: Context) -> AVRoutePickerView {
+    var tintColor: UIColor = .label
+    var activeTintColor: UIColor = .systemBlue
+    
+    
+    func makeUIView(
+        context: Context
+    ) -> AVRoutePickerView {
         
         let view = AVRoutePickerView()
         
-        view.tintColor = .white
-        view.activeTintColor = .systemBlue
+        view.tintColor = tintColor
+        view.activeTintColor = activeTintColor
         
         return view
     }
@@ -19,5 +25,7 @@ struct AirPlayButton: UIViewRepresentable {
         context: Context
     ) {
         
+        uiView.tintColor = tintColor
+        uiView.activeTintColor = activeTintColor
     }
 }
