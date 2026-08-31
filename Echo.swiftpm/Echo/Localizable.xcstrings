@@ -10933,6 +10933,134 @@
       }
     }
   }
+},
+"searchview_recent_searches": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recent Searches"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recente zoekopdrachten"
+      }
+    }
+  }
+},
+"searchview_clear_recent": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Clear"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Wis"
+      }
+    }
+  }
+},
+"searchview_recently_searched": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recently Searched"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recent gezocht"
+      }
+    }
+  }
+},
+"searchview_your_artists": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Your Artists"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Jouw artiesten"
+      }
+    }
+  }
+},
+"searchview_browse_albums": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Albums"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Albums"
+      }
+    }
+  }
+},
+"searchview_browse_playlists": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Playlists"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Playlists"
+      }
+    }
+  }
+},
+"searchview_empty_library_title": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Nothing to search yet"
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Nog niets om te zoeken"
+      }
+    }
+  }
+},
+"searchview_empty_library_description": {
+  "localizations": {
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Add music to your library to start searching."
+      }
+    },
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Voeg muziek toe aan je bibliotheek om te beginnen met zoeken."
+      }
+    }
+  }
 }
 
   }
