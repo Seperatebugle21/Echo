@@ -11,11 +11,20 @@ struct HomeView: View {
     private let recommendationManager =
         RecommendationManager.shared
 
+    private let homeSession =
+        HomeSessionManager.shared
+
     @State private var recommendedSnapshot: [Song] = []
     @State private var recentlyPlayedSnapshot: [Song] = []
+    @State private var favoritesSnapshot: [Song] = []
+
     @State private var showSettings = false
 
+
+    // MARK: - Recently Added
+
     private var recentlyAdded: [Song] {
+
         Array(
             library.songs
                 .sorted {
@@ -25,12 +34,8 @@ struct HomeView: View {
         )
     }
 
-    private var favorites: [Song] {
-        Array(
-            library.favoriteSongs
-                .prefix(10)
-        )
-    }
+
+    // MARK: - Artists
 
     private var artists: [ArtistGroup] {
 
@@ -70,6 +75,9 @@ struct HomeView: View {
             }
     }
 
+
+    // MARK: - Body
+
     var body: some View {
 
         NavigationStack {
@@ -80,6 +88,8 @@ struct HomeView: View {
                     alignment: .leading,
                     spacing: 32
                 ) {
+
+                    // MARK: Header
 
                     HStack(
                         alignment: .center
@@ -119,6 +129,7 @@ struct HomeView: View {
                     .padding(.horizontal)
                     .padding(.top, 6)
 
+
                     // MARK: - Recommended
 
                     if !recommendedSnapshot.isEmpty {
@@ -130,6 +141,7 @@ struct HomeView: View {
                                 recommendedSnapshot
                         )
                     }
+
 
                     // MARK: - Recently Played
 
@@ -143,6 +155,7 @@ struct HomeView: View {
                         )
                     }
 
+
                     // MARK: - Recently Added
 
                     if !recentlyAdded.isEmpty {
@@ -155,25 +168,30 @@ struct HomeView: View {
                         )
                     }
 
+
                     // MARK: - Favorites
 
-                    if !favorites.isEmpty {
+                    if !favoritesSnapshot.isEmpty {
 
                         songSection(
                             title:
                                 "homeview_favorites",
                             songs:
-                                favorites,
+                                favoritesSnapshot,
                             queue:
-                                favorites
+                                favoritesSnapshot
                         )
                     }
+
 
                     // MARK: - Artists
 
                     if !artists.isEmpty {
                         artistSection
                     }
+
+
+                    // MARK: - Empty Library
 
                     if library.songs.isEmpty {
 
@@ -195,6 +213,9 @@ struct HomeView: View {
                 .padding(.bottom, 120)
             }
 
+
+            // MARK: - Settings
+
             .sheet(
                 isPresented:
                     $showSettings
@@ -202,24 +223,20 @@ struct HomeView: View {
                 SettingsView()
             }
 
+
+            // MARK: - Session Snapshot
+
             .onAppear {
-                refreshHomeSnapshots()
+
+                prepareSessionSnapshots()
             }
 
-            // Herbereken wanneer de learning-engine
-            // nieuwe luisterinformatie heeft opgeslagen.
-            .onChange(
-                of:
-                    recommendationManager
-                        .revision
-            ) {
-                _, _ in
 
-                refreshRecommendations()
-            }
-
-            // Ook opnieuw berekenen wanneer songs
-            // worden toegevoegd/verwijderd.
+            // Alleen nodig om een lege/new library tijdens
+            // dezelfde sessie bruikbaar te houden.
+            //
+            // Bestaande recommendations worden NIET opnieuw
+            // berekend wanneer de learning engine verandert.
             .onChange(
                 of:
                     library.songs
@@ -227,64 +244,40 @@ struct HomeView: View {
             ) {
                 _, _ in
 
-                refreshHomeSnapshots()
-            }
-
-            // Favorieten beïnvloeden de score sterk.
-            .onChange(
-                of:
-                    library.favoriteSongIDs
-            ) {
-                _, _ in
-
-                refreshRecommendations()
+                prepareSessionSnapshots()
             }
         }
     }
 
-    // MARK: - Snapshots
 
-    private func refreshHomeSnapshots() {
-        refreshRecentlyPlayed()
-        refreshRecommendations()
-    }
+    // MARK: - Prepare Session Snapshots
 
-    private func refreshRecommendations() {
+    private func prepareSessionSnapshots() {
+
+        homeSession.prepareIfNeeded(
+            songs:
+                library.songs,
+            favorites:
+                library.favoriteSongs,
+            favoriteSongIDs:
+                library.favoriteSongIDs,
+            recommendationManager:
+                recommendationManager
+        )
 
         recommendedSnapshot =
-            recommendationManager
-                .recommendations(
-                    from:
-                        library.songs,
-                    favoriteSongIDs:
-                        library.favoriteSongIDs,
-                    limit:
-                        12
-                )
-    }
-
-    private func refreshRecentlyPlayed() {
+            homeSession.recommendedSongs
+            ?? []
 
         recentlyPlayedSnapshot =
-            Array(
-                library.songs
-                    .filter {
-                        $0.lastPlayed != nil
-                    }
-                    .sorted {
-                        (
-                            $0.lastPlayed
-                            ?? .distantPast
-                        )
-                        >
-                        (
-                            $1.lastPlayed
-                            ?? .distantPast
-                        )
-                    }
-                    .prefix(10)
-            )
+            homeSession.recentlyPlayedSongs
+            ?? []
+
+        favoritesSnapshot =
+            homeSession.favoriteSongs
+            ?? []
     }
+
 
     // MARK: - Song Section
 
@@ -365,6 +358,7 @@ struct HomeView: View {
             }
         }
     }
+
 
     // MARK: - Artist Section
 
@@ -461,6 +455,7 @@ struct HomeView: View {
             }
         }
     }
+
 
     // MARK: - Play
 
