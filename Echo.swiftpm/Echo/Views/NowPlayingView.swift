@@ -318,7 +318,7 @@ struct NowPlayingView: View {
                     
                     AirPlayButton(
                         tintColor: .white,
-                        activeTintColor: .blue
+                        activeTintColor: .white
                     )
                     .frame(
                         width: 30,
