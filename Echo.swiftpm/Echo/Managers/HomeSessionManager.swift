@@ -14,11 +14,19 @@ final class HomeSessionManager {
     func prepareIfNeeded(
         songs: [Song],
         favorites: [Song],
-        favoriteSongIDs: Set<UUID>,
+        favoriteSongIDs: [UUID],
         recommendationManager: RecommendationManager
     ) {
-        // Aanbevolen wordt maar één keer per app-run berekend.
+
+        guard !songs.isEmpty else {
+            return
+        }
+
+        // MARK: - Recommended
+
+     
         if recommendedSongs == nil {
+
             recommendedSongs =
                 recommendationManager
                     .recommendations(
@@ -28,8 +36,11 @@ final class HomeSessionManager {
                     )
         }
 
-        // Recent afgespeeld wordt ook als snapshot bewaard.
+
+        // MARK: - Recently Played
+
         if recentlyPlayedSongs == nil {
+
             recentlyPlayedSongs =
                 Array(
                     songs
@@ -45,10 +56,12 @@ final class HomeSessionManager {
                 )
         }
 
-        // Eerst ALLE favorieten shufflen en daarna pas 10 nemen.
-        // Daardoor krijg je bij een nieuwe app-start ook andere songs,
-        // niet alleen dezelfde songs in een andere volgorde.
+
+        // MARK: - Favorites
+
+     
         if favoriteSongs == nil {
+
             favoriteSongs =
                 Array(
                     favorites
