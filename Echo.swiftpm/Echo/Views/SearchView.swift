@@ -547,7 +547,7 @@ struct SearchView: View {
 
                 ForEach(
                     Array(
-                        recentQueries.prefix(6)
+                        recentQueries.prefix(4)
                     ),
                     id: \.self
                 ) { query in
@@ -609,7 +609,7 @@ struct SearchView: View {
                     if query
                         !=
                         Array(
-                            recentQueries.prefix(6)
+                            recentQueries.prefix(4)
                         ).last
                     {
 
@@ -654,7 +654,7 @@ struct SearchView: View {
                 LazyHStack(spacing: 15) {
 
                     ForEach(
-                        recentlySearchedSongs.prefix(10)
+                        recentlySearchedSongs.prefix(6)
                     ) { song in
 
                         Button {
@@ -1467,7 +1467,7 @@ struct SearchView: View {
 
         searches =
             Array(
-                searches.prefix(8)
+                searches.prefix(4)
             )
 
         if let data =
@@ -1510,7 +1510,7 @@ struct SearchView: View {
 
         ids =
             Array(
-                ids.prefix(10)
+                ids.prefix(6)
             )
 
         if let data =
