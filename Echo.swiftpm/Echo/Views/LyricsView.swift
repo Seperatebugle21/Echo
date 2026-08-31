@@ -473,68 +473,64 @@ struct LyricsView: View {
     
     
     private func parseLine(
-        _ line: String
-    ) -> LyricLine? {
-        
-        guard line.hasPrefix("[")
-        else {
-            return nil
-        }
-        
-        guard
-            let closingBracket =
-                line.firstIndex(of: "]")
-        else {
-            return nil
-        }
-        
-        let timeString =
-            String(
-                line[
-                    line.index(
-                        after:
-                            line.startIndex
-                    )
-                    ..<
-                    closingBracket
-                ]
-            )
-        
-        let text =
-            String(
-                line[
-                    line.index(
-                        after:
-                            closingBracket
-                    )
-                    ...
-                ]
-            )
-            .trimmingCharacters(
-                in: .whitespaces
-            )
-        
-        let components =
-            timeString.split(
-                separator: ":"
-            )
-        
-        guard
-            components.count == 2,
-            let minutes =
-                Double(components[0]),
-            let seconds =
-                Double(components[1])
-        else {
-            return nil
-        }
-        
-        return LyricLine(
-            time:
-                minutes * 60 + seconds,
-            text: text
-        )
+    _ line: String
+) -> LyricLine? {
+
+    guard line.hasPrefix("[") else {
+        return nil
     }
+
+    guard let closingBracket =
+        line.firstIndex(of: "]")
+    else {
+        return nil
+    }
+
+    let timeStart =
+        line.index(
+            after: line.startIndex
+        )
+
+    let timeString =
+        String(
+            line[
+                timeStart..<closingBracket
+            ]
+        )
+
+    let textStart =
+        line.index(
+            after: closingBracket
+        )
+
+    let text =
+        String(
+            line[textStart...]
+        )
+        .trimmingCharacters(
+            in: .whitespaces
+        )
+
+    let components =
+        timeString.split(
+            separator: ":"
+        )
+
+    guard
+        components.count == 2,
+        let minutes =
+            Double(components[0]),
+        let seconds =
+            Double(components[1])
+    else {
+        return nil
+    }
+
+    return LyricLine(
+        time: minutes * 60 + seconds,
+        text: text
+    )
+}
     
     
     // MARK: - Plain Lyrics
