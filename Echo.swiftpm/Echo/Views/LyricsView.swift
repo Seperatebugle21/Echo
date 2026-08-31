@@ -91,7 +91,9 @@ struct LyricsView: View {
                                         
                                         // Wit voor alle lyrics
                                         .foregroundStyle(
-                                            Color.white
+                                                isCurrent
+                                                ? Color.white
+                                                : Color.white.opacity(0.48)
                                         )
                                         
                                         .blur(
@@ -345,38 +347,57 @@ struct LyricsView: View {
     
     
     private func calculateOpacity(
-        for distance: Int
-    ) -> Double {
-        
-        if isUserScrolling {
-            return 1.0
+    for distance: Int
+) -> Double {
+
+    // Huidige regel altijd volledig helder
+    if distance == 0 {
+        return 1.0
+    }
+
+    // Tijdens scrollen blijven de andere regels
+    // nog steeds duidelijk minder fel
+    if isUserScrolling {
+        return 0.82
+    }
+
+    if distance < 0 {
+
+        // Vorige regels
+        switch abs(distance) {
+
+        case 1:
+            return 0.82
+
+        case 2:
+            return 0.68
+
+        case 3:
+            return 0.55
+
+        default:
+            return 0.45
         }
-        
-        if distance == 0 {
-            return 1.0
-        }
-        
-        if distance < 0 {
-            
-            // Vorige lyrics
-            
-            return max(
-                1.0
-                - Double(abs(distance)) * 0.18,
-                0.35
-            )
-            
-        } else {
-            
-            // Volgende lyrics
-            
-            return max(
-                1.0
-                - Double(distance) * 0.13,
-                0.42
-            )
+
+    } else {
+
+        // Volgende regels
+        switch distance {
+
+        case 1:
+            return 0.78
+
+        case 2:
+            return 0.64
+
+        case 3:
+            return 0.52
+
+        default:
+            return 0.42
         }
     }
+}
     
     
     // MARK: - Empty State
