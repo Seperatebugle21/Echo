@@ -311,27 +311,39 @@ struct InteractiveDismiss: ViewModifier {
     @Environment(\.dismiss) private var dismiss
 
     func body(content: Content) -> some View {
-        content
-            .offset(y: max(offset, 0))
-            .background(.black.opacity(1 - min(offset / 400, 0.4)))
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        if value.translation.height > 0 {
-                            offset = value.translation.height
+        ZStack {
+            
+            // Altijd ondoorzichtig zwart, vult het hele scherm
+            Color.black
+                .ignoresSafeArea()
+            
+            content
+                .offset(y: max(offset, 0))
+                .clipShape(
+                    RoundedRectangle(
+                        cornerRadius: offset > 0 ? 40 : 0,
+                        style: .continuous
+                    )
+                )
+        }
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    if value.translation.height > 0 {
+                        offset = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    if value.translation.height > 120 {
+                        dismiss()
+                    } else {
+                        withAnimation(.spring()) {
+                            offset = 0
                         }
                     }
-                    .onEnded { value in
-                        if value.translation.height > 120 {
-                            dismiss()
-                        } else {
-                            withAnimation(.spring()) {
-                                offset = 0
-                            }
-                        }
-                    }
-            )
-            .animation(.interactiveSpring(), value: offset)
+                }
+        )
+        .animation(.interactiveSpring(), value: offset)
     }
 }
 
