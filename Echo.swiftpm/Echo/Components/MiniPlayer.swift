@@ -1,6 +1,19 @@
 import SwiftUI
 
 
+// MARK: - Custom Full Detent
+
+extension PresentationDetent {
+    static let full = PresentationDetent.custom(FullDetent.self)
+}
+
+private struct FullDetent: CustomPresentationDetent {
+    static func height(in context: Context) -> CGFloat? {
+        context.maxDetentValue
+    }
+}
+
+
 struct MiniPlayer: View {
     let onMinimize: () -> Void
     
@@ -189,6 +202,9 @@ struct MiniPlayer: View {
                 isPresented: $showNowPlaying
             ) {
                 NowPlayingView()
+                    .presentationDetents([.full])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(0)
             }
         }
     }
