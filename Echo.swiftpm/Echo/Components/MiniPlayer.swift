@@ -207,13 +207,13 @@ struct MiniPlayer: View {
         // MARK: - Custom Apple Music style presentation
         
         .background {
-            
-            NowPlayingUIKitPresenter(
-                isPresented: $showNowPlaying
-            ) {
-                NowPlayingView()
-            }
-        }
+    NowPlayingUIKitPresenter(
+        isPresented: $showNowPlaying
+    ) {
+        NowPlayingView()
+            .environment(audioPlayer)
+    }
+}
     }
     
     
