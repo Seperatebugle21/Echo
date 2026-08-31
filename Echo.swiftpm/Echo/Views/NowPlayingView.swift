@@ -180,35 +180,18 @@ struct NowPlayingView: View {
                         Slider(
                             value: Binding(
                                 get: {
-                                    audioPlayer
-                                        .currentTime
+                                    audioPlayer.currentTime
                                 },
                                 set: { value in
-                                    audioPlayer
-                                        .seek(
-                                            to: value
-                                        )
+                                    audioPlayer.seek(to: value)
                                 }
                             ),
-                            in:
-                                0...
-                                max(
-                                    audioPlayer
-                                        .duration,
-                                    1
-                                ),
-                            onEditingChanged: {
-                                editing in
-
-                                if editing {
-
-                                    audioPlayer
-                                        .pauseForSeeking()
-
+                           in: 0...max(audioPlayer.duration, 1),
+                            onEditingChanged: { editing in
+                                    if editing {
+                                    audioPlayer.pauseForSeeking()
                                 } else {
-
-                                    audioPlayer
-                                        .resumeAfterSeeking()
+                                    audioPlayer.resumeAfterSeeking()
                                 }
                             }
                         )
