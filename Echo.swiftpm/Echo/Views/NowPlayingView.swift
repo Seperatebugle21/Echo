@@ -27,36 +27,13 @@ struct NowPlayingView: View {
                 
                 // MARK: Close Button
                 
-                HStack {
-                    
-                    Spacer()
-                    
-                    Button {
-                        dismiss()
-                    } label: {
-                        
-                        Image(
-                            systemName: "chevron.down"
-                        )
-                        .font(
-                            .system(
-                                size: 24,
-                                weight: .semibold
-                            )
-                        )
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "dismiss_action"
-                        )
-                    )
-                    
-                    Spacer()
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
+                Capsule()
+                .fill(.white.opacity(0.45))
+                .frame(
+                    width: 38,
+                    height: 5
+                )
+                .padding(.top, 10)
                 
                 
                 Spacer(minLength: 0)
