@@ -310,34 +310,35 @@ struct HomeView: View {
     }
 
     private func play(
-        _ song: Song
-    ) {
+    _ song: Song
+) {
 
-        guard
-            let url =
-                library.getURL(
-                    for: song
-                )
-        else {
-            return
-        }
-
-        library.markAsPlayed(song)
-
-        audioPlayer.lastPlaybackDirection =
-            .fade
-
-        audioPlayer.play(
-            song: song,
-            url: url,
-            queue: library.songs
-        )
-
-        audioPlayer.allSongs =
-            library.songs
-
-        audioPlayer.fillAutoNext(
-            from: library.songs
-        )
+    guard
+        let url =
+            library.getURL(
+                for: song
+            )
+    else {
+        return
     }
+
+    library.markAsPlayed(song)
+
+    audioPlayer.lastPlaybackDirection =
+        .fade
+
+    audioPlayer.play(
+        song: song,
+        url: url,
+        queue: [song]   // <-- was: library.songs
+    )
+
+    audioPlayer.allSongs =
+        library.songs
+
+    audioPlayer.fillAutoNext(
+        from: library.songs
+    )
+}
+
 }
