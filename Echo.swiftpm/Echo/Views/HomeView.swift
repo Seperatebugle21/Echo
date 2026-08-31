@@ -1,12 +1,17 @@
 import SwiftUI
 
 struct HomeView: View {
+
     @Environment(MusicLibraryManager.self)
     private var library
 
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
+    private let recommendationManager =
+        RecommendationManager.shared
+
+    @State private var recommendedSnapshot: [Song] = []
     @State private var recentlyPlayedSnapshot: [Song] = []
     @State private var showSettings = false
 
@@ -42,8 +47,9 @@ struct HomeView: View {
 
                 return artist.isEmpty
                     ? String(
-                                    localized: "homeview_unknown_artist"
-                                )
+                        localized:
+                            "homeview_unknown_artist"
+                    )
                     : artist
             }
 
@@ -59,7 +65,8 @@ struct HomeView: View {
                     .localizedCaseInsensitiveCompare(
                         $1.name
                     )
-                == .orderedAscending
+                ==
+                .orderedAscending
             }
     }
 
@@ -74,10 +81,14 @@ struct HomeView: View {
                     spacing: 32
                 ) {
 
-                    HStack(alignment: .center) {
+                    HStack(
+                        alignment: .center
+                    ) {
 
                         Text("homeview_title")
-                            .font(.largeTitle.bold())
+                            .font(
+                                .largeTitle.bold()
+                            )
 
                         Spacer()
 
@@ -85,47 +96,80 @@ struct HomeView: View {
                             showSettings = true
                         } label: {
 
-                            Image(systemName: "gearshape")
-                                .font(.title3.weight(.medium))
-                                .foregroundStyle(.primary)
-                                .frame(width: 42, height: 42)
-                                .background(
-                                    .thinMaterial,
-                                    in: Circle()
-                                )
+                            Image(
+                                systemName:
+                                    "gearshape"
+                            )
+                            .font(
+                                .title3
+                                    .weight(.medium)
+                            )
+                            .foregroundStyle(.primary)
+                            .frame(
+                                width: 42,
+                                height: 42
+                            )
+                            .background(
+                                .thinMaterial,
+                                in: Circle()
+                            )
                         }
                         .buttonStyle(.plain)
                     }
                     .padding(.horizontal)
                     .padding(.top, 6)
 
-                    if !recentlyPlayedSnapshot.isEmpty {
+                    // MARK: - Recommended
+
+                    if !recommendedSnapshot.isEmpty {
+
                         songSection(
-                            title: "homeview_recent_played",
+                            title:
+                                "homeview_recommended_for_you",
+                            songs:
+                                recommendedSnapshot
+                        )
+                    }
+
+                    // MARK: - Recently Played
+
+                    if !recentlyPlayedSnapshot.isEmpty {
+
+                        songSection(
+                            title:
+                                "homeview_recent_played",
                             songs:
                                 recentlyPlayedSnapshot
-                            // geen queue meegegeven -> single-song queue,
-                            // speler valt terug op auto-next aanbeveling
                         )
                     }
+
+                    // MARK: - Recently Added
 
                     if !recentlyAdded.isEmpty {
+
                         songSection(
-                            title: "homeview_recent_added",
-                            songs: recentlyAdded
-                            // geen queue meegegeven -> single-song queue,
-                            // speler valt terug op auto-next aanbeveling
+                            title:
+                                "homeview_recent_added",
+                            songs:
+                                recentlyAdded
                         )
                     }
 
+                    // MARK: - Favorites
+
                     if !favorites.isEmpty {
+
                         songSection(
-                            title: "homeview_favorites",
-                            songs: favorites,
-                            queue: favorites
-                            // hele favorietenlijst als queue -> speelt door favorieten heen
+                            title:
+                                "homeview_favorites",
+                            songs:
+                                favorites,
+                            queue:
+                                favorites
                         )
                     }
+
+                    // MARK: - Artists
 
                     if !artists.isEmpty {
                         artistSection
@@ -135,13 +179,16 @@ struct HomeView: View {
 
                         ContentUnavailableView(
                             "homeview_empty_title",
-                            systemImage: "music.note",
+                            systemImage:
+                                "music.note",
                             description:
                                 Text(
                                     "homeview_empty_description"
                                 )
                         )
-                        .frame(maxWidth: .infinity)
+                        .frame(
+                            maxWidth: .infinity
+                        )
                         .padding(.top, 80)
                     }
                 }
@@ -149,15 +196,71 @@ struct HomeView: View {
             }
 
             .sheet(
-                isPresented: $showSettings
+                isPresented:
+                    $showSettings
             ) {
                 SettingsView()
             }
 
             .onAppear {
-                refreshRecentlyPlayed()
+                refreshHomeSnapshots()
+            }
+
+            // Herbereken wanneer de learning-engine
+            // nieuwe luisterinformatie heeft opgeslagen.
+            .onChange(
+                of:
+                    recommendationManager
+                        .revision
+            ) {
+                _, _ in
+
+                refreshRecommendations()
+            }
+
+            // Ook opnieuw berekenen wanneer songs
+            // worden toegevoegd/verwijderd.
+            .onChange(
+                of:
+                    library.songs
+                        .map(\.id)
+            ) {
+                _, _ in
+
+                refreshHomeSnapshots()
+            }
+
+            // Favorieten beïnvloeden de score sterk.
+            .onChange(
+                of:
+                    library.favoriteSongIDs
+            ) {
+                _, _ in
+
+                refreshRecommendations()
             }
         }
+    }
+
+    // MARK: - Snapshots
+
+    private func refreshHomeSnapshots() {
+        refreshRecentlyPlayed()
+        refreshRecommendations()
+    }
+
+    private func refreshRecommendations() {
+
+        recommendedSnapshot =
+            recommendationManager
+                .recommendations(
+                    from:
+                        library.songs,
+                    favoriteSongIDs:
+                        library.favoriteSongIDs,
+                    limit:
+                        12
+                )
     }
 
     private func refreshRecentlyPlayed() {
@@ -169,13 +272,21 @@ struct HomeView: View {
                         $0.lastPlayed != nil
                     }
                     .sorted {
-                        ($0.lastPlayed ?? .distantPast)
+                        (
+                            $0.lastPlayed
+                            ?? .distantPast
+                        )
                         >
-                        ($1.lastPlayed ?? .distantPast)
+                        (
+                            $1.lastPlayed
+                            ?? .distantPast
+                        )
                     }
                     .prefix(10)
             )
     }
+
+    // MARK: - Song Section
 
     @ViewBuilder
     private func songSection(
@@ -203,7 +314,14 @@ struct HomeView: View {
                     ForEach(songs) { song in
 
                         Button {
-                            play(song, queue: queue ?? [song])
+
+                            play(
+                                song,
+                                queue:
+                                    queue
+                                    ?? [song]
+                            )
+
                         } label: {
 
                             VStack(
@@ -215,21 +333,29 @@ struct HomeView: View {
                                     song: song,
                                     cornerRadius: 16
                                 )
-                                .frame(width: 150, height: 150)
+                                .frame(
+                                    width: 150,
+                                    height: 150
+                                )
 
                                 Text(song.title)
                                     .font(.headline)
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(
+                                        .primary
+                                    )
                                     .lineLimit(1)
 
                                 Text(song.artist)
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(
+                                        .secondary
+                                    )
                                     .lineLimit(1)
                             }
                             .frame(
                                 width: 150,
-                                alignment: .leading
+                                alignment:
+                                    .leading
                             )
                         }
                         .buttonStyle(.plain)
@@ -240,6 +366,8 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Artist Section
+
     private var artistSection: some View {
 
         VStack(
@@ -249,8 +377,10 @@ struct HomeView: View {
 
             HStack {
 
-                Text("homeview_your_artists")
-                    .font(.title2.bold())
+                Text(
+                    "homeview_your_artists"
+                )
+                .font(.title2.bold())
 
                 Spacer()
 
@@ -260,11 +390,13 @@ struct HomeView: View {
 
                 } label: {
 
-                    Text("homeview_show_all")
-                        .font(
-                            .subheadline
-                                .weight(.medium)
-                        )
+                    Text(
+                        "homeview_show_all"
+                    )
+                    .font(
+                        .subheadline
+                            .weight(.medium)
+                    )
                 }
             }
             .padding(.horizontal)
@@ -293,19 +425,33 @@ struct HomeView: View {
                             VStack(spacing: 8) {
 
                                 ArtistArtworkView(
-                                    songs: artist.songs
+                                    songs:
+                                        artist.songs
                                 )
-                                .frame(width: 112, height: 112)
-                                .clipShape(Circle())
+                                .frame(
+                                    width: 112,
+                                    height: 112
+                                )
+                                .clipShape(
+                                    Circle()
+                                )
 
-                                Text(artist.name)
-                                    .font(
-                                        .subheadline
-                                            .weight(.medium)
-                                    )
-                                    .foregroundStyle(.primary)
-                                    .lineLimit(1)
-                                    .frame(width: 112)
+                                Text(
+                                    artist.name
+                                )
+                                .font(
+                                    .subheadline
+                                        .weight(
+                                            .medium
+                                        )
+                                )
+                                .foregroundStyle(
+                                    .primary
+                                )
+                                .lineLimit(1)
+                                .frame(
+                                    width: 112
+                                )
                             }
                         }
                         .buttonStyle(.plain)
@@ -315,6 +461,8 @@ struct HomeView: View {
             }
         }
     }
+
+    // MARK: - Play
 
     private func play(
         _ song: Song,
@@ -345,7 +493,8 @@ struct HomeView: View {
             library.songs
 
         audioPlayer.fillAutoNext(
-            from: library.songs
+            from:
+                library.songs
         )
     }
 }
