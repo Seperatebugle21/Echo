@@ -104,6 +104,8 @@ struct HomeView: View {
                             title: "homeview_recent_played",
                             songs:
                                 recentlyPlayedSnapshot
+                            // geen queue meegegeven -> single-song queue,
+                            // speler valt terug op auto-next aanbeveling
                         )
                     }
 
@@ -111,13 +113,17 @@ struct HomeView: View {
                         songSection(
                             title: "homeview_recent_added",
                             songs: recentlyAdded
+                            // geen queue meegegeven -> single-song queue,
+                            // speler valt terug op auto-next aanbeveling
                         )
                     }
 
                     if !favorites.isEmpty {
                         songSection(
                             title: "homeview_favorites",
-                            songs: favorites
+                            songs: favorites,
+                            queue: favorites
+                            // hele favorietenlijst als queue -> speelt door favorieten heen
                         )
                     }
 
@@ -174,7 +180,8 @@ struct HomeView: View {
     @ViewBuilder
     private func songSection(
         title: LocalizedStringKey,
-        songs: [Song]
+        songs: [Song],
+        queue: [Song]? = nil
     ) -> some View {
 
         VStack(
@@ -196,7 +203,7 @@ struct HomeView: View {
                     ForEach(songs) { song in
 
                         Button {
-                            play(song)
+                            play(song, queue: queue ?? [song])
                         } label: {
 
                             VStack(
@@ -310,35 +317,35 @@ struct HomeView: View {
     }
 
     private func play(
-    _ song: Song
-) {
+        _ song: Song,
+        queue: [Song]
+    ) {
 
-    guard
-        let url =
-            library.getURL(
-                for: song
-            )
-    else {
-        return
+        guard
+            let url =
+                library.getURL(
+                    for: song
+                )
+        else {
+            return
+        }
+
+        library.markAsPlayed(song)
+
+        audioPlayer.lastPlaybackDirection =
+            .fade
+
+        audioPlayer.play(
+            song: song,
+            url: url,
+            queue: queue
+        )
+
+        audioPlayer.allSongs =
+            library.songs
+
+        audioPlayer.fillAutoNext(
+            from: library.songs
+        )
     }
-
-    library.markAsPlayed(song)
-
-    audioPlayer.lastPlaybackDirection =
-        .fade
-
-    audioPlayer.play(
-        song: song,
-        url: url,
-        queue: [song]   // <-- was: library.songs
-    )
-
-    audioPlayer.allSongs =
-        library.songs
-
-    audioPlayer.fillAutoNext(
-        from: library.songs
-    )
-}
-
 }
