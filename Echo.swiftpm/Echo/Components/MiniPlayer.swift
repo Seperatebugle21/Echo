@@ -198,14 +198,10 @@ struct MiniPlayer: View {
             
             // MARK: - Now Playing
             
-            .sheet(
-                isPresented: $showNowPlaying
-            ) {
-                NowPlayingView()
-                    .presentationDetents([.full])
-                    .presentationDragIndicator(.visible)
-                    .presentationCornerRadius(0)
-            }
+           .fullScreenCover(isPresented: $showNowPlaying) {
+    NowPlayingView()
+        .interactiveDismiss(isPresented: $showNowPlaying)
+}
         }
     }
     
@@ -306,5 +302,41 @@ struct MiniPlayer: View {
                 alignment: .leading
             )
         }
+    }
+}
+
+struct InteractiveDismiss: ViewModifier {
+    @Binding var isPresented: Bool
+    @State private var offset: CGFloat = 0
+    @Environment(\.dismiss) private var dismiss
+
+    func body(content: Content) -> some View {
+        content
+            .offset(y: max(offset, 0))
+            .background(.black.opacity(1 - min(offset / 400, 0.4)))
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            offset = value.translation.height
+                        }
+                    }
+                    .onEnded { value in
+                        if value.translation.height > 120 {
+                            dismiss()
+                        } else {
+                            withAnimation(.spring()) {
+                                offset = 0
+                            }
+                        }
+                    }
+            )
+            .animation(.interactiveSpring(), value: offset)
+    }
+}
+
+extension View {
+    func interactiveDismiss(isPresented: Binding<Bool>) -> some View {
+        self.modifier(InteractiveDismiss(isPresented: isPresented))
     }
 }
