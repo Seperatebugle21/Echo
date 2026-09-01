@@ -817,8 +817,11 @@ struct SongsView: View {
                         .secondary
                     )
                     .frame(
-                        width: 30,
-                        height: 30
+                        width: 44,
+                        height: 44
+                    )
+                    .contentShape(
+                        Rectangle()
                     )
                 }
 
