@@ -145,6 +145,15 @@ struct SpotifyPlaylistDetailView: View {
                         track:
                             track
                     )
+                    .frame(
+                        maxWidth:
+                            .infinity,
+                        alignment:
+                            .leading
+                    )
+                    .contentShape(
+                        Rectangle()
+                    )
                 }
                 .buttonStyle(.plain)
             }
