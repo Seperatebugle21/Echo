@@ -1,0 +1,575 @@
+name: Build Echo IPA (Unsigned)
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - PlaylistTransfer
+
+
+jobs:
+
+  build:
+
+    runs-on: macos-latest
+
+    permissions:
+      contents: write
+
+
+    steps:
+
+      # ============================================
+      # 1. Checkout
+      # ============================================
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      # ============================================
+      # 2. Resolve packages
+      # ============================================
+
+      - name: Resolve SwiftPM dependencies
+        run: |
+
+          PACKAGE_DIR=$(find . \
+            -name "Package.swift" \
+            -print \
+            | head -n 1 \
+            | xargs dirname)
+
+          echo "Gevonden Package map: $PACKAGE_DIR"
+
+          if [ -z "$PACKAGE_DIR" ]; then
+            echo "Geen Package.swift gevonden."
+            exit 1
+          fi
+
+          cd "$PACKAGE_DIR"
+
+          mkdir -p ../build
+
+          xcodebuild \
+            -resolvePackageDependencies \
+            -scheme Echo \
+            -derivedDataPath ../build/DerivedData
+
+
+      # ============================================
+      # 3. Locate Python library
+      # ============================================
+
+      - name: Locate Python library
+        run: |
+
+          echo ""
+          echo "========================================"
+          echo " SEARCHING LIBPYTHON"
+          echo "========================================"
+          echo ""
+
+          PYTHON_XCFRAMEWORK=$(find build/DerivedData \
+            -type d \
+            -path "*libpython3.xcframework" \
+            | head -n 1)
+
+          if [ -z "$PYTHON_XCFRAMEWORK" ]; then
+            echo "ERROR: libpython3.xcframework niet gevonden."
+            exit 1
+          fi
+
+          PYTHON_XCFRAMEWORK=$(realpath "$PYTHON_XCFRAMEWORK")
+
+          echo "XCFramework:"
+          echo "$PYTHON_XCFRAMEWORK"
+
+
+          PYTHON_BIN=$(find "$PYTHON_XCFRAMEWORK/ios-arm64" \
+            -maxdepth 1 \
+            -type f \
+            -name "libpython*.a" \
+            | head -n 1)
+
+          if [ -z "$PYTHON_BIN" ]; then
+
+            echo "ERROR: iOS arm64 libpython binary niet gevonden."
+
+            find "$PYTHON_XCFRAMEWORK/ios-arm64" \
+              -maxdepth 2 \
+              -print || true
+
+            exit 1
+          fi
+
+          PYTHON_BIN=$(realpath "$PYTHON_BIN")
+
+          if [ ! -f "$PYTHON_BIN" ]; then
+            echo "ERROR: Python binary bestaat niet."
+            exit 1
+          fi
+
+          echo ""
+          echo "Python device binary:"
+          echo "$PYTHON_BIN"
+
+          lipo -info "$PYTHON_BIN"
+
+          nm -g "$PYTHON_BIN" \
+            | grep " T _Py_Initialize$" \
+            | head -n 5 || true
+
+          nm -g "$PYTHON_BIN" \
+            | grep " T _Py_IsInitialized$" \
+            | head -n 5 || true
+
+          nm -g "$PYTHON_BIN" \
+            | grep " T _PyUnicode_FromString$" \
+            | head -n 5 || true
+
+
+          echo "PYTHON_BIN=$PYTHON_BIN" >> "$GITHUB_ENV"
+
+
+      # ============================================
+      # 4. Build
+      # ============================================
+
+      - name: Build SwiftPM
+        run: |
+
+          PACKAGE_FILE=$(find . \
+            -name "Package.swift" \
+            -print \
+            | head -n 1)
+
+          if [ -z "$PACKAGE_FILE" ]; then
+            echo "Geen Package.swift gevonden."
+            exit 1
+          fi
+
+          PACKAGE_DIR=$(dirname "$PACKAGE_FILE")
+
+          echo "Gevonden Package map: $PACKAGE_DIR"
+
+          if [ -z "$PYTHON_BIN" ]; then
+            echo "ERROR: PYTHON_BIN ontbreekt."
+            exit 1
+          fi
+
+          if [ ! -f "$PYTHON_BIN" ]; then
+            echo "ERROR: Python library bestaat niet:"
+            echo "$PYTHON_BIN"
+            exit 1
+          fi
+
+          cd "$PACKAGE_DIR"
+
+          mkdir -p ../build
+
+          echo ""
+          echo "========================================"
+          echo " BUILDING ECHO"
+          echo "========================================"
+          echo ""
+
+          xcodebuild archive \
+            -scheme Echo \
+            -destination 'generic/platform=iOS' \
+            -archivePath ../build/Echo.xcarchive \
+            -derivedDataPath ../build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            "OTHER_LDFLAGS=\$(inherited) -Xlinker -export_dynamic -Xlinker -force_load -Xlinker $PYTHON_BIN" \
+            DEAD_CODE_STRIPPING=NO \
+            COPY_PHASE_STRIP=NO \
+            STRIP_INSTALLED_PRODUCT=NO
+
+
+      # ============================================
+      # 5. Verify Python runtime
+      # ============================================
+
+      - name: Verify embedded Python runtime
+        run: |
+
+          APP_PATH=$(find build/Echo.xcarchive/Products/Applications \
+            -maxdepth 1 \
+            -name "*.app" \
+            | head -n 1)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Echo.app niet gevonden."
+            exit 1
+          fi
+
+          APP_PATH=$(realpath "$APP_PATH")
+
+          INFO_PLIST="$APP_PATH/Info.plist"
+
+          EXECUTABLE_NAME=$(
+            /usr/libexec/PlistBuddy \
+              -c "Print :CFBundleExecutable" \
+              "$INFO_PLIST"
+          )
+
+          EXECUTABLE="$APP_PATH/$EXECUTABLE_NAME"
+
+
+          if [ ! -f "$EXECUTABLE" ]; then
+            echo "ERROR: executable niet gevonden."
+            exit 1
+          fi
+
+
+          # ============================================
+          # Python support bundle
+          # ============================================
+
+          PYTHON_SUPPORT_BUNDLE=$(find "$APP_PATH" \
+            -type d \
+            -name "*PythonSupport.bundle" \
+            | head -n 1)
+
+
+          if [ -z "$PYTHON_SUPPORT_BUNDLE" ]; then
+            echo "ERROR: PythonSupport bundle ontbreekt."
+            exit 1
+          fi
+
+
+          # ============================================
+          # Python stdlib
+          # ============================================
+
+          PYTHON_RESOURCE=$(find "$PYTHON_SUPPORT_BUNDLE" \
+            \( \
+              -name "python310.zip" \
+              -o \
+              -path "*python3.10*" \
+            \) \
+            | head -n 1)
+
+
+          if [ -z "$PYTHON_RESOURCE" ]; then
+            echo "ERROR: Python stdlib ontbreekt."
+            exit 1
+          fi
+
+
+          echo ""
+          echo "Python stdlib:"
+          echo "$PYTHON_RESOURCE"
+
+
+          # ============================================
+          # Symbols
+          # ============================================
+
+          check_symbol() {
+
+            SYMBOL="$1"
+
+            if xcrun nm -gU "$EXECUTABLE" \
+              | grep -q "$SYMBOL"; then
+
+              echo "OK: $SYMBOL"
+
+            else
+
+              echo "MISSING: $SYMBOL"
+              exit 1
+            fi
+          }
+
+
+          check_symbol "_Py_Initialize"
+          check_symbol "_Py_IsInitialized"
+          check_symbol "_PyUnicode_FromString"
+          check_symbol "_PyObject_GetAttrString"
+          check_symbol "_Py_DecRef"
+
+
+          echo ""
+          echo "========================================"
+          echo " PYTHON LINKING OK"
+          echo "========================================"
+
+
+      # ============================================
+      # 6. Create IPA
+      # ============================================
+
+      - name: Create IPA Package
+        run: |
+
+          rm -rf Payload
+          mkdir -p Payload
+
+
+          BUILT_APP=$(find build/Echo.xcarchive/Products/Applications \
+            -maxdepth 1 \
+            -name "*.app" \
+            | head -n 1)
+
+
+          if [ -z "$BUILT_APP" ]; then
+            echo "Geen gebouwde Echo.app gevonden."
+            exit 1
+          fi
+
+
+          cp -R "$BUILT_APP" Payload/
+
+
+          APP_PATH=$(find Payload \
+            -maxdepth 1 \
+            -name "*.app" \
+            | head -n 1)
+
+
+          if [ -z "$APP_PATH" ]; then
+            echo "App niet gevonden in Payload."
+            exit 1
+          fi
+
+
+          INFO_PLIST="$APP_PATH/Info.plist"
+
+
+          if [ ! -f "$INFO_PLIST" ]; then
+            echo "Info.plist niet gevonden."
+            exit 1
+          fi
+
+
+          # ============================================
+          # Background audio
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :UIBackgroundModes" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes array" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes:0 string audio" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Files access
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIFileSharingEnabled bool true" \
+            "$INFO_PLIST" \
+            2>/dev/null || \
+          /usr/libexec/PlistBuddy \
+            -c "Set :UIFileSharingEnabled true" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :LSSupportsOpeningDocumentsInPlace bool true" \
+            "$INFO_PLIST" \
+            2>/dev/null || \
+          /usr/libexec/PlistBuddy \
+            -c "Set :LSSupportsOpeningDocumentsInPlace true" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Spotify callback
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :CFBundleURLTypes" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes array" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0 dict" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLName string echo.spotify.login" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string echo-spotify-login" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Siri / SiriKit
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " CONFIGURING SIRI"
+          echo "========================================"
+          echo ""
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :INIntentsSupported" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INIntentsSupported array" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INIntentsSupported:0 string INPlayMediaIntent" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Music media category
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :INSupportedMediaCategories" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INSupportedMediaCategories array" \
+            "$INFO_PLIST"
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :INSupportedMediaCategories:0 string INMediaCategoryMusic" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Siri usage description
+          # ============================================
+
+          /usr/libexec/PlistBuddy \
+            -c "Delete :NSSiriUsageDescription" \
+            "$INFO_PLIST" \
+            2>/dev/null || true
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Add :NSSiriUsageDescription string Echo gebruikt Siri om muziek en playlists af te spelen." \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Verify Siri configuration
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " SIRI CONFIGURATION"
+          echo "========================================"
+
+
+          echo ""
+          echo "Supported intents:"
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :INIntentsSupported" \
+            "$INFO_PLIST"
+
+
+          echo ""
+          echo "Supported media categories:"
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :INSupportedMediaCategories" \
+            "$INFO_PLIST"
+
+
+          echo ""
+          echo "Siri usage description:"
+
+          /usr/libexec/PlistBuddy \
+            -c "Print :NSSiriUsageDescription" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Final Info.plist
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " FINAL INFO.PLIST"
+          echo "========================================"
+          echo ""
+
+
+          /usr/libexec/PlistBuddy \
+            -c "Print" \
+            "$INFO_PLIST"
+
+
+          # ============================================
+          # Python files
+          # ============================================
+
+          echo ""
+          echo "========================================"
+          echo " PYTHON FILES"
+          echo "========================================"
+
+
+          find "$APP_PATH" \
+            \( \
+              -iname "*python*" \
+              -o \
+              -name "*.bundle" \
+            \) \
+            -print || true
+
+
+          # ============================================
+          # Create IPA
+          # ============================================
+
+          rm -f Echo.ipa
+
+          zip -r Echo.ipa Payload
+
+
+      # ============================================
+      # 7. Upload IPA
+      # ============================================
+
+      - name: Save IPA to Artifacts
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: Echo-Release-IPA
+          path: Echo.ipa
