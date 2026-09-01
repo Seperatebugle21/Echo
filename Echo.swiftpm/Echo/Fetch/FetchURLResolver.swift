@@ -426,17 +426,65 @@ final class FetchURLResolver {
             let tracks
         ):
 
-            guard !tracks.isEmpty else {
+            var resolvedTracks =
+                tracks
+
+
+            if SpotifyManager.shared
+                .isConnected {
+
+                do {
+
+                    let authenticatedTracks =
+                        try await
+                        SpotifyAPI.shared
+                            .getPlaylistTracks(
+                                playlistID:
+                                    playlist.id
+                            )
+
+
+                    if !authenticatedTracks.isEmpty {
+
+                        resolvedTracks =
+                            authenticatedTracks
+                    }
+
+
+                } catch {
+
+                    print(
+                        "Spotify authenticated playlist pagination fallback:",
+                        error
+                    )
+                }
+            }
+
+
+            guard !resolvedTracks.isEmpty else {
 
                 throw FetchURLResolverError
                     .emptyPlaylist
             }
 
 
+            let resolvedPlaylist =
+                SpotifyPlaylist(
+                    id: playlist.id,
+                    name: playlist.name,
+                    artworkURL:
+                        playlist.artworkURL,
+                    spotifyURL:
+                        playlist.spotifyURL,
+                    trackCount:
+                        resolvedTracks.count
+                )
+
+
             return
                 .spotifyPlaylist(
-                    playlist,
-                    tracks
+                    resolvedPlaylist,
+                    resolvedTracks
                 )
         }
     }
