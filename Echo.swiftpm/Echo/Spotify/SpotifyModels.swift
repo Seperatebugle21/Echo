@@ -125,6 +125,36 @@ struct SpotifyPlaylistItemsResponse: Decodable {
 
 struct SpotifyPlaylistItem: Decodable {
     let item: SpotifyAPITrack?
+
+    enum CodingKeys: String, CodingKey {
+        case item
+        case track
+    }
+
+    init(from decoder: Decoder) throws {
+
+        let container =
+            try decoder.container(
+                keyedBy: CodingKeys.self
+            )
+
+        let currentItem =
+            try? container.decode(
+                SpotifyAPITrack.self,
+                forKey: .item
+            )
+
+        let legacyTrack =
+            try? container.decode(
+                SpotifyAPITrack.self,
+                forKey: .track
+            )
+
+        item =
+            currentItem
+            ??
+            legacyTrack
+    }
 }
 
 struct SpotifySearchResponse: Decodable {
