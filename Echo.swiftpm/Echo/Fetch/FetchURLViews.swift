@@ -493,6 +493,21 @@ struct FetchURLPreviewView:
     @State private var isStarting =
         false
 
+    @State private var isTransferring =
+        false
+
+    @State private var showDownloadConfirmation =
+        false
+
+    @State private var showTransferConfirmation =
+        false
+
+    @State private var transferResultMessage:
+        String?
+
+    @State private var showTransferResult =
+        false
+
     @State private var showStarted =
         false
 
@@ -556,38 +571,85 @@ struct FetchURLPreviewView:
                     playlistTracks
                 }
 
-                Button {
+                VStack(
+                    spacing: 12
+                ) {
 
-                    startDownload()
+                    Button {
 
-                } label: {
+                        if content.isPlaylist {
 
-                    HStack {
-
-                        Spacer()
-
-                        if isStarting {
-
-                            ProgressView()
-                                .tint(.white)
+                            showDownloadConfirmation =
+                                true
 
                         } else {
 
-                            Label(
-                                downloadButtonTitle,
-                                systemImage:
-                                    "arrow.down.circle.fill"
-                            )
+                            startDownload()
                         }
 
-                        Spacer()
+                    } label: {
+
+                        HStack {
+
+                            Spacer()
+
+                            if isStarting {
+
+                                ProgressView()
+                                    .tint(.white)
+
+                            } else {
+
+                                Label(
+                                    downloadButtonTitle,
+                                    systemImage:
+                                        "arrow.down.circle.fill"
+                                )
+                            }
+
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(
+                        .borderedProminent
+                    )
+                    .controlSize(.large)
+                    .disabled(isBusy)
+
+                    if canTransferPlaylist {
+
+                        Button {
+
+                            showTransferConfirmation =
+                                true
+
+                        } label: {
+
+                            HStack {
+
+                                Spacer()
+
+                                if isTransferring {
+
+                                    ProgressView()
+
+                                } else {
+
+                                    Label(
+                                        "fetchurlviews_transfer_to_echo",
+                                        systemImage:
+                                            "rectangle.stack.badge.plus"
+                                    )
+                                }
+
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .disabled(isBusy)
                     }
                 }
-                .buttonStyle(
-                    .borderedProminent
-                )
-                .controlSize(.large)
-                .disabled(isStarting)
             }
             .padding(20)
         }
@@ -618,6 +680,60 @@ struct FetchURLPreviewView:
                     dismiss()
                 }
             }
+        }
+
+        .confirmationDialog(
+            "fetchurlviews_download_playlist_confirmation",
+            isPresented:
+                $showDownloadConfirmation,
+            titleVisibility:
+                .visible
+        ) {
+
+            Button(
+                downloadButtonTitle
+            ) {
+
+                startDownload()
+            }
+
+            Button(
+                "fetchurlviews_cancel",
+                role: .cancel
+            ) {}
+
+        } message: {
+
+            Text(
+                "fetchurlviews_download_playlist_message"
+            )
+        }
+
+        .confirmationDialog(
+            "fetchurlviews_transfer_confirmation",
+            isPresented:
+                $showTransferConfirmation,
+            titleVisibility:
+                .visible
+        ) {
+
+            Button(
+                "fetchurlviews_transfer_to_echo"
+            ) {
+
+                startTransfer()
+            }
+
+            Button(
+                "fetchurlviews_cancel",
+                role: .cancel
+            ) {}
+
+        } message: {
+
+            Text(
+                "fetchurlviews_transfer_message"
+            )
         }
 
         .alert(
@@ -707,6 +823,26 @@ struct FetchURLPreviewView:
                 )
             )
         }
+
+        .alert(
+            "fetchurlviews_transfer_result",
+            isPresented:
+                $showTransferResult
+        ) {
+
+            Button(
+                "fetchurlviews_ok",
+                role: .cancel
+            ) {}
+
+        } message: {
+
+            Text(
+                transferResultMessage
+                ??
+                ""
+            )
+        }
     }
 
     private var artwork:
@@ -763,7 +899,7 @@ struct FetchURLPreviewView:
     private var playlistTracks:
         some View {
 
-        VStack(
+        LazyVStack(
             alignment: .leading,
             spacing: 0
         ) {
@@ -785,10 +921,7 @@ struct FetchURLPreviewView:
             .padding(.bottom, 10)
 
             ForEach(
-                Array(
-                    playlistRows
-                        .prefix(12)
-                )
+                playlistRows
             ) { row in
 
                 HStack(
@@ -847,23 +980,6 @@ struct FetchURLPreviewView:
                 .padding(.vertical, 6)
 
                 Divider()
-            }
-
-            if playlistRows.count > 12 {
-
-                Text(
-                    String(
-                        format:
-                            String(
-                                localized:
-                                    "fetchurlviews_more_songs"
-                            ),
-                        playlistRows.count - 12
-                    )
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.top, 10)
             }
         }
         .padding(14)
@@ -971,6 +1087,23 @@ struct FetchURLPreviewView:
         }
     }
 
+    private var isBusy:
+        Bool {
+
+        isStarting ||
+        isTransferring
+    }
+
+    private var canTransferPlaylist:
+        Bool {
+
+        if case .spotifyPlaylist = content {
+            return true
+        }
+
+        return false
+    }
+
     private struct PreviewRow:
         Identifiable
     {
@@ -999,11 +1132,13 @@ struct FetchURLPreviewView:
             let tracks
         ):
 
-            return tracks.map { track in
+            return tracks.enumerated().map {
+                index,
+                track in
 
                 PreviewRow(
                     id:
-                        track.id,
+                        "\(index)-\(track.id)",
                     title:
                         track.name,
                     artist:
@@ -1017,11 +1152,15 @@ struct FetchURLPreviewView:
             let playlist
         ):
 
-            return playlist.tracks.map { track in
+            return playlist.tracks
+                .enumerated()
+                .map {
+                    index,
+                    track in
 
                 PreviewRow(
                     id:
-                        track.id,
+                        "\(index)-\(track.id)",
                     title:
                         track.title,
                     artist:
@@ -1101,6 +1240,58 @@ struct FetchURLPreviewView:
             }
 
             isStarting = false
+        }
+    }
+
+    private func startTransfer() {
+
+        guard !isBusy else {
+            return
+        }
+
+        guard case .spotifyPlaylist(
+            let playlist,
+            let tracks
+        ) = content,
+              !tracks.isEmpty
+        else {
+            return
+        }
+
+        isTransferring = true
+
+        Task {
+
+            let result =
+                await SpotifyPlaylistTransferService
+                    .transfer(
+                        playlist: playlist,
+                        tracks: tracks
+                    )
+
+            transferResultMessage =
+                String(
+                    format:
+                        String(
+                            localized:
+                                "fetchurlviews_transfer_started_message"
+                        ),
+                    result.existingSongCount,
+                    result.queuedDownloadCount
+                )
+
+            isTransferring = false
+            showTransferResult = true
+
+            if result.queuedDownloadCount > 0 {
+
+                NotificationCenter.default
+                    .post(
+                        name:
+                            .echoOpenFetchDownloads,
+                        object: nil
+                    )
+            }
         }
     }
 
