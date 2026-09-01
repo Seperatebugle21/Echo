@@ -1197,6 +1197,75 @@ struct PlayPlaylistIntent:
 
 
 // ============================================================
+// MARK: - Play Favorites
+// ============================================================
+
+struct PlayFavoritesIntent:
+    AudioPlaybackIntent {
+
+    static var title:
+        LocalizedStringResource =
+        "Speel favorieten"
+
+
+    static var description =
+        IntentDescription(
+            "Speelt je favoriete nummers in Echo."
+        )
+
+
+    static var openAppWhenRun =
+        false
+
+
+    func perform()
+        async throws
+        -> some IntentResult {
+
+        try await MainActor.run {
+
+            let library =
+                MusicLibraryManager.shared
+
+            let songs =
+                library.favoriteSongs
+
+
+            guard
+                let first = songs.first,
+                let url =
+                    library.getURL(
+                        for: first
+                    )
+            else {
+
+                throw EchoSiriError
+                    .playlistEmpty
+            }
+
+
+            let audio =
+                AudioPlayerManager.shared
+
+
+            audio.allSongs =
+                library.songs
+
+
+            audio.play(
+                song: first,
+                url: url,
+                queue: songs
+            )
+        }
+
+
+        return .result()
+    }
+}
+
+
+// ============================================================
 // MARK: - Shuffle
 // ============================================================
 
@@ -1421,6 +1490,27 @@ struct EchoShortcuts:
 
             systemImageName:
                 "music.note.list"
+        )
+
+
+        AppShortcut(
+            intent:
+                PlayFavoritesIntent(),
+
+            phrases: [
+
+                "Speel favorieten op \(.applicationName)",
+
+                "Speel mijn favorieten op \(.applicationName)",
+
+                "Start favorieten in \(.applicationName)"
+            ],
+
+            shortTitle:
+                "Speel favorieten",
+
+            systemImageName:
+                "heart.fill"
         )
 
 
