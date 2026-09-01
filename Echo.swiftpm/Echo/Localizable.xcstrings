@@ -11131,6 +11131,78 @@
       }
     }
   }
+},
+"fetchurlviews_cancel": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "Abbrechen" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Cancel" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Annuler" } },
+    "nl": { "stringUnit": { "state": "translated", "value": "Annuleer" } }
+  }
+},
+"fetchurlviews_download_playlist_confirmation": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "Titel einzeln herunterladen?" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Download Songs Separately?" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Télécharger les morceaux séparément ?" } },
+    "nl": { "stringUnit": { "state": "translated", "value": "Nummers apart downloaden?" } }
+  }
+},
+"fetchurlviews_download_playlist_message": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "Jeder Titel wird einzeln zu Fetch hinzugefügt und nacheinander verarbeitet." } },
+    "en": { "stringUnit": { "state": "translated", "value": "Every song will be added to Fetch separately and processed one after another." } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Chaque morceau sera ajouté séparément à Fetch et traité l’un après l’autre." } },
+    "nl": { "stringUnit": { "state": "translated", "value": "Elk nummer wordt apart aan Fetch toegevoegd en één voor één verwerkt." } }
+  }
+},
+"fetchurlviews_transfer_to_echo": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "Wiedergabeliste zu Echo übertragen" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Transfer Playlist to Echo" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Transférer la liste vers Echo" } },
+    "nl": { "stringUnit": { "state": "translated", "value": "Zet playlist over naar Echo" } }
+  }
+},
+"fetchurlviews_transfer_confirmation": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "Wiedergabeliste zu Echo übertragen?" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Transfer Playlist to Echo?" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Transférer la liste vers Echo ?" } },
+    "nl": { "stringUnit": { "state": "translated", "value": "Playlist overzetten naar Echo?" } }
+  }
+},
+"fetchurlviews_transfer_message": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "Echo übernimmt Name und Cover, fügt vorhandene Titel sofort hinzu und lädt nur fehlende Titel herunter." } },
+    "en": { "stringUnit": { "state": "translated", "value": "Echo copies the name and cover, adds existing songs immediately, and downloads only missing songs." } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Echo copie le nom et la pochette, ajoute immédiatement les morceaux existants et télécharge uniquement les morceaux manquants." } },
+    "nl": { "stringUnit": { "state": "translated", "value": "Echo neemt de naam en cover over, voegt bestaande nummers meteen toe en downloadt alleen de ontbrekende nummers." } }
+  }
+},
+"fetchurlviews_transfer_result": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "Wiedergabeliste erstellt" } },
+    "en": { "stringUnit": { "state": "translated", "value": "Playlist Created" } },
+    "fr": { "stringUnit": { "state": "translated", "value": "Liste de lecture créée" } },
+    "nl": { "stringUnit": { "state": "translated", "value": "Playlist aangemaakt" } }
+  }
+},
+"fetchurlviews_transfer_started_message": {
+  "extractionState": "manual",
+  "localizations": {
+    "de": { "stringUnit": { "state": "translated", "value": "%1$d vorhandene Titel wurden hinzugefügt. %2$d fehlende Titel werden heruntergeladen und danach automatisch hinzugefügt." } },
+    "en": { "stringUnit": { "state": "translated", "value": "%1$d existing songs were added. %2$d missing songs will be downloaded and then added automatically." } },
+    "fr": { "stringUnit": { "state": "translated", "value": "%1$d morceaux existants ont été ajoutés. %2$d morceaux manquants seront téléchargés puis ajoutés automatiquement." } },
+    "nl": { "stringUnit": { "state": "translated", "value": "%1$d bestaande nummers zijn toegevoegd. %2$d ontbrekende nummers worden gedownload en daarna automatisch toegevoegd." } }
+  }
 }
 
   }
