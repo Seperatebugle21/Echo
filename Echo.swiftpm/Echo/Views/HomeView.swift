@@ -19,6 +19,7 @@ struct HomeView: View {
     @State private var favoritesSnapshot: [Song] = []
 
     @State private var showSettings = false
+    @State private var selectedSong: Song?
 
 
     // MARK: - Recently Added
@@ -223,6 +224,38 @@ struct HomeView: View {
                 SettingsView()
             }
 
+            .sheet(
+                item: $selectedSong
+            ) { song in
+                SongOptionsView(
+                    song: song
+                )
+            }
+
+            .sheet(
+                item:
+                    Bindable(library)
+                        .songToAddToPlaylist
+            ) { song in
+                PlaylistPickerView(
+                    songs: [song]
+                )
+            }
+
+            .sheet(
+                isPresented:
+                    Bindable(library)
+                        .showEditSheet
+            ) {
+                if let song =
+                    library.editingSong
+                {
+                    EditSongView(
+                        song: song
+                    )
+                }
+            }
+
 
             // MARK: - Session Snapshot
 
@@ -306,52 +339,53 @@ struct HomeView: View {
 
                     ForEach(songs) { song in
 
-                        Button {
+                        VStack(
+                            alignment: .leading,
+                            spacing: 7
+                        ) {
 
+                            SongArtworkView(
+                                song: song,
+                                cornerRadius: 16
+                            )
+                            .frame(
+                                width: 150,
+                                height: 150
+                            )
+
+                            Text(song.title)
+                                .font(.headline)
+                                .foregroundStyle(
+                                    .primary
+                                )
+                                .lineLimit(1)
+
+                            Text(song.artist)
+                                .font(.caption)
+                                .foregroundStyle(
+                                    .secondary
+                                )
+                                .lineLimit(1)
+                        }
+                        .frame(
+                            width: 150,
+                            alignment: .leading
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
                             play(
                                 song,
                                 queue:
                                     queue
                                     ?? [song]
                             )
-
-                        } label: {
-
-                            VStack(
-                                alignment: .leading,
-                                spacing: 7
-                            ) {
-
-                                SongArtworkView(
-                                    song: song,
-                                    cornerRadius: 16
-                                )
-                                .frame(
-                                    width: 150,
-                                    height: 150
-                                )
-
-                                Text(song.title)
-                                    .font(.headline)
-                                    .foregroundStyle(
-                                        .primary
-                                    )
-                                    .lineLimit(1)
-
-                                Text(song.artist)
-                                    .font(.caption)
-                                    .foregroundStyle(
-                                        .secondary
-                                    )
-                                    .lineLimit(1)
-                            }
-                            .frame(
-                                width: 150,
-                                alignment:
-                                    .leading
-                            )
                         }
-                        .buttonStyle(.plain)
+                        .onLongPressGesture {
+                            selectedSong = song
+                        }
+                        .accessibilityAddTraits(
+                            .isButton
+                        )
                     }
                 }
                 .padding(.horizontal)
