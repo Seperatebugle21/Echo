@@ -266,12 +266,51 @@ final class SpotifyPublicURLResolver:
         // does not fire dozens of requests at once.
         // =====================================
 
-        let tracks =
-            await enrichTracks(
-                baseTracks,
-                fallbackArtwork:
-                    playlistArtwork
+        let tracks:
+            [SpotifyTrack]
+
+
+        do {
+
+            let paginatedTracks =
+                try await
+                fetchAllPlaylistTracks(
+                    id: id,
+                    embedJSON: json
+                )
+
+
+            if paginatedTracks.isEmpty {
+
+                tracks =
+                    await enrichTracks(
+                    baseTracks,
+                    fallbackArtwork:
+                        playlistArtwork
+                )
+
+            } else {
+
+                tracks =
+                    paginatedTracks
+            }
+
+
+        } catch {
+
+            print(
+                "Spotify public playlist pagination fallback:",
+                error
             )
+
+
+            tracks =
+                await enrichTracks(
+                    baseTracks,
+                    fallbackArtwork:
+                        playlistArtwork
+                )
+        }
 
 
         // =====================================
@@ -483,6 +522,159 @@ final class SpotifyPublicURLResolver:
 
 
         return result
+    }
+
+
+    // MARK: - Paginated Public Playlist Tracks
+
+    private func fetchAllPlaylistTracks(
+        id: String,
+        embedJSON: [String: Any]
+    ) async throws -> [SpotifyTrack] {
+
+        guard let session =
+            dictionary(
+                at: [
+                    "props",
+                    "pageProps",
+                    "state",
+                    "settings",
+                    "session"
+                ],
+                in: embedJSON
+            ),
+              let accessToken =
+            string(
+                session[
+                    "accessToken"
+                ]
+            )
+        else {
+
+            throw SpotifyPublicURLResolverError
+                .metadataNotFound
+        }
+
+
+        guard var nextURL =
+            URL(
+                string:
+                    "https://api.spotify.com/v1/playlists/\(id)/items?limit=50"
+            )
+        else {
+
+            throw SpotifyPublicURLResolverError
+                .invalidURL
+        }
+
+
+        var tracks:
+            [SpotifyTrack] = []
+
+
+        while true {
+
+            var request =
+                URLRequest(
+                    url: nextURL
+                )
+
+
+            request.setValue(
+                "Bearer \(accessToken)",
+                forHTTPHeaderField:
+                    "Authorization"
+            )
+
+
+            request.setValue(
+                "application/json",
+                forHTTPHeaderField:
+                    "Accept"
+            )
+
+
+            let (data, response) =
+                try await URLSession.shared
+                    .data(
+                        for: request
+                    )
+
+
+            guard let httpResponse =
+                response as? HTTPURLResponse,
+                  200..<300 ~= httpResponse.statusCode
+            else {
+
+                throw SpotifyPublicURLResolverError
+                    .requestFailed
+            }
+
+
+            let page =
+                try JSONDecoder()
+                    .decode(
+                        SpotifyPlaylistItemsResponse.self,
+                        from: data
+                    )
+
+
+            tracks.append(
+                contentsOf:
+                    page.items.compactMap {
+                        item in
+
+
+                        guard let track =
+                            item.item
+                        else {
+
+                            return nil
+                        }
+
+
+                        return SpotifyTrack(
+                            id: track.id,
+                            name: track.name,
+                            artist:
+                                track.artists
+                                    .map(\.name)
+                                    .joined(
+                                        separator: ", "
+                                    ),
+                            album: track.album.name,
+                            durationMS:
+                                track.durationMS,
+                            artworkURL:
+                                track.album.images
+                                    .first?
+                                    .url,
+                            spotifyURL:
+                                track.externalURLs
+                                    .spotify
+                        )
+                    }
+            )
+
+
+            guard let next =
+                page.next,
+                  let parsedURL =
+                URL(
+                    string: next
+                )
+            else {
+
+                break
+            }
+
+
+            nextURL =
+                parsedURL
+        }
+
+
+        return tracks
     }
 
 
