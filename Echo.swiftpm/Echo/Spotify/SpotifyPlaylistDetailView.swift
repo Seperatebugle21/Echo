@@ -425,60 +425,12 @@ struct SpotifyPlaylistDetailView: View {
 
         Task {
 
-            let coverData =
-                await loadPlaylistCover()
-
-            let echoPlaylist =
-                MusicLibraryManager.shared
-                    .createPlaylist(
-                        name: playlist.name,
-                        imageData: coverData
+            let result =
+                await SpotifyPlaylistTransferService
+                    .transfer(
+                        playlist: playlist,
+                        tracks: playlistTracks
                     )
-
-            var missingTracks:
-                [SpotifyTrack] = []
-
-            var missingTrackPositions:
-                [Int] = []
-
-            for (position, track) in
-                playlistTracks.enumerated() {
-
-                if let existingSong =
-                    MusicLibraryManager.shared
-                        .songMatching(
-                            title: track.name,
-                            artist: track.artist
-                        ) {
-
-                    MusicLibraryManager.shared
-                        .addSong(
-                            existingSong,
-                            toPlaylistID:
-                                echoPlaylist.id,
-                            at: position
-                        )
-
-                } else {
-
-                    missingTracks.append(
-                        track
-                    )
-
-                    missingTrackPositions.append(
-                        position
-                    )
-                }
-            }
-
-            await FetchManager.shared
-                .preparePlaylistTracks(
-                    missingTracks,
-                    destinationPlaylistID:
-                        echoPlaylist.id,
-                    destinationPositions:
-                        missingTrackPositions
-                )
 
             isTransferringPlaylist =
                 false
@@ -489,14 +441,14 @@ struct SpotifyPlaylistDetailView: View {
                         localized:
                             "spotifyplaylistdetailview_transfer_started_message"
                     ),
-                    playlistTracks.count - missingTracks.count,
-                    missingTracks.count
+                    result.existingSongCount,
+                    result.queuedDownloadCount
                 )
 
             showTransferResult =
                 true
 
-            if !missingTracks.isEmpty {
+            if result.queuedDownloadCount > 0 {
 
                 NotificationCenter.default
                     .post(
@@ -504,43 +456,6 @@ struct SpotifyPlaylistDetailView: View {
                         object: nil
                     )
             }
-        }
-    }
-
-    private func loadPlaylistCover()
-        async -> Data? {
-
-        guard let artworkURL =
-            playlist.artworkURL
-        else {
-            return nil
-        }
-
-        do {
-
-            let (data, response) =
-                try await URLSession.shared
-                    .data(
-                        from: artworkURL
-                    )
-
-            guard let httpResponse =
-                response as? HTTPURLResponse,
-                  200..<300 ~= httpResponse.statusCode
-            else {
-                return nil
-            }
-
-            return data
-
-        } catch {
-
-            print(
-                "Failed loading Spotify playlist cover:",
-                error
-            )
-
-            return nil
         }
     }
 
