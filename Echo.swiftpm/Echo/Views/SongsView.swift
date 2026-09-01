@@ -67,27 +67,9 @@ struct SongsView: View {
 
 
         return library.songs.filter { song in
-
-            song.title
-                .localizedCaseInsensitiveContains(
-                    searchText
-                )
-
-            ||
-
-            song.artist
-                .localizedCaseInsensitiveContains(
-                    searchText
-                )
-
-            ||
-
-            (
-                song.album?
-                    .localizedCaseInsensitiveContains(
-                        searchText
-                    )
-                ?? false
+            FuzzySearch.matches(
+                query: searchText,
+                in: [song.title, song.artist, song.album]
             )
         }
     }
