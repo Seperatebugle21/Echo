@@ -1077,11 +1077,11 @@ struct ArtistsView: View {
             return allArtists
         }
 
-        return allArtists.filter {
-            $0.name
-                .localizedCaseInsensitiveContains(
-                    searchText
-                )
+        return allArtists.filter { artist in
+            FuzzySearch.matches(
+                query: searchText,
+                in: [artist.name]
+            )
         }
     }
 
@@ -1330,19 +1330,11 @@ struct AlbumsView: View {
             return allAlbums
         }
 
-        return allAlbums.filter {
-
-            $0.name
-                .localizedCaseInsensitiveContains(
-                    searchText
-                )
-
-            ||
-
-            $0.artist
-                .localizedCaseInsensitiveContains(
-                    searchText
-                )
+        return allAlbums.filter { album in
+            FuzzySearch.matches(
+                query: searchText,
+                in: [album.name, album.artist]
+            )
         }
     }
 
