@@ -43,9 +43,10 @@ struct FavoritesView: View {
     
     var processedSongs: [Song] {
         let filtered = songs.filter { song in
-            searchText.isEmpty ||
-            song.title.localizedCaseInsensitiveContains(searchText) ||
-            song.artist.localizedCaseInsensitiveContains(searchText)
+            FuzzySearch.matches(
+                query: searchText,
+                in: [song.title, song.artist, song.album]
+            )
         }
         
         switch sortOption {
