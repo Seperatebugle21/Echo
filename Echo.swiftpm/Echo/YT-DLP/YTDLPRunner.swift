@@ -84,6 +84,58 @@ actor YTDLPRunner {
     private init() {}
 
 
+    // MARK: - Module management
+
+    func installedVersion()
+        async throws -> String?
+    {
+
+        guard FileManager.default
+            .fileExists(
+                atPath:
+                    YoutubeDL
+                        .pythonModuleURL
+                        .path
+            )
+        else {
+            return nil
+        }
+
+
+        return try await runIsolated {
+
+            let _ =
+                try await
+                YtDlp()
+
+
+            let module =
+                try Python.attemptImport(
+                    "yt_dlp"
+                )
+
+
+            return String(
+                module
+                    .version
+                    .__version__
+            )
+        }
+    }
+
+
+    func installLatestVersion()
+        async throws
+    {
+
+        try await runIsolated {
+
+            try await YoutubeDL
+                .downloadPythonModule()
+        }
+    }
+
+
     // MARK: - Search YouTube
 
     func search(

@@ -9,6 +9,9 @@ struct DeveloperView: View {
     @State private var echoStorage: Int64 = 0
     @State private var isLoadingStorage = false
 
+    @State private var ytdlpUpdateManager =
+        YTDLPUpdateManager()
+
     var body: some View {
 
         Form {
@@ -181,6 +184,11 @@ struct DeveloperView: View {
                     "developerview_storage_description"
                 )
             }
+
+            YTDLPUpdateSection(
+                manager:
+                    ytdlpUpdateManager
+            )
         }
 
         .navigationTitle(
@@ -191,6 +199,9 @@ struct DeveloperView: View {
         )
         .task {
             refreshStorage()
+
+            await ytdlpUpdateManager
+                .refresh()
         }
     }
 
@@ -439,6 +450,260 @@ struct DeveloperView: View {
                 fromByteCount: bytes,
                 countStyle: .file
             )
+    }
+}
+
+
+private struct YTDLPUpdateSection:
+    View {
+
+    let manager:
+        YTDLPUpdateManager
+
+
+    var body: some View {
+
+        Section {
+
+            versionRow(
+                title:
+                    "developerview_ytdlp_installed_version",
+                value:
+                    manager.installedVersion
+                    ?? String(
+                        localized:
+                            "developerview_ytdlp_not_installed"
+                    )
+            )
+
+            versionRow(
+                title:
+                    "developerview_ytdlp_latest_version",
+                value:
+                    manager.latestVersion
+                    ?? String(
+                        localized:
+                            "developerview_ytdlp_not_checked"
+                    )
+            )
+
+            updateStatus
+
+            Button {
+
+                Task {
+
+                    await manager
+                        .refresh()
+                }
+
+            } label: {
+
+                HStack {
+
+                    Label(
+                        "developerview_ytdlp_check_update",
+                        systemImage:
+                            "arrow.clockwise"
+                    )
+
+                    Spacer()
+
+                    if manager.isChecking {
+
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                }
+            }
+            .disabled(
+                manager.isBusy
+            )
+
+            if manager.updateAvailable
+                == true
+            {
+
+                Button {
+
+                    Task {
+
+                        await manager
+                            .installUpdate()
+                    }
+
+                } label: {
+
+                    HStack {
+
+                        Label {
+
+                            if manager
+                                .installedVersion
+                                == nil
+                            {
+
+                                Text(
+                                    "developerview_ytdlp_install"
+                                )
+
+                            } else {
+
+                                Text(
+                                    "developerview_ytdlp_install_update"
+                                )
+                            }
+
+                        } icon: {
+
+                            Image(
+                                systemName:
+                                    "arrow.down.circle"
+                            )
+                        }
+
+                        Spacer()
+
+                        if manager.isInstalling {
+
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                    }
+                }
+                .disabled(
+                    manager.isBusy
+                )
+            }
+
+            if manager.didInstallUpdate {
+
+                Label(
+                    "developerview_ytdlp_install_success",
+                    systemImage:
+                        "checkmark.circle.fill"
+                )
+                .foregroundStyle(.green)
+            }
+
+            if let errorMessage =
+                manager.errorMessage
+            {
+
+                Label {
+
+                    Text(errorMessage)
+
+                } icon: {
+
+                    Image(
+                        systemName:
+                            "exclamationmark.triangle.fill"
+                    )
+                }
+                .foregroundStyle(.red)
+            }
+
+        } header: {
+
+            Text(
+                "developerview_ytdlp"
+            )
+
+        } footer: {
+
+            Text(
+                "developerview_ytdlp_description"
+            )
+        }
+    }
+
+
+    private func versionRow(
+        title: LocalizedStringKey,
+        value: String
+    ) -> some View {
+
+        HStack(
+            spacing: 12
+        ) {
+
+            Text(title)
+
+            Spacer()
+
+            Text(value)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+                .multilineTextAlignment(
+                    .trailing
+                )
+        }
+        .accessibilityElement(
+            children: .combine
+        )
+    }
+
+
+    @ViewBuilder
+    private var updateStatus:
+        some View {
+
+        if manager.isChecking {
+
+            Label(
+                "developerview_ytdlp_checking",
+                systemImage:
+                    "clock"
+            )
+            .foregroundStyle(.secondary)
+
+        } else if
+            manager.hasLoadedVersions,
+            manager.installedVersion
+                == nil
+        {
+
+            Label(
+                "developerview_ytdlp_missing",
+                systemImage:
+                    "exclamationmark.circle.fill"
+            )
+            .foregroundStyle(.orange)
+
+        } else if
+            manager.updateAvailable
+                == true
+        {
+
+            Label(
+                "developerview_ytdlp_update_available",
+                systemImage:
+                    "arrow.down.circle.fill"
+            )
+            .foregroundStyle(.orange)
+
+        } else if
+            manager.updateAvailable
+                == false
+        {
+
+            Label(
+                "developerview_ytdlp_up_to_date",
+                systemImage:
+                    "checkmark.circle.fill"
+            )
+            .foregroundStyle(.green)
+
+        } else {
+
+            Label(
+                "developerview_ytdlp_not_checked",
+                systemImage:
+                    "questionmark.circle"
+            )
+            .foregroundStyle(.secondary)
+        }
     }
 }
 
