@@ -894,7 +894,7 @@ struct SearchView: View {
                                                 localized:
                                                     "searchview_songs_count"
                                             ),
-                                        playlist.songIDs.count
+                                        library.songCount(in: playlist)
                                     )
                                 )
                                 .font(.caption)
@@ -1343,7 +1343,7 @@ struct SearchView: View {
                                                 localized:
                                                     "searchview_songs_count"
                                             ),
-                                        playlist.songIDs.count
+                                        library.songCount(in: playlist)
                                     )
                                 )
                                 .font(.caption)

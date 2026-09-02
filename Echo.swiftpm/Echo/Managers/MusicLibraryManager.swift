@@ -52,6 +52,7 @@ class MusicLibraryManager {
         loadSongs()
         loadPlaylists()
         loadFavorites()
+        removeMissingSongReferences()
         syncDocumentsFolder()
     }
     
@@ -330,7 +331,15 @@ class MusicLibraryManager {
     // MARK: - Delete
     
     func deleteSong(_ song: Song) {
-        
+        playlists = playlists.map { playlist in
+            var updatedPlaylist = playlist
+            updatedPlaylist.songIDs.removeAll { $0 == song.id }
+            return updatedPlaylist
+        }
+
+        favoriteSongIDs.removeAll { $0 == song.id }
+        saveFavorites()
+
         songs.removeAll {
             $0.id == song.id
         }
@@ -352,6 +361,15 @@ class MusicLibraryManager {
         }
         
         
+        playlists = playlists.map { playlist in
+            var updatedPlaylist = playlist
+            updatedPlaylist.songIDs.removeAll()
+            return updatedPlaylist
+        }
+
+        favoriteSongIDs.removeAll()
+        saveFavorites()
+
         // Verwijder ook de bibliotheek
         songs.removeAll()
     }
@@ -484,6 +502,36 @@ class MusicLibraryManager {
         if !playlists[index].songIDs.contains(song.id) {
             playlists[index].songIDs.append(song.id)
         }
+    }
+
+    func songs(in playlist: Playlist) -> [Song] {
+        let songsByID = Dictionary(
+            uniqueKeysWithValues: songs.map { ($0.id, $0) }
+        )
+
+        return playlist.songIDs.compactMap { songsByID[$0] }
+    }
+
+    func songCount(in playlist: Playlist) -> Int {
+        let availableSongIDs = Set(songs.map(\.id))
+        return playlist.songIDs.filter(availableSongIDs.contains).count
+    }
+
+    private func removeMissingSongReferences() {
+        let availableSongIDs = Set(songs.map(\.id))
+
+        playlists = playlists.map { playlist in
+            var updatedPlaylist = playlist
+            updatedPlaylist.songIDs.removeAll {
+                !availableSongIDs.contains($0)
+            }
+            return updatedPlaylist
+        }
+
+        favoriteSongIDs.removeAll {
+            !availableSongIDs.contains($0)
+        }
+        saveFavorites()
     }
 
     func addSong(

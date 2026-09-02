@@ -62,7 +62,7 @@ struct PlaylistPickerView: View {
                             image: playlist.imageData,
                             systemImage: "music.note.list",
                             title: Text(playlist.name),
-                            count: playlist.songIDs.count,
+                            count: library.songCount(in: playlist),
                             isSelected: areAllInPlaylist(playlist)
                         )
                     }

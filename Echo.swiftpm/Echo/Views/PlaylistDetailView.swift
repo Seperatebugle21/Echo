@@ -24,10 +24,8 @@ struct PlaylistDetailView: View {
         }) else {
             return []
         }
-        
-        return currentPlaylist.songIDs.compactMap { id in
-            library.songs.first { $0.id == id }
-        }
+
+        return library.songs(in: currentPlaylist)
     }
     
     var processedSongs: [Song] {
