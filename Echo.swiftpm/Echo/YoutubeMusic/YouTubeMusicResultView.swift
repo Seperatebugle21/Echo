@@ -3,9 +3,8 @@ import SwiftUI
 struct YouTubeMusicResultView:
     View
 {
-
     let result:
-        YouTubeSearchResult
+        YouTubeMusicTrack
 
     let onClose:
         () -> Void
@@ -80,9 +79,26 @@ struct YouTubeMusicResultView:
                     .multilineTextAlignment(.center)
 
                     Text(
-                        result.channelTitle
+                        result.artist
                     )
                     .foregroundStyle(.secondary)
+
+                    if let album =
+                        result.album,
+                       !album.isEmpty
+                    {
+                        Text(album)
+                            .font(.subheadline)
+                            .foregroundStyle(.tertiary)
+                    }
+
+                    if let duration =
+                        result.duration
+                    {
+                        Text(duration)
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
 
                 Spacer()
@@ -165,22 +181,19 @@ struct YouTubeMusicResultView:
 
     private func download() {
 
-        let pseudoURL =
-            result.videoURL
-
         let item =
             FetchItem(
                 spotifyURL:
-                    pseudoURL,
+                    result.videoURL,
 
                 title:
-                    cleanedTitle,
+                    result.title,
 
                 artist:
-                    result.channelTitle,
+                    result.artist,
 
                 album:
-                    nil,
+                    result.album,
 
                 artworkURL:
                     result.thumbnailURL,
@@ -198,43 +211,5 @@ struct YouTubeMusicResultView:
 
         showStarted =
             true
-    }
-
-    private var cleanedTitle:
-        String
-    {
-
-        var title =
-            result.title
-
-        let removable = [
-
-            "(Official Video)",
-            "(Official Music Video)",
-            "(Official Audio)",
-            "[Official Video]",
-            "[Official Audio]",
-            "Official Video",
-            "Official Audio"
-        ]
-
-        for value in removable {
-
-            title =
-                title.replacingOccurrences(
-                    of:
-                        value,
-                    with:
-                        "",
-                    options:
-                        .caseInsensitive
-                )
-        }
-
-        return title
-            .trimmingCharacters(
-                in:
-                    .whitespacesAndNewlines
-            )
     }
 }
