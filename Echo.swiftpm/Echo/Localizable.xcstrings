@@ -11667,6 +11667,1658 @@
     "fr": { "stringUnit": { "state": "translated", "value": "%1$d morceaux existants ont été ajoutés. %2$d morceaux manquants seront téléchargés puis ajoutés automatiquement." } },
     "nl": { "stringUnit": { "state": "translated", "value": "%1$d bestaande nummers zijn toegevoegd. %2$d ontbrekende nummers worden gedownload en daarna automatisch toegevoegd." } }
   }
+},
+"onboarding_back_accessibility": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Terug"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Back"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Retour"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Zurück"
+      }
+    }
+  }
+},
+"onboarding_continue": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Doorgaan"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Continue"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Continuer"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fortfahren"
+      }
+    }
+  }
+},
+"onboarding_done": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Klaar"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Done"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Terminer"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fertig"
+      }
+    }
+  }
+},
+"onboarding_welcome_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Welkom bij Echo"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Welcome to Echo"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Bienvenue dans Echo"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Willkommen bei Echo"
+      }
+    }
+  }
+},
+"onboarding_welcome_subtitle": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Je muziek, je bibliotheek en je luisterervaring — samengebracht op één plek."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Your music, your library and your listening experience — brought together in one place."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Votre musique, votre bibliothèque et votre expérience d’écoute — réunies au même endroit."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Deine Musik, deine Mediathek und dein Hörerlebnis — an einem Ort vereint."
+      }
+    }
+  }
+},
+"onboarding_welcome_chip_library": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Je bibliotheek"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Your library"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Votre bibliothèque"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Deine Mediathek"
+      }
+    }
+  }
+},
+"onboarding_welcome_chip_fetch": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Muziek ophalen"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch music"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Récupérer de la musique"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Musik laden"
+      }
+    }
+  }
+},
+"onboarding_welcome_chip_personal": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Persoonlijke keuzes"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Personal picks"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Sélection personnelle"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Persönliche Auswahl"
+      }
+    }
+  }
+},
+"onboarding_library_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Je bibliotheek, georganiseerd"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Your library, organised"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Votre bibliothèque, organisée"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Deine Mediathek, organisiert"
+      }
+    }
+  }
+},
+"onboarding_library_subtitle": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo houdt je nummers, playlists en favorieten samen en maakt ze makkelijk om te bekijken."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo keeps your songs, playlists and favourites together and makes them easy to browse."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo réunit vos morceaux, listes de lecture et favoris pour les parcourir facilement."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo hält deine Songs, Playlists und Favoriten zusammen und macht sie leicht durchsuchbar."
+      }
+    }
+  }
+},
+"onboarding_library_tile_songs": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Nummers"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Songs"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Morceaux"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Songs"
+      }
+    }
+  }
+},
+"onboarding_library_tile_playlists": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Playlists"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Playlists"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Playlists"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Playlists"
+      }
+    }
+  }
+},
+"onboarding_library_tile_favorites": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Favorieten"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Favourites"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Favoris"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Favoriten"
+      }
+    }
+  }
+},
+"onboarding_library_feature_songs_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Alles in één bibliotheek"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Everything in one library"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Tout dans une seule bibliothèque"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Alles in einer Mediathek"
+      }
+    }
+  }
+},
+"onboarding_library_feature_songs_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Geïmporteerde en gedownloade nummers staan samen, zodat je collectie eenvoudig te beheren blijft."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Imported and downloaded songs appear together so your collection stays simple to manage."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Les morceaux importés et téléchargés apparaissent ensemble pour garder votre collection facile à gérer."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Importierte und heruntergeladene Songs erscheinen zusammen, damit deine Sammlung einfach zu verwalten bleibt."
+      }
+    }
+  }
+},
+"onboarding_library_feature_playlists_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Maak playlists zoals jij wilt"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Build playlists your way"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Créez vos playlists à votre façon"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Erstelle Playlists nach deinem Geschmack"
+      }
+    }
+  }
+},
+"onboarding_library_feature_playlists_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Maak playlists, kies covers en houd de nummers die je wilt bij elkaar."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Create playlists, choose covers and keep the songs you want together."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Créez des playlists, choisissez leurs pochettes et regroupez les morceaux que vous aimez."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Erstelle Playlists, wähle Cover und halte deine gewünschten Songs zusammen."
+      }
+    }
+  }
+},
+"onboarding_library_feature_metadata_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Volledige muziekinformatie"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Rich music information"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Informations musicales complètes"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Umfangreiche Musikinformationen"
+      }
+    }
+  }
+},
+"onboarding_library_feature_metadata_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Titels, artiesten, albums en artwork zorgen dat elk nummer netjes in je bibliotheek past."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Titles, artists, albums and artwork help every song feel at home in your library."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Titres, artistes, albums et pochettes permettent à chaque morceau de trouver sa place dans votre bibliothèque."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Titel, Künstler, Alben und Cover sorgen dafür, dass jeder Song sauber in deine Mediathek passt."
+      }
+    }
+  }
+},
+"onboarding_learning_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo leert wat je graag luistert"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo learns what you enjoy"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo apprend ce que vous aimez"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo lernt, was du gerne hörst"
+      }
+    }
+  }
+},
+"onboarding_learning_subtitle": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Terwijl je luistert, verbetert Echo geleidelijk de aanbevelingen die je op Home ziet."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "As you listen, Echo gradually improves the recommendations shown on Home."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Au fil de vos écoutes, Echo améliore progressivement les recommandations affichées sur l’accueil."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Während du hörst, verbessert Echo nach und nach die Empfehlungen auf Home."
+      }
+    }
+  }
+},
+"onboarding_learning_feature_listens_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Leert van je luistergedrag"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Learns from listening"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Apprend de vos écoutes"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Lernt aus deinem Hörverhalten"
+      }
+    }
+  }
+},
+"onboarding_learning_feature_listens_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Afgespeelde nummers, volledig beluisterde nummers, skips en favorieten helpen Echo begrijpen wat bij je past."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Plays, completed songs, skips and favourites help Echo understand what fits you."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Les lectures, morceaux terminés, passages et favoris aident Echo à comprendre vos goûts."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Wiedergaben, vollständig gehörte Songs, Überspringen und Favoriten helfen Echo, deinen Geschmack zu verstehen."
+      }
+    }
+  }
+},
+"onboarding_learning_feature_adapts_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Past zich na verloop van tijd aan"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Adapts over time"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "S’adapte avec le temps"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Passt sich mit der Zeit an"
+      }
+    }
+  }
+},
+"onboarding_learning_feature_adapts_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Artiesten en albums waar je graag naar luistert kunnen relevanter worden naarmate je luistergeschiedenis groeit."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Artists and albums you enjoy can become more relevant as your listening history grows."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Les artistes et albums que vous aimez peuvent devenir plus pertinents à mesure que votre historique grandit."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Künstler und Alben, die du magst, können mit wachsender Hörhistorie relevanter werden."
+      }
+    }
+  }
+},
+"onboarding_learning_feature_discovery_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Laat ruimte om te ontdekken"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Still leaves room to discover"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Garde une place pour la découverte"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Lässt Raum zum Entdecken"
+      }
+    }
+  }
+},
+"onboarding_learning_feature_discovery_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Aanbevelingen herhalen niet alleen je favorieten — Echo geeft ook minder beluisterde nummers een kans."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recommendations do not only repeat favourites — Echo also gives less-played songs a chance."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Les recommandations ne répètent pas seulement vos favoris — Echo donne aussi une chance aux morceaux moins écoutés."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Empfehlungen wiederholen nicht nur Favoriten — Echo gibt auch seltener gehörten Songs eine Chance."
+      }
+    }
+  }
+},
+"onboarding_fetch_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Haal muziek naar Echo"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Bring music into Echo"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Ajoutez de la musique à Echo"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Hol Musik in Echo"
+      }
+    }
+  }
+},
+"onboarding_fetch_subtitle": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch helpt je muziek te vinden, te downloaden en rechtstreeks aan je Echo-bibliotheek toe te voegen."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch helps you find music, download it and add it directly to your Echo library."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch vous aide à trouver de la musique, la télécharger et l’ajouter directement à votre bibliothèque Echo."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch hilft dir, Musik zu finden, herunterzuladen und direkt zu deiner Echo-Mediathek hinzuzufügen."
+      }
+    }
+  }
+},
+"onboarding_fetch_engine_badge": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Downloads worden verwerkt met yt-dlp"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Downloads are handled with yt-dlp"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Les téléchargements sont gérés avec yt-dlp"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Downloads werden mit yt-dlp verarbeitet"
+      }
+    }
+  }
+},
+"onboarding_fetch_node_find": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Zoek"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Find"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Trouver"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Finden"
+      }
+    }
+  }
+},
+"onboarding_fetch_node_download": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Download"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Download"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Télécharger"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Laden"
+      }
+    }
+  }
+},
+"onboarding_fetch_node_library": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Bibliotheek"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Library"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Bibliothèque"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Mediathek"
+      }
+    }
+  }
+},
+"onboarding_fetch_feature_find_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Start vanuit muziek zoeken"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Start from music search"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Commencez par la recherche musicale"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Starte mit der Musiksuche"
+      }
+    }
+  }
+},
+"onboarding_fetch_feature_find_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Zoek naar muziek en kies het nummer dat je naar Echo wilt halen."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Search for music and select the track you want to bring into Echo."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recherchez de la musique et choisissez le morceau que vous souhaitez ajouter à Echo."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Suche nach Musik und wähle den Song aus, den du in Echo übernehmen möchtest."
+      }
+    }
+  }
+},
+"onboarding_fetch_feature_download_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "yt-dlp verwerkt de download"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "yt-dlp handles the download"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "yt-dlp gère le téléchargement"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "yt-dlp übernimmt den Download"
+      }
+    }
+  }
+},
+"onboarding_fetch_feature_download_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo bereidt het gekozen nummer voor en gebruikt de yt-dlp-downloadflow om de audio op te halen."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo prepares the selected track and uses its yt-dlp download flow to retrieve the audio."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo prépare le morceau choisi et utilise son flux de téléchargement yt-dlp pour récupérer l’audio."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo bereitet den gewählten Song vor und nutzt den yt-dlp-Downloadablauf, um das Audio abzurufen."
+      }
+    }
+  }
+},
+"onboarding_fetch_feature_ready_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Klaar in je bibliotheek"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Ready in your library"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Prêt dans votre bibliothèque"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Bereit in deiner Mediathek"
+      }
+    }
+  }
+},
+"onboarding_fetch_feature_ready_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Wanneer de verwerking klaar is, wordt het nummer met de beschikbare muziekinformatie aan je bibliotheek toegevoegd."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "When processing is finished, the song is added to your library with its available music information."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Une fois le traitement terminé, le morceau est ajouté à votre bibliothèque avec les informations musicales disponibles."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Nach der Verarbeitung wird der Song mit den verfügbaren Musikinformationen zu deiner Mediathek hinzugefügt."
+      }
+    }
+  }
+},
+"onboarding_spotify_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Heb je Spotify Premium?"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Do you have Spotify Premium?"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Vous avez Spotify Premium ?"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Hast du Spotify Premium?"
+      }
+    }
+  }
+},
+"onboarding_spotify_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Spotify koppelen is volledig optioneel. Echo heeft Spotify niet nodig om te werken. Koppelen is gewoon handig om via Spotify naar nummers te zoeken en je Spotify-bibliotheek te bekijken, zodat nummers en playlists makkelijker te vinden en te downloaden zijn."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Connecting Spotify is completely optional. Echo does not need Spotify to work. Connecting it is simply a convenient way to search Spotify and browse your Spotify library so songs and playlists are easier to find and download."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Connecter Spotify est entièrement facultatif. Echo n’a pas besoin de Spotify pour fonctionner. La connexion permet simplement de rechercher des morceaux via Spotify et de parcourir votre bibliothèque Spotify afin de trouver et télécharger plus facilement des morceaux et playlists."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Spotify zu verbinden ist vollständig optional. Echo benötigt Spotify nicht, um zu funktionieren. Die Verbindung ist lediglich praktisch, um über Spotify nach Songs zu suchen und deine Spotify-Mediathek zu durchsuchen, damit Songs und Playlists leichter gefunden und heruntergeladen werden können."
+      }
+    }
+  }
+},
+"onboarding_spotify_optional_badge": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Volledig optioneel"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Completely optional"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Entièrement facultatif"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Vollständig optional"
+      }
+    }
+  }
+},
+"onboarding_spotify_feature_search_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Zoeken via Spotify"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Search with Spotify"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Rechercher avec Spotify"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Mit Spotify suchen"
+      }
+    }
+  }
+},
+"onboarding_spotify_feature_search_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Gebruik de Spotify-catalogus om snel een specifiek nummer te vinden."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Use Spotify’s catalogue to find a specific song quickly."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Utilisez le catalogue Spotify pour trouver rapidement un morceau précis."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Nutze den Spotify-Katalog, um schnell einen bestimmten Song zu finden."
+      }
+    }
+  }
+},
+"onboarding_spotify_feature_library_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Bekijk je Spotify-bibliotheek"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Browse your Spotify library"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Parcourir votre bibliothèque Spotify"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Deine Spotify-Mediathek durchsuchen"
+      }
+    }
+  }
+},
+"onboarding_spotify_feature_library_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Bekijk je opgeslagen Spotify-muziek vanuit Echo wanneer je account gekoppeld is."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "See your saved music from inside Echo when your account is connected."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Consultez votre musique enregistrée sur Spotify depuis Echo lorsque votre compte est connecté."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Sieh deine gespeicherte Spotify-Musik direkt in Echo, wenn dein Konto verbunden ist."
+      }
+    }
+  }
+},
+"onboarding_spotify_feature_playlists_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Vind playlists makkelijker"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Find playlists more easily"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Trouvez vos playlists plus facilement"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Playlists leichter finden"
+      }
+    }
+  }
+},
+"onboarding_spotify_feature_playlists_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Open Spotify-playlists in Echo en gebruik ze als handig startpunt voor downloads en transfers."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Open Spotify playlists in Echo and use them as a convenient starting point for downloads and transfers."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Ouvrez vos playlists Spotify dans Echo et utilisez-les comme point de départ pratique pour les téléchargements et transferts."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Öffne Spotify-Playlists in Echo und nutze sie als praktischen Ausgangspunkt für Downloads und Übertragungen."
+      }
+    }
+  }
+},
+"onboarding_spotify_connect": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Koppel Spotify"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Connect Spotify"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Connecter Spotify"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Spotify verbinden"
+      }
+    }
+  }
+},
+"onboarding_spotify_skip": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Nu overslaan"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Skip for now"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Passer pour le moment"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Vorerst überspringen"
+      }
+    }
+  }
+},
+"onboarding_spotify_connected_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Spotify is gekoppeld"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Spotify is connected"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Spotify est connecté"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Spotify ist verbunden"
+      }
+    }
+  }
+},
+"onboarding_spotify_connected_body": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Je Spotify-koppeling is klaar. Echo rondt de configuratie af."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Your Spotify connection is ready. Echo is finishing setup."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Votre connexion Spotify est prête. Echo termine la configuration."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Deine Spotify-Verbindung ist bereit. Echo schließt die Einrichtung ab."
+      }
+    }
+  }
+},
+"onboarding_spotify_finishing": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Configuratie afronden…"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Finishing setup…"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Finalisation de la configuration…"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Einrichtung wird abgeschlossen…"
+      }
+    }
+  }
+},
+"onboarding_ready_title": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Alles staat klaar"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Everything is ready"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Tout est prêt"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Alles ist bereit"
+      }
+    }
+  }
+},
+"onboarding_ready_subtitle": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo is ingesteld en klaar voor je muziek."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo is set up and ready for your music."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo est configuré et prêt pour votre musique."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Echo ist eingerichtet und bereit für deine Musik."
+      }
+    }
+  }
+},
+"onboarding_ready_library": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Je bibliotheek is klaar"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Your library is ready"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Votre bibliothèque est prête"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Deine Mediathek ist bereit"
+      }
+    }
+  }
+},
+"onboarding_ready_learning": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Aanbevelingen kunnen leren terwijl je luistert"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Recommendations can learn as you listen"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Les recommandations peuvent apprendre au fil de vos écoutes"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Empfehlungen können beim Hören dazulernen"
+      }
+    }
+  }
+},
+"onboarding_ready_fetch": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch staat klaar wanneer je nieuwe muziek wilt"
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch is ready when you want new music"
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch est prêt lorsque vous voulez ajouter de la musique"
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Fetch ist bereit, wenn du neue Musik möchtest"
+      }
+    }
+  }
+},
+"onboarding_ready_footer": {
+  "localizations": {
+    "nl": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Je kunt beschikbare opties later aanpassen via Instellingen."
+      }
+    },
+    "en": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "You can change available options later from Settings."
+      }
+    },
+    "fr": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Vous pourrez modifier les options disponibles plus tard dans Réglages."
+      }
+    },
+    "de": {
+      "stringUnit": {
+        "state": "translated",
+        "value": "Verfügbare Optionen kannst du später in den Einstellungen ändern."
+      }
+    }
+  }
 }
 
   }
