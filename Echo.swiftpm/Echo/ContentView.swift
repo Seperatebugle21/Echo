@@ -100,6 +100,10 @@ struct ContentView: View {
                 }
             }
             .zIndex(100)
+            .ignoresSafeArea(
+            .keyboard,
+                edges: .bottom
+             )
         }
 
         .animation(
