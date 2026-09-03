@@ -6,6 +6,10 @@ struct ContentView: View {
 
     @State private var miniPlayerHidden = false
 
+    // Hoogte waarmee iOS de onderste safe area
+    // door het toetsenbord naar boven verplaatst.
+    @State private var keyboardHeight: CGFloat = 0
+
     var body: some View {
 
         TabView {
@@ -44,27 +48,48 @@ struct ContentView: View {
         }
 
         .background {
+
             TabBarShiftAnimator(
                 isShifted: false
             )
         }
 
-        .overlay(alignment: .bottom) {
+        .overlay(
+            alignment: .bottom
+        ) {
 
             ZStack {
+
+                // MARK: - Mini Player
 
                 if !miniPlayerHidden {
 
                     MiniPlayer {
+
                         miniPlayerHidden = true
                     }
-                    .padding(.bottom, 60)
-                    .padding(.horizontal)
+
+                    .padding(
+                        .bottom,
+                        60
+                    )
+
+                    .padding(
+                        .horizontal
+                    )
+
                     .transition(
-                        .move(edge: .bottom)
-                            .combined(with: .opacity)
+                        .move(
+                            edge: .bottom
+                        )
+                        .combined(
+                            with: .opacity
+                        )
                     )
                 }
+
+
+                // MARK: - Hidden Mini Player Button
 
                 if miniPlayerHidden {
 
@@ -73,37 +98,86 @@ struct ContentView: View {
                         Spacer()
 
                         Button {
+
                             miniPlayerHidden = false
+
                         } label: {
+
                             MiniPlayerEqualizer()
-                                .scaleEffect(0.88)
-                                .foregroundColor(.primary)
-                                .frame(width: 61, height: 61)
+
+                                .scaleEffect(
+                                    0.88
+                                )
+
+                                .foregroundColor(
+                                    .primary
+                                )
+
+                                .frame(
+                                    width: 61,
+                                    height: 61
+                                )
                         }
-                        .buttonStyle(.plain)
-                        .glassEffect(
-                            .regular.interactive()
+
+                        .buttonStyle(
+                            .plain
                         )
+
+                        .glassEffect(
+                            .regular
+                                .interactive()
+                        )
+
                         .contentShape(
                             RoundedRectangle(
                                 cornerRadius: 18
                             )
                         )
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 60)
+
+                        .padding(
+                            .trailing,
+                            20
+                        )
+
+                        .padding(
+                            .bottom,
+                            60
+                        )
                     }
-                    .zIndex(100)
+
+                    .zIndex(
+                        100
+                    )
+
                     .transition(
-                        .scale(scale: 0.7)
-                            .combined(with: .opacity)
+                        .scale(
+                            scale: 0.7
+                        )
+                        .combined(
+                            with: .opacity
+                        )
                     )
                 }
             }
-            .zIndex(100)
-            .ignoresSafeArea(
-            .keyboard,
-                edges: .bottom
-             )
+
+            .zIndex(
+                100
+            )
+
+            /*
+             SwiftUI verplaatst de bottom safe area
+             naar boven zodra het keyboard opent.
+
+             We verplaatsen alleen de MiniPlayer exact
+             dezelfde afstand terug naar beneden.
+
+             Daardoor blijft hij fysiek op dezelfde
+             schermpositie staan en kan het keyboard
+             er gewoon overheen verschijnen.
+             */
+            .offset(
+                y: keyboardHeight
+            )
         }
 
         .animation(
@@ -113,13 +187,90 @@ struct ContentView: View {
             ),
             value: miniPlayerHidden
         )
+
+        // MARK: - Keyboard Open / Change
+
+        .onReceive(
+            NotificationCenter
+                .default
+                .publisher(
+                    for:
+                        UIResponder
+                            .keyboardWillChangeFrameNotification
+                )
+        ) { notification in
+
+            guard
+                let frame =
+                    notification
+                        .userInfo?[
+                            UIResponder
+                                .keyboardFrameEndUserInfoKey
+                        ]
+                    as?
+                    CGRect
+            else {
+
+                return
+            }
+
+
+            let screenHeight =
+                UIScreen
+                    .main
+                    .bounds
+                    .height
+
+
+            /*
+             Als het keyboard onder het scherm staat,
+             is overlap 0.
+
+             Als het keyboard zichtbaar is:
+             schermhoogte - keyboard.minY
+             = daadwerkelijke keyboardhoogte.
+             */
+            let overlap =
+                max(
+                    0,
+                    screenHeight
+                    -
+                    frame.minY
+                )
+
+
+            keyboardHeight =
+                overlap
+        }
+
+        // MARK: - Keyboard Hide
+
+        .onReceive(
+            NotificationCenter
+                .default
+                .publisher(
+                    for:
+                        UIResponder
+                            .keyboardWillHideNotification
+                )
+        ) { _ in
+
+            keyboardHeight =
+                0
+        }
     }
 }
 
+
+// MARK: - Mini Player Equalizer
+
 struct MiniPlayerEqualizer: View {
 
-    @Environment(AudioPlayerManager.self)
+    @Environment(
+        AudioPlayerManager.self
+    )
     private var audioPlayer
+
 
     var body: some View {
 
@@ -129,98 +280,158 @@ struct MiniPlayerEqualizer: View {
         ) {
 
             RandomBar(
-                isPlaying: audioPlayer.isPlaying,
+                isPlaying:
+                    audioPlayer.isPlaying,
                 minHeight: 5,
                 maxHeight: 25
             )
 
             RandomBar(
-                isPlaying: audioPlayer.isPlaying,
+                isPlaying:
+                    audioPlayer.isPlaying,
                 minHeight: 7,
                 maxHeight: 18
             )
 
             RandomBar(
-                isPlaying: audioPlayer.isPlaying,
+                isPlaying:
+                    audioPlayer.isPlaying,
                 minHeight: 4,
                 maxHeight: 28
             )
 
             RandomBar(
-                isPlaying: audioPlayer.isPlaying,
+                isPlaying:
+                    audioPlayer.isPlaying,
                 minHeight: 6,
                 maxHeight: 22
             )
         }
-        .frame(width: 30, height: 30)
+
+        .frame(
+            width: 30,
+            height: 30
+        )
     }
 }
+
+
+// MARK: - Equalizer Bar
 
 struct RandomBar: View {
 
     let isPlaying: Bool
+
     let minHeight: CGFloat
+
     let maxHeight: CGFloat
 
-    @State private var height: CGFloat = 8
+
+    @State private var height:
+        CGFloat = 8
+
 
     var body: some View {
 
         Capsule()
+
             .frame(
                 width: 4,
-                height: isPlaying ? height : 8
+                height:
+                    isPlaying
+                    ? height
+                    : 8
             )
-            .task(id: isPlaying) {
+
+            .task(
+                id:
+                    isPlaying
+            ) {
 
                 guard isPlaying else {
 
                     withAnimation(
-                        .easeOut(duration: 0.15)
+                        .easeOut(
+                            duration: 0.15
+                        )
                     ) {
+
                         height = 8
                     }
 
                     return
                 }
 
-                while !Task.isCancelled && isPlaying {
+
+                while
+                    !Task.isCancelled
+                    &&
+                    isPlaying
+                {
 
                     let newHeight =
                         CGFloat.random(
-                            in: minHeight...maxHeight
+                            in:
+                                minHeight
+                                ...
+                                maxHeight
                         )
+
 
                     let duration =
                         Double.random(
-                            in: 0.08...0.30
+                            in:
+                                0.08
+                                ...
+                                0.30
                         )
+
 
                     let delay =
                         Double.random(
-                            in: 0.02...0.20
+                            in:
+                                0.02
+                                ...
+                                0.20
                         )
 
+
                     withAnimation(
-                        .easeInOut(duration: duration)
+                        .easeInOut(
+                            duration:
+                                duration
+                        )
                     ) {
-                        height = newHeight
+
+                        height =
+                            newHeight
                     }
+
 
                     let totalNanoseconds =
                         UInt64(
-                            (duration + delay)
-                            * 1_000_000_000
+                            (
+                                duration
+                                +
+                                delay
+                            )
+                            *
+                            1_000_000_000
                         )
+
 
                     try?
                         await Task.sleep(
-                            nanoseconds: totalNanoseconds
+                            nanoseconds:
+                                totalNanoseconds
                         )
                 }
             }
     }
 }
+
+
+// MARK: - Tab Bar Shift Animator
 
 struct TabBarShiftAnimator:
     UIViewRepresentable
@@ -228,85 +439,143 @@ struct TabBarShiftAnimator:
 
     let isShifted: Bool
 
+
     func makeUIView(
         context: Context
     ) -> ShiftTrackerView {
 
-        let view = ShiftTrackerView()
-        view.backgroundColor = .clear
-        view.isUserInteractionEnabled = false
+        let view =
+            ShiftTrackerView()
+
+
+        view.backgroundColor =
+            .clear
+
+
+        view.isUserInteractionEnabled =
+            false
+
+
         return view
     }
 
+
     func updateUIView(
-        _ uiView: ShiftTrackerView,
-        context: Context
+        _ uiView:
+            ShiftTrackerView,
+        context:
+            Context
     ) {
 
-        uiView.isShifted = isShifted
+        uiView.isShifted =
+            isShifted
+
 
         uiView.updatePosition(
             animated:
-                context.transaction
-                    .animation != nil
+                context
+                    .transaction
+                    .animation
+                !=
+                nil
         )
     }
+
 
     class ShiftTrackerView:
         UIView
     {
 
-        var isShifted: Bool = false
+        var isShifted:
+            Bool = false
+
 
         override func didMoveToWindow() {
+
             super.didMoveToWindow()
-            updatePosition(animated: false)
+
+
+            updatePosition(
+                animated:
+                    false
+            )
         }
 
+
         override func layoutSubviews() {
+
             super.layoutSubviews()
-            updatePosition(animated: false)
+
+
+            updatePosition(
+                animated:
+                    false
+            )
         }
+
 
         func updatePosition(
             animated: Bool
         ) {
 
             guard
-                let window = self.window,
+                let window =
+                    self.window,
+
                 let tabBar =
-                    findTabBar(in: window)
+                    findTabBar(
+                        in:
+                            window
+                    )
             else {
+
                 return
             }
 
-            let targetX: CGFloat =
-                isShifted ? -32 : 0
+
+            let targetX:
+                CGFloat =
+                isShifted
+                ? -32
+                : 0
+
 
             let targetTransform =
                 CGAffineTransform(
-                    translationX: targetX,
-                    y: 0
+                    translationX:
+                        targetX,
+                    y:
+                        0
                 )
 
-            if tabBar.transform ==
+
+            if
+                tabBar.transform
+                ==
                 targetTransform
             {
+
                 return
             }
+
 
             if animated {
 
                 UIView.animate(
-                    withDuration: 0.4,
-                    delay: 0,
-                    usingSpringWithDamping: 0.82,
-                    initialSpringVelocity: 0.2,
+                    withDuration:
+                        0.4,
+                    delay:
+                        0,
+                    usingSpringWithDamping:
+                        0.82,
+                    initialSpringVelocity:
+                        0.2,
                     options: [
                         .beginFromCurrentState,
                         .allowUserInteraction
                     ]
                 ) {
+
                     tabBar.transform =
                         targetTransform
                 }
@@ -318,36 +587,54 @@ struct TabBarShiftAnimator:
             }
         }
 
+
         private func findTabBar(
-            in view: UIView
+            in view:
+                UIView
         ) -> UITabBar? {
 
             if let tabBar =
-                view as? UITabBar
+                view
+                    as?
+                    UITabBar
             {
+
                 return tabBar
             }
 
-            for subview in view.subviews {
+
+            for subview in
+                view.subviews
+            {
 
                 if let found =
-                    findTabBar(in: subview)
+                    findTabBar(
+                        in:
+                            subview
+                    )
                 {
+
                     return found
                 }
             }
+
 
             return nil
         }
     }
 }
 
+
+// MARK: - Preview
+
 #Preview {
 
     ContentView()
+
         .environment(
             MusicLibraryManager()
         )
+
         .environment(
             AudioPlayerManager()
         )
