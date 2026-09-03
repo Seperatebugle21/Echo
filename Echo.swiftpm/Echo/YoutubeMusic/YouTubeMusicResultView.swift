@@ -3,33 +3,42 @@ import SwiftUI
 struct YouTubeMusicResultView:
     View
 {
+
     let result:
         YouTubeMusicTrack
+
 
     let onClose:
         () -> Void
 
+
     let onViewDownloads:
         () -> Void
+
 
     @State private var fetch =
         FetchManager.shared
 
+
     @State private var showStarted =
         false
+
 
     var body: some View {
 
         NavigationStack {
 
             VStack(
-                spacing: 22
+                spacing:
+                    22
             ) {
 
                 AsyncImage(
                     url:
                         result.thumbnailURL
-                ) { image in
+                ) {
+                    image in
+
 
                     image
                         .resizable()
@@ -38,12 +47,14 @@ struct YouTubeMusicResultView:
                 } placeholder: {
 
                     RoundedRectangle(
-                        cornerRadius: 20
+                        cornerRadius:
+                            20
                     )
                     .fill(
-                        .secondary.opacity(
-                            0.12
-                        )
+                        .secondary
+                            .opacity(
+                                0.12
+                            )
                     )
                     .overlay {
 
@@ -53,55 +64,88 @@ struct YouTubeMusicResultView:
                         )
                         .font(
                             .system(
-                                size: 48
+                                size:
+                                    48
                             )
                         )
                     }
                 }
                 .frame(
-                    width: 230,
-                    height: 230
+                    width:
+                        230,
+                    height:
+                        230
                 )
                 .clipShape(
                     RoundedRectangle(
-                        cornerRadius: 20
+                        cornerRadius:
+                            20
                     )
                 )
 
+
                 VStack(
-                    spacing: 6
+                    spacing:
+                        6
                 ) {
 
                     Text(
                         result.title
                     )
-                    .font(.title2.bold())
-                    .multilineTextAlignment(.center)
+                    .font(
+                        .title2
+                            .bold()
+                    )
+                    .multilineTextAlignment(
+                        .center
+                    )
+
 
                     Text(
                         result.artist
                     )
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(
+                        .secondary
+                    )
 
-                    if let album =
-                        result.album,
-                       !album.isEmpty
+
+                    if
+                        let album =
+                            result.album,
+                        !album.isEmpty
                     {
-                        Text(album)
-                            .font(.subheadline)
-                            .foregroundStyle(.tertiary)
+
+                        Text(
+                            album
+                        )
+                        .font(
+                            .subheadline
+                        )
+                        .foregroundStyle(
+                            .tertiary
+                        )
                     }
+
 
                     if let duration =
                         result.duration
                     {
-                        Text(duration)
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+
+                        Text(
+                            duration
+                        )
+                        .font(
+                            .caption
+                        )
+                        .foregroundStyle(
+                            .tertiary
+                        )
                     }
                 }
 
+
                 Spacer()
+
 
                 Button {
 
@@ -114,25 +158,35 @@ struct YouTubeMusicResultView:
                         systemImage:
                             "arrow.down.circle.fill"
                     )
-                    .font(.headline)
+                    .font(
+                        .headline
+                    )
                     .frame(
-                        maxWidth: .infinity
+                        maxWidth:
+                            .infinity
                     )
                 }
                 .buttonStyle(
                     .borderedProminent
                 )
-                .controlSize(.large)
+                .controlSize(
+                    .large
+                )
             }
-            .padding(24)
+            .padding(
+                24
+            )
+
 
             .navigationTitle(
                 "youtubemusicresultview_song"
             )
 
+
             .navigationBarTitleDisplayMode(
                 .inline
             )
+
 
             .toolbar {
 
@@ -151,6 +205,7 @@ struct YouTubeMusicResultView:
             }
         }
 
+
         .alert(
             "youtubemusicresultview_download_started",
             isPresented:
@@ -163,6 +218,7 @@ struct YouTubeMusicResultView:
 
                 onClose()
             }
+
 
             Button(
                 "youtubemusicresultview_view_downloads"
@@ -179,10 +235,12 @@ struct YouTubeMusicResultView:
         }
     }
 
+
     private func download() {
 
         let item =
             FetchItem(
+
                 spotifyURL:
                     result.videoURL,
 
@@ -205,9 +263,11 @@ struct YouTubeMusicResultView:
                     true
             )
 
+
         fetch.addPreparedItem(
             item
         )
+
 
         showStarted =
             true
