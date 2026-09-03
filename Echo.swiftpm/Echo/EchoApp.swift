@@ -24,6 +24,13 @@ struct EchoApp: App {
         "system"
 
 
+    @AppStorage(
+        "hasCompletedEchoOnboarding"
+    )
+    private var hasCompletedEchoOnboarding =
+        false
+
+
     @Environment(
         \.scenePhase
     )
@@ -42,83 +49,119 @@ struct EchoApp: App {
 
         WindowGroup {
 
-            ContentView()
+            Group {
 
-                // MARK: - Language
+                if hasCompletedEchoOnboarding {
 
-                .environment(
-                    \.locale,
-                    Locale(
-                        identifier:
-                            selectedLanguage
-                    )
-                )
-
-                .id(
-                    selectedLanguage
-                )
-
-
-                // MARK: - Shared Managers
-
-                .environment(
-                    library
-                )
-
-                .environment(
-                    audioPlayer
-                )
-
-
-                // MARK: - Appearance
-
-                .preferredColorScheme(
-                    colorScheme
-                )
-
-
-                // MARK: - Prepare Background Fetch
-
-                .task {
-
-                    FetchDownloadEngine.shared
-                        .prepare()
-
-
-                    await FetchManager.shared
-                        .restoreBackgroundDownloads()
-                }
-
-
-                // MARK: - Spotify Callback
-
-                .onOpenURL { url in
-
-                    Task {
-
-                        await SpotifyManager.shared
-                            .handleCallback(
-                                url:
-                                    url
-                            )
-                    }
-                }
-
-
-                // MARK: - Fetch Completed
-
-                .onReceive(
-                    NotificationCenter
-                        .default
-                        .publisher(
-                            for:
-                                .echoFetchCompleted
+                    ContentView()
+                        .transition(
+                            .opacity
                         )
-                ) { _ in
 
-                    library
-                        .syncDocumentsFolder()
+                } else {
+
+                    EchoOnboardingView {
+
+                        withAnimation(
+                            .easeInOut(
+                                duration: 0.55
+                            )
+                        ) {
+
+                            hasCompletedEchoOnboarding =
+                                true
+                        }
+                    }
+                    .transition(
+                        .opacity
+                    )
                 }
+            }
+
+            .animation(
+                .easeInOut(
+                    duration: 0.55
+                ),
+                value:
+                    hasCompletedEchoOnboarding
+            )
+
+
+            // MARK: - Language
+
+            .environment(
+                \.locale,
+                Locale(
+                    identifier:
+                        selectedLanguage
+                )
+            )
+
+            .id(
+                selectedLanguage
+            )
+
+
+            // MARK: - Shared Managers
+
+            .environment(
+                library
+            )
+
+            .environment(
+                audioPlayer
+            )
+
+
+            // MARK: - Appearance
+
+            .preferredColorScheme(
+                colorScheme
+            )
+
+
+            // MARK: - Prepare Background Fetch
+
+            .task {
+
+                FetchDownloadEngine.shared
+                    .prepare()
+
+
+                await FetchManager.shared
+                    .restoreBackgroundDownloads()
+            }
+
+
+            // MARK: - Spotify Callback
+
+            .onOpenURL { url in
+
+                Task {
+
+                    await SpotifyManager.shared
+                        .handleCallback(
+                            url:
+                                url
+                        )
+                }
+            }
+
+
+            // MARK: - Fetch Completed
+
+            .onReceive(
+                NotificationCenter
+                    .default
+                    .publisher(
+                        for:
+                            .echoFetchCompleted
+                    )
+            ) { _ in
+
+                library
+                    .syncDocumentsFolder()
+            }
         }
 
 
@@ -130,25 +173,16 @@ struct EchoApp: App {
         ) { _, newPhase in
 
             if newPhase ==
-                .active {
-
-                // Refresh files that may have been
-                // completed in the background.
+                .active
+            {
 
                 library
                     .syncDocumentsFolder()
 
 
-                // If a background URLSession transfer
-                // finished while Echo was suspended,
-                // resume the existing async pipeline.
-
                 FetchDownloadEngine.shared
                     .resumeLiveCompletedTransfers()
 
-
-                // Also recover transfers after a full
-                // app relaunch.
 
                 Task {
 
@@ -163,7 +197,8 @@ struct EchoApp: App {
     // MARK: - Appearance
 
     private var colorScheme:
-        ColorScheme? {
+        ColorScheme?
+    {
 
         switch appearanceMode {
 
