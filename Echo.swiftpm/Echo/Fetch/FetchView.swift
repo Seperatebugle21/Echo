@@ -408,7 +408,10 @@ struct FetchView: View {
 
                             FetchSourceCard(
                                 title:
-                                    "fetchview_your_library",
+                                    String(
+                                        localized:
+                                            "fetchview_your_library"
+                                    ),
                                 systemImage:
                                     "music.note.list",
                                 tint:
@@ -425,7 +428,10 @@ struct FetchView: View {
 
                             FetchSourceCard(
                                 title:
-                                    "fetchview_search_spotify",
+                                    String(
+                                        localized:
+                                            "fetchview_search_spotify"
+                                    ),
                                 systemImage:
                                     "magnifyingglass",
                                 tint:
@@ -555,8 +561,6 @@ struct FetchView: View {
                     spacing: 16
                 ) {
 
-                    // YouTube Music staat nu eerst.
-
                     NavigationLink {
 
                         YouTubeMusicSearchView()
@@ -564,8 +568,7 @@ struct FetchView: View {
                     } label: {
 
                         FetchSourceCard(
-                            title:
-                                "fetchview_search_youtube_music",
+                            title: "YouTube Music",
                             systemImage:
                                 "play.rectangle.fill",
                             tint:
@@ -574,8 +577,6 @@ struct FetchView: View {
                     }
                     .buttonStyle(.plain)
 
-                    // MusicBrainz staat nu als tweede.
-
                     NavigationLink {
 
                         MusicBrainzSearchView()
@@ -583,8 +584,7 @@ struct FetchView: View {
                     } label: {
 
                         FetchSourceCard(
-                            title:
-                                "fetchview_search_musicbrainz",
+                            title: "MusicBrainz",
                             systemImage:
                                 "music.note.list",
                             tint:
@@ -1280,7 +1280,7 @@ struct FetchView: View {
 private struct FetchSourceCard: View {
 
     let title:
-        LocalizedStringKey
+        String
 
     let systemImage:
         String
@@ -1387,4 +1387,3 @@ private struct FetchSourceCard: View {
         )
     }
 }
-
