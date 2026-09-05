@@ -1277,5 +1277,114 @@ struct FetchView: View {
 
 // MARK: - Source Card
 
-Card
+private struct FetchSourceCard: View {
+
+    let title:
+        LocalizedStringKey
+
+    let systemImage:
+        String
+
+    let tint:
+        Color
+
+    var body: some View {
+
+        VStack(
+            alignment: .leading,
+            spacing: 10
+        ) {
+
+            HStack {
+
+                Image(
+                    systemName: systemImage
+                )
+                .font(
+                    .system(
+                        size: 23,
+                        weight: .semibold
+                    )
+                )
+                .foregroundStyle(tint)
+                .frame(
+                    width: 48,
+                    height: 48
+                )
+                .background(
+                    tint.opacity(0.12),
+                    in: RoundedRectangle(
+                        cornerRadius: 14,
+                        style: .continuous
+                    )
+                )
+
+                Spacer()
+
+                Image(
+                    systemName: "arrow.up.right"
+                )
+                .font(
+                    .caption
+                        .weight(.bold)
+                )
+                .foregroundStyle(.tertiary)
+            }
+
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .leading
+                )
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .fixedSize(
+                    horizontal: false,
+                    vertical: true
+                )
+                .layoutPriority(1)
+
+            Spacer(minLength: 0)
+        }
+        .padding(15)
+        .frame(
+            width: 176,
+            height: 148,
+            alignment: .leading
+        )
+        .background(
+            Color.primary.opacity(0.045),
+            in: RoundedRectangle(
+                cornerRadius: 22,
+                style: .continuous
+            )
+        )
+        .overlay {
+
+            RoundedRectangle(
+                cornerRadius: 22,
+                style: .continuous
+            )
+            .stroke(
+                Color.primary.opacity(0.07),
+                lineWidth: 1
+            )
+        }
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: 22,
+                style: .continuous
+            )
+        )
+        .contentShape(
+            RoundedRectangle(
+                cornerRadius: 22,
+                style: .continuous
+            )
+        )
+    }
+}
 
