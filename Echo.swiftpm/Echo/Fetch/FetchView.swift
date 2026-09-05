@@ -555,22 +555,7 @@ struct FetchView: View {
                     spacing: 16
                 ) {
 
-                    NavigationLink {
-
-                        MusicBrainzSearchView()
-
-                    } label: {
-
-                        FetchSourceCard(
-                            title:
-                                "fetchview_search_musicbrainz",
-                            systemImage:
-                                "music.note.list",
-                            tint:
-                                .purple
-                        )
-                    }
-                    .buttonStyle(.plain)
+                    // YouTube Music staat nu eerst.
 
                     NavigationLink {
 
@@ -585,6 +570,25 @@ struct FetchView: View {
                                 "play.rectangle.fill",
                             tint:
                                 .red
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    // MusicBrainz staat nu als tweede.
+
+                    NavigationLink {
+
+                        MusicBrainzSearchView()
+
+                    } label: {
+
+                        FetchSourceCard(
+                            title:
+                                "fetchview_search_musicbrainz",
+                            systemImage:
+                                "music.note.list",
+                            tint:
+                                .purple
                         )
                     }
                     .buttonStyle(.plain)
@@ -1288,7 +1292,7 @@ private struct FetchSourceCard: View {
 
         VStack(
             alignment: .leading,
-            spacing: 16
+            spacing: 14
         ) {
 
             HStack {
@@ -1331,14 +1335,22 @@ private struct FetchSourceCard: View {
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
-                .lineLimit(2)
+                .frame(
+                    maxWidth: .infinity,
+                    alignment: .leading
+                )
+                .lineLimit(3)
+                .fixedSize(
+                    horizontal: false,
+                    vertical: true
+                )
 
             Spacer(minLength: 0)
         }
         .padding(17)
         .frame(
             width: 176,
-            height: 148,
+            height: 170,
             alignment: .leading
         )
         .background(
@@ -1359,6 +1371,12 @@ private struct FetchSourceCard: View {
                 lineWidth: 1
             )
         }
+        .clipShape(
+            RoundedRectangle(
+                cornerRadius: 22,
+                style: .continuous
+            )
+        )
         .contentShape(
             RoundedRectangle(
                 cornerRadius: 22,
