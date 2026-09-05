@@ -1,1369 +1,486 @@
 import SwiftUI
 
-struct FetchView: View {
+struct SettingsView: View {
 
-    @State private var manager =
-        FetchManager.shared
+    @Environment(MusicLibraryManager.self)
+    private var library
 
-    @State private var fetchSettings =
-        FetchSettings.shared
+    @AppStorage("geniusAccessToken")
+    private var geniusToken: String = ""
+
+    @AppStorage("musixmatchApiKey")
+    private var musixmatchApiKey: String = ""
+
+    @AppStorage("selectedLanguage")
+    private var selectedLanguage: String = "en"
+
+    @AppStorage("appearanceMode")
+    private var appearanceMode = "system"
+
+    @State private var showDeleteConfirmation = false
+    @State private var showFirstDeleteAlert = false
+    @State private var showFinalDeleteAlert = false
+    @State private var showDeleteLyricsAlert = false
 
     @State private var apifySettings =
         ApifySettings.shared
 
-    @State private var spotify =
-        SpotifyManager.shared
-
-    @State private var library =
-        MusicLibraryManager.shared
-
-    @State private var apifyUsage:
-        ApifyUsageInfo?
-
-    @State private var apifyUsageLoading =
-        false
-
-    @State private var apifyUsageError:
-        String?
-
-    @State private var fetchNavigationID =
-        UUID()
-
-    @State private var showDownloadsFromTrack =
-        false
-
-    @State private var showURLInput =
-        false
-
-
-    // MARK: - Body
+    @State private var showApifyToken = false
 
     var body: some View {
 
         NavigationStack {
 
-            ScrollView {
+            Form {
 
-                LazyVStack(
-                    alignment: .leading,
-                    spacing: 32
+                Section(
+                    LocalizedStringKey(
+                        "settings_section_appearance"
+                    )
                 ) {
 
-                    header
-
-                    urlImportSection
-
-                    spotifySection
-
-                    musicSearchSection
-
-                    downloadsSection
-
-                    outputSection
-
-                    if apifySettings.downloadMethod == .youtube {
-                        apifySection
-                    }
-
-                    if !manager.items.isEmpty {
-                        recentSection
-                    }
-                }
-                .padding(.bottom, 120)
-            }
-            .refreshable {
-                await refreshForCurrentMethod()
-            }
-            .task {
-                await refreshForCurrentMethod()
-            }
-            .onChange(
-                of: apifySettings.downloadMethod
-            ) { _, newMethod in
-
-                Task {
-
-                    if newMethod == .youtube {
-
-                        await loadApifyUsage()
-
-                    } else {
-
-                        apifyUsage = nil
-                        apifyUsageError = nil
-                        apifyUsageLoading = false
-                    }
-                }
-            }
-        }
-        .id(fetchNavigationID)
-        .onReceive(
-            NotificationCenter.default
-                .publisher(
-                    for: .echoOpenFetchDownloads
-                )
-        ) { _ in
-
-            fetchNavigationID = UUID()
-
-            DispatchQueue.main.async {
-                showDownloadsFromTrack = true
-            }
-        }
-        .alert(
-            Text("alert_duplicate_title"),
-            isPresented:
-                Bindable(library)
-                    .showDuplicateAlert
-        ) {
-
-            Button(
-                String(
-                    localized: "action_skip"
-                )
-            ) {
-
-                library.resolveDuplicate(
-                    choice: .skip,
-                    applyToAll: false
-                )
-            }
-
-            Button(
-                String(
-                    localized: "action_replace"
-                ),
-                role: .destructive
-            ) {
-
-                library.resolveDuplicate(
-                    choice: .replace,
-                    applyToAll: false
-                )
-            }
-
-            Button(
-                String(
-                    localized: "action_skip_all"
-                )
-            ) {
-
-                library.resolveDuplicate(
-                    choice: .skip,
-                    applyToAll: true
-                )
-            }
-
-            Button(
-                String(
-                    localized: "action_replace_all"
-                ),
-                role: .destructive
-            ) {
-
-                library.resolveDuplicate(
-                    choice: .replace,
-                    applyToAll: true
-                )
-            }
-
-            Button(
-                String(
-                    localized: "action_cancel"
-                ),
-                role: .cancel
-            ) {}
-
-        } message: {
-
-            Text(
-                "alert_duplicate_message \(library.duplicateSongName)"
-            )
-        }
-        .sheet(
-            isPresented: $showDownloadsFromTrack
-        ) {
-
-            NavigationStack {
-
-                FetchQueueView()
-                    .navigationTitle(
-                        "fetchview_downloads"
-                    )
-                    .navigationBarTitleDisplayMode(
-                        .inline
-                    )
-                    .toolbar {
-
-                        ToolbarItem(
-                            placement: .topBarTrailing
-                        ) {
-
-                            Button(
-                                "fetchview_done"
-                            ) {
-                                showDownloadsFromTrack = false
-                            }
-                        }
-                    }
-            }
-        }
-        .sheet(
-            isPresented: $showURLInput
-        ) {
-
-            FetchURLInputSheet()
-        }
-    }
-
-
-    // MARK: - Header
-
-    private var header: some View {
-
-        HStack(
-            alignment: .center
-        ) {
-
-            Text("fetchview_title")
-                .font(.largeTitle.bold())
-
-            Spacer()
-
-            Button {
-
-                showURLInput = true
-
-            } label: {
-
-                Image(
-                    systemName: "link"
-                )
-                .font(
-                    .title3
-                        .weight(.medium)
-                )
-                .foregroundStyle(.primary)
-                .frame(
-                    width: 42,
-                    height: 42
-                )
-                .background(
-                    .thinMaterial,
-                    in: Circle()
-                )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(
-                "fetchview_fetch_url"
-            )
-        }
-        .padding(.horizontal)
-        .padding(.top, 6)
-    }
-
-
-    // MARK: - URL Import
-
-    private var urlImportSection: some View {
-
-        Button {
-
-            showURLInput = true
-
-        } label: {
-
-            HStack(
-                spacing: 17
-            ) {
-
-                Image(
-                    systemName: "link.badge.plus"
-                )
-                .font(
-                    .system(
-                        size: 25,
-                        weight: .semibold
-                    )
-                )
-                .foregroundStyle(.white)
-                .frame(
-                    width: 58,
-                    height: 58
-                )
-                .background(
-                    Color.accentColor,
-                    in: RoundedRectangle(
-                        cornerRadius: 17,
-                        style: .continuous
-                    )
-                )
-
-                VStack(
-                    alignment: .leading,
-                    spacing: 5
-                ) {
-
-                    Text("fetchurlviews_url")
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-
-                    Text("fetchurlviews_inline_footer")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-
-                Spacer(minLength: 8)
-
-                Image(
-                    systemName: "chevron.right"
-                )
-                .font(
-                    .subheadline
-                        .weight(.semibold)
-                )
-                .foregroundStyle(.tertiary)
-            }
-            .padding(18)
-            .background(
-                Color.primary.opacity(0.045),
-                in: RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
-                )
-            )
-            .overlay {
-
-                RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
-                )
-                .stroke(
-                    Color.primary.opacity(0.07),
-                    lineWidth: 1
-                )
-            }
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal)
-    }
-
-
-    // MARK: - Spotify
-
-    @ViewBuilder
-    private var spotifySection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 14
-        ) {
-
-            HStack {
-
-                Text("fetchview_spotify")
-                    .font(.title2.bold())
-
-                Spacer()
-
-                if spotify.isConnected {
-
-                    Label(
-                        "fetchview_connected",
-                        systemImage: "checkmark.circle.fill"
-                    )
-                    .font(
-                        .caption
-                            .weight(.semibold)
-                    )
-                    .foregroundStyle(.green)
-
-                } else {
-
-                    Text("fetchview_not_configured")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal)
-
-            if spotify.isConnected {
-
-                ScrollView(
-                    .horizontal,
-                    showsIndicators: false
-                ) {
-
-                    LazyHStack(
-                        spacing: 16
+                    Picker(
+                        LocalizedStringKey(
+                            "settings_appearance_title"
+                        ),
+                        selection:
+                            $appearanceMode
                     ) {
 
-                        NavigationLink {
-
-                            SpotifyLibraryView()
-
-                        } label: {
-
-                            FetchSourceCard(
-                                title:
-                                    "fetchview_your_library",
-                                systemImage:
-                                    "music.note.list",
-                                tint:
-                                    .green
-                            )
-                        }
-                        .buttonStyle(.plain)
-
-                        NavigationLink {
-
-                            SpotifySearchView()
-
-                        } label: {
-
-                            FetchSourceCard(
-                                title:
-                                    "fetchview_search_spotify",
-                                systemImage:
-                                    "magnifyingglass",
-                                tint:
-                                    .green
-                            )
-                        }
-                        .buttonStyle(.plain)
+                        Text(LocalizedStringKey("appearance_system"))
+                            .tag("system")
+                        
+                        Text(LocalizedStringKey("appearance_light"))
+                            .tag("light")
+                        
+                        Text(LocalizedStringKey("appearance_dark"))
+                            .tag("dark")
                     }
-                    .padding(.horizontal)
                 }
 
-            } else {
-
-                VStack(
-                    alignment: .leading,
-                    spacing: 16
+                Section(
+                    header:
+                        Text(
+                            LocalizedStringKey(
+                                "settings_language_section"
+                            )
+                        )
                 ) {
 
-                    HStack(
-                        alignment: .top,
-                        spacing: 14
+                    Picker(
+                        selection:
+                            $selectedLanguage
                     ) {
 
-                        Image(
-                            systemName: "music.note"
-                        )
-                        .font(
-                            .system(
-                                size: 22,
-                                weight: .semibold
-                            )
-                        )
-                        .foregroundStyle(.green)
-                        .frame(
-                            width: 48,
-                            height: 48
-                        )
-                        .background(
-                            Color.green.opacity(0.12),
-                            in: RoundedRectangle(
-                                cornerRadius: 14,
-                                style: .continuous
-                            )
-                        )
-
-                        VStack(
-                            alignment: .leading,
-                            spacing: 4
-                        ) {
-
-                            Text(
-                                "fetchview_connect_spotify"
-                            )
-                            .font(.headline)
-
-                            Text(
-                                "fetchview_connect_spotify_description"
-                            )
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Button {
-
-                        spotify.connect()
+                        Text("English").tag("en")
+                        Text("Nederlands").tag("nl")
+                        Text("Français").tag("fr")
+                        Text("Deutsch").tag("de")
 
                     } label: {
 
                         Label(
-                            "fetchview_connect_spotify",
+                            LocalizedStringKey(
+                                "settings_language_label"
+                            ),
                             systemImage:
-                                "person.crop.circle.badge.plus"
-                        )
-                        .fontWeight(.semibold)
-                        .frame(
-                            maxWidth: .infinity
+                                "globe"
                         )
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.green)
+                    .pickerStyle(.menu)
                 }
-                .padding(18)
-                .background(
-                    Color.primary.opacity(0.045),
-                    in: RoundedRectangle(
-                        cornerRadius: 23,
-                        style: .continuous
-                    )
-                )
-                .overlay {
 
-                    RoundedRectangle(
-                        cornerRadius: 23,
-                        style: .continuous
-                    )
-                    .stroke(
-                        Color.primary.opacity(0.07),
-                        lineWidth: 1
-                    )
-                }
-                .padding(.horizontal)
-            }
-        }
-    }
-
-
-    // MARK: - Music Search
-
-    private var musicSearchSection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 14
-        ) {
-
-            Text("fetchview_music")
-                .font(.title2.bold())
-                .padding(.horizontal)
-
-            ScrollView(
-                .horizontal,
-                showsIndicators: false
-            ) {
-
-                LazyHStack(
-                    spacing: 16
+                Section(
+                    header:
+                        Text(
+                            "settings.api.header"
+                        ),
+                    footer:
+                        Text(
+                            "settings.genius.footer"
+                        )
                 ) {
 
-                    NavigationLink {
+                    SecureField(
+                        String(
+                            localized:
+                                "settingsview_genius_token"
+                        ),
+                        text:
+                            $geniusToken
+                    )
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
 
-                        MusicBrainzSearchView()
-
-                    } label: {
-
-                        FetchSourceCard(
-                            title:
-                                "fetchview_search_musicbrainz",
-                            systemImage:
-                                "music.note.list",
-                            tint:
-                                .purple
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    NavigationLink {
-
-                        YouTubeMusicSearchView()
-
-                    } label: {
-
-                        FetchSourceCard(
-                            title:
-                                "fetchview_search_youtube_music",
-                            systemImage:
-                                "play.rectangle.fill",
-                            tint:
-                                .red
-                        )
-                    }
-                    .buttonStyle(.plain)
+                    SecureField(
+                        String(
+                            localized:
+                                "settingsview_musixmatch_key"
+                        ),
+                        text:
+                            $musixmatchApiKey
+                    )
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
                 }
-                .padding(.horizontal)
-            }
 
-            Text("fetchview_music_search_footer")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-        }
-    }
-
-
-    // MARK: - Downloads
-
-    private var downloadsSection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 14
-        ) {
-
-            Text("fetchview_downloads")
-                .font(.title2.bold())
-                .padding(.horizontal)
-
-            NavigationLink {
-
-                FetchQueueView()
-
-            } label: {
-
-                HStack(
-                    spacing: 16
+                Section(
+                    "settingsview_fetch"
                 ) {
-
-                    ZStack {
-
-                        RoundedRectangle(
-                            cornerRadius: 16,
-                            style: .continuous
-                        )
-                        .fill(
-                            Color.blue.opacity(0.12)
-                        )
-
-                        if activeDownloadCount > 0 {
-
-                            ProgressView()
-                                .controlSize(.regular)
-
-                        } else {
-
-                            Image(
-                                systemName:
-                                    "arrow.down.circle.fill"
-                            )
-                            .font(.title2)
-                            .foregroundStyle(.blue)
-                        }
-                    }
-                    .frame(
-                        width: 54,
-                        height: 54
-                    )
-
-                    VStack(
-                        alignment: .leading,
-                        spacing: 5
-                    ) {
-
-                        Text("fetchview_downloads")
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-
-                        if activeDownloadCount > 0 {
-
-                            Text(activeDownloadsText)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-
-                        } else if manager.items.isEmpty {
-
-                            Text(
-                                "fetchqueueview_no_downloads_description"
-                            )
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-
-                        } else {
-
-                            Text(
-                                "\(manager.items.count)"
-                            )
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Spacer()
-
-                    if !manager.items.isEmpty {
-
-                        Text("\(manager.items.count)")
-                            .font(
-                                .caption
-                                    .weight(.semibold)
-                            )
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                Color.primary.opacity(0.06),
-                                in: Capsule()
-                            )
-                    }
-
-                    Image(
-                        systemName: "chevron.right"
-                    )
-                    .font(
-                        .subheadline
-                            .weight(.semibold)
-                    )
-                    .foregroundStyle(.tertiary)
-                }
-                .padding(18)
-                .background(
-                    Color.primary.opacity(0.045),
-                    in: RoundedRectangle(
-                        cornerRadius: 23,
-                        style: .continuous
-                    )
-                )
-                .overlay {
-
-                    RoundedRectangle(
-                        cornerRadius: 23,
-                        style: .continuous
-                    )
-                    .stroke(
-                        Color.primary.opacity(0.07),
-                        lineWidth: 1
-                    )
-                }
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal)
-        }
-    }
-
-
-    // MARK: - Output
-
-    private var outputSection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 14
-        ) {
-
-            Text("fetchview_output")
-                .font(.title2.bold())
-                .padding(.horizontal)
-
-            VStack(spacing: 0) {
-
-                HStack(
-                    spacing: 14
-                ) {
-
-                    Image(
-                        systemName: "waveform"
-                    )
-                    .font(.headline)
-                    .foregroundStyle(.orange)
-                    .frame(
-                        width: 42,
-                        height: 42
-                    )
-                    .background(
-                        Color.orange.opacity(0.12),
-                        in: RoundedRectangle(
-                            cornerRadius: 12,
-                            style: .continuous
-                        )
-                    )
-
-                    Text("fetchview_audio_quality")
-                        .font(.body)
-
-                    Spacer()
 
                     Picker(
-                        "fetchview_audio_quality",
+                        String(
+                            localized:
+                                "settingsview_download_method"
+                        ),
                         selection:
-                            $fetchSettings.quality
+                            $apifySettings.downloadMethod
                     ) {
 
                         ForEach(
-                            FetchQuality.allCases
-                        ) { quality in
-
-                            Text(quality.title)
-                                .tag(quality)
-                        }
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                }
-                .padding(16)
-
-                Divider()
-                    .padding(.leading, 72)
-
-                Toggle(
-                    isOn:
-                        $fetchSettings.embedArtwork
-                ) {
-
-                    HStack(
-                        spacing: 14
-                    ) {
-
-                        Image(
-                            systemName: "photo"
-                        )
-                        .font(.headline)
-                        .foregroundStyle(.pink)
-                        .frame(
-                            width: 42,
-                            height: 42
-                        )
-                        .background(
-                            Color.pink.opacity(0.12),
-                            in: RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
-                            )
-                        )
-
-                        Text("fetchview_artwork")
-                    }
-                }
-                .padding(16)
-            }
-            .background(
-                Color.primary.opacity(0.045),
-                in: RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
-                )
-            )
-            .overlay {
-
-                RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
-                )
-                .stroke(
-                    Color.primary.opacity(0.07),
-                    lineWidth: 1
-                )
-            }
-            .padding(.horizontal)
-
-            Text("fetchview_output_footer")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-        }
-    }
-
-
-    // MARK: - Apify
-
-    @ViewBuilder
-    private var apifySection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 14
-        ) {
-
-            Text("fetchview_apify")
-                .font(.title2.bold())
-                .padding(.horizontal)
-
-            VStack(
-                alignment: .leading,
-                spacing: 16
-            ) {
-
-                NavigationLink {
-
-                    ApifyAccountsView()
-
-                } label: {
-
-                    HStack(
-                        spacing: 14
-                    ) {
-
-                        Image(
-                            systemName:
-                                "person.crop.circle"
-                        )
-                        .font(.title3)
-                        .foregroundStyle(.indigo)
-                        .frame(
-                            width: 46,
-                            height: 46
-                        )
-                        .background(
-                            Color.indigo.opacity(0.12),
-                            in: RoundedRectangle(
-                                cornerRadius: 13,
-                                style: .continuous
-                            )
-                        )
-
-                        VStack(
-                            alignment: .leading,
-                            spacing: 3
-                        ) {
+                            ApifyDownloadMethod.allCases
+                        ) { method in
 
                             Text(
-                                "fetchview_apify_account"
+                                method.title
                             )
-                            .font(.headline)
-                            .foregroundStyle(.primary)
+                            .tag(method)
+                        }
+                    }
 
-                            if let account =
-                                apifySettings.activeAccount
-                            {
+                    if
+                        apifySettings.downloadMethod
+                        == .youtube
+                    {
 
-                                Text(account.name)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
+                        NavigationLink {
 
-                            } else {
+                            ApifyAccountsView()
 
-                                Text(
-                                    "fetchview_not_configured"
+                        } label: {
+
+                            HStack {
+
+                                Label(
+                                    "settingsview_apify_accounts",
+                                    systemImage:
+                                        "person.2"
                                 )
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+
+                                Spacer()
+
+                                if let account =
+                                    apifySettings.activeAccount
+                                {
+
+                                    Text(
+                                        account.name
+                                    )
+                                    .foregroundStyle(
+                                        .secondary
+                                    )
+
+                                } else {
+
+                                    Text(
+                                        "settingsview_none"
+                                    )
+                                    .foregroundStyle(
+                                        .secondary
+                                    )
+                                }
                             }
                         }
+                    }
+                }
+
+                Section(
+                    LocalizedStringKey(
+                        "settings_section_library"
+                    )
+                ) {
+
+                    HStack {
+
+                        Text(
+                            LocalizedStringKey(
+                                "tab_songs"
+                            )
+                        )
 
                         Spacer()
 
-                        Image(
-                            systemName: "chevron.right"
+                        Text(
+                            "\(library.songs.count)"
                         )
-                        .font(
-                            .subheadline
-                                .weight(.semibold)
-                        )
-                        .foregroundStyle(.tertiary)
-                    }
-                }
-                .buttonStyle(.plain)
-
-                if !apifySettings.isConfigured {
-
-                    Label(
-                        "fetchview_add_apify_account_usage",
-                        systemImage: "info.circle"
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                } else if apifyUsageLoading {
-
-                    HStack(spacing: 10) {
-
-                        ProgressView()
-
-                        Text("fetchview_loading_usage")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                } else if let usage = apifyUsage {
-
-                    Divider()
-
-                    VStack(
-                        alignment: .leading,
-                        spacing: 11
-                    ) {
-
-                        HStack {
-
-                            Text("fetchview_usage")
-                                .font(
-                                    .subheadline
-                                        .weight(.semibold)
-                                )
-
-                            Spacer()
-
-                            Text(
-                                String(
-                                    format:
-                                        "$%.2f / $%.2f",
-                                    usage.usedUSD,
-                                    usage.maxUSD
-                                )
-                            )
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                        }
-
-                        ProgressView(
-                            value:
-                                usage.usageFraction
-                        )
-                        .tint(.indigo)
-
-                        HStack {
-
-                            Label(
-                                String(
-                                    format:
-                                        "%.3f CU",
-                                    usage.actorComputeUnits
-                                ),
-                                systemImage: "cpu"
-                            )
-
-                            Spacer()
-
-                            Label(
-                                String(
-                                    format:
-                                        "%.3f GB",
-                                    usage.externalTransferGB
-                                ),
-                                systemImage:
-                                    "arrow.up.arrow.down"
-                            )
-                        }
-                        .font(.caption)
                         .foregroundStyle(.secondary)
                     }
 
-                } else if let apifyUsageError {
+                    HStack {
 
-                    Divider()
+                        Text(
+                            LocalizedStringKey(
+                                "tab_playlists"
+                            )
+                        )
 
-                    VStack(
-                        alignment: .leading,
-                        spacing: 9
-                    ) {
+                        Spacer()
+
+                        Text(
+                            "\(library.playlists.count)"
+                        )
+                        .foregroundStyle(.secondary)
+                    }
+
+                    Button {
+                    } label: {
 
                         Label(
-                            "fetchview_usage_unavailable",
+                            LocalizedStringKey(
+                                "settings_refresh_library"
+                            ),
                             systemImage:
-                                "exclamationmark.triangle.fill"
+                                "arrow.clockwise"
                         )
-                        .font(
-                            .subheadline
-                                .weight(.semibold)
-                        )
-                        .foregroundStyle(.orange)
-
-                        Text(apifyUsageError)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Button(
-                            "fetchview_try_again"
-                        ) {
-
-                            Task {
-                                await loadApifyUsage()
-                            }
-                        }
-                        .buttonStyle(.bordered)
                     }
                 }
-            }
-            .padding(18)
-            .background(
-                Color.primary.opacity(0.045),
-                in: RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
-                )
-            )
-            .overlay {
 
-                RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
-                )
-                .stroke(
-                    Color.primary.opacity(0.07),
-                    lineWidth: 1
-                )
-            }
-            .padding(.horizontal)
+                Section(
+                    LocalizedStringKey(
+                        "settings_section_danger"
+                    )
+                ) {
 
-            Text("fetchview_apify_footer")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-        }
-    }
+                    Button {
 
-
-    // MARK: - Recent Downloads
-
-    private var recentSection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 14
-        ) {
-
-            HStack {
-
-                Text("fetchview_recent")
-                    .font(.title2.bold())
-
-                Spacer()
-
-                if manager.items.count > 4 {
-
-                    NavigationLink {
-
-                        FetchQueueView()
+                        library.clearCache()
 
                     } label: {
 
-                        Text(
-                            "fetchview_view_all_downloads"
+                        Label(
+                            LocalizedStringKey(
+                                "settings_clear_cache"
+                            ),
+                            systemImage:
+                                "arrow.clockwise"
                         )
-                        .font(
-                            .subheadline
-                                .weight(.semibold)
+                    }
+
+                    Button(
+                        role: .destructive
+                    ) {
+
+                        showFirstDeleteAlert = true
+
+                    } label: {
+
+                        Label(
+                            LocalizedStringKey(
+                                "settings_delete_all_music"
+                            ),
+                            systemImage: "trash"
                         )
                     }
                 }
-            }
-            .padding(.horizontal)
 
-            VStack(spacing: 0) {
-
-                ForEach(recentItems) { item in
-
-                    FetchItemRow(
-                        item: item
+                Section(
+                    LocalizedStringKey(
+                        "settings_section_about"
                     )
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                ) {
 
-                    if item.id != recentItems.last?.id {
+                    HStack {
 
-                        Divider()
-                            .padding(.leading, 84)
+                        Text(
+                            LocalizedStringKey(
+                                "settings_version"
+                            )
+                        )
+
+                        Spacer()
+
+                        Text("3.0")
+                            .foregroundStyle(
+                                .secondary
+                            )
+                    }
+
+                    Text(
+                        LocalizedStringKey(
+                            "settings_made_with"
+                        )
+                    )
+                    .foregroundStyle(
+                        .secondary
+                    )
+                }
+
+                Section(
+                    "settingsview_developer"
+                ) {
+
+                    NavigationLink {
+
+                        DeveloperView()
+
+                    } label: {
+
+                        Label(
+                            "settingsview_developer_settings",
+                            systemImage:
+                                "hammer"
+                        )
                     }
                 }
             }
-            .background(
-                Color.primary.opacity(0.045),
-                in: RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
+
+            .navigationTitle(
+                LocalizedStringKey(
+                    "tab_settings"
                 )
             )
-            .overlay {
 
-                RoundedRectangle(
-                    cornerRadius: 23,
-                    style: .continuous
-                )
-                .stroke(
-                    Color.primary.opacity(0.07),
-                    lineWidth: 1
-                )
-            }
-            .padding(.horizontal)
-        }
-    }
-
-
-    // MARK: - Values
-
-    private var recentItems: [FetchItem] {
-
-        Array(
-            manager.items
-                .reversed()
-                .prefix(4)
-        )
-    }
-
-    private var activeDownloadCount: Int {
-
-        manager.items
-            .filter { item in
-
-                switch item.status {
-
-                case .preparing,
-                     .downloading,
-                     .processing:
-
-                    return true
-
-                default:
-
-                    return false
-                }
-            }
-            .count
-    }
-
-    private var activeDownloadsText: String {
-
-        String(
-            format:
-                String(
-                    localized:
-                        "fetchview_active_downloads"
+            .alert(
+                LocalizedStringKey(
+                    "alert_delete_lyrics_title"
                 ),
-            activeDownloadCount
-        )
-    }
+                isPresented:
+                    $showDeleteLyricsAlert
+            ) {
 
+                Button(
+                    LocalizedStringKey(
+                        "action_cancel"
+                    ),
+                    role: .cancel
+                ) {}
 
-    // MARK: - Refresh
+                Button(
+                    LocalizedStringKey(
+                        "action_delete"
+                    ),
+                    role: .destructive
+                ) {
+                    MusicLibraryManager
+                        .shared
+                        .removeAllLyrics()
+                }
 
-    private func refreshForCurrentMethod() async {
+            } message: {
 
-        if apifySettings.downloadMethod == .youtube {
-            await loadApifyUsage()
+                Text(
+                    LocalizedStringKey(
+                        "alert_delete_lyrics_message"
+                    )
+                )
+            }
+
+            .alert(
+                LocalizedStringKey(
+                    "alert_delete_all_music_title"
+                ),
+                isPresented:
+                    $showFirstDeleteAlert
+            ) {
+
+                Button(
+                    LocalizedStringKey(
+                        "action_cancel"
+                    ),
+                    role: .cancel
+                ) {}
+
+                Button(
+                    LocalizedStringKey(
+                        "action_continue"
+                    ),
+                    role: .destructive
+                ) {
+                    showFinalDeleteAlert = true
+                }
+
+            } message: {
+
+                Text(
+                    LocalizedStringKey(
+                        "alert_delete_all_music_message"
+                    )
+                )
+            }
+
+            .alert(
+                LocalizedStringKey(
+                    "alert_cannot_be_undone_title"
+                ),
+                isPresented:
+                    $showFinalDeleteAlert
+            ) {
+
+                Button(
+                    LocalizedStringKey(
+                        "action_cancel"
+                    ),
+                    role: .cancel
+                ) {}
+
+                Button(
+                    LocalizedStringKey(
+                        "action_delete_everything"
+                    ),
+                    role: .destructive
+                ) {
+                    library.songs.removeAll()
+                }
+
+            } message: {
+
+                Text(
+                    LocalizedStringKey(
+                        "alert_cannot_be_undone_message"
+                    )
+                )
+            }
+
+            .alert(
+                LocalizedStringKey(
+                    "alert_delete_all_music_title"
+                ),
+                isPresented:
+                    $showDeleteConfirmation
+            ) {
+
+                Button(
+                    LocalizedStringKey(
+                        "action_cancel"
+                    ),
+                    role: .cancel
+                ) {}
+
+                Button(
+                    LocalizedStringKey(
+                        "action_delete"
+                    ),
+                    role: .destructive
+                ) {
+                    library.deleteAllSongs()
+                }
+
+            } message: {
+
+                Text(
+                    LocalizedStringKey(
+                        "alert_delete_confirmation_message"
+                    )
+                )
+            }
         }
-    }
-
-    private func loadApifyUsage() async {
-
-        guard
-            apifySettings.downloadMethod == .youtube
-        else {
-            return
-        }
-
-        guard apifySettings.isConfigured else {
-
-            apifyUsage = nil
-            apifyUsageLoading = false
-            apifyUsageError = nil
-            return
-        }
-
-        apifyUsageLoading = true
-        apifyUsageError = nil
-
-        do {
-
-            apifyUsage =
-                try await
-                ApifyUsageAPI.shared
-                    .getUsage()
-
-        } catch {
-
-            apifyUsage = nil
-            apifyUsageError =
-                error.localizedDescription
-        }
-
-        apifyUsageLoading = false
     }
 }
 
+#Preview {
 
-// MARK: - Source Card
-
-private struct FetchSourceCard: View {
-
-    let title:
-        LocalizedStringKey
-
-    let systemImage:
-        String
-
-    let tint:
-        Color
-
-    var body: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 16
-        ) {
-
-            HStack {
-
-                Image(
-                    systemName: systemImage
-                )
-                .font(
-                    .system(
-                        size: 23,
-                        weight: .semibold
-                    )
-                )
-                .foregroundStyle(tint)
-                .frame(
-                    width: 48,
-                    height: 48
-                )
-                .background(
-                    tint.opacity(0.12),
-                    in: RoundedRectangle(
-                        cornerRadius: 14,
-                        style: .continuous
-                    )
-                )
-
-                Spacer()
-
-                Image(
-                    systemName: "arrow.up.right"
-                )
-                .font(
-                    .caption
-                        .weight(.bold)
-                )
-                .foregroundStyle(.tertiary)
-            }
-
-            Text(title)
-                .font(.headline)
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(.leading)
-                .lineLimit(2)
-
-            Spacer(minLength: 0)
-        }
-        .padding(17)
-        .frame(
-            width: 176,
-            height: 148,
-            alignment: .leading
+    SettingsView()
+        .environment(
+            MusicLibraryManager()
         )
-        .background(
-            Color.primary.opacity(0.045),
-            in: RoundedRectangle(
-                cornerRadius: 22,
-                style: .continuous
-            )
-        )
-        .overlay {
-
-            RoundedRectangle(
-                cornerRadius: 22,
-                style: .continuous
-            )
-            .stroke(
-                Color.primary.opacity(0.07),
-                lineWidth: 1
-            )
-        }
-        .contentShape(
-            RoundedRectangle(
-                cornerRadius: 22,
-                style: .continuous
-            )
-        )
-    }
 }
