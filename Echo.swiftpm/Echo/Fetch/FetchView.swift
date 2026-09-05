@@ -2,41 +2,19 @@ import SwiftUI
 
 struct FetchView: View {
 
-    @State private var manager =
-        FetchManager.shared
+    @State private var manager = FetchManager.shared
+    @State private var fetchSettings = FetchSettings.shared
+    @State private var apifySettings = ApifySettings.shared
+    @State private var spotify = SpotifyManager.shared
+    @State private var library = MusicLibraryManager.shared
 
-    @State private var fetchSettings =
-        FetchSettings.shared
+    @State private var apifyUsage: ApifyUsageInfo?
+    @State private var apifyUsageLoading = false
+    @State private var apifyUsageError: String?
 
-    @State private var apifySettings =
-        ApifySettings.shared
-
-    @State private var spotify =
-        SpotifyManager.shared
-
-    @State private var library =
-        MusicLibraryManager.shared
-
-    @State private var apifyUsage:
-        ApifyUsageInfo?
-
-    @State private var apifyUsageLoading =
-        false
-
-    @State private var apifyUsageError:
-        String?
-
-    @State private var fetchNavigationID =
-        UUID()
-
-    @State private var showDownloadsFromTrack =
-        false
-
-    @State private var showURLInput =
-        false
-
-
-    // MARK: - Body
+    @State private var fetchNavigationID = UUID()
+    @State private var showDownloadsFromTrack = false
+    @State private var showURLInput = false
 
     var body: some View {
 
@@ -50,15 +28,10 @@ struct FetchView: View {
                 ) {
 
                     header
-
                     urlImportSection
-
                     spotifySection
-
                     musicSearchSection
-
                     downloadsSection
-
                     outputSection
 
                     if apifySettings.downloadMethod == .youtube {
@@ -84,11 +57,8 @@ struct FetchView: View {
                 Task {
 
                     if newMethod == .youtube {
-
                         await loadApifyUsage()
-
                     } else {
-
                         apifyUsage = nil
                         apifyUsageError = nil
                         apifyUsageLoading = false
@@ -98,10 +68,9 @@ struct FetchView: View {
         }
         .id(fetchNavigationID)
         .onReceive(
-            NotificationCenter.default
-                .publisher(
-                    for: .echoOpenFetchDownloads
-                )
+            NotificationCenter.default.publisher(
+                for: .echoOpenFetchDownloads
+            )
         ) { _ in
 
             fetchNavigationID = UUID()
@@ -113,16 +82,12 @@ struct FetchView: View {
         .alert(
             Text("alert_duplicate_title"),
             isPresented:
-                Bindable(library)
-                    .showDuplicateAlert
+                Bindable(library).showDuplicateAlert
         ) {
 
             Button(
-                String(
-                    localized: "action_skip"
-                )
+                String(localized: "action_skip")
             ) {
-
                 library.resolveDuplicate(
                     choice: .skip,
                     applyToAll: false
@@ -130,12 +95,9 @@ struct FetchView: View {
             }
 
             Button(
-                String(
-                    localized: "action_replace"
-                ),
+                String(localized: "action_replace"),
                 role: .destructive
             ) {
-
                 library.resolveDuplicate(
                     choice: .replace,
                     applyToAll: false
@@ -143,11 +105,8 @@ struct FetchView: View {
             }
 
             Button(
-                String(
-                    localized: "action_skip_all"
-                )
+                String(localized: "action_skip_all")
             ) {
-
                 library.resolveDuplicate(
                     choice: .skip,
                     applyToAll: true
@@ -155,12 +114,9 @@ struct FetchView: View {
             }
 
             Button(
-                String(
-                    localized: "action_replace_all"
-                ),
+                String(localized: "action_replace_all"),
                 role: .destructive
             ) {
-
                 library.resolveDuplicate(
                     choice: .replace,
                     applyToAll: true
@@ -168,9 +124,7 @@ struct FetchView: View {
             }
 
             Button(
-                String(
-                    localized: "action_cancel"
-                ),
+                String(localized: "action_cancel"),
                 role: .cancel
             ) {}
 
@@ -190,9 +144,7 @@ struct FetchView: View {
                     .navigationTitle(
                         "fetchview_downloads"
                     )
-                    .navigationBarTitleDisplayMode(
-                        .inline
-                    )
+                    .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
 
                         ToolbarItem(
@@ -211,7 +163,6 @@ struct FetchView: View {
         .sheet(
             isPresented: $showURLInput
         ) {
-
             FetchURLInputSheet()
         }
     }
@@ -221,9 +172,7 @@ struct FetchView: View {
 
     private var header: some View {
 
-        HStack(
-            alignment: .center
-        ) {
+        HStack {
 
             Text("fetchview_title")
                 .font(.largeTitle.bold())
@@ -236,22 +185,19 @@ struct FetchView: View {
 
             } label: {
 
-                Image(
-                    systemName: "link"
-                )
-                .font(
-                    .title3
-                        .weight(.medium)
-                )
-                .foregroundStyle(.primary)
-                .frame(
-                    width: 42,
-                    height: 42
-                )
-                .background(
-                    .thinMaterial,
-                    in: Circle()
-                )
+                Image(systemName: "link")
+                    .font(
+                        .title3.weight(.medium)
+                    )
+                    .foregroundStyle(.primary)
+                    .frame(
+                        width: 42,
+                        height: 42
+                    )
+                    .background(
+                        .thinMaterial,
+                        in: Circle()
+                    )
             }
             .buttonStyle(.plain)
             .accessibilityLabel(
@@ -273,9 +219,7 @@ struct FetchView: View {
 
         } label: {
 
-            HStack(
-                spacing: 17
-            ) {
+            HStack(spacing: 17) {
 
                 Image(
                     systemName: "link.badge.plus"
@@ -317,14 +261,11 @@ struct FetchView: View {
 
                 Spacer(minLength: 8)
 
-                Image(
-                    systemName: "chevron.right"
-                )
-                .font(
-                    .subheadline
-                        .weight(.semibold)
-                )
-                .foregroundStyle(.tertiary)
+                Image(systemName: "chevron.right")
+                    .font(
+                        .subheadline.weight(.semibold)
+                    )
+                    .foregroundStyle(.tertiary)
             }
             .padding(18)
             .background(
@@ -372,11 +313,11 @@ struct FetchView: View {
 
                     Label(
                         "fetchview_connected",
-                        systemImage: "checkmark.circle.fill"
+                        systemImage:
+                            "checkmark.circle.fill"
                     )
                     .font(
-                        .caption
-                            .weight(.semibold)
+                        .caption.weight(.semibold)
                     )
                     .foregroundStyle(.green)
 
@@ -396,9 +337,7 @@ struct FetchView: View {
                     showsIndicators: false
                 ) {
 
-                    LazyHStack(
-                        spacing: 16
-                    ) {
+                    LazyHStack(spacing: 16) {
 
                         NavigationLink {
 
@@ -408,9 +347,8 @@ struct FetchView: View {
 
                             FetchSourceCard(
                                 title:
-                                    String(
-                                        localized:
-                                            "fetchview_your_library"
+                                    Text(
+                                        "fetchview_your_library"
                                     ),
                                 systemImage:
                                     "music.note.list",
@@ -428,9 +366,8 @@ struct FetchView: View {
 
                             FetchSourceCard(
                                 title:
-                                    String(
-                                        localized:
-                                            "fetchview_search_spotify"
+                                    Text(
+                                        "fetchview_search_spotify"
                                     ),
                                 systemImage:
                                     "magnifyingglass",
@@ -455,27 +392,25 @@ struct FetchView: View {
                         spacing: 14
                     ) {
 
-                        Image(
-                            systemName: "music.note"
-                        )
-                        .font(
-                            .system(
-                                size: 22,
-                                weight: .semibold
+                        Image(systemName: "music.note")
+                            .font(
+                                .system(
+                                    size: 22,
+                                    weight: .semibold
+                                )
                             )
-                        )
-                        .foregroundStyle(.green)
-                        .frame(
-                            width: 48,
-                            height: 48
-                        )
-                        .background(
-                            Color.green.opacity(0.12),
-                            in: RoundedRectangle(
-                                cornerRadius: 14,
-                                style: .continuous
+                            .foregroundStyle(.green)
+                            .frame(
+                                width: 48,
+                                height: 48
                             )
-                        )
+                            .background(
+                                Color.green.opacity(0.12),
+                                in: RoundedRectangle(
+                                    cornerRadius: 14,
+                                    style: .continuous
+                                )
+                            )
 
                         VStack(
                             alignment: .leading,
@@ -507,9 +442,7 @@ struct FetchView: View {
                                 "person.crop.circle.badge.plus"
                         )
                         .fontWeight(.semibold)
-                        .frame(
-                            maxWidth: .infinity
-                        )
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.green)
@@ -557,9 +490,7 @@ struct FetchView: View {
                 showsIndicators: false
             ) {
 
-                LazyHStack(
-                    spacing: 16
-                ) {
+                LazyHStack(spacing: 16) {
 
                     NavigationLink {
 
@@ -568,7 +499,11 @@ struct FetchView: View {
                     } label: {
 
                         FetchSourceCard(
-                            title: "YouTube Music",
+                            title:
+                                Text(
+                                    verbatim:
+                                        "YouTube Music"
+                                ),
                             systemImage:
                                 "play.rectangle.fill",
                             tint:
@@ -584,7 +519,11 @@ struct FetchView: View {
                     } label: {
 
                         FetchSourceCard(
-                            title: "MusicBrainz",
+                            title:
+                                Text(
+                                    verbatim:
+                                        "MusicBrainz"
+                                ),
                             systemImage:
                                 "music.note.list",
                             tint:
@@ -623,9 +562,7 @@ struct FetchView: View {
 
             } label: {
 
-                HStack(
-                    spacing: 16
-                ) {
+                HStack(spacing: 16) {
 
                     ZStack {
 
@@ -683,11 +620,9 @@ struct FetchView: View {
 
                         } else {
 
-                            Text(
-                                "\(manager.items.count)"
-                            )
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            Text("\(manager.items.count)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
                     }
 
@@ -697,8 +632,7 @@ struct FetchView: View {
 
                         Text("\(manager.items.count)")
                             .font(
-                                .caption
-                                    .weight(.semibold)
+                                .caption.weight(.semibold)
                             )
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 10)
@@ -709,14 +643,11 @@ struct FetchView: View {
                             )
                     }
 
-                    Image(
-                        systemName: "chevron.right"
-                    )
-                    .font(
-                        .subheadline
-                            .weight(.semibold)
-                    )
-                    .foregroundStyle(.tertiary)
+                    Image(systemName: "chevron.right")
+                        .font(
+                            .subheadline.weight(.semibold)
+                        )
+                        .foregroundStyle(.tertiary)
                 }
                 .padding(18)
                 .background(
@@ -759,26 +690,22 @@ struct FetchView: View {
 
             VStack(spacing: 0) {
 
-                HStack(
-                    spacing: 14
-                ) {
+                HStack(spacing: 14) {
 
-                    Image(
-                        systemName: "waveform"
-                    )
-                    .font(.headline)
-                    .foregroundStyle(.orange)
-                    .frame(
-                        width: 42,
-                        height: 42
-                    )
-                    .background(
-                        Color.orange.opacity(0.12),
-                        in: RoundedRectangle(
-                            cornerRadius: 12,
-                            style: .continuous
+                    Image(systemName: "waveform")
+                        .font(.headline)
+                        .foregroundStyle(.orange)
+                        .frame(
+                            width: 42,
+                            height: 42
                         )
-                    )
+                        .background(
+                            Color.orange.opacity(0.12),
+                            in: RoundedRectangle(
+                                cornerRadius: 12,
+                                style: .continuous
+                            )
+                        )
 
                     Text("fetchview_audio_quality")
                         .font(.body)
@@ -812,26 +739,22 @@ struct FetchView: View {
                         $fetchSettings.embedArtwork
                 ) {
 
-                    HStack(
-                        spacing: 14
-                    ) {
+                    HStack(spacing: 14) {
 
-                        Image(
-                            systemName: "photo"
-                        )
-                        .font(.headline)
-                        .foregroundStyle(.pink)
-                        .frame(
-                            width: 42,
-                            height: 42
-                        )
-                        .background(
-                            Color.pink.opacity(0.12),
-                            in: RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
+                        Image(systemName: "photo")
+                            .font(.headline)
+                            .foregroundStyle(.pink)
+                            .frame(
+                                width: 42,
+                                height: 42
                             )
-                        )
+                            .background(
+                                Color.pink.opacity(0.12),
+                                in: RoundedRectangle(
+                                    cornerRadius: 12,
+                                    style: .continuous
+                                )
+                            )
 
                         Text("fetchview_artwork")
                     }
@@ -891,9 +814,7 @@ struct FetchView: View {
 
                 } label: {
 
-                    HStack(
-                        spacing: 14
-                    ) {
+                    HStack(spacing: 14) {
 
                         Image(
                             systemName:
@@ -949,8 +870,7 @@ struct FetchView: View {
                             systemName: "chevron.right"
                         )
                         .font(
-                            .subheadline
-                                .weight(.semibold)
+                            .subheadline.weight(.semibold)
                         )
                         .foregroundStyle(.tertiary)
                     }
@@ -990,16 +910,14 @@ struct FetchView: View {
 
                             Text("fetchview_usage")
                                 .font(
-                                    .subheadline
-                                        .weight(.semibold)
+                                    .subheadline.weight(.semibold)
                                 )
 
                             Spacer()
 
                             Text(
                                 String(
-                                    format:
-                                        "$%.2f / $%.2f",
+                                    format: "$%.2f / $%.2f",
                                     usage.usedUSD,
                                     usage.maxUSD
                                 )
@@ -1010,8 +928,7 @@ struct FetchView: View {
                         }
 
                         ProgressView(
-                            value:
-                                usage.usageFraction
+                            value: usage.usageFraction
                         )
                         .tint(.indigo)
 
@@ -1019,8 +936,7 @@ struct FetchView: View {
 
                             Label(
                                 String(
-                                    format:
-                                        "%.3f CU",
+                                    format: "%.3f CU",
                                     usage.actorComputeUnits
                                 ),
                                 systemImage: "cpu"
@@ -1030,8 +946,7 @@ struct FetchView: View {
 
                             Label(
                                 String(
-                                    format:
-                                        "%.3f GB",
+                                    format: "%.3f GB",
                                     usage.externalTransferGB
                                 ),
                                 systemImage:
@@ -1057,8 +972,7 @@ struct FetchView: View {
                                 "exclamationmark.triangle.fill"
                         )
                         .font(
-                            .subheadline
-                                .weight(.semibold)
+                            .subheadline.weight(.semibold)
                         )
                         .foregroundStyle(.orange)
 
@@ -1135,8 +1049,7 @@ struct FetchView: View {
                             "fetchview_view_all_downloads"
                         )
                         .font(
-                            .subheadline
-                                .weight(.semibold)
+                            .subheadline.weight(.semibold)
                         )
                     }
                 }
@@ -1147,11 +1060,9 @@ struct FetchView: View {
 
                 ForEach(recentItems) { item in
 
-                    FetchItemRow(
-                        item: item
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    FetchItemRow(item: item)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
 
                     if item.id != recentItems.last?.id {
 
@@ -1204,11 +1115,9 @@ struct FetchView: View {
                 case .preparing,
                      .downloading,
                      .processing:
-
                     return true
 
                 default:
-
                     return false
                 }
             }
@@ -1260,8 +1169,7 @@ struct FetchView: View {
 
             apifyUsage =
                 try await
-                ApifyUsageAPI.shared
-                    .getUsage()
+                ApifyUsageAPI.shared.getUsage()
 
         } catch {
 
@@ -1279,59 +1187,49 @@ struct FetchView: View {
 
 private struct FetchSourceCard: View {
 
-    let title:
-        String
-
-    let systemImage:
-        String
-
-    let tint:
-        Color
+    let title: Text
+    let systemImage: String
+    let tint: Color
 
     var body: some View {
 
         VStack(
             alignment: .leading,
-            spacing: 10
+            spacing: 8
         ) {
 
             HStack {
 
-                Image(
-                    systemName: systemImage
-                )
-                .font(
-                    .system(
-                        size: 23,
-                        weight: .semibold
+                Image(systemName: systemImage)
+                    .font(
+                        .system(
+                            size: 22,
+                            weight: .semibold
+                        )
                     )
-                )
-                .foregroundStyle(tint)
-                .frame(
-                    width: 48,
-                    height: 48
-                )
-                .background(
-                    tint.opacity(0.12),
-                    in: RoundedRectangle(
-                        cornerRadius: 14,
-                        style: .continuous
+                    .foregroundStyle(tint)
+                    .frame(
+                        width: 44,
+                        height: 44
                     )
-                )
+                    .background(
+                        tint.opacity(0.12),
+                        in: RoundedRectangle(
+                            cornerRadius: 13,
+                            style: .continuous
+                        )
+                    )
 
                 Spacer()
 
-                Image(
-                    systemName: "arrow.up.right"
-                )
-                .font(
-                    .caption
-                        .weight(.bold)
-                )
-                .foregroundStyle(.tertiary)
+                Image(systemName: "arrow.up.right")
+                    .font(
+                        .caption.weight(.bold)
+                    )
+                    .foregroundStyle(.tertiary)
             }
 
-            Text(title)
+            title
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
@@ -1349,10 +1247,10 @@ private struct FetchSourceCard: View {
 
             Spacer(minLength: 0)
         }
-        .padding(15)
+        .padding(14)
         .frame(
             width: 176,
-            height: 148,
+            height: 126,
             alignment: .leading
         )
         .background(
