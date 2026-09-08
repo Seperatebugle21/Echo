@@ -40,7 +40,7 @@ private struct EchoLockScreenWidgetView: View {
     AccessoryWidgetBackground()
 
     Image(systemName: "music.note")
-        .font(.system(size: 20, weight: .bold))
+        .font(.system(size: 30, weight: .bold))
         .foregroundStyle(.primary)
         .widgetAccentable()
 }
