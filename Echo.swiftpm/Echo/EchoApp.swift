@@ -115,6 +115,8 @@ struct EchoApp: App {
 
             // MARK: - Appearance
 
+            .tint(.red)
+
             .preferredColorScheme(
                 colorScheme
             )
