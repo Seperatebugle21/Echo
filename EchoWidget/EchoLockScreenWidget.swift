@@ -37,14 +37,13 @@ private struct EchoLockScreenWidgetView: View {
     var body: some View {
 
         ZStack {
-            AccessoryWidgetBackground()
+    AccessoryWidgetBackground()
 
-            Image("EchoMark")
-                .resizable()
-                .scaledToFill()
-                .clipShape(Circle())
-                .padding(3)
-        }
+    Image(systemName: "music.note")
+        .font(.system(size: 20, weight: .bold))
+        .foregroundStyle(.primary)
+        .widgetAccentable()
+}
         .widgetURL(
             URL(string: "echo://open")
         )
