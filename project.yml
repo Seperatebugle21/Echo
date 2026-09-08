@@ -1,0 +1,83 @@
+name: Echo
+
+options:
+  minimumXcodeGenVersion: 2.45.4
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1,2"
+
+packages:
+  YoutubeDL:
+    url: https://github.com/Seperatebugle21/YoutubeDL-iOS.git
+    branch: main
+  PythonKit:
+    url: https://github.com/pvieito/PythonKit.git
+    exactVersion: 0.5.1
+  Python-iOS:
+    url: https://github.com/kewlbear/Python-iOS.git
+    exactVersion: 0.1.1-b20230423-090254
+  EchoNativeAudio:
+    path: Packages/EchoNativeAudio
+
+targets:
+  Echo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Echo.swiftpm/Echo
+      - path: Echo.swiftpm/Assets.xcassets
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app
+        PRODUCT_NAME: Echo
+        INFOPLIST_FILE: Echo.swiftpm/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Configuration/Echo.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SUPPORTS_MACCATALYST: NO
+      configs:
+        Release:
+          OTHER_LDFLAGS: "$(inherited) -Xlinker -export_dynamic -Xlinker -force_load -Xlinker $(ECHO_PYTHON_BIN)"
+    dependencies:
+      - package: YoutubeDL
+      - package: PythonKit
+      - package: Python-iOS
+      - package: EchoNativeAudio
+        product: CLame
+      - target: EchoWidget
+        embed: true
+
+  EchoWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: EchoWidget
+      - path: Echo.swiftpm/Echo/Widgets/EchoWidgetModels.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.widget
+        PRODUCT_NAME: EchoWidget
+        INFOPLIST_FILE: Configuration/EchoWidget-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Configuration/EchoWidget.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+
+schemes:
+  Echo:
+    build:
+      targets:
+        Echo: all
+        EchoWidget: all
+    run:
+      config: Debug
+    archive:
+      config: Release

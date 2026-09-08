@@ -137,6 +137,10 @@ struct EchoApp: App {
 
             .onOpenURL { url in
 
+                if EchoWidgetDeepLink.handle(url) {
+                    return
+                }
+
                 Task {
 
                     await SpotifyManager.shared

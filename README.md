@@ -1,4 +1,3 @@
-Echo
 Echo is an advanced, modern local music player for iOS, built natively using Swift and SwiftUI. The application is designed with an uncompromising focus on delivering a clean, intuitive, and high-performance audio experience that integrates seamlessly into Apple's native software ecosystem.
 
 The primary objective of Echo is to empower users with a powerful platform to manage their local music collection, organize custom playlists, and stream audio through a refined, user-centric interface. With recent major architecture updates, Echo now features real-time synchronized lyrics, enhanced connectivity options, and expanded metadata capabilities.
@@ -50,3 +49,5 @@ Dependencies: Pure native architecture designed without relying on heavy third-p
 
 Project Status
 Echo is an actively maintained software project undergoing continuous development, with regular updates focused on performance optimizations, refined playback mechanics, and enhanced user interface experiences.
+
+Widget setup and behavior are documented in [WIDGETS.md](WIDGETS.md).

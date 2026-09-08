@@ -651,6 +651,10 @@ class MusicLibraryManager {
                 to: songsFileURL,
                 options: [.atomic]
             )
+
+            EchoWidgetSnapshotPublisher.publish(
+                songs: songs
+            )
             
             print("Songs opgeslagen:", songs.count)
             
