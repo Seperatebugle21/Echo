@@ -56,7 +56,21 @@ struct ContentView: View {
             GeometryReader { safeGeometry in
                 GeometryReader { fullGeometry in
                     ZStack(alignment: .topLeading) {
-                        Color.clear
+                        Color.clear.allowsHitTesting(false)
+                        // One persistent player; tabs only report its reserved space.
+                        let slot = presentation.dockSlotFrame
+                        ResizableMiniPlayerDock(
+                            isMinimized: $miniPlayerHidden, isActive: true
+                        )
+                        .frame(width: max(68, slot.width - 16), height: 64)
+                        .offset(
+                            x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
+                            y: slot.minY - fullGeometry.frame(in: .global).minY
+                        )
+                        .opacity(audioPlayer.currentSong != nil && slot.width > 0 ? 1 : 0)
+                        .allowsHitTesting(audioPlayer.currentSong != nil && slot.width > 0)
+                        .accessibilityHidden(presentation.isVisible)
+
                         if audioPlayer.currentSong != nil {
                             ExpandedPlayerSurface(
                                 presentation: presentation,
@@ -64,6 +78,7 @@ struct ContentView: View {
                                 safeInsets: safeGeometry.safeAreaInsets
                             )
                             .opacity(presentation.isVisible ? 1 : 0)
+                            .allowsHitTesting(presentation.isExpanded)
                         }
                     }
                     .onGeometryChange(for: CGRect.self) { proxy in
@@ -74,8 +89,6 @@ struct ContentView: View {
                 }
                 .ignoresSafeArea()
             }
-            // Do not steal the finger from the source gesture during opening.
-            .allowsHitTesting(presentation.isExpanded)
         }
         .environment(presentation)
         .onChange(of: audioPlayer.currentSong?.id) {
@@ -91,18 +104,30 @@ struct ContentView: View {
 // A custom glass surface can shrink in width; the system accessory cannot.
 private struct MiniPlayerDockModifier: ViewModifier {
     @Environment(AudioPlayerManager.self) private var audioPlayer
+    @Environment(MiniPlayerPresentation.self) private var presentation
     @Binding var isMinimized: Bool
     let isActive: Bool
+    @State private var slotFrame: CGRect = .zero
 
     func body(content: Content) -> some View {
         content.safeAreaInset(edge: .bottom, spacing: 0) {
             if audioPlayer.currentSong != nil {
-                ResizableMiniPlayerDock(
-                    isMinimized: $isMinimized, isActive: isActive
-                )
-                // 8 here + 8 inside the touch halo = 16 visual side margins.
-                .padding(.horizontal, 8)
-                .padding(.bottom, 6)
+                Color.clear
+                    .frame(height: 70)
+                    .allowsHitTesting(false)
+                    .onGeometryChange(for: CGRect.self) { proxy in
+                        proxy.frame(in: .global)
+                    } action: { frame in
+                        slotFrame = frame
+                        if isActive && frame.width > 0 {
+                            presentation.dockSlotFrame = frame
+                        }
+                    }
+                    .onChange(of: isActive) {
+                        if isActive && slotFrame.width > 0 {
+                            presentation.dockSlotFrame = slotFrame
+                        }
+                    }
             }
         }
     }
@@ -366,6 +391,7 @@ struct RandomBar: View {
 // Shared by the stationary mini player and the full-window expansion layer.
 @Observable
 final class MiniPlayerPresentation {
+    var dockSlotFrame: CGRect = .zero
     var dockFrame: CGRect = .zero
     var containerFrame: CGRect = .zero
     private(set) var sourceFrame: CGRect = .zero
