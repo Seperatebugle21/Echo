@@ -1,17 +1,10 @@
 import SwiftUI
-import UIKit
-import YoutubeDL
 
 struct ContentView: View {
-
+    @Environment(AudioPlayerManager.self) private var audioPlayer
     @State private var miniPlayerHidden = false
 
-    // Hoogte waarmee iOS de onderste safe area
-    // door het toetsenbord naar boven verplaatst.
-    @State private var keyboardHeight: CGFloat = 0
-
     var body: some View {
-
         TabView {
 
             HomeView()
@@ -47,220 +40,63 @@ struct ContentView: View {
                 }
         }
 
-        .background {
-
-            TabBarShiftAnimator(
-                isShifted: false
-            )
-        }
-
-        .overlay(
-            alignment: .bottom
-        ) {
-
-            ZStack {
-
-                // MARK: - Mini Player
-
-                if !miniPlayerHidden {
-
-                    MiniPlayer {
-
-                        miniPlayerHidden = true
-                    }
-
-                    .padding(
-                        .bottom,
-                        60
-                    )
-
-                    .padding(
-                        .horizontal
-                    )
-
-                    .transition(
-                        .move(
-                            edge: .bottom
-                        )
-                        .combined(
-                            with: .opacity
-                        )
-                    )
-                }
-
-
-                // MARK: - Hidden Mini Player Button
-
-                if miniPlayerHidden {
-
-                    HStack {
-
-                        Spacer()
-
-                        Button {
-
-                            miniPlayerHidden = false
-
-                        } label: {
-
-                            MiniPlayerEqualizer()
-
-                                .scaleEffect(
-                                    0.88
-                                )
-
-                                .foregroundColor(
-                                    .primary
-                                )
-
-                                .frame(
-                                    width: 61,
-                                    height: 61
-                                )
-                        }
-
-                        .buttonStyle(
-                            .plain
-                        )
-
-                        .glassEffect(
-                            .regular
-                                .interactive()
-                        )
-
-                        .contentShape(
-                            RoundedRectangle(
-                                cornerRadius: 18
-                            )
-                        )
-
-                        .padding(
-                            .trailing,
-                            20
-                        )
-
-                        .padding(
-                            .bottom,
-                            60
-                        )
-                    }
-
-                    .zIndex(
-                        100
-                    )
-
-                    .transition(
-                        .scale(
-                            scale: 0.7
-                        )
-                        .combined(
-                            with: .opacity
-                        )
-                    )
-                }
-            }
-
-            .zIndex(
-                100
-            )
-
-            /*
-             SwiftUI verplaatst de bottom safe area
-             naar boven zodra het keyboard opent.
-
-             We verplaatsen alleen de MiniPlayer exact
-             dezelfde afstand terug naar beneden.
-
-             Daardoor blijft hij fysiek op dezelfde
-             schermpositie staan en kan het keyboard
-             er gewoon overheen verschijnen.
-             */
-            .offset(
-                y: keyboardHeight
-            )
-        }
-
+        .modifier(MiniPlayerAccessoryModifier(
+            isEnabled: audioPlayer.currentSong != nil,
+            isMinimized: $miniPlayerHidden
+        ))
         .animation(
-            .spring(
-                response: 0.4,
-                dampingFraction: 0.85
-            ),
+            .spring(response: 0.4, dampingFraction: 0.85),
             value: miniPlayerHidden
         )
-
-        // MARK: - Keyboard Open / Change
-
-        .onReceive(
-            NotificationCenter
-                .default
-                .publisher(
-                    for:
-                        UIResponder
-                            .keyboardWillChangeFrameNotification
-                )
-        ) { notification in
-
-            guard
-                let frame =
-                    notification
-                        .userInfo?[
-                            UIResponder
-                                .keyboardFrameEndUserInfoKey
-                        ]
-                    as?
-                    CGRect
-            else {
-
-                return
-            }
-
-
-            let screenHeight =
-                UIScreen
-                    .main
-                    .bounds
-                    .height
-
-
-            /*
-             Als het keyboard onder het scherm staat,
-             is overlap 0.
-
-             Als het keyboard zichtbaar is:
-             schermhoogte - keyboard.minY
-             = daadwerkelijke keyboardhoogte.
-             */
-            let overlap =
-                max(
-                    0,
-                    screenHeight
-                    -
-                    frame.minY
-                )
-
-
-            keyboardHeight =
-                overlap
-        }
-
-        // MARK: - Keyboard Hide
-
-        .onReceive(
-            NotificationCenter
-                .default
-                .publisher(
-                    for:
-                        UIResponder
-                            .keyboardWillHideNotification
-                )
-        ) { _ in
-
-            keyboardHeight =
-                0
-        }
     }
 }
 
+// The TabView supplies the Liquid Glass surface and positions the player.
+private struct MiniPlayerAccessoryModifier: ViewModifier {
+    let isEnabled: Bool
+    @Binding var isMinimized: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 26.1, *) {
+            content
+                .tabViewBottomAccessory(isEnabled: isEnabled) {
+                    accessory
+                }
+        } else {
+            // iOS 26.0 has no isEnabled overload.
+            content
+                .tabViewBottomAccessory {
+                    if isEnabled {
+                        accessory
+                    }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var accessory: some View {
+        if isMinimized {
+            Button {
+                isMinimized = false
+            } label: {
+                MiniPlayerEqualizer()
+                    .scaleEffect(0.88)
+                    .foregroundStyle(.primary)
+                    .frame(width: 61, height: 57)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.horizontal, 10)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open miniplayer")
+        } else {
+            MiniPlayer {
+                isMinimized = true
+            }
+        }
+    }
+}
 
 // MARK: - Mini Player Equalizer
 
@@ -431,200 +267,6 @@ struct RandomBar: View {
 }
 
 
-// MARK: - Tab Bar Shift Animator
-
-struct TabBarShiftAnimator:
-    UIViewRepresentable
-{
-
-    let isShifted: Bool
-
-
-    func makeUIView(
-        context: Context
-    ) -> ShiftTrackerView {
-
-        let view =
-            ShiftTrackerView()
-
-
-        view.backgroundColor =
-            .clear
-
-
-        view.isUserInteractionEnabled =
-            false
-
-
-        return view
-    }
-
-
-    func updateUIView(
-        _ uiView:
-            ShiftTrackerView,
-        context:
-            Context
-    ) {
-
-        uiView.isShifted =
-            isShifted
-
-
-        uiView.updatePosition(
-            animated:
-                context
-                    .transaction
-                    .animation
-                !=
-                nil
-        )
-    }
-
-
-    class ShiftTrackerView:
-        UIView
-    {
-
-        var isShifted:
-            Bool = false
-
-
-        override func didMoveToWindow() {
-
-            super.didMoveToWindow()
-
-
-            updatePosition(
-                animated:
-                    false
-            )
-        }
-
-
-        override func layoutSubviews() {
-
-            super.layoutSubviews()
-
-
-            updatePosition(
-                animated:
-                    false
-            )
-        }
-
-
-        func updatePosition(
-            animated: Bool
-        ) {
-
-            guard
-                let window =
-                    self.window,
-
-                let tabBar =
-                    findTabBar(
-                        in:
-                            window
-                    )
-            else {
-
-                return
-            }
-
-
-            let targetX:
-                CGFloat =
-                isShifted
-                ? -32
-                : 0
-
-
-            let targetTransform =
-                CGAffineTransform(
-                    translationX:
-                        targetX,
-                    y:
-                        0
-                )
-
-
-            if
-                tabBar.transform
-                ==
-                targetTransform
-            {
-
-                return
-            }
-
-
-            if animated {
-
-                UIView.animate(
-                    withDuration:
-                        0.4,
-                    delay:
-                        0,
-                    usingSpringWithDamping:
-                        0.82,
-                    initialSpringVelocity:
-                        0.2,
-                    options: [
-                        .beginFromCurrentState,
-                        .allowUserInteraction
-                    ]
-                ) {
-
-                    tabBar.transform =
-                        targetTransform
-                }
-
-            } else {
-
-                tabBar.transform =
-                    targetTransform
-            }
-        }
-
-
-        private func findTabBar(
-            in view:
-                UIView
-        ) -> UITabBar? {
-
-            if let tabBar =
-                view
-                    as?
-                    UITabBar
-            {
-
-                return tabBar
-            }
-
-
-            for subview in
-                view.subviews
-            {
-
-                if let found =
-                    findTabBar(
-                        in:
-                            subview
-                    )
-                {
-
-                    return found
-                }
-            }
-
-
-            return nil
-        }
-    }
-}
-
-
 // MARK: - Preview
 
 #Preview {
@@ -639,3 +281,4 @@ struct TabBarShiftAnimator:
             AudioPlayerManager()
         )
 }
+

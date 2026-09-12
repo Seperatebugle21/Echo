@@ -67,46 +67,11 @@ struct MiniPlayer: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(10)
-            
-            
-            // MARK: - Liquid Glass
-            
-            .background(
-                .ultraThinMaterial,
-                in: RoundedRectangle(
-                    cornerRadius: 16,
-                    style: .continuous
-                )
-            )
-            
-            .overlay {
-                
-                RoundedRectangle(
-                    cornerRadius: 16,
-                    style: .continuous
-                )
-                .stroke(
-                    .white.opacity(0.12),
-                    lineWidth: 0.7
-                )
-            }
-            
-            .clipShape(
-                RoundedRectangle(
-                    cornerRadius: 16,
-                    style: .continuous
-                )
-            )
-            
-            .shadow(
-                radius: 12,
-                y: 5
-            )
-            
-            .padding(.horizontal)
-            
-            
+            // The tab accessory provides the Liquid Glass background.
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+
             // MARK: - Song changed
             
             .onChange(of: song.id) {
@@ -292,3 +257,4 @@ struct MiniPlayer: View {
         }
     }
 }
+
