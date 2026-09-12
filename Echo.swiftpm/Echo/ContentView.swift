@@ -144,7 +144,6 @@ private struct ResizableMiniPlayerDock: View {
                 .frame(width: width, height: 52, alignment: .trailing)
                 .clipShape(.capsule)
                 .glassEffect(.regular.interactive(), in: .capsule)
-                .offset(x: -8, y: 12)
                 .onGeometryChange(for: CGRect.self) { proxy in
                     proxy.frame(in: .global)
                 } action: { frame in
@@ -158,6 +157,7 @@ private struct ResizableMiniPlayerDock: View {
                         presentation.dockFrame = lastFrame
                     }
                 }
+                .offset(x: -8, y: 12)
                 .opacity(presentation.isVisible ? 0 : 1)
                 .allowsHitTesting(true)
 
@@ -560,9 +560,9 @@ private struct ExpandedPlayerSurface: View {
             width: max(1, rect.width), height: max(1, rect.height),
             alignment: .topLeading
         )
-        .background(.ultraThinMaterial, in: shape)
         .contentShape(shape)
         .clipShape(shape)
+        .glassEffect(.regular.interactive(), in: shape)
         .offset(x: rect.minX, y: rect.minY)
         .accessibilityAction(.escape) {
             presentation.close(reduceMotion: reduceMotion)
