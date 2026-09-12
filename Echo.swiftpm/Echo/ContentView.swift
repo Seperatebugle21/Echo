@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(AudioPlayerManager.self) private var audioPlayer
     @State private var miniPlayerHidden = false
 
     var body: some View {
         TabView {
 
             HomeView()
+                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden))
                 .tabItem {
                     Label(
                         "contentview_home",
@@ -16,6 +16,7 @@ struct ContentView: View {
                 }
 
             LibraryView()
+                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden))
                 .tabItem {
                     Label(
                         "contentview_library",
@@ -24,6 +25,7 @@ struct ContentView: View {
                 }
 
             FetchView()
+                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden))
                 .tabItem {
                     Label(
                         "contentview_fetch",
@@ -32,6 +34,7 @@ struct ContentView: View {
                 }
 
             SearchView()
+                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden))
                 .tabItem {
                     Label(
                         "contentview_search",
@@ -40,61 +43,68 @@ struct ContentView: View {
                 }
         }
 
-        .modifier(MiniPlayerAccessoryModifier(
-            isEnabled: audioPlayer.currentSong != nil,
-            isMinimized: $miniPlayerHidden
-        ))
-        .animation(
-            .spring(response: 0.4, dampingFraction: 0.85),
-            value: miniPlayerHidden
-        )
     }
 }
 
-// The TabView supplies the Liquid Glass surface and positions the player.
-private struct MiniPlayerAccessoryModifier: ViewModifier {
-    let isEnabled: Bool
+// Attach to each tab's content: its bottom safe area ends ABOVE the tab bar.
+// A custom glass surface can shrink in width; the system accessory cannot.
+private struct MiniPlayerDockModifier: ViewModifier {
+    @Environment(AudioPlayerManager.self) private var audioPlayer
     @Binding var isMinimized: Bool
 
-    @ViewBuilder
     func body(content: Content) -> some View {
-        if #available(iOS 26.1, *) {
-            content
-                .tabViewBottomAccessory(isEnabled: isEnabled) {
-                    accessory
-                }
-        } else {
-            // iOS 26.0 has no isEnabled overload.
-            content
-                .tabViewBottomAccessory {
-                    if isEnabled {
-                        accessory
-                    }
-                }
+        content.safeAreaInset(edge: .bottom, spacing: 0) {
+            if audioPlayer.currentSong != nil {
+                ResizableMiniPlayerDock(isMinimized: $isMinimized)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 4)
+                    .padding(.bottom, 6)
+            }
         }
     }
+}
 
-    @ViewBuilder
-    private var accessory: some View {
-        if isMinimized {
-            Button {
-                isMinimized = false
-            } label: {
-                MiniPlayerEqualizer()
-                    .scaleEffect(0.88)
-                    .foregroundStyle(.primary)
-                    .frame(width: 61, height: 57)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.horizontal, 10)
-                    .contentShape(Rectangle())
+private struct ResizableMiniPlayerDock: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Binding var isMinimized: Bool
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .trailing) {
+                // Keep a full-width layout during the morph so text never squashes.
+                MiniPlayer { setMinimized(true) }
+                    .frame(width: geometry.size.width, height: 52)
+                    .opacity(isMinimized ? 0 : 1)
+                    .allowsHitTesting(!isMinimized)
+                    .accessibilityHidden(isMinimized)
+
+                Button { setMinimized(false) } label: {
+                    MiniPlayerEqualizer()
+                        .scaleEffect(0.8)
+                        .frame(width: 52, height: 52)
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open miniplayer")
+                .opacity(isMinimized ? 1 : 0)
+                .scaleEffect(isMinimized ? 1 : 0.65)
+                .allowsHitTesting(isMinimized)
+                .accessibilityHidden(!isMinimized)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Open miniplayer")
-        } else {
-            MiniPlayer {
-                isMinimized = true
-            }
+            .frame(width: isMinimized ? 52 : geometry.size.width,
+                   height: 52, alignment: .trailing)
+            .clipShape(.capsule)
+            .glassEffect(.regular.interactive(), in: .capsule)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .animation(reduceMotion ? .linear(duration: 0.12)
+                       : .spring(response: 0.42, dampingFraction: 0.86),
+                       value: isMinimized)
         }
+        .frame(height: 52)
+    }
+
+    private func setMinimized(_ value: Bool) {
+        isMinimized = value
     }
 }
 
@@ -281,4 +291,3 @@ struct RandomBar: View {
             AudioPlayerManager()
         )
 }
-
