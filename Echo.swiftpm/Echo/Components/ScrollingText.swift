@@ -4,7 +4,7 @@ struct ScrollingText: View {
 
     let text: String
 
-    private let pauseDuration: Double = 2.5
+    private let pauseDuration: Double = 5
     private let pointsPerSecond: CGFloat = 25
     private let spacing: CGFloat = 40
 
