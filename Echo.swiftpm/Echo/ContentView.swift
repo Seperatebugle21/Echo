@@ -3,7 +3,10 @@ import Observation
 
 struct ContentView: View {
     @State private var miniPlayerHidden = false
-    @State private var selectedTab = 0
+    @State private var selectedTab = TabBarConfiguration.load().startTab
+    @AppStorage(TabBarConfiguration.storageKey) private var storedTabs = ""
+    @State private var showTabSettings = false
+    private var tabConfiguration: TabBarConfiguration { .decode(storedTabs) }
     @State private var presentation = MiniPlayerPresentation()
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @Environment(\.scenePhase) private var scenePhase
@@ -11,45 +14,16 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
 
-            HomeView()
-                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden, isActive: selectedTab == 0))
-                .tag(0)
-                .tabItem {
-                    Label(
-                        "contentview_home",
-                        systemImage: "house.fill"
-                    )
+            ForEach(tabConfiguration.tabs) { tab in
+                Tab(value: tab) {
+                    tabContent(tab)
+                        .modifier(MiniPlayerDockModifier(
+                            isMinimized: $miniPlayerHidden, isActive: selectedTab == tab
+                        ))
+                } label: {
+                    Label(tab.title, systemImage: tab.symbol)
                 }
-
-            LibraryView()
-                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden, isActive: selectedTab == 1))
-                .tag(1)
-                .tabItem {
-                    Label(
-                        "contentview_library",
-                        systemImage: "square.stack.fill"
-                    )
-                }
-
-            FetchView()
-                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden, isActive: selectedTab == 2))
-                .tag(2)
-                .tabItem {
-                    Label(
-                        "contentview_fetch",
-                        systemImage: "arrow.down.circle"
-                    )
-                }
-
-            SearchView()
-                .modifier(MiniPlayerDockModifier(isMinimized: $miniPlayerHidden, isActive: selectedTab == 3))
-                .tag(3)
-                .tabItem {
-                    Label(
-                        "contentview_search",
-                        systemImage: "magnifyingglass"
-                    )
-                }
+            }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .accessibilityHidden(presentation.isVisible)
@@ -91,6 +65,28 @@ struct ContentView: View {
                 .ignoresSafeArea()
             }
         }
+        // Keep customization reachable even if Home, Search and Settings are removed.
+        .overlay(alignment: .topTrailing) {
+            if !tabConfiguration.tabs.contains(where: { [.home, .search, .settings].contains($0) }) {
+                Button {
+                    showTabSettings = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.glass)
+                .padding(.trailing)
+                .accessibilityLabel("Settings")
+                .opacity(presentation.isVisible ? 0 : 1)
+                .allowsHitTesting(!presentation.isVisible)
+            }
+        }
+        .sheet(isPresented: $showTabSettings) { SettingsView() }
+        .onChange(of: storedTabs) {
+            if !tabConfiguration.tabs.contains(selectedTab) {
+                selectedTab = tabConfiguration.startTab
+            }
+        }
         .environment(presentation)
         .onChange(of: audioPlayer.currentSong?.id) {
             if audioPlayer.currentSong == nil { presentation.reset() }
@@ -101,6 +97,20 @@ struct ContentView: View {
     }
 }
 
+private extension ContentView {
+    @ViewBuilder
+    func tabContent(_ tab: AppTab) -> some View {
+        switch tab {
+        case .home: HomeView()
+        case .library: LibraryView()
+        case .fetch: FetchView()
+        case .search: SearchView()
+        case .settings: SettingsView()
+        case .playlists: NavigationStack { PlaylistsView() }
+        case .favorites: NavigationStack { FavoritesView() }
+        }
+    }
+}
 // Attach to each tab's content: its bottom safe area ends ABOVE the tab bar.
 // A custom glass surface can shrink in width; the system accessory cannot.
 private struct MiniPlayerDockModifier: ViewModifier {

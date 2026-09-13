@@ -33,6 +33,14 @@ struct SettingsView: View {
 
             Form {
 
+                Section {
+                    NavigationLink {
+                        TabBarSettingsView()
+                    } label: {
+                        Label("Tab bar", systemImage: "rectangle.bottomthird.inset.filled")
+                    }
+                }
+
                 Section(
                     LocalizedStringKey(
                         "settings_section_appearance"
