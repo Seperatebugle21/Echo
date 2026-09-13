@@ -2,6 +2,673 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+"settingsview_equalizer": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Equalizer",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Equalizer",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Égaliseur",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Equalizer",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_title": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Equalizer",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Equalizer",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Égaliseur",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Equalizer",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_enabled": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Enable equalizer",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Equalizer inschakelen",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Activer l’égaliseur",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Equalizer aktivieren",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_saved_hint": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Changes apply immediately and are saved automatically, even after you close Echo.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Wijzigingen worden direct toegepast en automatisch bewaard, ook als je Echo sluit.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Les modifications sont appliquées immédiatement et enregistrées automatiquement, même après la fermeture d’Echo.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Änderungen werden sofort angewendet und automatisch gespeichert, auch wenn du Echo schließt.",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_bands": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Sound",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Geluid",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Son",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Klang",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_bands_hint": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Drag each point up or down to adjust that frequency. Left controls bass, right controls treble.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Sleep elk punt omhoog of omlaag om die frequentie aan te passen. Links pas je de lage tonen aan, rechts de hoge.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Faites glisser chaque point vers le haut ou le bas pour ajuster la fréquence. Les graves sont à gauche, les aigus à droite.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Ziehe jeden Punkt nach oben oder unten, um die Frequenz anzupassen. Links stellst du die Bässe ein, rechts die Höhen.",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_frequency %lld": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "%lld Hz",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "%lld Hz",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "%lld Hz",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "%lld Hz",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_gain %.1f": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "%.1f dB",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "%.1f dB",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "%.1f dB",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "%.1f dB",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_gain_max": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "+12 dB",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "+12 dB",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "+12 dB",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "+12 dB",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_gain_min": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "−12 dB",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "−12 dB",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "−12 dB",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "−12 dB",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Preset",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Voorinstelling",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Préréglage",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Voreinstellung",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_reset": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Reset to flat",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Terugzetten naar vlak",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Réinitialiser à plat",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Auf neutral zurücksetzen",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_headroom_hint": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Boosting frequencies can lower the overall volume to leave room for the extra gain. The equalizer affects music played by Echo.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Bij het versterken van frequenties kan het totale volume dalen om ruimte te laten voor de versterking. De equalizer werkt op muziek die Echo afspeelt.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "L’amplification de certaines fréquences peut réduire le volume global afin de laisser une marge au gain supplémentaire. L’égaliseur agit sur la musique lue par Echo.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Beim Anheben von Frequenzen kann die Gesamtlautstärke sinken, um Platz für die zusätzliche Verstärkung zu lassen. Der Equalizer wirkt auf Musik, die Echo abspielt.",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_flat": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Flat",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Vlak",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Plat",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Neutral",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_bass_boost": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Bass booster",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Meer bas",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Amplification des graves",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Bassverstärkung",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_bass_reducer": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Bass reducer",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Minder bas",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Réduction des graves",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Bassreduzierung",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_treble_boost": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Treble booster",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Meer hoge tonen",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Amplification des aigus",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Höhenverstärkung",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_vocal": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Vocals",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Zang",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Voix",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Gesang",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_acoustic": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Acoustic",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Akoestisch",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Acoustique",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Akustisch",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_pop": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Pop",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Pop",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Pop",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Pop",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_rock": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Rock",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Rock",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Rock",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Rock",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_electronic": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Electronic",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Elektronisch",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Électronique",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Elektronisch",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "equalizerview_preset_custom": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Custom",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Aangepast",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Personnalisé",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Benutzerdefiniert",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
 "contentview_settings": {
     "extractionState": "manual",
     "localizations": {

@@ -35,6 +35,11 @@ struct SettingsView: View {
 
                 Section {
                     NavigationLink {
+                        EqualizerView()
+                    } label: {
+                        Label("settingsview_equalizer", systemImage: "slider.vertical.3")
+                    }
+                    NavigationLink {
                         TabBarSettingsView()
                     } label: {
                         Label("settingsview_tab_bar", systemImage: "rectangle.bottomthird.inset.filled")

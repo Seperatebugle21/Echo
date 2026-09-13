@@ -16,7 +16,7 @@ enum RepeatMode: Equatable {
 @Observable
 class AudioPlayerManager:
     NSObject,
-    AVAudioPlayerDelegate {
+    EqualizedAudioPlayerDelegate {
 
     static let shared =
         AudioPlayerManager()
@@ -47,7 +47,7 @@ class AudioPlayerManager:
 
 
     private var player:
-        AVAudioPlayer?
+        EqualizedAudioPlayer?
 
 
     private var timer:
@@ -59,7 +59,7 @@ class AudioPlayerManager:
 
 
     private var preloadedPlayer:
-        AVAudioPlayer?
+        EqualizedAudioPlayer?
 
 
     var currentLyrics:
@@ -542,7 +542,7 @@ class AudioPlayerManager:
 
 
             player =
-                try AVAudioPlayer(
+                try EqualizedAudioPlayer(
                     contentsOf:
                         url
                 )
@@ -608,7 +608,7 @@ class AudioPlayerManager:
 
 
             isPlaying =
-                true
+                player?.isPlaying ?? false
 
 
             updateNowPlaying()
@@ -900,7 +900,7 @@ class AudioPlayerManager:
 
 
             isPlaying =
-                true
+                player?.isPlaying ?? false
 
 
             startTimer()
@@ -1138,7 +1138,7 @@ class AudioPlayerManager:
 
 
         player =
-            try? AVAudioPlayer(
+            try? EqualizedAudioPlayer(
                 contentsOf:
                     url
             )
@@ -1183,7 +1183,7 @@ class AudioPlayerManager:
 
 
         isPlaying =
-            true
+            player?.isPlaying ?? false
 
 
         startTimer()
@@ -1344,7 +1344,7 @@ class AudioPlayerManager:
             player.play()
 
             isPlaying =
-                true
+                player.isPlaying
 
 
             startTimer()
@@ -1474,6 +1474,11 @@ class AudioPlayerManager:
                 }
 
 
+                let playing = self.player?.isPlaying ?? false
+                if self.isPlaying != playing {
+                    self.isPlaying = playing
+                    self.updateNowPlaying()
+                }
                 self.currentTime =
                     self.player?
                         .currentTime
@@ -1544,13 +1549,20 @@ class AudioPlayerManager:
 
 
     // ========================================================
-    // MARK: - AVAudioPlayer Delegate
+    // MARK: - EqualizedAudioPlayer Delegate
     // ========================================================
 
     func audioPlayerDidFinishPlaying(
-        _ player: AVAudioPlayer,
+        _ player: EqualizedAudioPlayer,
         successfully flag: Bool
     ) {
+
+        guard self.player === player else { return }
+        guard flag else {
+            isPlaying = false
+            updateNowPlaying()
+            return
+        }
 
         if repeatMode ==
             .one {
