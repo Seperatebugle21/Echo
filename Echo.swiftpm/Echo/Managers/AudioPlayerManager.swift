@@ -505,7 +505,7 @@ class AudioPlayerManager:
     func play(
         song: Song,
         url: URL,
-        queue: [Song] = []
+        queue: [Song] = [], queuePosition: Int? = nil, repeatingCurrent: Bool = false
     ) {
 
         setupAudioSession()
@@ -521,20 +521,16 @@ class AudioPlayerManager:
         }
 
 
-        if let index =
-            self.queue
-                .firstIndex(
-                    where: {
-                        $0.id ==
-                            song.id
-                    }
-                ) {
-
-            currentIndex =
-                index
+        if let queuePosition, self.queue.indices.contains(queuePosition),
+           self.queue[queuePosition].id == song.id {
+            currentIndex = queuePosition
+        } else if let index = self.queue.firstIndex(where: { $0.id == song.id }) {
+            currentIndex = index
+        } else {
+            self.queue = [song]
+            self.originalQueue = [song]
+            currentIndex = 0
         }
-
-
         do {
 
             timer?
@@ -581,6 +577,7 @@ class AudioPlayerManager:
             }
 
 
+            if !repeatingCurrent && repeatMode == .one { repeatMode = .all }
             currentSong =
                 song
 
@@ -796,42 +793,22 @@ class AudioPlayerManager:
         }
 
 
-        if let nextSong =
-            autoNextQueue.first {
-
-            autoNextQueue
-                .removeFirst()
-
-
-            if let url =
-                getURL(
-                    for:
-                        nextSong
-                ) {
-
-                play(
-                    song:
-                        nextSong,
-
-                    url:
-                        url,
-
-                    queue:
-                        []
-                )
-
-
-                fillAutoNext(
-                    from:
-                        allSongs
-                )
+        if let nextSong = autoNextQueue.first, let url = getURL(for: nextSong) {
+            guard FileManager.default.fileExists(atPath: url.path) else { return }
+            let savedQueue = queue
+            let savedIndex = currentIndex
+            queue.append(nextSong)
+            currentIndex = queue.count - 1
+            play(song: nextSong, url: url, queue: queue, queuePosition: currentIndex)
+            if player?.isPlaying == true {
+                autoNextQueue.removeFirst()
+                fillAutoNext(from: allSongs)
+            } else {
+                queue = savedQueue
+                currentIndex = savedIndex
             }
-
-
             return
         }
-
-
         isPlaying =
             false
 
@@ -845,79 +822,7 @@ class AudioPlayerManager:
     // ========================================================
 
     private func playPreloadedOrNextSong() {
-
-        let song =
-            queue[
-                currentIndex
-            ]
-
-
-        if
-            preloadedSong?.id ==
-                song.id,
-
-            let preparedPlayer =
-                preloadedPlayer {
-
-            player?
-                .stop()
-
-
-            player =
-                preparedPlayer
-
-
-            player?
-                .delegate =
-                self
-
-
-            currentSong =
-                song
-
-
-            currentTime =
-                0
-
-
-            duration =
-                player?
-                    .duration
-                ??
-                0
-
-
-            preloadedSong =
-                nil
-
-
-            preloadedPlayer =
-                nil
-
-
-            player?
-                .play()
-
-
-            isPlaying =
-                player?.isPlaying ?? false
-
-
-            startTimer()
-
-            updateNowPlaying()
-
-
-            donatePlaybackToSiri(
-                song:
-                    song
-            )
-
-
-        } else {
-
-            playSongAtIndex()
-        }
+        playSongAtIndex()
     }
 
 
@@ -926,47 +831,17 @@ class AudioPlayerManager:
     // ========================================================
 
     func previous() {
+        lastPlaybackDirection = .previous
+        if repeatMode == .one { repeatMode = .all }
+        if currentTime > 3 { seek(to: 0); return }
+        if let song = previousQueuedSong { playPreviousSong(song) }
+        else { seek(to: 0) }
+    }
 
-        lastPlaybackDirection =
-            .previous
-
-
-        if repeatMode ==
-            .one {
-
-            repeatMode =
-                .all
-        }
-
-
-        if currentTime >
-            3 {
-
-            seek(
-                to:
-                    0
-            )
-
-
-            return
-        }
-
-
-        if let previousSong =
-            history.popLast() {
-
-            playPreviousSong(
-                previousSong
-            )
-
-
-        } else {
-
-            seek(
-                to:
-                    0
-            )
-        }
+    var previousQueuedSong: Song? {
+        if queue.indices.contains(currentIndex), queue[currentIndex].id == currentSong?.id,
+           currentIndex > 0 { return queue[currentIndex - 1] }
+        return history.last
     }
 
 
@@ -974,35 +849,16 @@ class AudioPlayerManager:
     // MARK: - Play Next
     // ========================================================
 
-    func playNext(
-        _ song: Song
-    ) {
-
-        guard let currentIndex =
-            queue.firstIndex(
-                where: {
-
-                    $0.id ==
-                        currentSong?.id
-                }
-            )
-        else {
-            return
+    func playNext(_ song: Song) {
+        guard let currentSong else { return }
+        if !queue.indices.contains(currentIndex) || queue[currentIndex].id != currentSong.id {
+            queue = [currentSong]
+            currentIndex = 0
         }
-
-
-        queue.removeAll {
-            $0.id ==
-                song.id
-        }
-
-
-        queue.insert(
-            song,
-
-            at:
-                currentIndex + 1
-        )
+        // Never remove the playing occurrence or invalidate its insertion index.
+        let prefix = Array(queue.prefix(currentIndex + 1))
+        let upcoming = queue.dropFirst(currentIndex + 1).filter { $0.id != song.id }
+        queue = prefix + [song] + upcoming
     }
 
 
@@ -1011,39 +867,8 @@ class AudioPlayerManager:
     // ========================================================
 
     private func playSongAtIndex() {
-
-        guard queue.indices
-            .contains(
-                currentIndex
-            )
-        else {
-            return
-        }
-
-
-        let song =
-            queue[
-                currentIndex
-            ]
-
-
-        if let url =
-            getURL(
-                for:
-                    song
-            ) {
-
-            play(
-                song:
-                    song,
-
-                url:
-                    url,
-
-                queue:
-                    queue
-            )
-        }
+        guard queue.indices.contains(currentIndex), let url = getURL(for: queue[currentIndex]) else { return }
+        play(song: queue[currentIndex], url: url, queue: queue, queuePosition: currentIndex)
     }
 
 
@@ -1060,16 +885,7 @@ class AudioPlayerManager:
         }
 
 
-        let upcoming =
-            queue
-                .drop(
-                    while: {
-                        $0.id !=
-                            currentSong.id
-                    }
-                )
-                .dropFirst()
-
+        let upcoming = queue.dropFirst(max(0, currentIndex + 1))
 
         let missing =
             30
@@ -1119,82 +935,29 @@ class AudioPlayerManager:
     // MARK: - Previous Song Playback
     // ========================================================
 
-    func playPreviousSong(
-        _ song: Song
-    ) {
-
-        guard let url =
-            getURL(
-                for:
-                    song
-            )
-        else {
+    func playPreviousSong(_ song: Song) {
+        guard let url = getURL(for: song), FileManager.default.fileExists(atPath: url.path) else { return }
+        let savedHistory = history
+        let savedQueue = queue
+        let savedIndex = currentIndex
+        let previousIndex = currentIndex - 1
+        if queue.indices.contains(previousIndex), queue[previousIndex].id == song.id {
+            currentIndex = previousIndex
+        } else {
+            let upcoming = Array(queue.dropFirst(max(0, currentIndex + 1)))
+            queue = [song] + (currentSong.map { [$0] } ?? []) + upcoming
+            currentIndex = 0
+        }
+        play(song: song, url: url, queue: queue, queuePosition: currentIndex)
+        guard player?.isPlaying == true else {
+            queue = savedQueue
+            currentIndex = savedIndex
+            history = savedHistory
             return
         }
-
-
-        player?
-            .stop()
-
-
-        player =
-            try? EqualizedAudioPlayer(
-                contentsOf:
-                    url
-            )
-
-
-        player?
-            .delegate =
-            self
-
-
-        duration =
-            player?
-                .duration
-            ??
-            0
-
-
-        currentTime =
-            0
-
-
-        currentSong =
-            song
-
-
-        currentLyrics =
-            nil
-
-
-        currentSyncedLyrics =
-            nil
-
-
-        loadLyrics(
-            for:
-                song
-        )
-
-
-        player?
-            .play()
-
-
-        isPlaying =
-            player?.isPlaying ?? false
-
-
-        startTimer()
-
-        updateNowPlaying()
-
-
-        donatePlaybackToSiri(
-            song:
-                song
-        )
+        history = savedHistory
+        if history.last?.id == song.id { history.removeLast() }
+        lastPlaybackDirection = .previous
     }
 
 
@@ -1224,18 +987,10 @@ class AudioPlayerManager:
         _ song: Song
     ) {
 
-        guard let index =
-            queue.firstIndex(
-                where: {
-                    $0.id ==
-                        song.id
-                }
-            )
-        else {
-            return
+        let upcomingIndex = queue.indices.first {
+            $0 > currentIndex && queue[$0].id == song.id
         }
-
-
+        guard let index = upcomingIndex ?? queue.firstIndex(where: { $0.id == song.id }) else { return }
         currentIndex =
             index
 
@@ -1585,7 +1340,7 @@ class AudioPlayerManager:
                         url,
 
                     queue:
-                        queue
+                        queue, queuePosition: currentIndex, repeatingCurrent: true
                 )
             }
 

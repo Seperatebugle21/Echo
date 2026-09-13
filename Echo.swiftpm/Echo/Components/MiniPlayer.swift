@@ -287,32 +287,10 @@ extension AudioPlayerManager {
         return autoNextQueue.first
     }
 
-    var miniPlayerPreviousSong: Song? {
-        // Preloaded playback does not append to history in the current manager.
-        if let index = queue.firstIndex(where: { $0.id == currentSong?.id }), index > 0 {
-            return queue[index - 1]
-        }
-        return history.last(where: { $0.id != currentSong?.id })
-    }
+    var miniPlayerPreviousSong: Song? { previousQueuedSong }
 
     func playMiniPlayerPrevious(_ song: Song) {
-        // A page swipe selects the previous song even after three seconds.
-        guard let url = getURL(for: song),
-              FileManager.default.fileExists(atPath: url.path) else { return }
-        let savedIndex = currentIndex
-        var previousHistory = history
-        if let index = previousHistory.lastIndex(where: { $0.id == song.id }) {
-            previousHistory.removeSubrange(index...)
-        }
-        // play() handles decoding failures before replacing the current song.
-        play(song: song, url: url)
-        guard currentSong?.id == song.id else {
-            currentIndex = savedIndex
-            return
-        }
-        history = previousHistory
-        lastPlaybackDirection = .previous
-        if repeatMode == .one { repeatMode = .all }
+        playPreviousSong(song)
     }
 }
 

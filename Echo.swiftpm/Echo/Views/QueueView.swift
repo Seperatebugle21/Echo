@@ -156,9 +156,11 @@ struct QueueView: View {
     // MARK: - Logica voor Verwijderen
     private func deleteSelectedSongs() {
         withAnimation {
-            audioPlayer.queue.removeAll { song in
-                selectedSongIDs.contains(song.id)
+            let played = Array(audioPlayer.queue.prefix(audioPlayer.currentIndex + 1))
+            let remaining = audioPlayer.queue.dropFirst(audioPlayer.currentIndex + 1).filter { song in
+                !selectedSongIDs.contains(song.id)
             }
+            audioPlayer.queue = played + remaining
             selectedSongIDs.removeAll()
             editMode = .inactive
         }
