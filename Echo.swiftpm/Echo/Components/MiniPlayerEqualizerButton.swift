@@ -14,7 +14,7 @@ struct MiniPlayerEqualizerButton: View {
             action()
         } label: {
             
-            EqualizerView(
+            MiniPlayerEqualizerBars(
                 isPlaying: audioPlayer.isPlaying
             )
             .frame(
@@ -32,7 +32,7 @@ struct MiniPlayerEqualizerButton: View {
 
 // MARK: - Equalizer
 
-struct EqualizerView: View {
+private struct MiniPlayerEqualizerBars: View {
     
     let isPlaying: Bool
     
