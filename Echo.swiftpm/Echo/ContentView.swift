@@ -501,7 +501,7 @@ final class MiniPlayerPresentation {
         let currentToken = UUID()
         token = currentToken
         let animation: Animation = reduceMotion
-            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1).speed(1.75)
+            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1).speed(1.32)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
