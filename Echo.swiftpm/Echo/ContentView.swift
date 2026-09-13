@@ -594,9 +594,9 @@ private struct ExpandedPlayerSurface: View {
         )
         .contentShape(shape)
         .clipShape(shape)
-        // The stationary dock retains Liquid Glass. Avoid its specular rim and
-        // interactive refraction across an animating full-screen surface.
-        .background(.regularMaterial, in: shape)
+        // Keep the same glass surface throughout the transition and dock handoff.
+        // The expanded bounds extend beyond the screen to hide the glass rim.
+        .glassEffect(.regular.interactive(), in: shape)
         .offset(x: rect.minX, y: rect.minY)
         .accessibilityAction(.escape) {
             presentation.close(reduceMotion: reduceMotion)
