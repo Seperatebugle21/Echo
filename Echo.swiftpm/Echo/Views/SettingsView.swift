@@ -37,7 +37,7 @@ struct SettingsView: View {
                     NavigationLink {
                         TabBarSettingsView()
                     } label: {
-                        Label("Tab bar", systemImage: "rectangle.bottomthird.inset.filled")
+                        Label("settingsview_tab_bar", systemImage: "rectangle.bottomthird.inset.filled")
                     }
                 }
 

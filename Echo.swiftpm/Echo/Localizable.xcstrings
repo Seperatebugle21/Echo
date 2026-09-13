@@ -2,6 +2,499 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+"contentview_settings": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Settings",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Instellingen",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Réglages",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Einstellungen",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "contentview_playlists": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Playlists",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Afspeellijsten",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Playlists",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Playlists",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "contentview_favorites": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Favorites",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Favorieten",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Favoris",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Favoriten",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "contentview_songs": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Songs",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Nummers",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Morceaux",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Titel",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_tab_bar": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Tab bar",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Tabbalk",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Barre d’onglets",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Tableiste",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Tab bar",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Tabbalk",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Barre d’onglets",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Tableiste",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_preview": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Preview",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Voorbeeld",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Aperçu",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Vorschau",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_reorder_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Drag the handles below to reorder. Choose the star for the tab that opens when you launch Echo.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Versleep de handvatten hieronder om de volgorde te wijzigen. Kies de ster bij de tab die opent wanneer je Echo start.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Faites glisser les poignées ci-dessous pour modifier l’ordre. Touchez l’étoile de l’onglet à afficher au lancement d’Echo.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Ziehe die Griffe unten, um die Reihenfolge zu ändern. Wähle den Stern für den Tab, der beim Start von Echo geöffnet wird.",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_remove_tab %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Remove %@",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "%@ verwijderen",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Supprimer %@",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "%@ entfernen",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_start_tab %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Set %@ as start tab",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "%@ instellen als starttab",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Définir %@ comme onglet de démarrage",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "%@ als Starttab festlegen",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_selected": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Selected",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Geselecteerd",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Sélectionné",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Ausgewählt",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_not_selected": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Not selected",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Niet geselecteerd",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Non sélectionné",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Nicht ausgewählt",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_your_tabs %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Your tabs (%lld/5)",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Je tabs (%lld/5)",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Vos onglets (%lld/5)",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Deine Tabs (%lld/5)",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_tab_limits": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Keep between 2 and 5 tabs. Each tab can appear only once.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Kies minimaal 2 en maximaal 5 tabs. Elke tab kan maar één keer voorkomen.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Choisissez entre 2 et 5 onglets. Chaque onglet ne peut apparaître qu’une seule fois.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Wähle zwischen 2 und 5 Tabs. Jeder Tab darf nur einmal vorkommen.",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_available_tabs": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Available tabs",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Beschikbare tabs",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Onglets disponibles",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Verfügbare Tabs",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_restore_defaults": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Restore defaults",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Standaardinstellingen herstellen",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Rétablir les réglages par défaut",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Standardeinstellungen wiederherstellen",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "tabbarsettingsview_save": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Save",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Opslaan",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Enregistrer",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Speichern",
+          "state": "translated"
+        }
+      }
+    }
+  },
     "tab_songs": {
       "localizations": {
         "nl": {

@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppTab: String, Codable, CaseIterable, Identifiable {
-    case home, library, fetch, search, settings, playlists, favorites
+    case home, library, fetch, search, settings, playlists, favorites, songs
 
     var id: String { rawValue }
 
@@ -11,9 +11,10 @@ enum AppTab: String, Codable, CaseIterable, Identifiable {
         case .library: "contentview_library"
         case .fetch: "contentview_fetch"
         case .search: "contentview_search"
-        case .settings: "Settings"
-        case .playlists: "playlists_title"
-        case .favorites: "Favorites"
+        case .settings: "contentview_settings"
+        case .playlists: "contentview_playlists"
+        case .favorites: "contentview_favorites"
+        case .songs: "contentview_songs"
         }
     }
 
@@ -26,6 +27,7 @@ enum AppTab: String, Codable, CaseIterable, Identifiable {
         case .settings: "gearshape.fill"
         case .playlists: "music.note.list"
         case .favorites: "heart.fill"
+        case .songs: "music.note"
         }
     }
 }
@@ -95,9 +97,9 @@ struct TabBarSettingsView: View {
                 .glassEffect(.regular, in: .capsule)
                 .listRowBackground(Color.clear)
             } header: {
-                Text("Preview")
+                Text("tabbarsettingsview_preview")
             } footer: {
-                Text("Drag the handles below to reorder. Choose the star for the tab that opens when you launch Echo.")
+                Text("tabbarsettingsview_reorder_hint")
             }
 
             Section {
@@ -111,7 +113,7 @@ struct TabBarSettingsView: View {
                         }
                         .buttonStyle(.borderless)
                         .disabled(draft.tabs.count <= 2)
-                        .accessibilityLabel(Text("Remove") + Text(" ") + Text(tab.title))
+                        .accessibilityLabel(Text("tabbarsettingsview_remove_tab \(Text(tab.title))"))
 
                         Label(tab.title, systemImage: tab.symbol)
                         Spacer()
@@ -122,21 +124,21 @@ struct TabBarSettingsView: View {
                                 .frame(width: 44, height: 44)
                         }
                         .buttonStyle(.borderless)
-                        .accessibilityLabel(Text("Start tab") + Text(" ") + Text(tab.title))
-                        .accessibilityValue(draft.startTab == tab ? Text("Selected") : Text("Not selected"))
+                        .accessibilityLabel(Text("tabbarsettingsview_start_tab \(Text(tab.title))"))
+                        .accessibilityValue(draft.startTab == tab ? Text("tabbarsettingsview_selected") : Text("tabbarsettingsview_not_selected"))
                     }
                 }
                 .onMove { source, destination in
                     draft.tabs.move(fromOffsets: source, toOffset: destination)
                 }
             } header: {
-                Text("Your tabs (\(draft.tabs.count)/5)")
+                Text("tabbarsettingsview_your_tabs \(draft.tabs.count)")
             } footer: {
-                Text("Keep between 2 and 5 tabs. Each tab can appear only once.")
+                Text("tabbarsettingsview_tab_limits")
             }
             .environment(\.editMode, .constant(.active))
 
-            Section("Available tabs") {
+            Section("tabbarsettingsview_available_tabs") {
                 ForEach(AppTab.allCases.filter { !draft.tabs.contains($0) }) { tab in
                     Button {
                         draft.add(tab)
@@ -152,14 +154,14 @@ struct TabBarSettingsView: View {
             }
 
             Section {
-                Button("Restore defaults") { draft = .defaults }
+                Button("tabbarsettingsview_restore_defaults") { draft = .defaults }
             }
         }
-        .navigationTitle("Tab bar")
+        .navigationTitle("tabbarsettingsview_title")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
+                Button("tabbarsettingsview_save") {
                     storedTabs = draft.encoded
                     dismiss()
                 }

@@ -76,7 +76,7 @@ struct ContentView: View {
                 }
                 .buttonStyle(.glass)
                 .padding(.trailing)
-                .accessibilityLabel("Settings")
+                .accessibilityLabel("contentview_settings")
                 .opacity(presentation.isVisible ? 0 : 1)
                 .allowsHitTesting(!presentation.isVisible)
             }
@@ -108,6 +108,7 @@ private extension ContentView {
         case .settings: SettingsView()
         case .playlists: NavigationStack { PlaylistsView() }
         case .favorites: NavigationStack { FavoritesView() }
+        case .songs: NavigationStack { SongsView() }
         }
     }
 }
@@ -500,7 +501,7 @@ final class MiniPlayerPresentation {
         let currentToken = UUID()
         token = currentToken
         let animation: Animation = reduceMotion
-            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1)
+            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1).speed(1.75)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
