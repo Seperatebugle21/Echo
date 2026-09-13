@@ -68,7 +68,9 @@ let package = Package(
                     purposeString:
                         "Used to connect to external devices like headphones or speakers"
                 )
-            ]
+            ],
+
+            additionalInfoPlistContentFilePath: "ProMotion.plist"
         )
     ],
 
@@ -147,7 +149,8 @@ let package = Package(
             // uitgesloten van AppModule.
 
             exclude: [
-                "Clame"
+                "Clame",
+                "ProMotion.plist"
             ],
 
             swiftSettings: [

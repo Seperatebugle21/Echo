@@ -51,6 +51,7 @@ struct ContentView: View {
                     )
                 }
         }
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .accessibilityHidden(presentation.isVisible)
         .overlay {
             GeometryReader { safeGeometry in
@@ -130,6 +131,8 @@ private struct MiniPlayerDockModifier: ViewModifier {
                     }
             }
         }
+        // Keep the reserved dock slot above the tab bar when search gains focus.
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }
 
@@ -487,7 +490,7 @@ final class MiniPlayerPresentation {
         let currentToken = UUID()
         token = currentToken
         let animation: Animation = reduceMotion
-            ? .linear(duration: 0.12) : .spring(response: 0.38, dampingFraction: 0.94)
+            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
@@ -523,6 +526,8 @@ private struct ExpandedPlayerSurface: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @State private var renderedArtwork = PlayerArtworkImages.empty
+    // Extend only the surface, keeping controls at their original safe-area positions.
+    private let edgeBleed: CGFloat = 2
 
     private var rectangle: CGRect {
         let source = presentation.sourceFrame.offsetBy(
@@ -531,9 +536,9 @@ private struct ExpandedPlayerSurface: View {
         let p = presentation.progress
         return CGRect(
             x: source.minX * (1 - p),
-            y: source.minY * (1 - p),
+            y: source.minY * (1 - p) - edgeBleed * p,
             width: source.width + (bounds.width - source.width) * p,
-            height: source.height + (bounds.height - source.height) * p
+            height: source.height + (bounds.height + 2 * edgeBleed - source.height) * p
         )
     }
 
@@ -550,7 +555,7 @@ private struct ExpandedPlayerSurface: View {
             // Same backdrop, same full-screen dimensions at EVERY progress value.
             // Its top pixels are revealed first; no temporary black surface.
             NowPlayingBackdrop(image: renderedArtwork.background)
-                .frame(width: bounds.width, height: bounds.height)
+                .frame(width: bounds.width, height: bounds.height + 2 * edgeBleed)
                 .opacity(backgroundProgress)
                 .allowsHitTesting(false)
 
@@ -571,6 +576,7 @@ private struct ExpandedPlayerSurface: View {
             .padding(.top, safeInsets.top)
             .padding(.bottom, safeInsets.bottom)
             .frame(width: bounds.width, height: bounds.height)
+            .offset(y: edgeBleed * p)
             .opacity(min(1, max(0, (p - 0.08) / 0.27)))
             .accessibilityHidden(!presentation.isExpanded)
 
@@ -588,7 +594,9 @@ private struct ExpandedPlayerSurface: View {
         )
         .contentShape(shape)
         .clipShape(shape)
-        .glassEffect(.regular.interactive(), in: shape)
+        // The stationary dock retains Liquid Glass. Avoid its specular rim and
+        // interactive refraction across an animating full-screen surface.
+        .background(.regularMaterial, in: shape)
         .offset(x: rect.minX, y: rect.minY)
         .accessibilityAction(.escape) {
             presentation.close(reduceMotion: reduceMotion)
