@@ -2,6 +2,354 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+"settingsview_intro_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Make Echo yours",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Maak Echo van jou",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Echo à votre image",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Dein Echo, dein Stil",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_intro_subtitle": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Your sound. Your style. Your library.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Jouw geluid. Jouw stijl. Jouw bibliotheek.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Votre son. Votre style. Votre bibliothèque.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Dein Klang. Dein Stil. Deine Mediathek.",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_personalization": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Your experience",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Jouw ervaring",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Votre expérience",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Deine Einstellungen",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_equalizer_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Shape your sound with bands and presets",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Pas je geluid aan met banden en presets",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Ajustez le son avec les bandes et préréglages",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Passe deinen Klang mit Bändern und Presets an",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_tab_bar_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Choose your tabs, order and start screen",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Kies je tabs, volgorde en startscherm",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Choisissez vos onglets, leur ordre et l’écran de démarrage",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Wähle Tabs, Reihenfolge und Startbildschirm",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_connections": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Connected services",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Gekoppelde diensten",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Services connectés",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Verbundene Dienste",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_lyrics_services": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Lyrics services",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Songtekstdiensten",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Services de paroles",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Songtextdienste",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_lyrics_services_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Manage your Genius and Musixmatch keys",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Beheer je Genius- en Musixmatch-sleutels",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Gérez vos clés Genius et Musixmatch",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Verwalte deine Genius- und Musixmatch-Schlüssel",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_delete_lyrics": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Delete all lyrics",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Alle songteksten verwijderen",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Supprimer toutes les paroles",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Alle Songtexte löschen",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_danger_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "These actions remove stored data. Review the confirmation before continuing.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Deze acties verwijderen opgeslagen gegevens. Lees de bevestiging voordat je doorgaat.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Ces actions suppriment des données enregistrées. Lisez la confirmation avant de continuer.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Diese Aktionen entfernen gespeicherte Daten. Lies die Bestätigung, bevor du fortfährst.",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_clear_cache_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Clear cache?",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Cache wissen?",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Vider le cache ?",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Cache leeren?",
+          "state": "translated"
+        }
+      }
+    }
+  },
+  "settingsview_clear_cache_message": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Temporary cached files will be removed. Your music library will be kept.",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Tijdelijke cachebestanden worden verwijderd. Je muziekbibliotheek blijft behouden.",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Les fichiers temporaires du cache seront supprimés. Votre bibliothèque musicale sera conservée.",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Temporäre Cache-Dateien werden entfernt. Deine Musikmediathek bleibt erhalten.",
+          "state": "translated"
+        }
+      }
+    }
+  },
 "settingsview_equalizer": {
     "localizations": {
       "en": {
