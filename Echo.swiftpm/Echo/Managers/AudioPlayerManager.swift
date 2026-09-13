@@ -577,7 +577,7 @@ class AudioPlayerManager:
             }
 
 
-            if !repeatingCurrent { updateRepeatForSelection() }
+
             currentSong =
                 song
 
@@ -629,6 +629,8 @@ class AudioPlayerManager:
                     queue
             )
 
+
+            if !repeatingCurrent { updateRepeatForSelection() }
 
         } catch {
 
@@ -835,8 +837,8 @@ class AudioPlayerManager:
 
     private func updateRepeatForSelection() {
         guard repeatMode != .off else { return }
-        // Evaluate the final queue, including a newly selected playlist.
-        repeatMode = queue.indices.contains(currentIndex + 1) ? .all : .off
+        // Count the complete queue: repeat-all also includes entries before the current song.
+        repeatMode = queue.count > 1 ? .all : .off
     }
 
     var previousQueuedSong: Song? {

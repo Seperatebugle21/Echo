@@ -8,6 +8,7 @@ struct SearchView: View {
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
 
+    @ScaledMetric(relativeTo: .body) private var historyRowHeight: CGFloat = 52
     @State private var searchText = ""
     @State private var showAllSongs = false
     @State private var showSettings = false
@@ -483,25 +484,54 @@ struct SearchView: View {
 
     private var recentSearchesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("searchview_recent_searches")
-                .font(.title2.bold())
-                .padding(.horizontal)
-            VStack(spacing: 0) {
+            HStack {
+                Text("searchview_recent_searches").font(.title2.bold())
+                Spacer()
+                Button("searchview_clear_recent", action: clearRecentSearches)
+                    .font(.subheadline.weight(.medium))
+                    .buttonStyle(.plain)
+            }
+            .padding(.horizontal)
+            List {
                 ForEach(Array(recentQueries.prefix(4)), id: \.self) { query in
-                    SearchHistorySwipeRow(query: query, onSelect: {
-                        withAnimation(.easeInOut(duration: 0.18)) { searchText = query }
-                    }, onDelete: {
-                        let remaining = recentQueries.filter { $0 != query }
-                        if let data = try? JSONEncoder().encode(remaining) {
-                            withAnimation(.easeInOut(duration: 0.18)) { recentQueriesData = data }
+                    Button {
+                        searchText = query
+                    } label: {
+                        HStack(spacing: 13) {
+                            Image(systemName: "clock.arrow.circlepath").foregroundStyle(.secondary)
+                            Text(verbatim: query).foregroundStyle(.primary).lineLimit(1)
+                            Spacer()
+                            Image(systemName: "arrow.up.left").font(.caption).foregroundStyle(.tertiary)
                         }
-                    })
-                    if query != recentQueries.prefix(4).last { Divider().padding(.leading, 50) }
+                        .padding(.horizontal, 15)
+                        .frame(height: historyRowHeight)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .listRowInsets(EdgeInsets())
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button("searchview_delete_history", role: .destructive) {
+                            removeRecentQuery(query)
+                        }
+                    }
+                    .accessibilityAction(named: Text("searchview_delete_history")) {
+                        removeRecentQuery(query)
+                    }
                 }
             }
+            .listStyle(.plain)
+            .environment(\.defaultMinListRowHeight, historyRowHeight)
+            .scrollDisabled(true)
+            .scrollContentBackground(.hidden)
+            .frame(height: historyRowHeight * CGFloat(min(4, recentQueries.count)))
             .clipShape(.rect(cornerRadius: 18))
             .padding(.horizontal)
         }
+    }
+
+    private func removeRecentQuery(_ query: String) {
+        guard let data = try? JSONEncoder().encode(recentQueries.filter { $0 != query }) else { return }
+        withAnimation { recentQueriesData = data }
     }
     // MARK: - Recently searched songs
 
@@ -1492,61 +1522,3 @@ struct PlaylistSearchArtwork: View {
     }
 }
 
-private struct SearchHistorySwipeRow: View {
-    let query: String
-    let onSelect: () -> Void
-    let onDelete: () -> Void
-    @State private var isRevealed = false
-    @GestureState private var translation: CGFloat = 0
-
-    private var offset: CGFloat { min(0, max(-88, (isRevealed ? -88 : 0) + translation)) }
-
-    var body: some View {
-        ZStack(alignment: .trailing) {
-            Button(role: .destructive, action: onDelete) {
-                Image(systemName: "trash.fill")
-                    .foregroundStyle(.white)
-                    .frame(width: 88, height: 52)
-                    .background(.red)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("searchview_delete_history")
-            .accessibilityHidden(!isRevealed)
-            .allowsHitTesting(isRevealed)
-
-            Button {
-                if isRevealed { withAnimation(.snappy) { isRevealed = false } }
-                else { onSelect() }
-            } label: {
-                HStack(spacing: 13) {
-                    Image(systemName: "clock.arrow.circlepath").foregroundStyle(.secondary)
-                    Text(verbatim: query).foregroundStyle(.primary).lineLimit(1)
-                    Spacer()
-                    Image(systemName: "arrow.up.left").font(.caption).foregroundStyle(.tertiary)
-                }
-                .padding(.horizontal, 15)
-                .frame(height: 52)
-                .background(Color(uiColor: .secondarySystemGroupedBackground))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .offset(x: offset)
-            .simultaneousGesture(DragGesture(minimumDistance: 20)
-                .updating($translation) { value, state, _ in
-                    if abs(value.translation.width) > abs(value.translation.height) {
-                        state = value.translation.width
-                    }
-                }
-                .onEnded { value in
-                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                    withAnimation(.snappy) {
-                        isRevealed = value.translation.width < -35
-                            || (isRevealed && value.translation.width < 35)
-                    }
-                }
-            )
-            .accessibilityAction(named: Text("searchview_delete_history"), onDelete)
-        }
-        .clipped()
-    }
-}

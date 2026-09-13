@@ -27,11 +27,14 @@ struct ContentView: View {
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .accessibilityHidden(presentation.isVisible)
+        .allowsHitTesting(!presentation.isVisible)
         .overlay {
             GeometryReader { safeGeometry in
                 GeometryReader { fullGeometry in
                     ZStack(alignment: .topLeading) {
-                        Color.clear.allowsHitTesting(false)
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .allowsHitTesting(presentation.isVisible)
                         // One persistent player; tabs only report its reserved space.
                         let slot = presentation.dockSlotFrame
                         ResizableMiniPlayerDock(
@@ -53,7 +56,7 @@ struct ContentView: View {
                                 safeInsets: safeGeometry.safeAreaInsets
                             )
                             .opacity(presentation.isVisible ? 1 : 0)
-                            .allowsHitTesting(presentation.isExpanded)
+                            .allowsHitTesting(presentation.isVisible)
                         }
                     }
                     .onGeometryChange(for: CGRect.self) { proxy in
@@ -501,7 +504,7 @@ final class MiniPlayerPresentation {
         let currentToken = UUID()
         token = currentToken
         let animation: Animation = reduceMotion
-            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1).speed(1.25)
+            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1).speed(1.75)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
@@ -589,7 +592,7 @@ private struct ExpandedPlayerSurface: View {
             .frame(width: bounds.width, height: bounds.height)
             .offset(y: edgeBleed * p)
             .opacity(min(1, max(0, (p - 0.08) / 0.27)))
-            .accessibilityHidden(!presentation.isExpanded)
+            .accessibilityHidden(!presentation.isVisible)
 
             // Includes artwork, title, artist, AirPlay and playback controls.
             // Appears progressively during closing, not only at the endpoint.
