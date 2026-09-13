@@ -120,10 +120,7 @@ struct HomeView: View {
                                 width: 42,
                                 height: 42
                             )
-                            .background(
-                                .thinMaterial,
-                                in: Circle()
-                            )
+                            .glassEffect(.regular.interactive(), in: .circle)
                         }
                         .buttonStyle(.plain)
                     }

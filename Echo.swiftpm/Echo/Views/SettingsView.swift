@@ -4,7 +4,7 @@ struct SettingsView: View {
     @Environment(MusicLibraryManager.self) private var library
     @AppStorage("selectedLanguage") private var selectedLanguage = "en"
     @AppStorage("appearanceMode") private var appearanceMode = "system"
-    @State private var apifySettings = ApifySettings.shared
+
     @State private var showFirstDeleteAlert = false
     @State private var showFinalDeleteAlert = false
     @State private var showDeleteLyricsAlert = false
@@ -167,17 +167,6 @@ struct SettingsView: View {
 
     private var connections: some View {
         Section("settingsview_connections") {
-            NavigationLink { ApifyAccountsView() } label: {
-                HStack {
-                    SettingsRow(title: "settingsview_apify_accounts", symbol: "person.2.fill", color: .orange)
-                    Spacer(minLength: 8)
-                    Group {
-                        if let account = apifySettings.activeAccount { Text(verbatim: account.name) }
-                        else { Text("settingsview_none") }
-                    }
-                    .font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
-                }
-            }
             NavigationLink { SettingsLyricsServicesView() } label: {
                 SettingsRow(title: "settingsview_lyrics_services", subtitle: "settingsview_lyrics_services_detail", symbol: "text.quote", color: .teal)
             }
@@ -227,14 +216,16 @@ private struct SettingsLyricsServicesView: View {
     @AppStorage("musixmatchApiKey") private var musixmatchApiKey = ""
     var body: some View {
         Form {
+            Section("settingsview_provider_musixmatch") {
+                SecureField("settingsview_musixmatch_key", text: $musixmatchApiKey)
+            }
             Section {
                 SecureField("settingsview_genius_token", text: $geniusToken)
-                SecureField("settingsview_musixmatch_key", text: $musixmatchApiKey)
-            } header: { Text("settings.api.header") }
+            } header: { Text("settingsview_provider_genius") }
               footer: { Text("settings.genius.footer") }
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
         }
+        .textInputAutocapitalization(.never)
+        .autocorrectionDisabled()
         .navigationTitle("settingsview_lyrics_services")
         .navigationBarTitleDisplayMode(.inline)
     }

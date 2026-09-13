@@ -283,7 +283,7 @@ extension AudioPlayerManager {
     var miniPlayerNextSong: Song? {
         if queue.indices.contains(currentIndex + 1) { return queue[currentIndex + 1] }
         // next() converts repeat-one into repeat-all for manual skipping.
-        if repeatMode != .off, let first = queue.first { return first }
+        // Manual next turns repeat off when there are no upcoming entries.
         return autoNextQueue.first
     }
 

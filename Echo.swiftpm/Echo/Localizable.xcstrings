@@ -2,6 +2,93 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+"settingsview_provider_musixmatch": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Musixmatch",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Musixmatch",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Musixmatch",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Musixmatch",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "settingsview_provider_genius": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Genius",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Genius",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Genius",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Genius",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
+  "searchview_delete_history": {
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "value": "Delete search",
+          "state": "translated"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "value": "Zoekopdracht verwijderen",
+          "state": "translated"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "value": "Supprimer la recherche",
+          "state": "translated"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "value": "Suche löschen",
+          "state": "translated"
+        }
+      }
+    },
+    "extractionState": "manual"
+  },
 "settingsview_intro_title": {
     "extractionState": "manual",
     "localizations": {

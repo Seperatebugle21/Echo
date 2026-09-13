@@ -577,7 +577,7 @@ class AudioPlayerManager:
             }
 
 
-            if !repeatingCurrent && repeatMode == .one { repeatMode = .all }
+            if !repeatingCurrent { updateRepeatForSelection() }
             currentSong =
                 song
 
@@ -750,19 +750,13 @@ class AudioPlayerManager:
     // MARK: - Next
     // ========================================================
 
-    func next() {
+    func next(manuallyInitiated: Bool = true) {
 
         lastPlaybackDirection =
             .next
 
 
-        if repeatMode ==
-            .one {
-
-            repeatMode =
-                .all
-        }
-
+        if manuallyInitiated { updateRepeatForSelection() }
 
         if queue.count >
             currentIndex + 1 {
@@ -771,7 +765,7 @@ class AudioPlayerManager:
                 1
 
 
-            playPreloadedOrNextSong()
+            playPreloadedOrNextSong(repeatingCurrent: !manuallyInitiated)
 
             return
         }
@@ -787,7 +781,7 @@ class AudioPlayerManager:
                 0
 
 
-            playSongAtIndex()
+            playSongAtIndex(repeatingCurrent: !manuallyInitiated)
 
             return
         }
@@ -809,6 +803,7 @@ class AudioPlayerManager:
             }
             return
         }
+        player?.stop()
         isPlaying =
             false
 
@@ -821,8 +816,8 @@ class AudioPlayerManager:
     // MARK: - Preloaded Next
     // ========================================================
 
-    private func playPreloadedOrNextSong() {
-        playSongAtIndex()
+    private func playPreloadedOrNextSong(repeatingCurrent: Bool) {
+        playSongAtIndex(repeatingCurrent: repeatingCurrent)
     }
 
 
@@ -832,10 +827,16 @@ class AudioPlayerManager:
 
     func previous() {
         lastPlaybackDirection = .previous
-        if repeatMode == .one { repeatMode = .all }
-        if currentTime > 3 { seek(to: 0); return }
+
+        if currentTime > 3 { updateRepeatForSelection(); seek(to: 0); return }
         if let song = previousQueuedSong { playPreviousSong(song) }
-        else { seek(to: 0) }
+        else { updateRepeatForSelection(); seek(to: 0) }
+    }
+
+    private func updateRepeatForSelection() {
+        guard repeatMode != .off else { return }
+        // Evaluate the final queue, including a newly selected playlist.
+        repeatMode = queue.indices.contains(currentIndex + 1) ? .all : .off
     }
 
     var previousQueuedSong: Song? {
@@ -866,9 +867,9 @@ class AudioPlayerManager:
     // MARK: - Play Song At Index
     // ========================================================
 
-    private func playSongAtIndex() {
+    private func playSongAtIndex(repeatingCurrent: Bool = false) {
         guard queue.indices.contains(currentIndex), let url = getURL(for: queue[currentIndex]) else { return }
-        play(song: queue[currentIndex], url: url, queue: queue, queuePosition: currentIndex)
+        play(song: queue[currentIndex], url: url, queue: queue, queuePosition: currentIndex, repeatingCurrent: repeatingCurrent)
     }
 
 
@@ -1347,7 +1348,7 @@ class AudioPlayerManager:
 
         } else {
 
-            next()
+            next(manuallyInitiated: false)
         }
     }
 }
