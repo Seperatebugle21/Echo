@@ -125,6 +125,7 @@ struct EchoApp: App {
             // MARK: - Prepare Background Fetch
 
             .task {
+                EchoWidgetSnapshotPublisher.refresh()
 
                 FetchDownloadEngine.shared
                     .prepare()
@@ -177,6 +178,7 @@ struct EchoApp: App {
             of:
                 scenePhase
         ) { _, newPhase in
+            EchoWidgetSnapshotPublisher.refresh()
 
             if newPhase ==
                 .active

@@ -61,6 +61,7 @@ targets:
     sources:
       - path: EchoWidget
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetModels.swift
+      - path: Echo.swiftpm/Echo/Widgets/EchoWidgetIntents.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.widget
@@ -68,9 +69,21 @@ targets:
         INFOPLIST_FILE: Configuration/EchoWidget-Info.plist
         CODE_SIGN_ENTITLEMENTS: Configuration/EchoWidget.entitlements
         APPLICATION_EXTENSION_API_ONLY: YES
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) ECHO_WIDGET_EXTENSION"
         SKIP_INSTALL: YES
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
+
+  EchoWidgetModelTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/EchoWidgetModelTests.swift
+      - path: Echo.swiftpm/Echo/Widgets/EchoWidgetModels.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.widget-model-tests
+        GENERATE_INFOPLIST_FILE: YES
 
 schemes:
   Echo:
@@ -82,3 +95,10 @@ schemes:
       config: Debug
     archive:
       config: Release
+  EchoWidgetModelTests:
+    build:
+      targets:
+        EchoWidgetModelTests: all
+    test:
+      targets:
+        - EchoWidgetModelTests

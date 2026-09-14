@@ -1,11 +1,22 @@
 import Foundation
 
+enum EchoWidgetKinds {
+    static let rounded = "com.echomusic.app.widget.player-rounded"
+    static let cover = "com.echomusic.app.widget.player-cover"
+    static let edge = "com.echomusic.app.widget.player-edge"
+    static let compact = "com.echomusic.app.widget.player-compact"
+    // Preserve the kind so existing recent-song widgets migrate to Quick Picks.
+    static let quickPicks = "com.echomusic.app.widget.recent-songs"
+    static let homeScreen = [rounded, cover, edge, compact, quickPicks]
+}
+
 struct EchoWidgetSongItem: Codable, Hashable, Identifiable {
 
     let id: UUID
     let title: String
     let artist: String
     let artworkData: Data?
+    var isFavorite: Bool? = nil
 
     var playbackURL: URL {
         var components = URLComponents()
@@ -27,6 +38,8 @@ struct EchoWidgetSnapshot: Codable, Hashable {
 
     let updatedAt: Date
     let songs: [EchoWidgetSongItem]
+    var currentSong: EchoWidgetSongItem? = nil
+    var isPlaying: Bool? = nil
 
     static let empty = EchoWidgetSnapshot(
         updatedAt: .distantPast,
@@ -61,7 +74,7 @@ enum EchoWidgetSnapshotStore {
     static func save(_ snapshot: EchoWidgetSnapshot) throws {
 
         guard let fileURL else {
-            return
+            throw CocoaError(.fileNoSuchFile)
         }
 
         let data = try JSONEncoder().encode(snapshot)
@@ -71,6 +84,8 @@ enum EchoWidgetSnapshotStore {
             options: [.atomic]
         )
     }
+
+    static var isAvailable: Bool { fileURL != nil }
 
     private static var fileURL: URL? {
 

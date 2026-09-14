@@ -25,7 +25,9 @@ class MusicLibraryManager {
         case replace
     }
     
-    var favoriteSongIDs: [UUID] = []
+    var favoriteSongIDs: [UUID] = [] {
+        didSet { EchoWidgetSnapshotPublisher.requestUpdate() }
+    }
     
     // MARK: - Songs
     

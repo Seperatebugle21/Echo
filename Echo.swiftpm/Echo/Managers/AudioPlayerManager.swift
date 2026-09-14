@@ -75,11 +75,17 @@ class AudioPlayerManager:
 
 
     var isPlaying =
-        false
+        false {
+        didSet {
+            if isPlaying != oldValue { EchoWidgetSnapshotPublisher.requestUpdate() }
+        }
+    }
 
 
     var currentSong:
-        Song?
+        Song? {
+        didSet { EchoWidgetSnapshotPublisher.requestUpdate() }
+    }
 
 
     var currentTime:

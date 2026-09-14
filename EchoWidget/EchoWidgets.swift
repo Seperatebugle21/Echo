@@ -6,6 +6,10 @@ struct EchoWidgets: WidgetBundle {
 
     var body: some Widget {
         EchoLockScreenWidget()
-        EchoRecentSongsWidget()
+        EchoRoundedPlayerWidget()
+        EchoCoverPlayerWidget()
+        EchoEdgePlayerWidget()
+        EchoCompactPlayerWidget()
+        EchoQuickPicksWidget()
     }
 }

@@ -19,7 +19,26 @@ final class HomeSessionManager {
     ) {
 
         guard !songs.isEmpty else {
+            recommendedSongs = nil
+            recentlyPlayedSongs = nil
+            favoriteSongs = nil
             return
+        }
+
+        // Keep session order stable, but replace edited values and remove deleted
+        // songs. Refill after imports so Home and the widget share actual picks.
+        if let previous = recommendedSongs {
+            let byID = Dictionary(songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            var refreshed = previous.compactMap { byID[$0.id] }
+            let desiredCount = min(12, songs.count)
+            if refreshed.count < desiredCount {
+                let selected = Set(refreshed.map(\.id))
+                let additional = recommendationManager.recommendations(
+                    from: songs, favoriteSongIDs: favoriteSongIDs, limit: songs.count
+                ).filter { !selected.contains($0.id) }
+                refreshed.append(contentsOf: additional.prefix(desiredCount - refreshed.count))
+            }
+            recommendedSongs = refreshed
         }
 
         // MARK: - Recommended
