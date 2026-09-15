@@ -76,6 +76,7 @@ let package = Package(
 
 
     dependencies: [
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0"),
 
         .package(
             url:
@@ -134,6 +135,7 @@ let package = Package(
                         "Python-iOS"
                 ),
 
+                .product(name: "SwiftSoup", package: "SwiftSoup"),
                 "CLame"
             ],
 

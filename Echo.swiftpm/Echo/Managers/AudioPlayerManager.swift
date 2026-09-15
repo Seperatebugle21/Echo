@@ -70,6 +70,13 @@ class AudioPlayerManager:
         String?
 
 
+    var currentLyricsSource: LyricsProvider?
+    var currentLyricsSourceURL: URL?
+    var isLoadingLyrics = false
+    var lyricsStatusKey: String?
+    @ObservationIgnored private var lyricsTask: Task<Void, Never>?
+    @ObservationIgnored private var lyricsRequestID = UUID()
+
     var lyricsNeedsInternet =
         false
 
@@ -652,107 +659,58 @@ class AudioPlayerManager:
     // MARK: - Lyrics
     // ========================================================
 
-    func loadLyrics(
-        for song: Song
-    ) {
-
-        if let savedSong =
-            MusicLibraryManager.shared
-                .songs
-                .first(
-                    where: {
-                        $0.id ==
-                            song.id
-                    }
-                ) {
-
-            if
-                savedSong.lyrics !=
-                    nil
-                ||
-                savedSong.syncedLyrics !=
-                    nil {
-
-                currentLyrics =
-                    savedSong.lyrics
-
-
-                currentSyncedLyrics =
-                    savedSong.syncedLyrics
-
-
-                lyricsNeedsInternet =
-                    false
-
-
+    func loadLyrics(for song: Song, forceRefresh: Bool = false, provider: LyricsProvider = .automatic) {
+        lyricsTask?.cancel()
+        let requestID = UUID()
+        lyricsRequestID = requestID
+        isLoadingLyrics = false
+        lyricsStatusKey = nil
+        lyricsNeedsInternet = false
+        if !forceRefresh {
+            currentLyrics = nil
+            currentSyncedLyrics = nil
+            currentLyricsSource = nil
+            currentLyricsSourceURL = nil
+            if let saved = MusicLibraryManager.shared.songs.first(where: { $0.id == song.id }),
+               saved.lyrics != nil || saved.syncedLyrics != nil {
+                currentLyrics = saved.lyrics
+                currentSyncedLyrics = saved.syncedLyrics
+                currentLyricsSource = saved.lyricsSource.flatMap(LyricsProvider.init(rawValue:))
+                currentLyricsSourceURL = saved.lyricsSourceURL
                 return
             }
         }
-
-
-        lyricsNeedsInternet =
-            false
-
-
-        Task {
-
-            let result =
-                await lyricsManager
-                    .fetchLyrics(
-                        for:
-                            song,
-
-                        duration:
-                            duration
-                    )
-
-
-            await MainActor.run {
-
-                if let result {
-
-                    self.currentLyrics =
-                        result.plainLyrics
-
-
-                    self.currentSyncedLyrics =
-                        result.syncedLyrics
-
-
-                    self.lyricsNeedsInternet =
-                        false
-
-
-                    MusicLibraryManager.shared
-                        .updateLyrics(
-                            for:
-                                song,
-
-                            lyrics:
-                                result.plainLyrics,
-
-                            syncedLyrics:
-                                result.syncedLyrics
-                        )
-
-
-                } else {
-
-                    self.currentLyrics =
-                        nil
-
-
-                    self.currentSyncedLyrics =
-                        nil
-
-
-                    self.lyricsNeedsInternet =
-                        true
-                }
+        let key = provider == .musixmatch ? "musixmatchApiKey" : "geniusAccessToken"
+        if (provider == .musixmatch || provider == .genius),
+           (UserDefaults.standard.string(forKey: key) ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            lyricsStatusKey = "lyrics_missing_key"
+            return
+        }
+        let songDuration = duration
+        isLoadingLyrics = true
+        lyricsTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let result = await lyricsManager.fetchLyrics(for: song, duration: songDuration, provider: provider)
+            guard !Task.isCancelled, lyricsRequestID == requestID, currentSong?.id == song.id else { return }
+            isLoadingLyrics = false
+            if let result {
+                currentLyrics = result.plainLyrics
+                currentSyncedLyrics = result.syncedLyrics
+                currentLyricsSource = result.source
+                currentLyricsSourceURL = result.sourceURL
+                MusicLibraryManager.shared.updateLyrics(for: song, lyrics: result.plainLyrics,
+                    syncedLyrics: result.syncedLyrics, source: result.source, sourceURL: result.sourceURL)
+            } else {
+                // Keep existing lyrics when a manual refresh fails.
+                lyricsStatusKey = "lyrics_fetch_failed"
             }
         }
     }
 
+    func refreshLyrics(provider: LyricsProvider) {
+        guard let song = currentSong else { return }
+        loadLyrics(for: song, forceRefresh: true, provider: provider)
+    }
 
     // ========================================================
     // MARK: - Next

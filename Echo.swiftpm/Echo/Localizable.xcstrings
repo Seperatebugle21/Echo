@@ -3,6 +3,443 @@
   "version": "1.0",
   "strings": {
 
+  "developer_lyrics_sources": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Show lyrics source controls"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bronkeuze bij lyrics tonen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afficher le choix de la source des paroles"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Quellenauswahl für Songtexte anzeigen"
+        }
+      }
+    }
+  },
+  "developer_lyrics_sources_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Show the source, source selector and search again button in the lyrics screen."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Toon de bron, bronkeuze en knop om opnieuw te zoeken in het lyricsscherm."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Affiche la source, son sélecteur et le bouton de recherche dans l’écran des paroles."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zeigt Quelle, Quellenauswahl und die Schaltfläche zum erneuten Suchen in der Songtextansicht."
+        }
+      }
+    }
+  },
+  "lyrics_provider_automatic": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatic"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatisch"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatique"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatisch"
+        }
+      }
+    }
+  },
+  "lyrics_provider_musixmatch": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musixmatch"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musixmatch"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musixmatch"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musixmatch"
+        }
+      }
+    }
+  },
+  "lyrics_provider_lrclib": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "LRCLIB"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "LRCLIB"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "LRCLIB"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "LRCLIB"
+        }
+      }
+    }
+  },
+  "lyrics_provider_genius": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Genius"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Genius"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Genius"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Genius"
+        }
+      }
+    }
+  },
+  "lyrics_source_unknown": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saved lyrics · source unknown"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opgeslagen lyrics · bron onbekend"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Paroles enregistrées · source inconnue"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gespeicherter Songtext · Quelle unbekannt"
+        }
+      }
+    }
+  },
+  "lyrics_plain": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Plain text"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gewone tekst"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Texte simple"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Einfacher Text"
+        }
+      }
+    }
+  },
+  "lyrics_synchronized": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Synchronized"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesynchroniseerd"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Synchronisées"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Synchronisiert"
+        }
+      }
+    }
+  },
+  "lyrics_choose_source": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lyrics source"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lyricsbron"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Source des paroles"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songtextquelle"
+        }
+      }
+    }
+  },
+  "lyrics_search_again": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search again"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opnieuw zoeken"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechercher à nouveau"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Erneut suchen"
+        }
+      }
+    }
+  },
+  "lyrics_open_source": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open source page"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bronpagina openen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ouvrir la page source"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Quellseite öffnen"
+        }
+      }
+    }
+  },
+  "lyrics_searching": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Searching for lyrics…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lyrics zoeken…"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Recherche des paroles…"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songtext wird gesucht…"
+        }
+      }
+    }
+  },
+  "lyrics_missing_key": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add an API key for this source in Settings → Lyrics services. Your current lyrics have been kept."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voeg een API-sleutel voor deze bron toe via Instellingen → Lyricsdiensten. Je huidige lyrics zijn behouden."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajoutez une clé API pour cette source dans Réglages → Services de paroles. Vos paroles actuelles sont conservées."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Füge unter Einstellungen → Songtextdienste einen API-Schlüssel für diese Quelle hinzu. Der aktuelle Songtext bleibt erhalten."
+        }
+      }
+    }
+  },
+  "lyrics_fetch_failed": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No matching lyrics could be retrieved. Check your connection and service credentials, or try another source. Existing lyrics have been kept."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Er konden geen passende lyrics worden opgehaald. Controleer je verbinding en API-sleutels of probeer een andere bron. Bestaande lyrics zijn behouden."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aucune parole correspondante n’a pu être récupérée. Vérifiez votre connexion et vos clés API, ou essayez une autre source. Les paroles existantes sont conservées."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Es konnte kein passender Songtext abgerufen werden. Prüfe deine Verbindung und API-Schlüssel oder versuche eine andere Quelle. Vorhandene Songtexte bleiben erhalten."
+        }
+      }
+    }
+  }
+,
+
   "settingsview_audio": {
     "extractionState": "manual",
     "localizations": {

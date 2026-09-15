@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DeveloperView: View {
+    @AppStorage("developerShowLyricsSources") private var showLyricsSources = false
     @AppStorage("developerMaxDownloadChunks")
     private var maxDownloadChunks: Int = 4
 
@@ -15,6 +16,11 @@ struct DeveloperView: View {
     var body: some View {
 
         Form {
+            Section {
+                Toggle("developer_lyrics_sources", isOn: $showLyricsSources)
+            } footer: {
+                Text("developer_lyrics_sources_hint")
+            }
 
             Section {
 

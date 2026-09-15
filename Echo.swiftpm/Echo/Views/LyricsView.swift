@@ -7,6 +7,8 @@ struct LyricLine: Identifiable {
 }
 
 struct LyricsView: View {
+    @AppStorage("developerShowLyricsSources") private var showLyricsSources = false
+    @State private var selectedProvider = LyricsProvider.automatic
     
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
@@ -44,6 +46,13 @@ struct LyricsView: View {
                         spacing: 22
                     ) {
                         
+                        if showLyricsSources { sourceControls }
+                        if audioPlayer.isLoadingLyrics {
+                            ProgressView("lyrics_searching").tint(.white).foregroundStyle(.white)
+                        }
+                        if let key = audioPlayer.lyricsStatusKey {
+                            Text(LocalizedStringKey(key)).font(.footnote).foregroundStyle(.white)
+                        }
                         if lines.isEmpty {
                             
                             if let lyrics =
@@ -53,7 +62,7 @@ struct LyricsView: View {
                                 
                                 plainLyricsView(lyrics)
                                 
-                            } else {
+                            } else if !audioPlayer.isLoadingLyrics {
                                 
                                 unavailableLyricsView
                             }
@@ -225,6 +234,8 @@ struct LyricsView: View {
         
         // MARK: - Updates
         
+        .onChange(of: audioPlayer.currentSong?.id) { selectedProvider = .automatic }
+        .onChange(of: showLyricsSources) { if !showLyricsSources { selectedProvider = .automatic } }
         .onAppear {
             parseLyrics()
         }
@@ -255,6 +266,37 @@ struct LyricsView: View {
     
     // MARK: - Background
     
+    @ViewBuilder
+    private var sourceControls: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if audioPlayer.currentLyrics != nil || audioPlayer.currentSyncedLyrics != nil {
+                HStack {
+                    Text(LocalizedStringKey(audioPlayer.currentLyricsSource?.titleKey ?? "lyrics_source_unknown"))
+                    Text(verbatim: "·")
+                    Text(LocalizedStringKey(lines.isEmpty ? "lyrics_plain" : "lyrics_synchronized"))
+                }
+                .font(.caption)
+            }
+            Picker("lyrics_choose_source", selection: $selectedProvider) {
+                ForEach(LyricsProvider.allCases) { provider in
+                    Text(LocalizedStringKey(provider.titleKey)).tag(provider)
+                }
+            }
+            .pickerStyle(.menu)
+            Button {
+                audioPlayer.refreshLyrics(provider: selectedProvider)
+            } label: {
+                Label("lyrics_search_again", systemImage: "arrow.clockwise")
+            }
+            .disabled(audioPlayer.isLoadingLyrics || audioPlayer.currentSong == nil)
+            if let url = audioPlayer.currentLyricsSourceURL, url.scheme == "https" {
+                Link("lyrics_open_source", destination: url)
+            }
+        }
+        .foregroundStyle(.white)
+        .tint(.white)
+    }
+
     @ViewBuilder
     private var lyricsBackground: some View {
         

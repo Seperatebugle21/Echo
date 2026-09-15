@@ -17,6 +17,8 @@ struct Song: Identifiable, Codable, Hashable {
     
     var lyrics: String?
     var syncedLyrics: String?
+    var lyricsSource: String?
+    var lyricsSourceURL: URL?
     
     
     init(

@@ -63,6 +63,8 @@ class MusicLibraryManager {
         for index in songs.indices {
             songs[index].lyrics = nil
             songs[index].syncedLyrics = nil
+            songs[index].lyricsSource = nil
+            songs[index].lyricsSourceURL = nil
         }
         
         saveSongs()
@@ -74,7 +76,9 @@ class MusicLibraryManager {
     func updateLyrics(
         for song: Song,
         lyrics: String?,
-        syncedLyrics: String?
+        syncedLyrics: String?,
+        source: LyricsProvider? = nil,
+        sourceURL: URL? = nil
     ) {
         
         guard let index = songs.firstIndex(
@@ -88,6 +92,8 @@ class MusicLibraryManager {
         
         songs[index].lyrics = lyrics
         songs[index].syncedLyrics = syncedLyrics
+        songs[index].lyricsSource = source?.rawValue
+        songs[index].lyricsSourceURL = sourceURL
         
         // Meteen permanent opslaan
         saveSongs()
