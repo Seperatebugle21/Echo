@@ -554,6 +554,29 @@ jobs:
           # Create IPA
           # ============================================
 
+          # Preserve the Echo launcher as well as the Spotify callback.
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1 dict" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLName string echo.widgets" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes array" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes:0 string echo" "$INFO_PLIST"
+
+          # A CODE_SIGNING_ALLOWED=NO archive does not embed requested entitlements.
+          # Add ad-hoc signatures so SideStore can discover and provision the
+          # shared App Group. SideStore replaces these signatures at installation.
+          # Embed entitlements in the Mach-O files only. SideStore later signs
+          # the complete bundles/frameworks with the user's provisioning profiles.
+          WIDGET_BUNDLE="$APP_PATH/PlugIns/EchoWidget.appex"
+          APP_EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$INFO_PLIST")
+          WIDGET_EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$WIDGET_BUNDLE/Info.plist")
+          codesign --force --sign - --identifier com.echomusic.app.widget \
+            --entitlements Configuration/EchoWidget.entitlements "$WIDGET_BUNDLE/$WIDGET_EXECUTABLE"
+          codesign --force --sign - --identifier com.echomusic.app \
+            --entitlements Configuration/Echo.entitlements "$APP_PATH/$APP_EXECUTABLE"
+
+          codesign -d --entitlements :- "$APP_PATH/$APP_EXECUTABLE" > build/app-entitlements.plist
+          codesign -d --entitlements :- "$WIDGET_BUNDLE/$WIDGET_EXECUTABLE" > build/widget-entitlements.plist
+          python3 -c 'import plistlib; from pathlib import Path; expected=["group.com.echomusic.app"]; paths=[Path("build/app-entitlements.plist"), Path("build/widget-entitlements.plist")]; groups=[plistlib.loads(p.read_bytes()).get("com.apple.security.application-groups") for p in paths]; assert all(g == expected for g in groups), groups'
+
           rm -f Echo.ipa
 
           zip -r Echo.ipa Payload

@@ -87,13 +87,27 @@ enum EchoWidgetSnapshotStore {
 
     static var isAvailable: Bool { fileURL != nil }
 
-    private static var fileURL: URL? {
+    // SideStore/AltStore writes the provisioned groups to each bundle's
+    // ALTAppGroups after re-signing. Do not guess a team ID from the bundle ID.
+    static func containerURL(
+        installedGroups: [String],
+        lookup: (String) -> URL?
+    ) -> URL? {
+        let remapped = Set(installedGroups.filter {
+            $0.hasPrefix(appGroupIdentifier + ".") && $0.count > appGroupIdentifier.count + 1
+        }).sorted()
+        // Prefer the installed mapping over a potentially stale original group.
+        // The original remains the fallback for Xcode/TestFlight/enterprise.
+        for identifier in remapped + [appGroupIdentifier] {
+            if let url = lookup(identifier) { return url }
+        }
+        return nil
+    }
 
-        FileManager.default
-            .containerURL(
-                forSecurityApplicationGroupIdentifier:
-                    appGroupIdentifier
-            )?
-            .appendingPathComponent(fileName)
+    private static var fileURL: URL? {
+        let groups = Bundle.main.object(forInfoDictionaryKey: "ALTAppGroups") as? [String] ?? []
+        return containerURL(installedGroups: groups) { identifier in
+            FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
+        }?.appendingPathComponent(fileName)
     }
 }

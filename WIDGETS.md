@@ -26,11 +26,25 @@ AudioPlaybackIntent routes controls to the app process, using AudioPlayerManager
 4. Build/install the Echo scheme and open Echo once to publish the library snapshot.
 5. Add the widgets through the Home Screen widget gallery.
 
-Swift Playgrounds alone cannot package this WidgetKit extension. The WidgetBuild workflow builds an unsigned IPA; its success does not verify the final installed App Group entitlements. A signing/sideloading tool must preserve or correctly remap the shared group for both targets. If it strips them, source changes alone cannot make the app and widget share their library. The widget now displays a connection state instead of silently showing four empty tiles; the app logs the storage failure.
+Swift Playgrounds alone cannot package this WidgetKit extension. The WidgetBuild workflow builds without a developer certificate, then adds ad-hoc Mach-O signatures carrying the App Group entitlement to both executables. It verifies the embedded groups before packaging; SideStore performs the final signing with the user's profiles. These ad-hoc signatures are metadata for the installer, not installable enterprise signatures.
+
+## SideStore installation
+
+Build the updated Widget branch with WidgetBuild.yml and download Echo-Release-IPA from the successful run. Install the new Echo.ipa through SideStore, retaining the EchoWidget extension. Update the existing app, open Echo once and start a song, then check the widgets. Refreshing the old installed IPA alone does not include this code/build fix.
+
+SideStore writes the actual provisioned groups into each bundle's ALTAppGroups Info.plist entry. The shared snapshot code now resolves matching group.com.echomusic.app.<team> entries from that metadata, checking container access, with the original group as fallback for standard signing. It does not guess team IDs or select unrelated groups. Both processes use the same resolution logic and stable ordering. This covers SideStore's normal group suffix mapping; a custom replacement of the entire bundle/group namespace is not supported by this resolver.
+
+The packaging workflow also preserves echo:// links; previously its Spotify URL configuration replaced the Echo launcher scheme.
+
+If the installer omits the group entitlement entirely, the resolver cannot grant missing access: the connection state remains visible and the app logs the storage failure. A successful archive is not proof that the final installation has shared access.
+
+Implementation references: [SideStore metadata key](https://github.com/SideStore/SideStore/blob/develop/Shared/Extensions/Bundle%2BAltStore.swift), [metadata population](https://github.com/SideStore/SideStore/blob/develop/SideStore/Core/Operations/PipelineOperations/ResignAppOperation.swift), [group provisioning](https://github.com/SideStore/SideStore/blob/develop/SideStore/Core/Operations/PipelineOperations/FetchProvisioningProfilesOperation.swift).
 
 ## Validation
 
 Run the EchoWidgetModelTests scheme on an available iOS Simulator. WidgetBuild runs these tests before archiving. They cover the previous JSON format, state/artwork round-tripping, missing artwork, empty libraries and legacy playback URLs.
+
+Five additional tests cover SideStore group selection, standard signing, denied/unrelated groups, missing permissions and consistent selection across app/extension metadata ordering.
 
 EchoWidgetPreviews.swift contains all five layouts and an empty-state preview.
 
