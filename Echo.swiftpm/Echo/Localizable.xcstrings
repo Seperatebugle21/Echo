@@ -2,6 +2,211 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+
+  "settingsview_audio": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Audio"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Audio"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Audio"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Audio"
+        }
+      }
+    }
+  },
+  "audio_output_mode": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Audio output"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Audio-uitvoer"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sortie audio"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Audioausgabe"
+        }
+      }
+    }
+  },
+  "audio_stereo": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stereo"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stereo"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stéréo"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stereo"
+        }
+      }
+    }
+  },
+  "audio_mono": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mono"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mono"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mono"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mono"
+        }
+      }
+    }
+  },
+  "audio_mono_explanation": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mono combines the left and right channels so you hear the same sound in both ears. Useful when listening with one earbud."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mono voegt het linker- en rechterkanaal samen, zodat je in beide oren hetzelfde hoort. Handig als je met één oortje luistert."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Le mode mono combine les canaux gauche et droit pour diffuser le même son dans les deux oreilles. Utile si vous utilisez un seul écouteur."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mono kombiniert den linken und rechten Kanal, sodass du auf beiden Ohren denselben Ton hörst. Praktisch, wenn du nur einen Ohrhörer verwendest."
+        }
+      }
+    }
+  },
+  "audio_stereo_explanation": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stereo keeps the left and right channels separate for a spatial listening experience when the recording and output device support it."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stereo houdt het linker- en rechterkanaal gescheiden voor een ruimtelijke luisterervaring wanneer de opname en het uitvoerapparaat dit ondersteunen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Le mode stéréo garde les canaux gauche et droit séparés pour une écoute spatiale, si l’enregistrement et le périphérique de sortie le permettent."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stereo hält den linken und rechten Kanal getrennt und ermöglicht räumliches Hören, wenn die Aufnahme und das Ausgabegerät dies unterstützen."
+        }
+      }
+    }
+  },
+  "audio_saved_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your choice is saved and applies immediately to playback in Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je keuze wordt opgeslagen en geldt direct voor het afspelen in Echo."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre choix est enregistré et s’applique immédiatement à la lecture dans Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Auswahl wird gespeichert und gilt sofort für die Wiedergabe in Echo."
+        }
+      }
+    }
+  }
+,
 "settingsview_provider_musixmatch": {
     "localizations": {
       "en": {

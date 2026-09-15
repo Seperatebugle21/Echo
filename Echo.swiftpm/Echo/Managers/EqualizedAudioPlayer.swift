@@ -9,6 +9,7 @@ final class EqualizedAudioPlayer {
     weak var delegate: EqualizedAudioPlayerDelegate?
     private let engine = AVAudioEngine()
     private let node = AVAudioPlayerNode()
+    private let channelMixer = AVAudioMixerNode()
     private let equalizer = AVAudioUnitEQ(numberOfBands: 6)
     private let file: AVAudioFile
     private var observers: [NSObjectProtocol] = []
@@ -52,8 +53,13 @@ final class EqualizedAudioPlayer {
         }
         engine.attach(node)
         engine.attach(equalizer)
+        engine.attach(channelMixer)
         engine.connect(node, to: equalizer, format: file.processingFormat)
-        engine.connect(equalizer, to: engine.mainMixerNode, format: file.processingFormat)
+        engine.connect(equalizer, to: channelMixer, format: file.processingFormat)
+        connectChannelMixer()
+        observers.append(NotificationCenter.default.addObserver(
+            forName: AudioSettings.didChange, object: nil, queue: .main
+        ) { [weak self] _ in self?.applyAudioMode() })
         applyEqualizer()
         observers.append(NotificationCenter.default.addObserver(
             forName: EqualizerSettings.didChange, object: nil, queue: .main
@@ -146,6 +152,26 @@ final class EqualizedAudioPlayer {
         resumeAfterInterruption = false
         cachedTime = 0
         offset = 0
+    }
+
+    private func connectChannelMixer() {
+        // The mixer downmixes all input channels to mono before the main mixer
+        // distributes that signal to the output device's channels.
+        let channels: AVAudioChannelCount = AudioSettings.isMonoEnabled ? 1 : file.processingFormat.channelCount
+        let format = AVAudioFormat(standardFormatWithSampleRate: file.processingFormat.sampleRate,
+                                   channels: channels)!
+        engine.connect(channelMixer, to: engine.mainMixerNode, format: format)
+    }
+
+    private func applyAudioMode() {
+        let resume = isPlaying
+        let pendingInterruptionResume = resumeAfterInterruption
+        pause()
+        engine.stop()
+        engine.disconnectNodeOutput(channelMixer)
+        connectChannelMixer()
+        resumeAfterInterruption = pendingInterruptionResume
+        if resume { play() }
     }
 
     private func applyEqualizer() {

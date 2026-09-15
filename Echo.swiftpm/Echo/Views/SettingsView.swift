@@ -139,6 +139,9 @@ struct SettingsView: View {
 
     private var personalization: some View {
         Section("settingsview_personalization") {
+            NavigationLink { AudioSettingsView() } label: {
+                SettingsRow(title: "settingsview_audio", symbol: "speaker.wave.2.fill", color: .orange)
+            }
             NavigationLink { EqualizerView() } label: {
                 SettingsRow(title: "settingsview_equalizer", subtitle: "settingsview_equalizer_detail", symbol: "slider.vertical.3", color: .pink)
             }
@@ -228,5 +231,34 @@ private struct SettingsLyricsServicesView: View {
         .autocorrectionDisabled()
         .navigationTitle("settingsview_lyrics_services")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct AudioSettingsView: View {
+    @AppStorage(AudioSettings.monoKey) private var monoAudio = false
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("audio_output_mode", selection: $monoAudio) {
+                    Text("audio_stereo").tag(false)
+                    Text("audio_mono").tag(true)
+                }
+                .pickerStyle(.segmented)
+            } header: {
+                Text("audio_output_mode")
+            } footer: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("audio_mono_explanation")
+                    Text("audio_stereo_explanation")
+                    Text("audio_saved_hint")
+                }
+            }
+        }
+        .navigationTitle("settingsview_audio")
+        .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: monoAudio) {
+            NotificationCenter.default.post(name: AudioSettings.didChange, object: nil)
+        }
     }
 }

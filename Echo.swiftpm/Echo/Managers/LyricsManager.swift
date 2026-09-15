@@ -27,76 +27,32 @@ final class LyricsManager {
     
     // MARK: - Main Fetch Method
     
-   func fetchLyrics(
-    for song: Song,
-    duration: Double
-) async -> LyricsResponse? {
-    
-    // Hierin bewaren we de eerste 'gewone' lyrics die we tegenkomen als reserve
-    var fallbackResponse: LyricsResponse?
-    
-    // Helper sluiting om een respons te verwerken
-    func process(_ response: LyricsResponse?) -> LyricsResponse? {
-        guard let response = response else { return nil }
-        
-        // 1. Hebben we gesynchroniseerde lyrics? Direct gebruiken!
-        if response.syncedLyrics != nil {
+    func fetchLyrics(for song: Song, duration: Double) async -> LyricsResponse? {
+        // Provider priority applies to both plain and synchronized lyrics.
+        func usable(_ response: LyricsResponse?) -> LyricsResponse? {
+            guard let response else { return nil }
+            let plain = response.plainLyrics?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let synced = response.syncedLyrics?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return plain.isEmpty && synced.isEmpty ? nil : response
+        }
+
+        if !musixmatchApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           let response = usable(await fetchMusixmatch(for: song)) {
             return response
         }
-        
-        // 2. Geen synced lyrics, maar wel plain lyrics? 
-        // Bewaar deze als reserve als we nog geen reserve hadden.
-        if fallbackResponse == nil && response.plainLyrics != nil {
-            fallbackResponse = response
+        if let response = usable(await fetchLRCLIBExact(for: song, duration: duration)) {
+            return response
         }
-        
+        if let response = usable(await fetchLRCLIBSearch(for: song)) {
+            return response
+        }
+        if !geniusToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           let response = usable(await fetchGenius(for: song)) {
+            return response
+        }
         return nil
     }
-    
-    // --- STAP 1: LRCLIB Exact ---
-    if let exact = await fetchLRCLIBExact(for: song, duration: duration),
-       let match = process(exact) {
-        print("Gesynchroniseerde lyrics via LRCLIB (Exact)")
-        return match
-    }
-    
-    // --- STAP 2: LRCLIB Search ---
-    if let search = await fetchLRCLIBSearch(for: song),
-       let match = process(search) {
-        print("Gesynchroniseerde lyrics via LRCLIB (Search)")
-        return match
-    }
-    
-    // --- STAP 3: Musixmatch ---
-    if !musixmatchApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        if let musixmatch = await fetchMusixmatch(for: song),
-           let match = process(musixmatch) {
-            print("Gesynchroniseerde lyrics via Musixmatch")
-            return match
-        }
-    }
-    
-    // --- STAP 4: Genius ---
-    if !geniusToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        if let genius = await fetchGenius(for: song),
-           let match = process(genius) {
-            print("Gesynchroniseerde lyrics via Genius")
-            return match
-        }
-    }
-    
-    // --- FINALE CHECK ---
-    // Nergens gesynchroniseerde lyrics gevonden? Gebruik de reserve (gewone lyrics)!
-    if let fallback = fallbackResponse {
-        print("Geen gesynchroniseerde lyrics gevonden. Gebruik gewone tekst-fallback.")
-        return fallback
-    }
-    
-    print("Geen lyrics gevonden bij alle bronnen")
-    return nil
-}
 
-    
     // MARK: - LRCLIB Exact (/api/get)
     
     private func fetchLRCLIBExact(
