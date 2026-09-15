@@ -28,29 +28,34 @@ final class LyricsManager {
     // MARK: - Main Fetch Method
     
     func fetchLyrics(for song: Song, duration: Double) async -> LyricsResponse? {
-        // Provider priority applies to both plain and synchronized lyrics.
-        func usable(_ response: LyricsResponse?) -> LyricsResponse? {
+        // Keep the first provider's plain text while looking for synchronized lyrics.
+        var plainFallback: LyricsResponse?
+        func synchronized(_ response: LyricsResponse?) -> LyricsResponse? {
             guard let response else { return nil }
             let plain = response.plainLyrics?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             let synced = response.syncedLyrics?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return plain.isEmpty && synced.isEmpty ? nil : response
+            if !synced.isEmpty { return response }
+            if plainFallback == nil && !plain.isEmpty {
+                plainFallback = LyricsResponse(plainLyrics: response.plainLyrics, syncedLyrics: nil)
+            }
+            return nil
         }
 
         if !musixmatchApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-           let response = usable(await fetchMusixmatch(for: song)) {
+           let response = synchronized(await fetchMusixmatch(for: song)) {
             return response
         }
-        if let response = usable(await fetchLRCLIBExact(for: song, duration: duration)) {
+        if let response = synchronized(await fetchLRCLIBExact(for: song, duration: duration)) {
             return response
         }
-        if let response = usable(await fetchLRCLIBSearch(for: song)) {
+        if let response = synchronized(await fetchLRCLIBSearch(for: song)) {
             return response
         }
         if !geniusToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-           let response = usable(await fetchGenius(for: song)) {
+           let response = synchronized(await fetchGenius(for: song)) {
             return response
         }
-        return nil
+        return plainFallback
     }
 
     // MARK: - LRCLIB Exact (/api/get)
@@ -113,7 +118,13 @@ final class LyricsManager {
             
             let searchResults = try JSONDecoder().decode([LRCLIBResponse].self, from: data)
             
-            if let bestMatch = searchResults.first(where: { $0.plainLyrics != nil || $0.syncedLyrics != nil }) {
+            let syncedMatch = searchResults.first {
+                !($0.syncedLyrics?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+            }
+            let plainMatch = searchResults.first {
+                !($0.plainLyrics?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+            }
+            if let bestMatch = syncedMatch ?? plainMatch {
                 return LyricsResponse(
                     plainLyrics: bestMatch.plainLyrics,
                     syncedLyrics: bestMatch.syncedLyrics
