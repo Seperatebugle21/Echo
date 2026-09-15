@@ -157,10 +157,10 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             Picker(selection: $selectedLanguage) {
-                Text("settingsview_language_english").tag("en")
-                Text("settingsview_language_dutch").tag("nl")
-                Text("settingsview_language_french").tag("fr")
-                Text("settingsview_language_german").tag("de")
+                Text("English").tag("en")
+                Text("Nederlands").tag("nl")
+                Text("Français").tag("fr")
+                Text("Deutsch").tag("de")
             } label: {
                 SettingsRow(title: "settings_language_label", symbol: "globe", color: .blue)
             }
