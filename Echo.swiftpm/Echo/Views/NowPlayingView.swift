@@ -11,6 +11,7 @@ struct NowPlayingView: View {
     var onCloseDragCancel: (() -> Void)? = nil
     var renderedArtwork: PlayerArtworkImages? = nil
     var drawsBackground = true
+    var tracksSliderGeometry = true
 
     @State private var sliderFrame: CGRect = .zero
     @State private var dragMayClose: Bool?
@@ -113,68 +114,8 @@ struct NowPlayingView: View {
 
                 // MARK: - Progress
 
-                VStack(spacing: 5) {
-
-                    Slider(
-                        value: Binding(
-                            get: {
-                                audioPlayer.currentTime
-                            },
-                            set: { value in
-                                audioPlayer.seek(
-                                    to: value
-                                )
-                            }
-                        ),
-                        in: 0...max(
-                            audioPlayer.duration,
-                            1
-                        ),
-                        onEditingChanged: { editing in
-
-                            if editing {
-
-                                audioPlayer
-                                    .pauseForSeeking()
-
-                            } else {
-
-                                audioPlayer
-                                    .resumeAfterSeeking()
-                            }
-                        }
-                    )
-                    .tint(.white)
-                    .onGeometryChange(for: CGRect.self) { proxy in
-                        proxy.frame(in: .global)
-                    } action: { frame in
-                        if !closingDragInProgress { sliderFrame = frame }
-                    }
-
-                    HStack {
-
-                        Text(
-                            formatTime(
-                                audioPlayer.currentTime
-                            )
-                        )
-
-                        Spacer()
-
-                        Text(
-                            formatTime(
-                                audioPlayer.duration
-                            )
-                        )
-                    }
-                    .font(.caption)
-                    .monospacedDigit()
-                    .foregroundStyle(
-                        .white.opacity(0.65)
-                    )
-                }
-                .padding(.horizontal, 28)
-
+                NowPlayingProgress(sliderFrame: $sliderFrame,
+                                   tracksGeometry: tracksSliderGeometry && !closingDragInProgress)
 
                 // MARK: - Playback Controls
 
@@ -673,5 +614,83 @@ struct NowPlayingBackdrop: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
             .clipped()
         }
+    }
+}
+
+// Time updates only invalidate this small subtree, not the artwork and full player.
+private struct NowPlayingProgress: View {
+    @Environment(AudioPlayerManager.self) private var audioPlayer
+    @Binding var sliderFrame: CGRect
+    let tracksGeometry: Bool
+    var body: some View {
+        VStack(spacing: 5) {
+
+                    Slider(
+                        value: Binding(
+                            get: {
+                                audioPlayer.currentTime
+                            },
+                            set: { value in
+                                audioPlayer.seek(
+                                    to: value
+                                )
+                            }
+                        ),
+                        in: 0...max(
+                            audioPlayer.duration,
+                            1
+                        ),
+                        onEditingChanged: { editing in
+
+                            if editing {
+
+                                audioPlayer
+                                    .pauseForSeeking()
+
+                            } else {
+
+                                audioPlayer
+                                    .resumeAfterSeeking()
+                            }
+                        }
+                    )
+                    .tint(.white)
+                    .onGeometryChange(for: CGRect.self) { proxy in
+                        tracksGeometry ? proxy.frame(in: .global) : .zero
+                    } action: { frame in
+                        if frame != .zero && sliderFrame != frame { sliderFrame = frame }
+                    }
+
+                    HStack {
+
+                        Text(
+                            Self.formatTime(
+                                audioPlayer.currentTime
+                            )
+                        )
+
+                        Spacer()
+
+                        Text(
+                            Self.formatTime(
+                                audioPlayer.duration
+                            )
+                        )
+                    }
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(
+                        .white.opacity(0.65)
+                    )
+                }
+                .padding(.horizontal, 28)
+
+
+
+    }
+    private static func formatTime(_ time: Double) -> String {
+        guard time.isFinite && time >= 0 else { return "0:00" }
+        let seconds = Int(time)
+        return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 }

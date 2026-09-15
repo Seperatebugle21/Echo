@@ -504,7 +504,7 @@ final class MiniPlayerPresentation {
         let currentToken = UUID()
         token = currentToken
         let animation: Animation = reduceMotion
-            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 1).speed(1.75)
+            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 0.92)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
@@ -585,7 +585,8 @@ private struct ExpandedPlayerSurface: View {
                     presentation.cancelClosing(reduceMotion: reduceMotion)
                 },
                 renderedArtwork: renderedArtwork,
-                drawsBackground: false
+                drawsBackground: false,
+                tracksSliderGeometry: presentation.isExpanded
             )
             .padding(.top, safeInsets.top)
             .padding(.bottom, safeInsets.bottom)
@@ -593,6 +594,7 @@ private struct ExpandedPlayerSurface: View {
             .offset(y: edgeBleed * p)
             .opacity(min(1, max(0, (p - 0.08) / 0.27)))
             .accessibilityHidden(!presentation.isVisible)
+            .allowsHitTesting(presentation.isExpanded)
 
             // Includes artwork, title, artist, AirPlay and playback controls.
             // Appears progressively during closing, not only at the endpoint.
@@ -608,8 +610,7 @@ private struct ExpandedPlayerSurface: View {
         )
         .contentShape(shape)
         .clipShape(shape)
-        // Keep the same glass surface throughout the transition and dock handoff.
-        // The expanded bounds extend beyond the screen to hide the glass rim.
+        // Preserve the continuous Liquid Glass surface throughout expansion and closing.
         .glassEffect(.regular.interactive(), in: shape)
         .offset(x: rect.minX, y: rect.minY)
         .accessibilityAction(.escape) {

@@ -1,15 +1,5 @@
 import SwiftUI
 
-struct ArtistGroup: Identifiable {
-
-    var id: String {
-        name
-    }
-
-    let name: String
-    let songs: [Song]
-}
-
 struct AlbumGroup: Identifiable {
 
     var id: String {
@@ -26,36 +16,7 @@ struct LibraryView: View {
     private var library
 
     private var artists: [ArtistGroup] {
-
-        Dictionary(
-            grouping: library.songs
-        ) { song in
-
-            let artist =
-                song.artist
-                    .trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    )
-
-            return artist.isEmpty
-                ? String(
-                                    localized: "libraryview_unknown_artist"
-                                )
-                : artist
-        }
-        .map {
-            ArtistGroup(
-                name: $0.key,
-                songs: $0.value
-            )
-        }
-        .sorted {
-            $0.name
-                .localizedCaseInsensitiveCompare(
-                    $1.name
-                )
-            == .orderedAscending
-        }
+        ArtistCredits.groups(for: library.songs, unknownName: String(localized: "libraryview_unknown_artist"))
     }
 
     private var albumGroups: [AlbumGroup] {
@@ -1037,37 +998,7 @@ struct ArtistsView: View {
     @State private var searchText = ""
 
     private var allArtists: [ArtistGroup] {
-
-        Dictionary(
-            grouping: library.songs
-        ) {
-
-            let value =
-                $0.artist
-                    .trimmingCharacters(
-                        in:
-                            .whitespacesAndNewlines
-                    )
-
-            return value.isEmpty
-                ? String(
-                                    localized: "libraryview_unknown_artist"
-                                )
-                : value
-        }
-        .map {
-            ArtistGroup(
-                name: $0.key,
-                songs: $0.value
-            )
-        }
-        .sorted {
-            $0.name
-                .localizedCaseInsensitiveCompare(
-                    $1.name
-                )
-            == .orderedAscending
-        }
+        ArtistCredits.groups(for: library.songs, unknownName: String(localized: "libraryview_unknown_artist"))
     }
 
     private var artists: [ArtistGroup] {
@@ -1152,6 +1083,11 @@ struct ArtistDetailView: View {
 
     let artist: ArtistGroup
 
+    private var songs: [Song] {
+        ArtistCredits.groups(for: library.songs, unknownName: String(localized: "libraryview_unknown_artist"))
+            .first { $0.id == artist.id }?.songs ?? []
+    }
+
     var body: some View {
 
         List {
@@ -1165,7 +1101,7 @@ struct ArtistDetailView: View {
                     VStack(spacing: 12) {
 
                         ArtistArtworkView(
-                            songs: artist.songs
+                            songs: songs
                         )
                         .frame(width: 160, height: 160)
                         .clipShape(Circle())
@@ -1179,7 +1115,7 @@ struct ArtistDetailView: View {
                                     localized: "libraryview_songs_count",
                                     locale: locale
                                 ),
-                                artist.songs.count
+                                songs.count
                             )
                         )
                         .font(.subheadline)
@@ -1198,7 +1134,7 @@ struct ArtistDetailView: View {
             ) {
 
                 ForEach(
-                    artist.songs.sorted {
+                    songs.sorted {
                         $0.title
                             .localizedCaseInsensitiveCompare(
                                 $1.title
@@ -1211,7 +1147,7 @@ struct ArtistDetailView: View {
 
                         play(
                             song,
-                            queue: artist.songs
+                            queue: songs
                         )
 
                     } label: {

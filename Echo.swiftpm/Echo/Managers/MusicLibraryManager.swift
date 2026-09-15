@@ -120,6 +120,7 @@ class MusicLibraryManager {
             
             songs[index].title = title
             songs[index].artist = artist
+            songs[index].artistNames = nil
         }
     }
     

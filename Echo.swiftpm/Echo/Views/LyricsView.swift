@@ -46,13 +46,6 @@ struct LyricsView: View {
                         spacing: 22
                     ) {
                         
-                        if showLyricsSources { sourceControls }
-                        if audioPlayer.isLoadingLyrics {
-                            ProgressView("lyrics_searching").tint(.white).foregroundStyle(.white)
-                        }
-                        if let key = audioPlayer.lyricsStatusKey {
-                            Text(LocalizedStringKey(key)).font(.footnote).foregroundStyle(.white)
-                        }
                         if lines.isEmpty {
                             
                             if let lyrics =
@@ -150,6 +143,13 @@ struct LyricsView: View {
                                         isUserScrolling
                                 )
                             }
+                        }
+                        if showLyricsSources { sourceControls }
+                        if audioPlayer.isLoadingLyrics {
+                            ProgressView("lyrics_searching").tint(.white).foregroundStyle(.white)
+                        }
+                        if let key = audioPlayer.lyricsStatusKey {
+                            Text(LocalizedStringKey(key)).font(.footnote).foregroundStyle(.white)
                         }
                     }
                     .padding(.horizontal, 24)

@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import ImageIO
 
 struct MiniPlayer: View {
     let onMinimize: () -> Void
@@ -229,7 +230,7 @@ struct MiniPlayer: View {
 
     private func songPage(_ song: Song, scrolling: Bool) -> some View {
         HStack(spacing: 8) {
-            MiniPlayerArtwork(data: showCovers ? song.coverData : nil)
+            MiniPlayerArtwork(data: showCovers ? (song.coverData ?? song.imageData) : nil)
             VStack(alignment: .leading, spacing: 1) {
                 if scrolling {
                     ScrollingText(text: song.title)
@@ -272,8 +273,20 @@ struct MiniPlayerArtwork: View {
         }
         .frame(width: 32, height: 32)
         .clipShape(.rect(cornerRadius: 6))
-        .onChange(of: data, initial: true) {
-            image = data.flatMap { UIImage(data: $0) }
+        .task(id: data) {
+            image = nil
+            let thumbnail = await Task.detached(priority: .userInitiated) { () -> UIImage? in
+                guard let data, let source = CGImageSourceCreateWithData(data as CFData, nil),
+                      let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                        kCGImageSourceCreateThumbnailFromImageAlways: true,
+                        kCGImageSourceCreateThumbnailWithTransform: true,
+                        kCGImageSourceThumbnailMaxPixelSize: 96,
+                        kCGImageSourceShouldCacheImmediately: true
+                      ] as CFDictionary) else { return nil }
+                return UIImage(cgImage: cgImage)
+            }.value
+            guard !Task.isCancelled else { return }
+            image = thumbnail
         }
     }
 }

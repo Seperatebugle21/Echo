@@ -6,6 +6,7 @@ struct Song: Identifiable, Codable, Hashable {
     let id: UUID
     var title: String
     var artist: String
+    var artistNames: [String]?
     var fileName: String
     
     var album: String?
@@ -32,11 +33,13 @@ struct Song: Identifiable, Codable, Hashable {
         dateAdded: Date = Date(),
         lastPlayed: Date? = nil,
         lyrics: String? = nil,
-        syncedLyrics: String? = nil
+        syncedLyrics: String? = nil,
+        artistNames: [String]? = nil
     ) {
         self.id = id
         self.title = title
         self.artist = artist
+        self.artistNames = artistNames
         self.fileName = fileName
         self.album = album
         self.coverData = coverData

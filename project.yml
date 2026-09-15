@@ -78,6 +78,18 @@ targets:
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
 
+  EchoArtistTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/ArtistCreditsTests.swift
+      - path: Echo.swiftpm/Echo/Models/ArtistCredits.swift
+      - path: Echo.swiftpm/Echo/Models/Song.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.artist-tests
+        GENERATE_INFOPLIST_FILE: YES
+
   EchoLyricsTests:
     type: bundle.unit-test
     platform: iOS
@@ -106,6 +118,13 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
+  EchoArtistTests:
+    build:
+      targets:
+        EchoArtistTests: all
+    test:
+      targets:
+        - EchoArtistTests
   EchoLyricsTests:
     build:
       targets:
