@@ -14,7 +14,7 @@ final class YouTubeAPI {
     // MARK: - API Key
 
     private let apiKey =
-        "AIzaSyC4N7M9pA9Um3PZzH6a2l_cMq_1JhQDP44"
+        ""
 
 
     // MARK: - Search Track
