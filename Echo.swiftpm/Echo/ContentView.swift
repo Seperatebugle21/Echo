@@ -1,5 +1,6 @@
 import SwiftUI
 import Observation
+import UIKit
 
 struct ContentView: View {
     @State private var miniPlayerHidden = false
@@ -39,13 +40,15 @@ struct ContentView: View {
                         // One persistent player; tabs only report its reserved space.
                         let slot = presentation.dockSlotFrame
                         let dockReady = audioPlayer.currentSong != nil && slot.width > 0
+                        let coverEntrance = !reduceMotion && presentation.entranceSong?.id == audioPlayer.currentSong?.id
+                            && presentation.entranceSong != nil
                         ResizableMiniPlayerDock(
                             isMinimized: $miniPlayerHidden, isActive: true
                         )
-                        .opacity(dockReady ? 1 : 0)
+                        .opacity(dockReady && !coverEntrance ? 1 : 0)
                         .offset(y: dockReady || reduceMotion ? 0 : 20)
                         .animation(
-                            reduceMotion ? .easeOut(duration: 0.15)
+                            coverEntrance ? nil : reduceMotion ? .easeOut(duration: 0.15)
                                 : .spring(response: 0.48, dampingFraction: 0.88),
                             value: dockReady
                         )
@@ -54,8 +57,26 @@ struct ContentView: View {
                             x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
                             y: slot.minY - fullGeometry.frame(in: .global).minY
                         )
-                        .allowsHitTesting(dockReady)
+                        .allowsHitTesting(dockReady && !coverEntrance)
                         .accessibilityHidden(presentation.isVisible)
+
+                        if dockReady && coverEntrance, let song = presentation.entranceSong {
+                            CoverToMiniPlayerEntrance(
+                                song: song,
+                                image: presentation.entranceImage,
+                                source: presentation.entranceFrame,
+                                destination: CGRect(x: slot.minX + 16, y: slot.minY + 12,
+                                                    width: max(52, slot.width - 32), height: 52),
+                                container: fullGeometry.frame(in: .global),
+                                completion: {
+                                    presentation.entranceSong = nil
+                                    presentation.entranceImage = nil
+                                }
+                            )
+                            .id(song.id)
+                            .allowsHitTesting(false)
+                            .accessibilityHidden(true)
+                        }
 
                         if audioPlayer.currentSong != nil {
                             ExpandedPlayerSurface(
@@ -101,9 +122,17 @@ struct ContentView: View {
         .environment(presentation)
         .onChange(of: audioPlayer.currentSong?.id) {
             if audioPlayer.currentSong == nil { presentation.reset() }
+            if presentation.entranceSong?.id != audioPlayer.currentSong?.id {
+                presentation.entranceSong = nil
+                presentation.entranceImage = nil
+            }
         }
         .onChange(of: scenePhase) {
-            if scenePhase != .active { presentation.cancelInteraction() }
+            if scenePhase != .active {
+                presentation.cancelInteraction()
+                presentation.entranceSong = nil
+                presentation.entranceImage = nil
+            }
         }
     }
 }
@@ -413,9 +442,109 @@ struct RandomBar: View {
             AudioPlayerManager()
         )
 }
+// Capture each card independently: the same song can appear in several Home sections.
+struct PlayerCoverLaunchSource: ViewModifier {
+    let song: Song
+    let coverSize: CGFloat
+    let action: () -> Void
+    @Environment(AudioPlayerManager.self) private var audioPlayer
+    @Environment(MiniPlayerPresentation.self) private var presentation
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var frame: CGRect = .zero
+
+    func body(content: Content) -> some View {
+        content
+            .onGeometryChange(for: CGRect.self) { proxy in
+                proxy.frame(in: .global)
+            } action: { frame = $0 }
+            .onTapGesture {
+                if audioPlayer.currentSong == nil && !reduceMotion && frame.width > 0 {
+                    presentation.entranceFrame = CGRect(origin: frame.origin,
+                        size: CGSize(width: coverSize, height: coverSize))
+                    presentation.entranceImage = (song.coverData ?? song.imageData).flatMap { UIImage(data: $0) }
+                    presentation.entranceSong = song
+                }
+                action()
+                if audioPlayer.currentSong?.id != song.id {
+                    presentation.entranceSong = nil
+                    presentation.entranceImage = nil
+                }
+            }
+    }
+}
+
+private struct CoverToMiniPlayerEntrance: View {
+    let song: Song
+    let image: UIImage?
+    let source: CGRect
+    let destination: CGRect
+    let container: CGRect
+    let completion: () -> Void
+    @State private var progress: CGFloat = 0
+
+    var body: some View {
+        CoverToMiniPlayerFrame(image: image, source: source, destination: destination,
+                               container: container, progress: progress)
+            .task {
+                // Give the cover-sized surface a rendered frame before it travels.
+                try? await Task.sleep(for: .milliseconds(20))
+                guard !Task.isCancelled else { return }
+                withAnimation(.smooth(duration: 0.68), completionCriteria: .removed) {
+                    progress = 1
+                } completion: {
+                    completion()
+                }
+            }
+    }
+}
+
+private struct CoverToMiniPlayerFrame: View, Animatable {
+    let image: UIImage?
+    let source: CGRect
+    let destination: CGRect
+    let container: CGRect
+    var progress: CGFloat
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    var body: some View {
+        let p = min(1, max(0, progress))
+        let width = source.width + (destination.width - source.width) * p
+        let height = source.height + (destination.height - source.height) * p
+        let shape = RoundedRectangle(cornerRadius: 16 + 10 * p, style: .continuous)
+        ZStack {
+            // The actual compact content emerges inside the same morphing glass surface.
+            MiniPlayer(onMinimize: {})
+                .frame(width: destination.width, height: 52)
+                .opacity(min(1, max(0, (p - 0.60) / 0.32)))
+            Group {
+                if let image {
+                    Image(uiImage: image).resizable().scaledToFill()
+                } else {
+                    Rectangle().fill(.thinMaterial)
+                        .overlay { Image(systemName: "music.note").font(.largeTitle) }
+                }
+            }
+            .frame(width: width, height: height)
+            .clipped()
+            .opacity(1 - min(1, max(0, (p - 0.25) / 0.55)))
+        }
+        .frame(width: width, height: height)
+        .clipShape(shape)
+        .glassEffect(.regular, in: shape)
+        .offset(x: source.minX + (destination.minX - source.minX) * p - container.minX,
+                y: source.minY + (destination.minY - source.minY) * p - container.minY)
+    }
+}
+
 // Shared by the stationary mini player and the full-window expansion layer.
 @Observable
 final class MiniPlayerPresentation {
+    var entranceSong: Song?
+    var entranceImage: UIImage?
+    var entranceFrame: CGRect = .zero
     var dockSlotFrame: CGRect = .zero
     var dockFrame: CGRect = .zero
     var containerFrame: CGRect = .zero

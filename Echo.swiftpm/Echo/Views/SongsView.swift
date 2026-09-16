@@ -816,7 +816,7 @@ struct SongsView: View {
         )
 
 
-        .onTapGesture {
+        .modifier(PlayerCoverLaunchSource(song: song, coverSize: 50) {
 
             guard
                 editMode == .inactive
@@ -858,7 +858,7 @@ struct SongsView: View {
             audioPlayer.fillAutoNext(
                 from: library.songs
             )
-        }
+        })
 
 
         .swipeActions(

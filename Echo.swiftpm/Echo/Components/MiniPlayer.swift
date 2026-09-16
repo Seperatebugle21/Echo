@@ -38,16 +38,11 @@ struct MiniPlayer: View {
                                     .offset(x: -width + offset)
                                     .accessibilityHidden(true)
                             }
-                            // Overlap outgoing/incoming content: never fade to an empty bar.
-                            // Queue swipes retain their existing captured sliding pages.
-                            ZStack {
-                                songPage(origin ?? current, scrolling: !dragActive && !settling)
-                                    .id((origin ?? current).id)
-                                    .transition(.opacity)
-                            }
+                            songPage(origin ?? current, scrolling: !dragActive && !settling,
+                                     selectedTransition: audioPlayer.lastPlaybackDirection == .fade && !dragActive && !settling)
                             .animation(
                                 audioPlayer.lastPlaybackDirection == .fade && !dragActive && !settling
-                                    ? .easeInOut(duration: reduceMotion ? 0.12 : 0.28) : nil,
+                                    ? .easeInOut(duration: reduceMotion ? 0.12 : 0.42) : nil,
                                 value: current.id
                             )
                             .frame(width: width)
@@ -239,9 +234,14 @@ struct MiniPlayer: View {
         }
     }
 
-    private func songPage(_ song: Song, scrolling: Bool) -> some View {
+    private func songPage(_ song: Song, scrolling: Bool, selectedTransition: Bool = false) -> some View {
         HStack(spacing: 8) {
-            MiniPlayerArtwork(data: showCovers ? (song.coverData ?? song.imageData) : nil)
+            ZStack {
+                MiniPlayerArtwork(data: showCovers ? (song.coverData ?? song.imageData) : nil)
+                    .id(song.id)
+                    .transition(selectedTransition ? .opacity : .identity)
+            }
+            ZStack(alignment: .leading) {
             VStack(alignment: .leading, spacing: 1) {
                 if scrolling {
                     ScrollingText(text: song.title)
@@ -261,6 +261,12 @@ struct MiniPlayer: View {
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .id(song.id)
+            .transition(selectedTransition && !reduceMotion ? .asymmetric(
+                insertion: .opacity.animation(.easeOut(duration: 0.24).delay(0.17)),
+                removal: .opacity.animation(.easeIn(duration: 0.12))
+            ) : .identity)
+            }
         }
         .padding(.trailing, 8)
         .frame(height: 44)

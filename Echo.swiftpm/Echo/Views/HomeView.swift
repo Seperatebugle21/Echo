@@ -342,14 +342,14 @@ struct HomeView: View {
                             alignment: .leading
                         )
                         .contentShape(Rectangle())
-                        .onTapGesture {
+                        .modifier(PlayerCoverLaunchSource(song: song, coverSize: 150) {
                             play(
                                 song,
                                 queue:
                                     queue
                                     ?? [song]
                             )
-                        }
+                        })
                         .onLongPressGesture {
                             selectedSong = song
                         }
