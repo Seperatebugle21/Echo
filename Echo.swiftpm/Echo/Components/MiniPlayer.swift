@@ -38,9 +38,20 @@ struct MiniPlayer: View {
                                     .offset(x: -width + offset)
                                     .accessibilityHidden(true)
                             }
-                            songPage(origin ?? current, scrolling: !dragActive && !settling)
-                                .frame(width: width)
-                                .offset(x: offset)
+                            // Overlap outgoing/incoming content: never fade to an empty bar.
+                            // Queue swipes retain their existing captured sliding pages.
+                            ZStack {
+                                songPage(origin ?? current, scrolling: !dragActive && !settling)
+                                    .id((origin ?? current).id)
+                                    .transition(.opacity)
+                            }
+                            .animation(
+                                audioPlayer.lastPlaybackDirection == .fade && !dragActive && !settling
+                                    ? .easeInOut(duration: reduceMotion ? 0.12 : 0.28) : nil,
+                                value: current.id
+                            )
+                            .frame(width: width)
+                            .offset(x: offset)
                             if let next {
                                 songPage(next, scrolling: false)
                                     .frame(width: width)

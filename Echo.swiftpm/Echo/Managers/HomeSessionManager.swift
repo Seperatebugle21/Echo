@@ -8,8 +8,19 @@ final class HomeSessionManager {
     private(set) var recommendedSongs: [Song]?
     private(set) var recentlyPlayedSongs: [Song]?
     private(set) var favoriteSongs: [Song]?
+    private var artistIDs: [String] = []
 
     private init() {}
+
+    // Random once per process; returning to Home keeps the same selection.
+    func artistSelection(from artists: [ArtistGroup]) -> [String] {
+        let available = Set(artists.map(\.id))
+        artistIDs.removeAll { !available.contains($0) }
+        let selected = Set(artistIDs)
+        let remaining = artists.map(\.id).filter { !selected.contains($0) }.shuffled()
+        artistIDs.append(contentsOf: remaining.prefix(max(0, 12 - artistIDs.count)))
+        return artistIDs
+    }
 
     func prepareIfNeeded(
         songs: [Song],

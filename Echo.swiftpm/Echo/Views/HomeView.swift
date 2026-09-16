@@ -38,42 +38,10 @@ struct HomeView: View {
 
     // MARK: - Artists
 
+    @State private var artistIDs: [String] = []
+
     private var artists: [ArtistGroup] {
-
-        let grouped =
-            Dictionary(
-                grouping: library.songs
-            ) { song in
-
-                let artist =
-                    song.artist
-                        .trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        )
-
-                return artist.isEmpty
-                    ? String(
-                        localized:
-                            "homeview_unknown_artist"
-                    )
-                    : artist
-            }
-
-        return grouped
-            .map {
-                ArtistGroup(
-                    name: $0.key,
-                    songs: $0.value
-                )
-            }
-            .sorted {
-                $0.name
-                    .localizedCaseInsensitiveCompare(
-                        $1.name
-                    )
-                ==
-                .orderedAscending
-            }
+        artistIDs.compactMap { library.artistGroupsByID[$0] }
     }
 
 
@@ -259,6 +227,10 @@ struct HomeView: View {
             .onAppear {
 
                 prepareSessionSnapshots()
+                artistIDs = homeSession.artistSelection(from: library.artistGroups)
+            }
+            .onChange(of: library.artistGroups.map(\.id)) {
+                artistIDs = homeSession.artistSelection(from: library.artistGroups)
             }
 
 
@@ -349,6 +321,7 @@ struct HomeView: View {
                                 width: 150,
                                 height: 150
                             )
+                            .shadow(color: .black.opacity(0.16), radius: 5, x: 0, y: 3)
 
                             Text(song.title)
                                 .font(.headline)
@@ -386,6 +359,7 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal)
+                .padding(.vertical, 6)
             }
         }
     }
@@ -460,6 +434,7 @@ struct HomeView: View {
                                 .clipShape(
                                     Circle()
                                 )
+                                .shadow(color: .black.opacity(0.16), radius: 5, x: 0, y: 3)
 
                                 Text(
                                     artist.name
@@ -483,6 +458,7 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal)
+                .padding(.vertical, 6)
             }
         }
     }

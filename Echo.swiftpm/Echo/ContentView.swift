@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var presentation = MiniPlayerPresentation()
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -37,16 +38,23 @@ struct ContentView: View {
                             .allowsHitTesting(presentation.isVisible)
                         // One persistent player; tabs only report its reserved space.
                         let slot = presentation.dockSlotFrame
+                        let dockReady = audioPlayer.currentSong != nil && slot.width > 0
                         ResizableMiniPlayerDock(
                             isMinimized: $miniPlayerHidden, isActive: true
+                        )
+                        .opacity(dockReady ? 1 : 0)
+                        .offset(y: dockReady || reduceMotion ? 0 : 20)
+                        .animation(
+                            reduceMotion ? .easeOut(duration: 0.15)
+                                : .spring(response: 0.48, dampingFraction: 0.88),
+                            value: dockReady
                         )
                         .frame(width: max(68, slot.width - 16), height: 64)
                         .offset(
                             x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
                             y: slot.minY - fullGeometry.frame(in: .global).minY
                         )
-                        .opacity(audioPlayer.currentSong != nil && slot.width > 0 ? 1 : 0)
-                        .allowsHitTesting(audioPlayer.currentSong != nil && slot.width > 0)
+                        .allowsHitTesting(dockReady)
                         .accessibilityHidden(presentation.isVisible)
 
                         if audioPlayer.currentSong != nil {

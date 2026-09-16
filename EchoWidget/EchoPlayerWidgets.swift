@@ -21,7 +21,7 @@ struct EchoCoverPlayerWidget: Widget {
             EchoPlayerWidgetView(entry: $0, style: .cover)
         }
         .configurationDisplayName("Speler · Albumcover")
-        .description("Een grote albumcover met titel en artiest. Tik om te luisteren.")
+        .description("Een grote albumcover met titel en artiest. Tik om Echo te openen.")
         .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()
     }
@@ -65,17 +65,16 @@ struct EchoPlayerWidgetView: View {
                 GeometryReader { proxy in
                     switch style {
                     case .cover:
-                        Button(intent: EchoWidgetPlaybackIntent(.play, songID: song.id)) {
-                            EchoWidgetArtwork(song: song)
-                                .frame(width: proxy.size.width, height: proxy.size.height)
-                                .overlay(alignment: .bottomLeading) {
-                                    metadata(song).padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                                        .background(LinearGradient(colors: [.clear, .black.opacity(0.9)],
-                                                                  startPoint: .top, endPoint: .bottom))
-                                }
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Speel \(song.title) van \(song.artist)")
+                        EchoWidgetArtwork(song: song)
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .overlay(alignment: .bottomLeading) {
+                                metadata(song).padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(LinearGradient(colors: [.clear, .black.opacity(0.9)],
+                                                              startPoint: .top, endPoint: .bottom))
+                            }
+                            .accessibilityHidden(false)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Open Echo: \(song.title) van \(song.artist)")
                     case .compact:
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(alignment: .top) {
