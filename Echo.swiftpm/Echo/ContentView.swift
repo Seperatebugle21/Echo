@@ -489,7 +489,7 @@ private struct CoverToMiniPlayerEntrance: View {
                 // Give the cover-sized surface a rendered frame before it travels.
                 try? await Task.sleep(for: .milliseconds(20))
                 guard !Task.isCancelled else { return }
-                withAnimation(.smooth(duration: 0.68), completionCriteria: .removed) {
+                withAnimation(.smooth(duration: 0.36), completionCriteria: .removed) {
                     progress = 1
                 } completion: {
                     completion()
