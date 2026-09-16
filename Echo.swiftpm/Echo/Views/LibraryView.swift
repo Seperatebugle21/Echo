@@ -16,7 +16,7 @@ struct LibraryView: View {
     private var library
 
     private var artists: [ArtistGroup] {
-        ArtistCredits.groups(for: library.songs, unknownName: String(localized: "libraryview_unknown_artist"))
+        library.artistGroups
     }
 
     private var albumGroups: [AlbumGroup] {
@@ -998,7 +998,7 @@ struct ArtistsView: View {
     @State private var searchText = ""
 
     private var allArtists: [ArtistGroup] {
-        ArtistCredits.groups(for: library.songs, unknownName: String(localized: "libraryview_unknown_artist"))
+        library.artistGroups
     }
 
     private var artists: [ArtistGroup] {
@@ -1063,6 +1063,19 @@ struct ArtistsView: View {
         .navigationTitle(
             "libraryview_artists"
         )
+        .overlay {
+            if library.isLoadingArtists && allArtists.isEmpty {
+                ProgressView("libraryview_loading_artists")
+            }
+        }
+        .safeAreaInset(edge: .top) {
+            if library.isLoadingArtists && !allArtists.isEmpty {
+                ProgressView("libraryview_loading_artists")
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .background(.regularMaterial)
+            }
+        }
 
         .searchable(
             text: $searchText,
@@ -1084,8 +1097,7 @@ struct ArtistDetailView: View {
     let artist: ArtistGroup
 
     private var songs: [Song] {
-        ArtistCredits.groups(for: library.songs, unknownName: String(localized: "libraryview_unknown_artist"))
-            .first { $0.id == artist.id }?.songs ?? []
+        library.artistGroupsByID[artist.id]?.songs ?? []
     }
 
     var body: some View {
@@ -1163,6 +1175,14 @@ struct ArtistDetailView: View {
 
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .top) {
+            if library.isLoadingArtists {
+                ProgressView("libraryview_loading_artists")
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .background(.regularMaterial)
+            }
+        }
     }
 
     private func play(

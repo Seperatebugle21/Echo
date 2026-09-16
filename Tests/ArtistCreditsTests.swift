@@ -1,6 +1,39 @@
 import XCTest
 
 final class ArtistCreditsTests: XCTestCase {
+    func testRepeatedCreditsKeepEverySongAndStructuredCreditsTakePrecedence() {
+        let songs = (0..<1_000).map {
+            Song(title: "Track \($0)", artist: "Alpha & Beta", fileName: "\($0).mp3")
+        }
+        let structured = Song(title: "Band", artist: "Alpha & Beta", fileName: "band.mp3",
+                              artistNames: ["Alpha & Beta"])
+        let groups = ArtistCredits.groups(for: songs + [structured], unknownName: "Unknown")
+        XCTAssertEqual(groups.count, 3)
+        XCTAssertEqual(groups.first { $0.name == "Alpha" }?.songs.map(\.id), songs.map(\.id))
+        XCTAssertEqual(groups.first { $0.name == "Beta" }?.songs.map(\.id), songs.map(\.id))
+        XCTAssertEqual(groups.first { $0.name == "Alpha & Beta" }?.songs.map(\.id), [structured.id])
+    }
+
+    func testRegroupAfterEditingAndRemovingSongsDoesNotReuseStaleCredits() {
+        var song = Song(title: "Track", artist: "Alpha & Beta", fileName: "track.mp3")
+        _ = ArtistCredits.groups(for: [song], unknownName: "Unknown")
+        song.artist = "Gamma & Delta"
+        XCTAssertEqual(Set(ArtistCredits.groups(for: [song], unknownName: "Unknown").map(\.name)),
+                       ["Gamma", "Delta"])
+        XCTAssertTrue(ArtistCredits.groups(for: [], unknownName: "Unknown").isEmpty)
+    }
+
+    func testLargeLibraryGroupingPerformance() {
+        let songs = (0..<10_000).map {
+            Song(title: "Track \($0)", artist: "Artist \($0 % 200) & Guest", fileName: "\($0).mp3")
+        }
+        measure {
+            let groups = ArtistCredits.groups(for: songs, unknownName: "Unknown")
+            XCTAssertEqual(groups.count, 201)
+            XCTAssertEqual(groups.first { $0.name == "Guest" }?.songs.count, 10_000)
+        }
+    }
+
     func testCollaborationAppearsUnderEveryArtist() {
         let collaboration = Song(title: "Together", artist: "AC/DC, Michael Jackson & Prince", fileName: "together.mp3")
         let solo = Song(title: "Solo", artist: "Michael Jackson", fileName: "solo.mp3")

@@ -2,6 +2,15 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+    "libraryview_loading_artists": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Loading artists…" } },
+        "nl": { "stringUnit": { "state": "translated", "value": "Artiesten laden…" } },
+        "fr": { "stringUnit": { "state": "translated", "value": "Chargement des artistes…" } },
+        "de": { "stringUnit": { "state": "translated", "value": "Interpreten werden geladen…" } }
+      }
+    },
 
   "developer_lyrics_sources": {
     "extractionState": "manual",

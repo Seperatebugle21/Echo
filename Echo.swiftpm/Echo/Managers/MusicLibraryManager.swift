@@ -33,7 +33,44 @@ class MusicLibraryManager {
     
     var songs: [Song] = [] {
         didSet {
+            scheduleArtistUpdate()
             saveSongs()
+        }
+    }
+
+    private(set) var artistGroups: [ArtistGroup] = []
+    private(set) var isLoadingArtists = false
+    private(set) var artistGroupsByID: [String: ArtistGroup] = [:]
+    @ObservationIgnored private var artistUpdateGeneration = 0
+    @ObservationIgnored private var pendingArtistUpdate: DispatchWorkItem?
+    @ObservationIgnored private let artistQueue = DispatchQueue(
+        label: "com.echomusic.artist-index", qos: .userInitiated
+    )
+
+    private func scheduleArtistUpdate() {
+        artistUpdateGeneration += 1
+        let generation = artistUpdateGeneration
+        pendingArtistUpdate?.cancel()
+        isLoadingArtists = true
+
+        // Coalesce synchronous edits/imports before capturing the library snapshot.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.artistUpdateGeneration == generation else { return }
+            let snapshot = self.songs
+            let unknownName = String(localized: "libraryview_unknown_artist")
+            let work = DispatchWorkItem { [weak self] in
+                let groups = ArtistCredits.groups(for: snapshot, unknownName: unknownName)
+                let byID = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0) })
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.artistUpdateGeneration == generation else { return }
+                    self.artistGroups = groups
+                    self.artistGroupsByID = byID
+                    self.isLoadingArtists = false
+                    self.pendingArtistUpdate = nil
+                }
+            }
+            self.pendingArtistUpdate = work
+            self.artistQueue.async(execute: work)
         }
     }
     

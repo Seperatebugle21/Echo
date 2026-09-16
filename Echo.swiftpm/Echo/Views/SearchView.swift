@@ -102,40 +102,7 @@ struct SearchView: View {
     // MARK: - Artists
 
     private var allArtists: [ArtistGroup] {
-
-        let grouped =
-            Dictionary(
-                grouping: library.songs
-            ) { song in
-
-                let artist =
-                    song.artist
-                        .trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        )
-
-                return artist.isEmpty
-                    ? String(
-                        localized:
-                            "searchview_unknown_artist"
-                    )
-                    : artist
-            }
-
-        return grouped
-            .map {
-                ArtistGroup(
-                    name: $0.key,
-                    songs: $0.value
-                )
-            }
-            .sorted {
-                $0.name
-                    .localizedCaseInsensitiveCompare(
-                        $1.name
-                    )
-                == .orderedAscending
-            }
+        library.artistGroups
     }
 
     private var matchingArtists: [ArtistGroup] {
