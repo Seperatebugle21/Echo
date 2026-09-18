@@ -13,16 +13,38 @@ struct PodcastsView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 24) {
                     if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        HStack(spacing: 18) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("podcasts_discover").font(.title2.bold())
+                                Text("podcasts_search_hint").font(.subheadline).foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "dot.radiowaves.left.and.right")
+                                .font(.system(size: 38, weight: .medium))
+                                .foregroundStyle(Color.accentColor)
+                                .accessibilityHidden(true)
+                        }
+                        .padding(22)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            LinearGradient(colors: [Color.accentColor.opacity(0.20), Color.accentColor.opacity(0.04)],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing),
+                            in: RoundedRectangle(cornerRadius: 26)
+                        )
                         PodcastLibraryLinks()
                         if !store.continueListening.isEmpty {
                             Text("podcasts_continue").font(.title2.bold())
-                            ForEach(store.continueListening.prefix(10)) { PodcastEpisodeRow(episode: $0) }
+                            ForEach(store.continueListening.prefix(2)) { PodcastEpisodeRow(episode: $0) }
                         }
                         if !store.savedShows.isEmpty {
                             Text("podcasts_saved_shows").font(.title2.bold())
-                            ForEach(store.savedShows) { PodcastShowLink(show: $0) }
+                            ForEach(store.savedShows) { show in
+                                PodcastShowLink(show: show)
+                                    .padding(14)
+                                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 22))
+                            }
                         } else {
-                            ContentUnavailableView("podcasts_discover", systemImage: "podcasts",
+                            ContentUnavailableView("podcasts_discover", systemImage: "dot.radiowaves.left.and.right",
                                 description: Text("podcasts_search_hint"))
                         }
                     } else if loading {
@@ -68,7 +90,7 @@ struct PodcastLibraryLinks: View {
     var body: some View {
         VStack(spacing: 14) {
             NavigationLink { PodcastLibraryView(kind: .shows) } label: {
-                Label("podcasts_saved_shows", systemImage: "podcasts").frame(maxWidth: .infinity, alignment: .leading)
+                Label("podcasts_saved_shows", systemImage: "dot.radiowaves.left.and.right").frame(maxWidth: .infinity, alignment: .leading)
             }
             NavigationLink { PodcastLibraryView(kind: .episodes) } label: {
                 Label("podcasts_saved_episodes", systemImage: "bookmark.fill").frame(maxWidth: .infinity, alignment: .leading)
@@ -116,7 +138,7 @@ struct PodcastLibraryView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     private var empty: some View {
-        ContentUnavailableView("podcasts_empty", systemImage: "podcasts", description: Text("podcasts_empty_hint"))
+        ContentUnavailableView("podcasts_empty", systemImage: "dot.radiowaves.left.and.right", description: Text("podcasts_empty_hint"))
     }
 }
 
@@ -132,7 +154,7 @@ struct PodcastArtwork: View {
                 AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: {
                     ZStack {
                         Color.accentColor.opacity(0.12)
-                        Image(systemName: "podcasts").font(.title).foregroundStyle(Color.accentColor)
+                        Image(systemName: "dot.radiowaves.left.and.right").font(.title).foregroundStyle(Color.accentColor)
                     }
                 }
             }
@@ -201,7 +223,7 @@ struct PodcastDetailView: View {
                 }
                 if loading && episodes.isEmpty { ProgressView("podcasts_loading") }
                 if !loading && !failed && episodes.isEmpty {
-                    ContentUnavailableView("podcasts_no_episodes", systemImage: "podcasts")
+                    ContentUnavailableView("podcasts_no_episodes", systemImage: "dot.radiowaves.left.and.right")
                 }
                 ForEach(episodes) { PodcastEpisodeRow(episode: $0) }
             }.padding()
@@ -263,7 +285,7 @@ struct PodcastEpisodeRow: View {
                     if player.currentSong?.podcastEpisodeID == episode.id { player.togglePlayPause() }
                     else { player.playPodcast(episode) }
                 } label: {
-                    Label(LocalizedStringKey(player.currentSong?.podcastEpisodeID == episode.id && player.isPlaying ? "pause_action" : "play_action"),
+                    Label(LocalizedStringKey(player.currentSong?.podcastEpisodeID == episode.id && player.isPlaying ? "podcasts_pause" : "podcasts_play"),
                           systemImage: player.currentSong?.podcastEpisodeID == episode.id && player.isPlaying ? "pause.fill" : "play.fill")
                 }.buttonStyle(.bordered)
                 if store.state.listening[episode.id]?.played == true {

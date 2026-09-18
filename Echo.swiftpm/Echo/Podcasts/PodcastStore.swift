@@ -47,7 +47,11 @@ import CryptoKit
         sorted(Set(state.downloads.keys).union(state.pendingDownloads).compactMap { state.episodes[$0] })
     }
     var continueListening: [PodcastEpisode] {
-        state.listening.filter { !$0.value.played && $0.value.position > 0 }
+        state.listening.filter { id, status in
+            guard !status.played, status.position > 0 else { return false }
+            if let duration = state.episodes[id]?.duration { return status.position < duration }
+            return true
+        }
             .sorted { $0.value.updatedAt > $1.value.updatedAt }.compactMap { state.episodes[$0.key] }
     }
     var downloadBytes: Int64 {

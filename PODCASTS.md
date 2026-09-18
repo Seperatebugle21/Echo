@@ -12,7 +12,8 @@ This change is based on the `Widget` branch. It adds Apple podcast search, publi
 - Podcast controls include 15 seconds back, 30 seconds forward, speed selection, queueing, AirPlay and lock-screen metadata. Playback position is saved periodically and when pausing/switching/backgrounding.
 - The background download session has its own identifier, persists pending jobs, and restores them at launch. A missing OS download task is retried from the beginning. Downloads move to Application Support and are excluded from backup. iOS controls background scheduling; force quitting can stop transfers until the next launch.
 - Covers and feed metadata are cached for offline browsing. Downloaded audio is preferred for playback. The app's existing widgets can display and reopen podcast playback.
-- All 44 new interface string keys are in the existing Localizable.xcstrings, with English, Dutch, French and German values. Podcast metadata is displayed in its original language.
+- All 46 new interface string keys are in the existing Localizable.xcstrings, with English, Dutch, French and German values. Podcast metadata is displayed in its original language.
+- Podcast symbols use `dot.radiowaves.left.and.right`. Library shows separate podcast folders at the bottom using the existing CollectionCard style. Continue listening shows at most the two most recently listened-to unfinished episodes. The podcast home has an accent gradient header and material-backed show rows.
 
 ## Validation performed
 

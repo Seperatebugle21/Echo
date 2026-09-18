@@ -20,7 +20,7 @@ struct PodcastPlaybackControls: View {
             Button { player.togglePlayPause() } label: {
                 Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
                     .font(.system(size: 70))
-            }.accessibilityLabel(player.isPlaying ? Text("pause_action") : Text("play_action"))
+            }.accessibilityLabel(player.isPlaying ? Text("podcasts_pause") : Text("podcasts_play"))
             Button { player.seek(to: player.currentTime + 30) } label: {
                 Image(systemName: "goforward.30").font(.title2).frame(width: 44, height: 44)
             }.accessibilityLabel("podcasts_skip_forward")

@@ -22,7 +22,7 @@ enum AppTab: String, Codable, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .home: "house.fill"
-        case .podcasts: "podcasts"
+        case .podcasts: "dot.radiowaves.left.and.right"
         case .library: "square.stack.fill"
         case .fetch: "arrow.down.circle"
         case .search: "magnifyingglass"
