@@ -20,6 +20,8 @@ struct Song: Identifiable, Codable, Hashable {
     var syncedLyrics: String?
     var lyricsSource: String?
     var lyricsSourceURL: URL?
+    // Playback metadata only; podcasts are stored in their own library.
+    var podcastEpisodeID: String?
     
     
     init(

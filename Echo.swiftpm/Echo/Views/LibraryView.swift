@@ -138,6 +138,9 @@ struct LibraryView: View {
                     spacing: 34
                 ) {
 
+                    PodcastLibraryLinks()
+                        .padding(.horizontal)
+
                     VStack(
                         alignment: .leading,
                         spacing: 14

@@ -46,6 +46,11 @@ struct EchoWidgetPlaybackIntent: AudioPlaybackIntent {
         if action == .previous, player.currentSong != nil { player.previous(); return }
         if action == .toggle, player.currentSong != nil { player.togglePlayPause(); return }
         let id = songID ?? player.currentSong?.id ?? EchoWidgetSnapshotStore.load().currentSong?.id
+        if let episode = PodcastStore.shared.state.episodes.values.first(where: { $0.playbackID == id }) {
+            if action == .favorite { PodcastStore.shared.toggleSaved(episode) }
+            else { player.playPodcast(episode) }
+            return
+        }
         guard let song = library.songs.first(where: { $0.id == id }) else { throw PlaybackError.missingSong }
         if action == .favorite { library.toggleFavorite(song); return }
         guard let url = library.getURL(for: song), FileManager.default.fileExists(atPath: url.path)

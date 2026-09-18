@@ -1,13 +1,14 @@
 import SwiftUI
 
 enum AppTab: String, Codable, CaseIterable, Identifiable {
-    case home, library, fetch, search, settings, playlists, favorites, songs
+    case home, library, podcasts, fetch, search, settings, playlists, favorites, songs
 
     var id: String { rawValue }
 
     var title: LocalizedStringKey {
         switch self {
         case .home: "contentview_home"
+        case .podcasts: "podcasts_title"
         case .library: "contentview_library"
         case .fetch: "contentview_fetch"
         case .search: "contentview_search"
@@ -21,6 +22,7 @@ enum AppTab: String, Codable, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .home: "house.fill"
+        case .podcasts: "podcasts"
         case .library: "square.stack.fill"
         case .fetch: "arrow.down.circle"
         case .search: "magnifyingglass"
@@ -34,8 +36,9 @@ enum AppTab: String, Codable, CaseIterable, Identifiable {
 
 struct TabBarConfiguration: Codable, Equatable {
     static let storageKey = "tabBarConfiguration.v1"
-    static let defaults = Self(tabs: [.home, .library, .fetch, .search], startTab: .home)
+    static let defaults = Self(tabs: [.home, .library, .podcasts, .fetch, .search], startTab: .home)
     var tabs: [AppTab]
+    var schemaVersion: Int? = 2
     var startTab: AppTab
 
     static func load() -> Self {
@@ -47,6 +50,10 @@ struct TabBarConfiguration: Codable, Equatable {
               var configuration = try? JSONDecoder().decode(Self.self, from: data),
               (2...5).contains(configuration.tabs.count),
               Set(configuration.tabs).count == configuration.tabs.count else { return defaults }
+        if configuration.schemaVersion == nil, configuration.tabs == [.home, .library, .fetch, .search] {
+            configuration.tabs.insert(.podcasts, at: 2)
+        }
+        configuration.schemaVersion = 2
         if !configuration.tabs.contains(configuration.startTab) {
             configuration.startTab = configuration.tabs[0]
         }

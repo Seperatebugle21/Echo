@@ -80,6 +80,10 @@ final class EchoAppDelegate:
             () -> Void
     ) {
 
+        if identifier == PodcastStore.sessionIdentifier {
+            PodcastStore.shared.handleBackgroundEvents(completion: completionHandler)
+            return
+        }
         FetchDownloadEngine.shared
             .handleBackgroundEvents(
                 identifier:

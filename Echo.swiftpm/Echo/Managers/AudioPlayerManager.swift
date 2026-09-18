@@ -49,6 +49,20 @@ class AudioPlayerManager:
     private var player:
         EqualizedAudioPlayer?
 
+    @ObservationIgnored private var podcastPlayer: AVPlayer?
+    @ObservationIgnored private var podcastTimeObserver: Any?
+    @ObservationIgnored private var podcastEndObserver: NSObjectProtocol?
+    @ObservationIgnored private var podcastInterruptionObserver: NSObjectProtocol?
+    @ObservationIgnored private var podcastRouteObserver: NSObjectProtocol?
+    @ObservationIgnored private var podcastStatusObserver: NSKeyValueObservation?
+    @ObservationIgnored private var podcastArtworkTask: Task<Void, Never>?
+    @ObservationIgnored private var podcastLastSaved: Double = -1
+    @ObservationIgnored private var podcastDidPrepare = false
+    private var podcastWantsPlayback = false
+    private var podcastResumeAfterInterruption = false
+    var podcastSpeed: Float = 1
+    var isPodcast: Bool { currentSong?.podcastEpisodeID != nil }
+
 
     private var timer:
         Timer?
@@ -286,6 +300,7 @@ class AudioPlayerManager:
     // ========================================================
 
     func updateNowPlaying() {
+        if isPodcast { updatePodcastNowPlaying(); return }
 
         guard
             let song =
@@ -410,6 +425,19 @@ class AudioPlayerManager:
     // ========================================================
 
     func setupRemoteCommands() {
+        let podcastCommands = MPRemoteCommandCenter.shared()
+        podcastCommands.skipBackwardCommand.preferredIntervals = [15]
+        podcastCommands.skipForwardCommand.preferredIntervals = [30]
+        podcastCommands.skipBackwardCommand.addTarget { [weak self] _ in
+            guard let self, self.isPodcast else { return .commandFailed }
+            self.seek(to: self.currentTime - 15)
+            return .success
+        }
+        podcastCommands.skipForwardCommand.addTarget { [weak self] _ in
+            guard let self, self.isPodcast else { return .commandFailed }
+            self.seek(to: self.currentTime + 30)
+            return .success
+        }
 
         let commandCenter =
             MPRemoteCommandCenter
@@ -423,8 +451,7 @@ class AudioPlayerManager:
                 _ in
 
 
-                self?
-                    .togglePlayPause()
+                if self?.isPlaying == false { self?.togglePlayPause() }
 
 
                 return .success
@@ -438,8 +465,7 @@ class AudioPlayerManager:
                 _ in
 
 
-                self?
-                    .togglePlayPause()
+                if self?.isPlaying == true { self?.togglePlayPause() }
 
 
                 return .success
@@ -523,6 +549,8 @@ class AudioPlayerManager:
 
         setupAudioSession()
 
+        stopPodcastPlayback()
+
 
         if !queue.isEmpty {
 
@@ -543,6 +571,10 @@ class AudioPlayerManager:
             self.queue = [song]
             self.originalQueue = [song]
             currentIndex = 0
+        }
+        if let id = song.podcastEpisodeID, let episode = PodcastStore.shared.state.episodes[id] {
+            startPodcastPlayback(episode, song: song)
+            return
         }
         do {
 
@@ -717,6 +749,14 @@ class AudioPlayerManager:
     // ========================================================
 
     func next(manuallyInitiated: Bool = true) {
+        if isPodcast && currentIndex + 1 >= queue.count {
+            podcastPlayer?.pause()
+            podcastWantsPlayback = false
+            isPlaying = false
+            savePodcastPosition()
+            updateNowPlaying()
+            return
+        }
 
         lastPlaybackDirection =
             .next
@@ -903,7 +943,7 @@ class AudioPlayerManager:
     // ========================================================
 
     func playPreviousSong(_ song: Song) {
-        guard let url = getURL(for: song), FileManager.default.fileExists(atPath: url.path) else { return }
+        guard let url = getURL(for: song), song.podcastEpisodeID != nil || FileManager.default.fileExists(atPath: url.path) else { return }
         let savedHistory = history
         let savedQueue = queue
         let savedIndex = currentIndex
@@ -916,7 +956,7 @@ class AudioPlayerManager:
             currentIndex = 0
         }
         play(song: song, url: url, queue: queue, queuePosition: currentIndex)
-        guard player?.isPlaying == true else {
+        guard player?.isPlaying == true || podcastPlayer != nil else {
             queue = savedQueue
             currentIndex = savedIndex
             history = savedHistory
@@ -1047,6 +1087,18 @@ class AudioPlayerManager:
     // ========================================================
 
     func togglePlayPause() {
+        if let podcastPlayer {
+            if podcastPlayer.currentItem?.status == .failed, let song = currentSong, let url = getURL(for: song) {
+                play(song: song, url: url, queue: queue, queuePosition: currentIndex)
+                return
+            }
+            podcastWantsPlayback.toggle()
+            if podcastWantsPlayback { podcastPlayer.playImmediately(atRate: podcastSpeed) }
+            else { podcastPlayer.pause(); savePodcastPosition() }
+            isPlaying = podcastWantsPlayback
+            updateNowPlaying()
+            return
+        }
 
         guard let player else {
             return
@@ -1217,6 +1269,15 @@ class AudioPlayerManager:
     func seek(
         to time: Double
     ) {
+        if let podcastPlayer {
+            guard time.isFinite else { return }
+            let target = max(0, duration > 0 ? min(time, duration) : time)
+            currentTime = target
+            podcastPlayer.seek(to: CMTime(seconds: target, preferredTimescale: 600))
+            if let id = currentSong?.podcastEpisodeID { PodcastStore.shared.record(id, position: target) }
+            updateNowPlaying()
+            return
+        }
 
         player?
             .currentTime =
@@ -1232,6 +1293,7 @@ class AudioPlayerManager:
 
 
     func pauseForSeeking() {
+        if let podcastPlayer { podcastPlayer.pause(); return }
 
         player?
             .pause()
@@ -1239,6 +1301,11 @@ class AudioPlayerManager:
 
 
     func resumeAfterSeeking() {
+        if let podcastPlayer {
+            if podcastWantsPlayback { podcastPlayer.playImmediately(atRate: podcastSpeed) }
+            updateNowPlaying()
+            return
+        }
 
         player?
             .play()
@@ -1255,8 +1322,11 @@ class AudioPlayerManager:
     func getURL(
         for song: Song
     ) -> URL? {
+        if let id = song.podcastEpisodeID, let episode = PodcastStore.shared.state.episodes[id] {
+            return PodcastStore.shared.playbackURL(episode)
+        }
 
-        FileManager.default
+        return FileManager.default
             .urls(
                 for:
                     .documentDirectory,
@@ -1316,5 +1386,190 @@ class AudioPlayerManager:
 
             next(manuallyInitiated: false)
         }
+    }
+}
+
+extension AudioPlayerManager {
+    func playPodcast(_ episode: PodcastEpisode) {
+        let song = podcastSong(episode)
+        play(song: song, url: PodcastStore.shared.playbackURL(episode), queue: [song])
+    }
+
+    func queuePodcastNext(_ episode: PodcastEpisode) {
+        let song = podcastSong(episode)
+        if currentSong == nil { playPodcast(episode) }
+        else { playNext(song) }
+    }
+
+    private func podcastSong(_ episode: PodcastEpisode) -> Song {
+        PodcastStore.shared.remember(episode)
+        PodcastStore.shared.flush()
+        var song = Song(id: episode.playbackID, title: episode.title, artist: episode.show.title,
+                        fileName: "", coverData: PodcastStore.shared.artwork(episode))
+        song.podcastEpisodeID = episode.id
+        return song
+    }
+
+    func setPodcastSpeed(_ speed: Float) {
+        guard [Float(0.75), 1, 1.25, 1.5, 1.75, 2].contains(speed) else { return }
+        podcastSpeed = speed
+        if podcastWantsPlayback { podcastPlayer?.rate = speed }
+        updateNowPlaying()
+    }
+
+    func savePodcastPosition() {
+        guard let id = currentSong?.podcastEpisodeID else { return }
+        PodcastStore.shared.record(id, position: currentTime)
+        PodcastStore.shared.flush()
+    }
+
+    private func stopPodcastPlayback() {
+        guard let podcastPlayer else { return }
+        savePodcastPosition()
+        podcastPlayer.pause()
+        if let token = podcastTimeObserver { podcastPlayer.removeTimeObserver(token) }
+        for token in [podcastEndObserver, podcastInterruptionObserver, podcastRouteObserver].compactMap({ $0 }) {
+            NotificationCenter.default.removeObserver(token)
+        }
+        podcastTimeObserver = nil
+        podcastEndObserver = nil
+        podcastInterruptionObserver = nil
+        podcastRouteObserver = nil
+        podcastStatusObserver = nil
+        podcastArtworkTask?.cancel()
+        self.podcastPlayer = nil
+        podcastWantsPlayback = false
+        let commands = MPRemoteCommandCenter.shared()
+        commands.skipBackwardCommand.isEnabled = false
+        commands.skipForwardCommand.isEnabled = false
+        commands.nextTrackCommand.isEnabled = true
+        commands.previousTrackCommand.isEnabled = true
+    }
+
+    private func startPodcastPlayback(_ episode: PodcastEpisode, song: Song) {
+        player?.stop()
+        player = nil
+        timer?.invalidate()
+        preloadedPlayer?.stop()
+        preloadedPlayer = nil
+        lyricsTask?.cancel()
+        currentLyrics = nil
+        currentSyncedLyrics = nil
+        isLoadingLyrics = false
+        shuffleEnabled = false
+        repeatMode = .off
+        autoNextQueue = []
+        if let old = currentSong, old.id != song.id { history.append(old) }
+        currentSong = song
+        let store = PodcastStore.shared
+        store.beginListening(episode.id)
+        currentTime = store.state.listening[episode.id]?.position ?? 0
+        duration = episode.duration ?? 0
+        podcastLastSaved = -1
+        podcastDidPrepare = false
+        let resumePosition = currentTime
+        let item = AVPlayerItem(url: store.playbackURL(episode))
+        item.audioTimePitchAlgorithm = .timeDomain
+        let stream = AVPlayer(playerItem: item)
+        podcastPlayer = stream
+        podcastWantsPlayback = true
+        isPlaying = true
+        podcastStatusObserver = item.observe(\.status, options: [.initial, .new]) { [weak self, weak item] _, _ in
+            DispatchQueue.main.async {
+                guard let self, let item, self.podcastPlayer?.currentItem === item else { return }
+                if item.status == .failed {
+                    self.podcastWantsPlayback = false
+                    self.isPlaying = false
+                    store.errorKey = "podcasts_playback_error"
+                    self.updateNowPlaying()
+                } else if item.status == .readyToPlay, !self.podcastDidPrepare {
+                    self.podcastDidPrepare = true
+                    let length = item.duration.seconds
+                    if length.isFinite, length > 0 { self.duration = length }
+                    let position = self.duration > 0 ? min(resumePosition, max(0, self.duration - 1)) : resumePosition
+                    self.podcastPlayer?.seek(to: CMTime(seconds: position, preferredTimescale: 600)) { [weak self, weak item] finished in
+                        DispatchQueue.main.async {
+                            guard let self, let item, self.podcastPlayer?.currentItem === item, finished else { return }
+                            self.currentTime = position
+                            if self.podcastWantsPlayback { self.podcastPlayer?.playImmediately(atRate: self.podcastSpeed) }
+                            self.updateNowPlaying()
+                        }
+                    }
+                }
+            }
+        }
+        podcastTimeObserver = stream.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.5, preferredTimescale: 600), queue: .main) { [weak self, weak stream] time in
+            guard let self, let stream, self.podcastPlayer === stream, self.podcastDidPrepare,
+                  stream.timeControlStatus == .playing else { return }
+            let seconds = time.seconds
+            if seconds.isFinite { self.currentTime = max(0, seconds) }
+            if let length = stream.currentItem?.duration.seconds, length.isFinite, length > 0 { self.duration = length }
+            if abs(self.currentTime - self.podcastLastSaved) >= 5 {
+                self.podcastLastSaved = self.currentTime
+                store.record(episode.id, position: self.currentTime)
+                self.updateNowPlaying()
+            }
+        }
+        podcastEndObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: item, queue: .main) { [weak self] _ in
+            guard let self, self.currentSong?.podcastEpisodeID == episode.id else { return }
+            self.currentTime = 0
+            store.record(episode.id, position: 0, completed: true)
+            self.next(manuallyInitiated: false)
+        }
+        podcastInterruptionObserver = NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] notification in
+            guard let self, let raw = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                  let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
+            if type == .began {
+                self.podcastResumeAfterInterruption = self.podcastWantsPlayback
+                if self.podcastWantsPlayback { self.togglePlayPause() }
+            } else {
+                let rawOptions = (notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt) ?? 0
+                let options = AVAudioSession.InterruptionOptions(rawValue: rawOptions)
+                if options.contains(.shouldResume), self.podcastResumeAfterInterruption, !self.podcastWantsPlayback {
+                    self.setupAudioSession()
+                    self.togglePlayPause()
+                }
+                self.podcastResumeAfterInterruption = false
+            }
+        }
+        podcastRouteObserver = NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] notification in
+            guard let self, let raw = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+                  AVAudioSession.RouteChangeReason(rawValue: raw) == .oldDeviceUnavailable else { return }
+            if self.podcastWantsPlayback { self.togglePlayPause() }
+        }
+        let commands = MPRemoteCommandCenter.shared()
+        commands.skipBackwardCommand.isEnabled = true
+        commands.skipForwardCommand.isEnabled = true
+        commands.nextTrackCommand.isEnabled = true
+        commands.previousTrackCommand.isEnabled = false
+        UIApplication.shared.beginReceivingRemoteControlEvents()
+        updateNowPlaying()
+        podcastArtworkTask = Task { @MainActor [weak self] in
+            guard let url = episode.artworkURL else { return }
+            do {
+                let (data, response) = try await URLSession.shared.data(from: url)
+                guard !Task.isCancelled, let http = response as? HTTPURLResponse,
+                      (200...299).contains(http.statusCode), data.count < 5_000_000,
+                      UIImage(data: data) != nil else { return }
+                store.cacheArtwork(data, episode: episode)
+                guard let self, self.currentSong?.podcastEpisodeID == episode.id else { return }
+                self.currentSong?.coverData = data
+                self.updateNowPlaying()
+            } catch { /* Artwork failure does not interrupt audio. */ }
+        }
+    }
+
+    private func updatePodcastNowPlaying() {
+        guard let song = currentSong else { return }
+        var info: [String: Any] = [MPMediaItemPropertyTitle: song.title,
+            MPMediaItemPropertyArtist: song.artist,
+            MPMediaItemPropertyPlaybackDuration: duration,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(podcastSpeed) : 0,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: Double(podcastSpeed)]
+        if let data = song.coverData, let image = UIImage(data: data) {
+            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        }
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 }

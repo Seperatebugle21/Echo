@@ -87,6 +87,10 @@ struct NowPlayingView: View {
 
                         Spacer()
 
+                        if let id = song.podcastEpisodeID,
+                           let episode = PodcastStore.shared.state.episodes[id] {
+                            PodcastEpisodeMenu(episode: episode).foregroundStyle(.white)
+                        } else {
                         Button {
                             showPlaylistPicker = true
                         } label: {
@@ -107,6 +111,7 @@ struct NowPlayingView: View {
                                 "add_to_playlist_action"
                             )
                         )
+                        }
                     }
                     .padding(.horizontal, 28)
                 }
@@ -119,6 +124,9 @@ struct NowPlayingView: View {
 
                 // MARK: - Playback Controls
 
+                if audioPlayer.isPodcast {
+                    PodcastPlaybackControls()
+                } else {
                 HStack(spacing: 35) {
 
                     // Shuffle
@@ -246,6 +254,8 @@ struct NowPlayingView: View {
                 }
 
 
+                }
+
                 // MARK: - Bottom Actions
 
                 HStack {
@@ -265,6 +275,7 @@ struct NowPlayingView: View {
                     Spacer()
 
 
+                    if !audioPlayer.isPodcast {
                     // Add to Playlist
 
                     Button {
@@ -307,6 +318,7 @@ struct NowPlayingView: View {
                     )
 
 
+                    }
                     // Queue
 
                     Button {

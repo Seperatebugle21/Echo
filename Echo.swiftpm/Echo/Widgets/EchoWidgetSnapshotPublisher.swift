@@ -34,7 +34,7 @@ enum EchoWidgetSnapshotPublisher {
             guard let url = library.getURL(for: $0) else { return false }
             return FileManager.default.fileExists(atPath: url.path)
         }
-        let current = player.currentSong.flatMap { existing[$0.id] }
+        let current = player.currentSong.flatMap { $0.podcastEpisodeID != nil ? $0 : existing[$0.id] }
         let displayed = current ?? library.songs.sorted {
             ($0.lastPlayed ?? $0.dateAdded) > ($1.lastPlayed ?? $1.dateAdded)
         }.first
@@ -65,7 +65,9 @@ enum EchoWidgetSnapshotPublisher {
             }
         }
         return EchoWidgetSongItem(id: song.id, title: song.title, artist: song.artist,
-                                  artworkData: thumbnail, isFavorite: library.isFavorite(song))
+            artworkData: thumbnail, isFavorite: song.podcastEpisodeID.map {
+                PodcastStore.shared.state.savedEpisodeIDs.contains($0)
+            } ?? library.isFavorite(song))
     }
 
     private static func thumbnailData(from data: Data) -> Data? {

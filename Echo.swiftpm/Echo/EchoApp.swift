@@ -125,6 +125,7 @@ struct EchoApp: App {
             // MARK: - Prepare Background Fetch
 
             .task {
+                PodcastStore.shared.prepare()
                 EchoWidgetSnapshotPublisher.refresh()
 
                 FetchDownloadEngine.shared
@@ -178,6 +179,8 @@ struct EchoApp: App {
             of:
                 scenePhase
         ) { _, newPhase in
+            audioPlayer.savePodcastPosition()
+            PodcastStore.shared.flush()
             EchoWidgetSnapshotPublisher.refresh()
 
             if newPhase ==

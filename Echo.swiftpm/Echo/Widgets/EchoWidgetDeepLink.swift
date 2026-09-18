@@ -40,6 +40,11 @@ enum EchoWidgetDeepLink {
         let library = MusicLibraryManager.shared
         let audioPlayer = AudioPlayerManager.shared
 
+        if let episode = PodcastStore.shared.state.episodes.values.first(where: { $0.playbackID == songID }) {
+            audioPlayer.playPodcast(episode)
+            return true
+        }
+
         guard
             let song = library.songs.first(
                 where: { $0.id == songID }

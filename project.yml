@@ -117,7 +117,27 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.widget-model-tests
         GENERATE_INFOPLIST_FILE: YES
 
+  EchoPodcastTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/EchoPodcastTests.swift
+      - path: Echo.swiftpm/Echo/Podcasts/PodcastModels.swift
+      - path: Echo.swiftpm/Echo/Podcasts/PodcastCatalog.swift
+      - path: Echo.swiftpm/Echo/Views/TabBarSettingsView.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.podcast-tests
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
+  EchoPodcastTests:
+    build:
+      targets:
+        EchoPodcastTests: all
+    test:
+      targets:
+        - EchoPodcastTests
   EchoArtistTests:
     build:
       targets:

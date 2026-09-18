@@ -120,6 +120,14 @@ struct ContentView: View {
             }
         }
         .environment(presentation)
+        .alert("podcasts_error_title", isPresented: Binding(
+            get: { PodcastStore.shared.errorKey != nil },
+            set: { if !$0 { PodcastStore.shared.errorKey = nil } }
+        )) {
+            Button("podcasts_ok", role: .cancel) { PodcastStore.shared.errorKey = nil }
+        } message: {
+            Text(LocalizedStringKey(PodcastStore.shared.errorKey ?? "podcasts_playback_error"))
+        }
         .onChange(of: audioPlayer.currentSong?.id) {
             if audioPlayer.currentSong == nil { presentation.reset() }
             if presentation.entranceSong?.id != audioPlayer.currentSong?.id {
@@ -142,6 +150,7 @@ private extension ContentView {
     func tabContent(_ tab: AppTab) -> some View {
         switch tab {
         case .home: HomeView()
+        case .podcasts: PodcastsView()
         case .library: LibraryView()
         case .fetch: FetchView()
         case .search: SearchView()
