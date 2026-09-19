@@ -101,11 +101,13 @@ struct PodcastsView: View {
 
             Button(action: resetSearch) {
                 Image(systemName: "xmark")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
                     .frame(width: 44, height: 44)
+                    .contentShape(Circle())
             }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.circle)
-            .contentShape(.circle)
+            .buttonStyle(.plain)
+            .glassEffect(.regular.interactive(), in: .circle)
             .accessibilityLabel("action_cancel")
         }
         .padding(.horizontal)
