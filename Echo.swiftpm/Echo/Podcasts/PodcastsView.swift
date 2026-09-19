@@ -5,6 +5,7 @@ struct PodcastsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var query = ""
     @State private var isSearchPresented = false
+    @State private var searchGeneration = 0
     @FocusState private var isSearchFocused: Bool
     @State private var results: [PodcastShow] = []
     @State private var loading = false
@@ -41,8 +42,25 @@ struct PodcastsView: View {
                 }
             }
             .scrollIndicators(.hidden)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if isSearchPresented {
+                    searchBar
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if !isSearchPresented {
+                        Button {
+                            isSearchPresented = true
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                        }
+                        .accessibilityLabel("podcasts_search")
+                    }
+                }
+            }
             .animation(reduceMotion ? nil : .smooth(duration: 0.42), value: query.isEmpty)
-            .task(id: "\(query):\(retry)") { await search() }
+            .task(id: "\(searchGeneration):\(query):\(retry)") { await search() }
             .task(id: recommendationsTaskID) { await loadRecommendations() }
             .task {
                 await Task.yield()
@@ -51,24 +69,57 @@ struct PodcastsView: View {
                 }
             }
         }
-        .searchable(text: $query, isPresented: $isSearchPresented, prompt: "podcasts_search")
-        .searchFocused($isSearchFocused)
-        .searchToolbarBehavior(.minimize)
-        .onChange(of: isSearchPresented) { _, isPresented in
-            if !isPresented { resetSearch() }
-        }
         .onChange(of: resetSearchID) {
             resetSearch()
         }
     }
 
+    private var searchBar: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("podcasts_search", text: $query)
+                    .textFieldStyle(.plain)
+                    .foregroundStyle(.primary)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                    .focused($isSearchFocused)
+                    .onSubmit { isSearchFocused = false }
+                    .accessibilityLabel("podcasts_search")
+                    .task {
+                        // Focus after the actual text field has entered the hierarchy.
+                        await Task.yield()
+                        guard !Task.isCancelled, isSearchPresented else { return }
+                        isSearchFocused = true
+                    }
+            }
+            .padding(.horizontal, 16)
+            .frame(minHeight: 44)
+            .glassEffect(.regular, in: .capsule)
+
+            Button(action: resetSearch) {
+                Image(systemName: "xmark")
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .glassEffect(.regular.interactive(), in: .circle)
+            .accessibilityLabel("action_close")
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+    }
+
     private func resetSearch() {
+        // Invalidate in-flight work even when the next search uses the same text.
+        searchGeneration += 1
         isSearchFocused = false
         isSearchPresented = false
         query = ""
         results = []
         loading = false
         failed = false
+        retry = 0
     }
 
     private var recommendationsTaskID: String {
@@ -77,18 +128,22 @@ struct PodcastsView: View {
     }
 
     private func search() async {
+        let generation = searchGeneration
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !term.isEmpty else { results = []; loading = false; failed = false; return }
+        guard isSearchPresented, !term.isEmpty else { results = []; loading = false; failed = false; return }
         loading = true
         failed = false
         do {
             try await Task.sleep(for: .milliseconds(500))
             let shows = try await PodcastCatalog.shared.search(term, country: Locale.current.region?.identifier ?? "US")
             try Task.checkCancellation()
+            guard generation == searchGeneration, isSearchPresented,
+                  term == query.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
             results = shows
             loading = false
         } catch {
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, generation == searchGeneration, isSearchPresented,
+                  term == query.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
             failed = true
             loading = false
         }
