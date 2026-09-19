@@ -46,7 +46,25 @@ jobs:
             -derivedDataPath build/DerivedData
 
 
-     
+      - name: Test shared widget snapshot compatibility
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for group in devices.values() for d in group if d.get("isAvailable") and d["name"].startswith("iPhone")))')
+          xcodebuild test \
+            -project Echo.xcodeproj \
+            -scheme EchoWidgetModelTests \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -derivedDataPath build/WidgetTests \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Test podcasts and tab migration
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for group in devices.values() for d in group if d.get("isAvailable") and d["name"].startswith("iPhone")))')
+          xcodebuild test \
+            -project Echo.xcodeproj \
+            -scheme EchoPodcastTests \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -derivedDataPath build/PodcastTests \
+            CODE_SIGNING_ALLOWED=NO
 
       # ============================================
       # 3. Locate Python library
