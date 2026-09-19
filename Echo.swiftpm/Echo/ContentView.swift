@@ -5,6 +5,7 @@ import UIKit
 struct ContentView: View {
     @State private var miniPlayerHidden = false
     @State private var selectedTab = TabBarConfiguration.load().startTab
+    @State private var podcastSearchResetID = 0
     @AppStorage(TabBarConfiguration.storageKey) private var storedTabs = ""
     @State private var showTabSettings = false
     private var tabConfiguration: TabBarConfiguration { .decode(storedTabs) }
@@ -14,7 +15,7 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
 
             ForEach(tabConfiguration.tabs) { tab in
                 Tab(value: tab) {
@@ -146,11 +147,23 @@ struct ContentView: View {
 }
 
 private extension ContentView {
+    var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { selectedTab },
+            set: { tab in
+                if tab == .podcasts && selectedTab == .podcasts {
+                    podcastSearchResetID += 1
+                }
+                selectedTab = tab
+            }
+        )
+    }
+
     @ViewBuilder
     func tabContent(_ tab: AppTab) -> some View {
         switch tab {
         case .home: HomeView()
-        case .podcasts: PodcastsView()
+        case .podcasts: PodcastsView(resetSearchID: podcastSearchResetID)
         case .library: LibraryView()
         case .fetch: FetchView()
         case .search: SearchView()

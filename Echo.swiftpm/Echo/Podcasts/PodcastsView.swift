@@ -1,8 +1,11 @@
 import SwiftUI
 
 struct PodcastsView: View {
+    var resetSearchID = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var query = ""
+    @State private var isSearchPresented = false
+    @FocusState private var isSearchFocused: Bool
     @State private var results: [PodcastShow] = []
     @State private var loading = false
     @State private var failed = false
@@ -38,8 +41,6 @@ struct PodcastsView: View {
                 }
             }
             .scrollIndicators(.hidden)
-            .searchable(text: $query, prompt: "podcasts_search")
-            .searchToolbarBehavior(.minimize)
             .animation(reduceMotion ? nil : .smooth(duration: 0.42), value: query.isEmpty)
             .task(id: "\(query):\(retry)") { await search() }
             .task(id: recommendationsTaskID) { await loadRecommendations() }
@@ -50,6 +51,24 @@ struct PodcastsView: View {
                 }
             }
         }
+        .searchable(text: $query, isPresented: $isSearchPresented, prompt: "podcasts_search")
+        .searchFocused($isSearchFocused)
+        .searchToolbarBehavior(.minimize)
+        .onChange(of: isSearchPresented) { _, isPresented in
+            if !isPresented { resetSearch() }
+        }
+        .onChange(of: resetSearchID) {
+            resetSearch()
+        }
+    }
+
+    private func resetSearch() {
+        isSearchFocused = false
+        isSearchPresented = false
+        query = ""
+        results = []
+        loading = false
+        failed = false
     }
 
     private var recommendationsTaskID: String {
