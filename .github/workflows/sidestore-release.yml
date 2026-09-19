@@ -1,0 +1,45 @@
+name: Update SideStore Source
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Generate apps.json
+        run: |
+          cat << 'EOF' > apps.json
+          {
+            "name": "Echo-MusicApp",
+            "identifier": "com.echomusic.repo",
+            "apps": [
+              {
+                "name": "Echo",
+                "bundleIdentifier": "com.echomusic.app",
+                "developerName": "Seperatebugle21",
+                "version": "${{ github.event.release.tag_name }}",
+                "versionDate": "${{ github.event.release.published_at }}",
+                "downloadURL": "${{ github.event.release.assets[0].browser_download_url }}",
+                "localizedDescription": "${{ github.event.release.body }}",
+                "iconURL": "https://raw.githubusercontent.com/${{ github.repository }}/main/icon.png",
+                "tintColor": "007AFF"
+              }
+            ]
+          }
+          EOF
+
+      - name: Commit and Push apps.json
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps.json
+          git commit -m "Update SideStore source for release ${{ github.event.release.tag_name }}" || exit 0
+          git push
