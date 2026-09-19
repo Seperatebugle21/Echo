@@ -32,7 +32,7 @@ Swift Playgrounds alone cannot package this WidgetKit extension. The WidgetBuild
 
 Build the updated Widget branch with WidgetBuild.yml and download Echo-Release-IPA from the successful run. Install the new Echo.ipa through SideStore, retaining the EchoWidget extension. Update the existing app, open Echo once and start a song, then check the widgets. Refreshing the old installed IPA alone does not include this code/build fix.
 
-SideStore writes the actual provisioned groups into each bundle's ALTAppGroups Info.plist entry. The shared snapshot code now resolves matching group.com.echomusic.app.<team> entries from that metadata, checking container access, with the original group as fallback for standard signing. It does not guess team IDs or select unrelated groups. Both processes use the same resolution logic and stable ordering. This covers SideStore's normal group suffix mapping; a custom replacement of the entire bundle/group namespace is not supported by this resolver.
+Recent SideStore nightlies, including the LiveContainer fork inspected at 12a496ca1c766a102193634879823d16610bf1cd, no longer write ALTAppGroups into Info.plist. The shared snapshot code reads group candidates from each installed bundle's embedded.mobileprovision, then falls back to ALTAppGroups for older installers and the original group for standard signing. It extracts the XML payload for discovery only; FileManager container access remains the permission check. It does not guess team IDs or select unrelated groups. Both processes use the same resolution logic and stable ordering. This covers SideStore's normal group suffix mapping; a custom replacement of the entire bundle/group namespace is not supported by this resolver.
 
 The packaging workflow also preserves echo:// links; previously its Spotify URL configuration replaced the Echo launcher scheme.
 
@@ -44,7 +44,7 @@ Implementation references: [SideStore metadata key](https://github.com/SideStore
 
 Run the EchoWidgetModelTests scheme on an available iOS Simulator. WidgetBuild runs these tests before archiving. They cover the previous JSON format, state/artwork round-tripping, missing artwork, empty libraries and legacy playback URLs.
 
-Five additional tests cover SideStore group selection, standard signing, denied/unrelated groups, missing permissions and consistent selection across app/extension metadata ordering.
+Tests cover SideStore group selection, standard signing, denied/unrelated groups, missing permissions and consistent selection across app/extension metadata ordering. Additional regression cases cover the nightly without ALTAppGroups, current profiles overriding stale metadata, denied access despite a declared profile group, and malformed or missing profile entitlements.
 
 EchoWidgetPreviews.swift contains all five layouts and an empty-state preview.
 

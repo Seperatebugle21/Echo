@@ -2,6 +2,49 @@ import Foundation
 import XCTest
 
 final class EchoWidgetModelTests: XCTestCase {
+    func testNightlyWithoutLegacyMetadataUsesEmbeddedProfile() throws {
+        let mapped = EchoWidgetSnapshotStore.appGroupIdentifier + ".ABC1234567"
+        let plist = try PropertyListSerialization.data(fromPropertyList: [
+            "Entitlements": ["com.apple.security.application-groups": [mapped]]
+        ], format: .xml, options: 0)
+        // Non-UTF8 bytes model the surrounding CMS envelope.
+        var profile = Data([0x30, 0x82, 0xFF, 0x00])
+        profile.append(plist)
+        profile.append(contentsOf: [0x00, 0xFF])
+        let groups = EchoWidgetSnapshotStore.appGroups(inProvisioningProfile: profile)
+        XCTAssertEqual(groups, [mapped])
+        let result = EchoWidgetSnapshotStore.containerURL(
+            installedGroups: [], provisionedGroups: groups
+        ) { id in id == mapped ? URL(fileURLWithPath: "/shared/current") : nil }
+        XCTAssertEqual(result?.lastPathComponent, "current")
+    }
+
+    func testCurrentProfileWinsOverStaleLegacyMetadata() {
+        let base = EchoWidgetSnapshotStore.appGroupIdentifier
+        let result = EchoWidgetSnapshotStore.containerURL(
+            installedGroups: [base + ".OLDTEAM"], provisionedGroups: [base + ".NEWTEAM"]
+        ) { URL(fileURLWithPath: "/shared/" + $0) }
+        XCTAssertEqual(result?.lastPathComponent, base + ".NEWTEAM")
+    }
+
+    func testProfileDoesNotGrantAccessOrSelectUnrelatedGroups() {
+        let base = EchoWidgetSnapshotStore.appGroupIdentifier
+        var requested: [String] = []
+        let result = EchoWidgetSnapshotStore.containerURL(
+            installedGroups: [], provisionedGroups: ["group.other.app", base + ".TEAM"]
+        ) { id in requested.append(id); return nil }
+        XCTAssertNil(result)
+        XCTAssertEqual(requested, [base + ".TEAM", base])
+    }
+
+    func testMalformedAndMissingProfileEntitlementsAreIgnored() throws {
+        for data in [Data(), Data("<plist>truncated".utf8), Data("<plist>bad</plist>".utf8)] {
+            XCTAssertTrue(EchoWidgetSnapshotStore.appGroups(inProvisioningProfile: data).isEmpty)
+        }
+        let data = try PropertyListSerialization.data(fromPropertyList: ["Name": "No groups"], format: .xml, options: 0)
+        XCTAssertTrue(EchoWidgetSnapshotStore.appGroups(inProvisioningProfile: data).isEmpty)
+    }
+
     func testSideStoreMappingPreferredOverOriginalGroup() {
         let base = EchoWidgetSnapshotStore.appGroupIdentifier
         let mapped = base + ".ABC1234567"

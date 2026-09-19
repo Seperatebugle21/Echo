@@ -194,7 +194,7 @@ struct EchoWidgetEmptyView: View {
                 .font(.title2)
             Text(sharedContainerAvailable ? "Je muziek, dichtbij" : "Widget niet gekoppeld")
                 .font(.headline)
-            Text(sharedContainerAvailable ? "Open Echo en voeg muziek toe." : "Echo en deze widget kunnen nog geen muziekgegevens delen. Werk Echo bij en open de app.")
+            Text(sharedContainerAvailable ? "Open Echo en voeg muziek toe." : "Geen toegang tot gedeelde opslag. Installeer de nieuwste Echo-build met de widgetextensie via SideStore en open Echo.")
                 .font(.caption).foregroundStyle(.white.opacity(0.8))
         }
         .padding(16).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

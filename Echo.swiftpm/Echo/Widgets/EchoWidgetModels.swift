@@ -87,26 +87,52 @@ enum EchoWidgetSnapshotStore {
 
     static var isAvailable: Bool { fileURL != nil }
 
-    // SideStore/AltStore writes the provisioned groups to each bundle's
-    // ALTAppGroups after re-signing. Do not guess a team ID from the bundle ID.
+    // Recent SideStore versions no longer populate ALTAppGroups. Prefer the
+    // installed profile, retaining the metadata fallback for older installers.
+    // A profile supplies candidates only: container lookup checks actual access.
     static func containerURL(
         installedGroups: [String],
+        provisionedGroups: [String] = [],
         lookup: (String) -> URL?
     ) -> URL? {
-        let remapped = Set(installedGroups.filter {
-            $0.hasPrefix(appGroupIdentifier + ".") && $0.count > appGroupIdentifier.count + 1
-        }).sorted()
+        func remapped(_ groups: [String]) -> [String] {
+            Set(groups.filter {
+                $0.hasPrefix(appGroupIdentifier + ".") && $0.count > appGroupIdentifier.count + 1
+            }).sorted()
+        }
         // Prefer the installed mapping over a potentially stale original group.
         // The original remains the fallback for Xcode/TestFlight/enterprise.
-        for identifier in remapped + [appGroupIdentifier] {
+        var tried = Set<String>()
+        for identifier in remapped(provisionedGroups) + remapped(installedGroups) + [appGroupIdentifier] {
+            guard tried.insert(identifier).inserted else { continue }
             if let url = lookup(identifier) { return url }
         }
         return nil
     }
 
+    // The embedded profile contains an XML plist inside a CMS envelope. Extract
+    // only its declared groups; this is not signature or entitlement validation.
+    static func appGroups(inProvisioningProfile data: Data) -> [String] {
+        guard let start = data.range(of: Data("<plist".utf8)),
+              let end = data.range(of: Data("</plist>".utf8), in: start.lowerBound..<data.endIndex),
+              let plist = try? PropertyListSerialization.propertyList(
+                from: data.subdata(in: start.lowerBound..<end.upperBound), options: [], format: nil
+              ) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any],
+              let groups = entitlements["com.apple.security.application-groups"] as? [String]
+        else { return [] }
+        return groups
+    }
+
+    private static let provisionedGroups: [String] = {
+        let url = Bundle.main.bundleURL.appendingPathComponent("embedded.mobileprovision")
+        guard let data = try? Data(contentsOf: url) else { return [] }
+        return appGroups(inProvisioningProfile: data)
+    }()
+
     private static var fileURL: URL? {
         let groups = Bundle.main.object(forInfoDictionaryKey: "ALTAppGroups") as? [String] ?? []
-        return containerURL(installedGroups: groups) { identifier in
+        return containerURL(installedGroups: groups, provisionedGroups: provisionedGroups) { identifier in
             FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
         }?.appendingPathComponent(fileName)
     }
