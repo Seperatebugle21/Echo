@@ -209,6 +209,8 @@ struct LyricsView: View {
         
         // MARK: - Navigation
         
+        .echoBackground()
+
         .navigationTitle(
             Text(
                 LocalizedStringKey(

@@ -107,6 +107,8 @@ struct SpotifyTrackDetailView: View {
                 .padding(24)
             }
 
+            .echoBackground()
+
             .navigationTitle(
                 "spotifytrackdetailview_song"
             )

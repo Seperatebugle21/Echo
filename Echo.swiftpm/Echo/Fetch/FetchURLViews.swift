@@ -345,6 +345,8 @@ struct FetchURLInputSheet:
                 }
             }
 
+            .echoBackground()
+
             .navigationTitle(
                 "fetchurlviews_fetch_url"
             )
@@ -653,6 +655,8 @@ struct FetchURLPreviewView:
             }
             .padding(20)
         }
+
+        .echoBackground()
 
         .navigationTitle(
             content.isPlaylist

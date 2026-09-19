@@ -121,6 +121,7 @@ struct QueueView: View {
                 }
             }
             .environment(\.editMode, $editMode)
+            .echoBackground()
             .navigationTitle(LocalizedStringKey("queue_title"))
             .navigationBarTitleDisplayMode(.inline)
             

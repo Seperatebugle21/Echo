@@ -80,6 +80,8 @@ struct FetchQueueView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "fetchqueueview_title"
         )

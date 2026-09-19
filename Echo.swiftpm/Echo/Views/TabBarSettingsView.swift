@@ -164,6 +164,7 @@ struct TabBarSettingsView: View {
                 Button("tabbarsettingsview_restore_defaults") { draft = .defaults }
             }
         }
+        .echoBackground()
         .navigationTitle("tabbarsettingsview_title")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

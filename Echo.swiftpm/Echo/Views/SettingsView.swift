@@ -3,7 +3,6 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(MusicLibraryManager.self) private var library
     @AppStorage("selectedLanguage") private var selectedLanguage = "en"
-    @AppStorage("appearanceMode") private var appearanceMode = "system"
 
     @State private var showFirstDeleteAlert = false
     @State private var showFinalDeleteAlert = false
@@ -57,6 +56,7 @@ struct SettingsView: View {
                 dangerZone
             }
             .formStyle(.grouped)
+            .echoBackground()
             .navigationTitle("tab_settings")
             .navigationBarTitleDisplayMode(.large)
             .alert("alert_cannot_be_undone_title", isPresented: $showFinalDeleteAlert) {
@@ -148,14 +148,11 @@ struct SettingsView: View {
             NavigationLink { TabBarSettingsView() } label: {
                 SettingsRow(title: "settingsview_tab_bar", subtitle: "settingsview_tab_bar_detail", symbol: "rectangle.bottomthird.inset.filled", color: .purple)
             }
-            Picker(selection: $appearanceMode) {
-                Text("appearance_system").tag("system")
-                Text("appearance_light").tag("light")
-                Text("appearance_dark").tag("dark")
+            NavigationLink {
+                AppearanceSettingsView()
             } label: {
                 SettingsRow(title: "settings_appearance_title", symbol: "circle.lefthalf.filled", color: .indigo)
             }
-            .pickerStyle(.menu)
             Picker(selection: $selectedLanguage) {
                 Text("English").tag("en")
                 Text("Nederlands").tag("nl")
@@ -190,6 +187,38 @@ struct SettingsView: View {
         } header: {
             Label("settings_section_danger", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
         } footer: { Text("settingsview_danger_detail") }
+    }
+}
+
+private struct AppearanceSettingsView: View {
+    @AppStorage("appearanceMode") private var appearanceMode = "system"
+    @AppStorage("darkBackgroundStyle") private var darkBackgroundStyle = "black"
+
+    var body: some View {
+        Form {
+            Section("settings_appearance_title") {
+                Picker("settings_appearance_title", selection: $appearanceMode) {
+                    Text("appearance_system").tag("system")
+                    Text("appearance_light").tag("light")
+                    Text("appearance_dark").tag("dark")
+                }
+                .pickerStyle(.segmented)
+            }
+            Section {
+                Picker("appearance_dark_background", selection: $darkBackgroundStyle) {
+                    Text("appearance_background_black").tag("black")
+                    Text("appearance_background_charcoal").tag("charcoal")
+                }
+                .pickerStyle(.inline)
+            } header: {
+                Text("appearance_dark_background")
+            } footer: {
+                Text("appearance_dark_background_detail")
+            }
+        }
+        .echoBackground()
+        .navigationTitle("settings_appearance_title")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -229,6 +258,7 @@ private struct SettingsLyricsServicesView: View {
         }
         .textInputAutocapitalization(.never)
         .autocorrectionDisabled()
+        .echoBackground()
         .navigationTitle("settingsview_lyrics_services")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -255,6 +285,7 @@ private struct AudioSettingsView: View {
                 }
             }
         }
+        .echoBackground()
         .navigationTitle("settingsview_audio")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: monoAudio) {

@@ -188,6 +188,7 @@ struct PlaylistDetailView: View {
             prompt: Text(LocalizedStringKey("MUSIC_APP_PLAYLIST_SEARCH_PLACEHOLDER_TEXT"))
         )
         .environment(\.editMode, $editMode)
+        .echoBackground()
         .navigationTitle(playlist.name)
         .onAppear {
             loadPlaylistImage()

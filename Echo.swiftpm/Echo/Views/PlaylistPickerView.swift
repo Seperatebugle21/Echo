@@ -68,6 +68,7 @@ struct PlaylistPickerView: View {
                     }
                 }
             }
+            .echoBackground()
             .navigationTitle(LocalizedStringKey("choose_playlist_title"))
             .tint(.primary)
             .toolbar {

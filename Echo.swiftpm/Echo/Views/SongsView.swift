@@ -149,6 +149,8 @@ struct SongsView: View {
             $editMode
         )
 
+        .echoBackground()
+
         .navigationTitle(
             LocalizedStringKey(
                 "songs_title"

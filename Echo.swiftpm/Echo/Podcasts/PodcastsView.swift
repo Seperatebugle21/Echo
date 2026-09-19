@@ -8,6 +8,7 @@ struct PodcastsView: View {
     @State private var searchGeneration = 0
     @FocusState private var isSearchFocused: Bool
     @State private var results: [PodcastShow] = []
+    @State private var episodeResults: [PodcastEpisode] = []
     @State private var loading = false
     @State private var failed = false
     @State private var retry = 0
@@ -20,33 +21,33 @@ struct PodcastsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    PodcastsOverview(
-                        recommendations: recommendations,
-                        recommendationsLoading: recommendationsLoading,
-                        recommendationsFailed: recommendationsFailed,
-                        retryRecommendations: { recommendationsRetry += 1 }
-                    )
-                    .opacity(isOverviewVisible ? 1 : 0)
-                    .offset(y: isOverviewVisible ? 0 : 18)
-                } else {
-                    PodcastSearchResults(
-                        query: query,
-                        results: results,
-                        loading: loading,
-                        failed: failed,
-                        retry: { retry += 1 }
-                    )
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            VStack(spacing: 0) {
+                if isSearchPresented { searchBar }
+                ScrollView {
+                    if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        PodcastsOverview(
+                            recommendations: recommendations,
+                            recommendationsLoading: recommendationsLoading,
+                            recommendationsFailed: recommendationsFailed,
+                            retryRecommendations: { recommendationsRetry += 1 }
+                        )
+                        .opacity(isOverviewVisible ? 1 : 0)
+                        .offset(y: isOverviewVisible ? 0 : 18)
+                    } else {
+                        PodcastSearchResults(
+                            query: query,
+                            results: results,
+                            episodes: episodeResults,
+                            loading: loading,
+                            failed: failed,
+                            retry: { retry += 1 }
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    }
                 }
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if isSearchPresented {
-                    searchBar
-                }
-            }
+            .echoBackground()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !isSearchPresented {
@@ -102,9 +103,10 @@ struct PodcastsView: View {
                 Image(systemName: "xmark")
                     .frame(width: 44, height: 44)
             }
-            .buttonStyle(.plain)
-            .glassEffect(.regular.interactive(), in: .circle)
-            .accessibilityLabel("action_close")
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .contentShape(.circle)
+            .accessibilityLabel("action_cancel")
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -117,6 +119,7 @@ struct PodcastsView: View {
         isSearchPresented = false
         query = ""
         results = []
+        episodeResults = []
         loading = false
         failed = false
         retry = 0
@@ -130,20 +133,29 @@ struct PodcastsView: View {
     private func search() async {
         let generation = searchGeneration
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard isSearchPresented, !term.isEmpty else { results = []; loading = false; failed = false; return }
+        guard isSearchPresented, !term.isEmpty else {
+            results = []; episodeResults = []; loading = false; failed = false
+            return
+        }
         loading = true
         failed = false
+        results = []
+        episodeResults = []
         do {
             try await Task.sleep(for: .milliseconds(500))
-            let shows = try await PodcastCatalog.shared.search(term, country: Locale.current.region?.identifier ?? "US")
+            let country = Locale.current.region?.identifier ?? "US"
+            async let shows = try? PodcastCatalog.shared.search(term, country: country)
+            async let episodes = try? PodcastCatalog.shared.searchEpisodes(term, country: country)
+            let (foundShows, foundEpisodes) = await (shows, episodes)
             try Task.checkCancellation()
             guard generation == searchGeneration, isSearchPresented,
                   term == query.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
-            results = shows
+            results = foundShows ?? []
+            episodeResults = foundEpisodes ?? []
+            failed = foundShows == nil || foundEpisodes == nil
             loading = false
         } catch {
-            guard !Task.isCancelled, generation == searchGeneration, isSearchPresented,
-                  term == query.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+            guard !Task.isCancelled, generation == searchGeneration else { return }
             failed = true
             loading = false
         }
@@ -186,7 +198,6 @@ private struct PodcastsOverview: View {
 
     var body: some View {
         let continuing = store.continueListening
-        let savedShows = store.savedShows
         let savedEpisodes = store.savedEpisodes
 
         LazyVStack(alignment: .leading, spacing: 32) {
@@ -211,14 +222,6 @@ private struct PodcastsOverview: View {
             )
 
             PodcastLibraryLinks()
-
-            if !savedShows.isEmpty {
-                PodcastShowStrip(
-                    title: "podcasts_saved_shows",
-                    shows: Array(savedShows.prefix(12)),
-                    showAllKind: .shows
-                )
-            }
 
             if !savedEpisodes.isEmpty {
                 PodcastSavedEpisodesSection(episodes: Array(savedEpisodes.prefix(4)))
@@ -246,9 +249,9 @@ private struct PodcastsHeader: View {
             } label: {
                 Image(systemName: "arrow.down.circle")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.accentColor)
                     .frame(width: 44, height: 44)
-                    .glassEffect(.regular.interactive(), in: .circle)
+                    .background(.regularMaterial, in: .circle)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("podcasts_downloads")
@@ -359,44 +362,29 @@ private struct PodcastResumeHero: View {
 }
 
 struct PodcastLibraryLinks: View {
+    var title: LocalizedStringKey = "podcasts_library"
+    var horizontalPadding: CGFloat = 16
     private let store = PodcastStore.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("podcasts_library")
-                .font(.title2.bold())
-                .padding(.horizontal)
-
-            GlassEffectContainer(spacing: 12) {
-                LazyVGrid(
-                    columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
-                    spacing: 12
-                ) {
-                    PodcastLibraryShortcut(
-                        title: "podcasts_saved_shows",
-                        symbol: "dot.radiowaves.left.and.right",
-                        color: .purple,
-                        count: store.savedShows.count,
-                        kind: .shows
-                    )
-                    PodcastLibraryShortcut(
-                        title: "podcasts_saved_episodes",
-                        symbol: "bookmark.fill",
-                        color: .orange,
-                        count: store.savedEpisodes.count,
-                        kind: .episodes
-                    )
-                    PodcastLibraryShortcut(
-                        title: "podcasts_downloads",
-                        symbol: "arrow.down.circle.fill",
-                        color: .blue,
-                        count: store.downloadedEpisodes.count,
-                        kind: .downloads
-                    )
+            Text(title).font(.title2.bold())
+            // Three persistent cards: no lazy glass region that can lose its drawing.
+            Grid(horizontalSpacing: 12, verticalSpacing: 12) {
+                GridRow {
+                    PodcastLibraryShortcut(title: "podcasts_saved_shows", symbol: "dot.radiowaves.left.and.right",
+                        color: .purple, count: store.savedShows.count, kind: .shows)
+                    PodcastLibraryShortcut(title: "podcasts_saved_episodes", symbol: "bookmark.fill",
+                        color: .orange, count: store.savedEpisodes.count, kind: .episodes)
+                }
+                GridRow {
+                    PodcastLibraryShortcut(title: "podcasts_downloads", symbol: "arrow.down.circle.fill",
+                        color: .blue, count: store.downloadedEpisodes.count, kind: .downloads)
+                        .gridCellColumns(2)
                 }
             }
-            .padding(.horizontal)
         }
+        .padding(.horizontal, horizontalPadding)
     }
 }
 
@@ -411,28 +399,24 @@ private struct PodcastLibraryShortcut: View {
         NavigationLink {
             PodcastLibraryView(kind: kind)
         } label: {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 12) {
                 Image(systemName: symbol)
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(color.gradient)
+                    .foregroundStyle(color)
                     .frame(width: 42, height: 42)
                     .background(color.opacity(0.14), in: .circle)
-
-                Spacer(minLength: 0)
-
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-
-                Text(count, format: .number)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(count, format: .number).font(.caption.weight(.medium)).foregroundStyle(.secondary)
             }
             .padding(16)
             .frame(maxWidth: .infinity, minHeight: 148, alignment: .leading)
+            .background(.regularMaterial, in: .rect(cornerRadius: 24))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24).strokeBorder(color.opacity(0.22), lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
             .contentShape(.rect(cornerRadius: 24))
-            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 24))
         }
         .buttonStyle(.plain)
     }
@@ -672,41 +656,57 @@ private struct PodcastSavedEpisodesSection: View {
 }
 
 private struct PodcastSearchResults: View {
+    private enum Scope { case all, shows, episodes }
+    @State private var scope = Scope.all
     let query: String
     let results: [PodcastShow]
+    let episodes: [PodcastEpisode]
     let loading: Bool
     let failed: Bool
     let retry: () -> Void
 
     var body: some View {
-        LazyVStack(alignment: .leading, spacing: 14) {
+        LazyVStack(alignment: .leading, spacing: 16) {
+            Picker("podcasts_search_results", selection: $scope) {
+                Text("podcasts_search_all").tag(Scope.all)
+                Text("podcasts_title").tag(Scope.shows)
+                Text("podcasts_episodes_title").tag(Scope.episodes)
+            }
+            .pickerStyle(.segmented)
             if loading {
-                ProgressView("podcasts_loading")
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 72)
-            } else if failed {
-                ContentUnavailableView {
-                    Label("podcasts_search_error", systemImage: "wifi.exclamationmark")
-                } actions: {
-                    Button("podcasts_retry", action: retry)
-                        .buttonStyle(.glass)
-                }
-                .padding(.top, 36)
-            } else if results.isEmpty {
-                ContentUnavailableView.search(text: query)
-                    .padding(.top, 36)
+                ProgressView("podcasts_loading").frame(maxWidth: .infinity).padding(.top, 40)
             } else {
-                Text("podcasts_search_results")
-                    .font(.title2.bold())
-                    .padding(.bottom, 2)
-
-                GlassEffectContainer(spacing: 12) {
-                    LazyVStack(spacing: 12) {
-                        ForEach(results) { show in
-                            PodcastShowLink(show: show)
-                                .padding(14)
-                                .contentShape(.rect(cornerRadius: 22))
-                                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 22))
+                if failed {
+                    Label("podcasts_search_partial_error", systemImage: "wifi.exclamationmark")
+                        .foregroundStyle(.secondary)
+                    Button("podcasts_retry", action: retry).buttonStyle(.bordered)
+                }
+                if !failed && ((scope == .all && results.isEmpty && episodes.isEmpty)
+                    || (scope == .shows && results.isEmpty) || (scope == .episodes && episodes.isEmpty)) {
+                    ContentUnavailableView.search(text: query)
+                }
+                if scope != .episodes && !results.isEmpty {
+                    HStack {
+                        Text("podcasts_title").font(.title2.bold())
+                        Spacer()
+                        if scope == .all && results.count > 5 {
+                            Button("podcasts_show_all") { scope = .shows }.font(.subheadline)
+                        }
+                    }
+                    ForEach(scope == .all ? Array(results.prefix(5)) : results) { show in
+                        PodcastShowLink(show: show).padding(14)
+                            .background(.regularMaterial, in: .rect(cornerRadius: 22))
+                    }
+                }
+                if scope != .shows && !episodes.isEmpty {
+                    Text("podcasts_episodes_title").font(.title2.bold())
+                    ForEach(episodes) { episode in
+                        VStack(alignment: .leading, spacing: 8) {
+                            NavigationLink { PodcastDetailView(show: episode.show) } label: {
+                                Label(episode.show.title, systemImage: "dot.radiowaves.left.and.right")
+                                    .font(.subheadline)
+                            }
+                            PodcastEpisodeRow(episode: episode)
                         }
                     }
                 }
@@ -719,6 +719,7 @@ private struct PodcastSearchResults: View {
 struct PodcastLibraryView: View {
     enum Kind { case shows, episodes, downloads }
     let kind: Kind
+    @State private var query = ""
     private let store = PodcastStore.shared
     private var title: LocalizedStringKey {
         switch kind {
@@ -732,10 +733,11 @@ struct PodcastLibraryView: View {
             GlassEffectContainer(spacing: 20) {
                 LazyVStack(alignment: .leading, spacing: 20) {
                     if kind == .shows {
-                        if store.savedShows.isEmpty { empty }
-                        ForEach(store.savedShows) { PodcastShowLink(show: $0) }
+                        let shows = store.savedShows.filter { $0.matches(query) }
+                        if shows.isEmpty { empty }
+                        ForEach(shows) { PodcastShowLink(show: $0) }
                     } else {
-                        let episodes = kind == .episodes ? store.savedEpisodes : store.downloadedEpisodes
+                        let episodes = (kind == .episodes ? store.savedEpisodes : store.downloadedEpisodes).filter { $0.matches(query) }
                         if kind == .downloads {
                             Text("podcasts_storage \(ByteCountFormatter.string(fromByteCount: store.downloadBytes, countStyle: .file))")
                                 .font(.subheadline).foregroundStyle(.secondary)
@@ -747,11 +749,17 @@ struct PodcastLibraryView: View {
                 .padding()
             }
         }
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "podcasts_search")
+        .echoBackground()
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }
-    private var empty: some View {
-        ContentUnavailableView("podcasts_empty", systemImage: "dot.radiowaves.left.and.right", description: Text("podcasts_empty_hint"))
+    @ViewBuilder private var empty: some View {
+        if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            ContentUnavailableView("podcasts_empty", systemImage: "dot.radiowaves.left.and.right", description: Text("podcasts_empty_hint"))
+        } else {
+            ContentUnavailableView.search(text: query)
+        }
     }
 }
 
@@ -808,6 +816,7 @@ private struct PodcastShowLink: View {
 
 struct PodcastDetailView: View {
     let show: PodcastShow
+    @State private var query = ""
     @State private var episodes: [PodcastEpisode] = []
     @State private var loading = true
     @State private var failed = false
@@ -839,10 +848,16 @@ struct PodcastDetailView: View {
                     if !loading && !failed && episodes.isEmpty {
                         ContentUnavailableView("podcasts_no_episodes", systemImage: "dot.radiowaves.left.and.right")
                     }
-                    ForEach(episodes) { PodcastEpisodeRow(episode: $0) }
+                    let filtered = episodes.filter { $0.matches(query) }
+                    if !query.isEmpty && filtered.isEmpty && !loading && !episodes.isEmpty {
+                        ContentUnavailableView.search(text: query)
+                    }
+                    ForEach(filtered) { PodcastEpisodeRow(episode: $0) }
                 }.padding()
             }
         }
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "podcasts_search_episodes")
+        .echoBackground()
         .navigationTitle(show.title)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: show.id) {

@@ -197,6 +197,8 @@ struct MusicBrainzSearchView:
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "musicbrainzsearchview_title"
         )

@@ -197,6 +197,8 @@ struct DeveloperView: View {
             )
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "developerview_title"
         )

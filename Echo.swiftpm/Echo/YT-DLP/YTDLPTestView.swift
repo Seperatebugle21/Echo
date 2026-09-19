@@ -284,6 +284,7 @@ struct YTDLPTestView: View {
                 }
                 .padding()
             }
+            .echoBackground()
             .navigationTitle("yt-dlp")
             .navigationBarTitleDisplayMode(
                 .inline

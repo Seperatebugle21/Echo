@@ -180,6 +180,8 @@ struct HomeView: View {
             }
 
 
+            .echoBackground()
+
             // MARK: - Settings
 
             .sheet(

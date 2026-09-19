@@ -373,6 +373,8 @@ struct LibraryView: View {
                 .padding(.bottom, 120)
             }
 
+            .echoBackground()
+
             .navigationTitle(
                 "libraryview_title"
             )
@@ -1063,6 +1065,8 @@ struct ArtistsView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "libraryview_artists"
         )
@@ -1175,6 +1179,8 @@ struct ArtistDetailView: View {
                 }
             }
         }
+
+        .echoBackground()
 
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -1339,6 +1345,8 @@ struct AlbumsView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "libraryview_albums"
         )
@@ -1423,6 +1431,8 @@ struct AlbumDetailView: View {
                 }
             }
         }
+
+        .echoBackground()
 
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -1528,6 +1538,7 @@ struct SongCollectionView: View {
             }
             .buttonStyle(.plain)
         }
+        .echoBackground()
         .navigationTitle(title)
     }
 

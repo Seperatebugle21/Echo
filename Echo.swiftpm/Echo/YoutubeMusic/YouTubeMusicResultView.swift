@@ -178,6 +178,9 @@ struct YouTubeMusicResultView:
             )
 
 
+            .echoBackground()
+
+
             .navigationTitle(
                 "youtubemusicresultview_song"
             )

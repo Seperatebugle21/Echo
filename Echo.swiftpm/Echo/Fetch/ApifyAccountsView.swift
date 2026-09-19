@@ -55,6 +55,8 @@ struct ApifyAccountsView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "apifyaccountsview_title"
         )

@@ -67,6 +67,7 @@ struct CreatePlaylistView: View {
                     )
                 }
             }
+            .echoBackground()
             .navigationTitle(Text(LocalizedStringKey("create_playlist_navigation_title")))
             .navigationBarTitleDisplayMode(.inline)
             .onChange(of: selectedImage) {

@@ -193,6 +193,7 @@ struct FavoritesView: View {
             prompt: Text(LocalizedStringKey("MUSIC_APP_FAVORITES_SEARCH_PLACEHOLDER_TEXT"))
         )
         .environment(\.editMode, $editMode)
+        .echoBackground()
         .navigationTitle(Text(LocalizedStringKey("favorites_navigation_title")))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {

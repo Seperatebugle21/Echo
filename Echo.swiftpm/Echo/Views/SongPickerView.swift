@@ -209,6 +209,8 @@ struct SongPickerView: View {
                     )
             )
 
+            .echoBackground()
+
             .navigationTitle(
                 isFavorites
                 ?

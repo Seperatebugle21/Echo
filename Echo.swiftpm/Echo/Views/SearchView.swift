@@ -284,6 +284,7 @@ struct SearchView: View {
                 .padding(.bottom, 120)
             }
 
+            .echoBackground()
             .toolbar(
                 .hidden,
                 for: .navigationBar

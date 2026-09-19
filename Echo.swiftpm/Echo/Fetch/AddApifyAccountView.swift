@@ -76,6 +76,8 @@ struct AddApifyAccountView: View {
                 }
             }
 
+            .echoBackground()
+
             .navigationTitle(
                 "addapifyaccountview_title"
             )

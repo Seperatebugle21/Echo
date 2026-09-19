@@ -46,6 +46,7 @@ struct PlaylistsView: View {
             .padding(.top, 8)
             .padding(.bottom, 120)
         }
+        .echoBackground()
         .navigationTitle("playlists_title")
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showCreatePlaylist) {
@@ -172,6 +173,7 @@ struct PlaylistsView: View {
             .onChange(of: selectedImage) {
                 loadSelectedImage()
             }
+            .echoBackground()
             .navigationTitle("edit_info_title")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

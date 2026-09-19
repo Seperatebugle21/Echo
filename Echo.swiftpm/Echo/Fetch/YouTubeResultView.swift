@@ -73,6 +73,8 @@ struct YouTubeResultView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "youtuberesultview_title"
         )

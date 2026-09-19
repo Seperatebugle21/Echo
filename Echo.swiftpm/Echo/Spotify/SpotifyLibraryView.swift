@@ -142,6 +142,8 @@ struct SpotifyLibraryView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "spotifylibraryview_title"
         )

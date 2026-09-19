@@ -171,6 +171,8 @@ struct SpotifyPlaylistDetailView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             playlist.name
         )

@@ -2,6 +2,354 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+"podcasts_search_all": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "All"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alles"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Tout"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alle"
+        }
+      }
+    }
+  },
+"podcasts_episodes_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Episodes"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afleveringen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Épisodes"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Folgen"
+        }
+      }
+    }
+  },
+  "podcasts_search_episodes": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search episodes"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoek afleveringen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechercher des épisodes"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Folgen suchen"
+        }
+      }
+    }
+  },
+  "podcasts_search_partial_error": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Some results could not be loaded."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sommige resultaten konden niet worden geladen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Certains résultats n’ont pas pu être chargés."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Einige Ergebnisse konnten nicht geladen werden."
+        }
+      }
+    }
+  },
+  "podcasts_transcript": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Transcript"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Transcriptie"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Transcription"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Transkript"
+        }
+      }
+    }
+  },
+  "podcasts_transcript_error": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Could not load the transcript"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Transcriptie kon niet worden geladen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Impossible de charger la transcription"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Transkript konnte nicht geladen werden"
+        }
+      }
+    }
+  },
+  "podcasts_transcript_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No transcript available"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geen transcriptie beschikbaar"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aucune transcription disponible"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kein Transkript verfügbar"
+        }
+      }
+    }
+  },
+  "podcasts_transcript_unavailable_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The publisher has not provided a supported transcript in this episode’s feed."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De maker biedt voor deze aflevering geen ondersteunde transcriptie aan in de podcastfeed."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Le créateur ne fournit pas de transcription compatible dans le flux de cet épisode."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Für diese Folge stellt der Herausgeber im Podcast-Feed kein unterstütztes Transkript bereit."
+        }
+      }
+    }
+  },
+  "appearance_dark_background": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dark mode background"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Achtergrond in donkere modus"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fond du mode sombre"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Hintergrund im Dunkelmodus"
+        }
+      }
+    }
+  },
+  "appearance_background_black": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Black"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zwart"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Noir"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Schwarz"
+        }
+      }
+    }
+  },
+  "appearance_background_charcoal": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dark grey"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Donkergrijs"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gris foncé"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dunkelgrau"
+        }
+      }
+    }
+  },
+  "appearance_dark_background_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Used whenever dark mode is active, including when following the system setting."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wordt gebruikt wanneer de donkere modus actief is, ook bij de systeeminstelling."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Utilisé lorsque le mode sombre est actif, y compris avec le réglage système."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wird verwendet, wenn der Dunkelmodus aktiv ist, auch bei der Systemeinstellung."
+        }
+      }
+    }
+  },
 "podcasts_play": {
     "extractionState": "manual",
     "localizations": {

@@ -1807,6 +1807,9 @@ struct YouTubeMusicSearchView:
         }
 
 
+        .echoBackground()
+
+
         .navigationTitle(
             "youtubemusicsearchview_title"
         )

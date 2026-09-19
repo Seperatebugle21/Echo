@@ -124,7 +124,9 @@ targets:
       - path: Tests/EchoPodcastTests.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastModels.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastCatalog.swift
+      - path: Echo.swiftpm/Echo/Podcasts/PodcastTranscript.swift
       - path: Echo.swiftpm/Echo/Views/TabBarSettingsView.swift
+      - path: Echo.swiftpm/Echo/Views/EchoAppearance.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.podcast-tests

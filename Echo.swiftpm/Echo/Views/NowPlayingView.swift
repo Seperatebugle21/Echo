@@ -29,6 +29,7 @@ struct NowPlayingView: View {
     @State private var showQueue = false
     @State private var showPlaylistPicker = false
     @State private var showLyrics = false
+    @State private var transcriptEpisode: PodcastEpisode?
 
     var body: some View {
 
@@ -319,6 +320,19 @@ struct NowPlayingView: View {
 
 
                     }
+                    if let id = audioPlayer.currentSong?.podcastEpisodeID,
+                       let episode = PodcastStore.shared.state.episodes[id] {
+                        Button {
+                            transcriptEpisode = episode
+                        } label: {
+                            Image(systemName: "text.bubble")
+                                .font(.title3)
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("podcasts_transcript")
+                    }
                     // Queue
 
                     Button {
@@ -393,6 +407,10 @@ struct NowPlayingView: View {
             }
         }
 
+
+        .sheet(item: $transcriptEpisode) { episode in
+            PodcastTranscriptView(episode: episode)
+        }
 
         // MARK: - Lyrics Sheet
 

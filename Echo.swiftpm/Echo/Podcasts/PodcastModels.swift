@@ -7,6 +7,11 @@ struct PodcastShow: Codable, Hashable, Identifiable, Sendable {
     let author: String
     let artworkURL: URL?
     let feedURL: URL
+
+    func matches(_ query: String) -> Bool {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return term.isEmpty || title.localizedStandardContains(term) || author.localizedStandardContains(term)
+    }
 }
 
 struct PodcastEpisode: Codable, Hashable, Identifiable, Sendable {
@@ -18,6 +23,18 @@ struct PodcastEpisode: Codable, Hashable, Identifiable, Sendable {
     let duration: Double?
     let audioURL: URL
     let artworkURL: URL?
+    var transcripts: [PodcastTranscriptReference]? = nil
+
+    static func identifier(showID: Int, guid: String?, audioURL: URL) -> String {
+        let guid = guid?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return "\(showID):\(guid.isEmpty ? audioURL.absoluteString : guid)"
+    }
+
+    func matches(_ query: String) -> Bool {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return term.isEmpty || title.localizedStandardContains(term)
+            || description.localizedStandardContains(term) || show.matches(term)
+    }
 
     // Stable across refreshes, including GUIDs that are not UUIDs.
     var fileKey: String {
@@ -34,6 +51,12 @@ struct PodcastEpisode: Codable, Hashable, Identifiable, Sendable {
         }.joined(separator: "-")
         return UUID(uuidString: value)!
     }
+}
+
+struct PodcastTranscriptReference: Codable, Hashable, Sendable {
+    let url: URL
+    let type: String
+    var language: String? = nil
 }
 
 struct PodcastListeningState: Codable {

@@ -50,6 +50,7 @@ struct FetchView: View {
             .task {
                 await refreshForCurrentMethod()
             }
+            .echoBackground()
             .onChange(
                 of: apifySettings.downloadMethod
             ) { _, newMethod in
@@ -141,6 +142,7 @@ struct FetchView: View {
             NavigationStack {
 
                 FetchQueueView()
+                    .echoBackground()
                     .navigationTitle(
                         "fetchview_downloads"
                     )

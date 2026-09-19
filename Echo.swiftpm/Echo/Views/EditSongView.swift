@@ -33,6 +33,7 @@ struct EditSongView: View {
                     )
                 }
             }
+            .echoBackground()
             .navigationTitle(Text(LocalizedStringKey("edit_song_navigation_title")))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

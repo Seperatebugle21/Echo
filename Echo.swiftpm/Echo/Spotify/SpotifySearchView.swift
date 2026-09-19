@@ -77,6 +77,8 @@ struct SpotifySearchView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "spotifysearchview_title"
         )

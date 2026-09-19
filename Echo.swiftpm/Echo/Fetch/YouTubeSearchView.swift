@@ -114,6 +114,8 @@ struct YouTubeSearchView: View {
             }
         }
 
+        .echoBackground()
+
         .navigationTitle(
             "youtubesearchview_find_audio"
         )

@@ -52,6 +52,7 @@ struct EqualizerView: View {
                 Text("equalizerview_headroom_hint")
             }
         }
+        .echoBackground()
         .navigationTitle("equalizerview_title")
         .navigationBarTitleDisplayMode(.inline)
     }
