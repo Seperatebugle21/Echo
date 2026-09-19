@@ -2,6 +2,412 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+"widget_rounded_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Soft Cover"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speler · Zachte cover"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lecteur · Pochette douce"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Sanftes Cover"
+        }
+      }
+    }
+  },
+  "widget_rounded_description": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album artwork, favorites and playback controls on a colorful background."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albumcover, favoriet en muziekbediening op een gekleurde achtergrond."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pochette, favoris et commandes de lecture sur un fond coloré."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albumcover, Favoriten und Wiedergabesteuerung vor einem farbigen Hintergrund."
+        }
+      }
+    }
+  },
+  "widget_cover_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Album Cover"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speler · Albumcover"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lecteur · Pochette d’album"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Albumcover"
+        }
+      }
+    }
+  },
+  "widget_cover_description": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Large album artwork with title and artist. Tap to open Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Een grote albumcover met titel en artiest. Tik om Echo te openen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Une grande pochette avec le titre et l’artiste. Touchez pour ouvrir Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Großes Albumcover mit Titel und Künstler. Tippe, um Echo zu öffnen."
+        }
+      }
+    }
+  },
+  "widget_edge_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Full Cover"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speler · Volle cover"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lecteur · Pleine pochette"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Vollflächiges Cover"
+        }
+      }
+    }
+  },
+  "widget_edge_description": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "A wide player with edge-to-edge artwork and playback controls."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Een brede speler met randvullende cover en afspeelknoppen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Un lecteur large avec pochette bord à bord et commandes de lecture."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ein breiter Player mit randlosem Cover und Wiedergabesteuerung."
+        }
+      }
+    }
+  },
+  "widget_compact_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Compact"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speler · Compact"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lecteur · Compact"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Player · Kompakt"
+        }
+      }
+    }
+  },
+  "widget_compact_description": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Artwork, favorites and previous, play/pause and next controls in a small widget."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cover, favoriet en vorige, pauze en volgende in een kleine widget."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pochette, favoris et commandes précédent, lecture/pause et suivant dans un petit widget."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cover, Favoriten sowie Zurück, Wiedergabe/Pause und Weiter in einem kleinen Widget."
+        }
+      }
+    }
+  },
+  "widget_quick_picks_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Quick Picks"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Quick Picks"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sélection rapide"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Schnellauswahl"
+        }
+      }
+    }
+  },
+  "widget_quick_picks_description": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your Quick Picks from Echo. Tap a cover to play that song."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw Quick Picks uit Echo. Tik op een cover om dat nummer af te spelen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre sélection rapide Echo. Touchez une pochette pour écouter le morceau."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Schnellauswahl aus Echo. Tippe auf ein Cover, um den Titel abzuspielen."
+        }
+      }
+    }
+  },
+  "widget_lock_screen_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open Echo"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo openen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ouvrir Echo"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo öffnen"
+        }
+      }
+    }
+  },
+  "widget_lock_screen_description": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open Echo directly from your Lock Screen."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open Echo rechtstreeks vanaf je toegangsscherm."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ouvrez Echo directement depuis votre écran verrouillé."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Öffne Echo direkt vom Sperrbildschirm."
+        }
+      }
+    }
+  },
+  "widget_empty_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your music, nearby"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je muziek, dichtbij"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre musique, à portée de main"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Musik, ganz nah"
+        }
+      }
+    }
+  },
+  "widget_empty_description": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open Echo and add music."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open Echo en voeg muziek toe."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ouvrez Echo et ajoutez de la musique."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Öffne Echo und füge Musik hinzu."
+        }
+      }
+    }
+  },
 "podcasts_search_all": {
     "extractionState": "manual",
     "localizations": {

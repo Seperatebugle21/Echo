@@ -20,9 +20,9 @@ struct EchoLockScreenWidget: Widget {
                     for: .widget
                 )
         }
-        .configurationDisplayName("Echo openen")
+        .configurationDisplayName("widget_lock_screen_title")
         .description(
-            "Open Echo rechtstreeks vanaf je toegangsscherm."
+            "widget_lock_screen_description"
         )
         .supportedFamilies([
             .accessoryCircular
@@ -45,7 +45,7 @@ private struct EchoLockScreenWidgetView: View {
         .widgetURL(
             URL(string: "echo://open")
         )
-        .accessibilityLabel("Open Echo")
+        .accessibilityLabel("widget_lock_screen_title")
     }
 }
 

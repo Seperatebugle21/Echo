@@ -8,8 +8,8 @@ struct EchoRoundedPlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.rounded, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .rounded)
         }
-        .configurationDisplayName("Speler · Zachte cover")
-        .description("Albumcover, favoriet en muziekbediening op een gekleurde achtergrond.")
+        .configurationDisplayName("widget_rounded_title")
+        .description("widget_rounded_description")
         .supportedFamilies([.systemMedium])
         .contentMarginsDisabled()
     }
@@ -20,8 +20,8 @@ struct EchoCoverPlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.cover, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .cover)
         }
-        .configurationDisplayName("Speler · Albumcover")
-        .description("Een grote albumcover met titel en artiest. Tik om Echo te openen.")
+        .configurationDisplayName("widget_cover_title")
+        .description("widget_cover_description")
         .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()
     }
@@ -32,8 +32,8 @@ struct EchoEdgePlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.edge, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .edge)
         }
-        .configurationDisplayName("Speler · Volle cover")
-        .description("Een brede speler met randvullende cover en afspeelknoppen.")
+        .configurationDisplayName("widget_edge_title")
+        .description("widget_edge_description")
         .supportedFamilies([.systemMedium])
         .contentMarginsDisabled()
     }
@@ -44,8 +44,8 @@ struct EchoCompactPlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.compact, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .compact)
         }
-        .configurationDisplayName("Speler · Compact")
-        .description("Cover, favoriet en vorige, pauze en volgende in een kleine widget.")
+        .configurationDisplayName("widget_compact_title")
+        .description("widget_compact_description")
         .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()
     }
@@ -192,10 +192,16 @@ struct EchoWidgetEmptyView: View {
         VStack(alignment: .leading, spacing: 7) {
             Image(systemName: sharedContainerAvailable ? "music.note" : "exclamationmark.icloud")
                 .font(.title2)
-            Text(sharedContainerAvailable ? "Je muziek, dichtbij" : "Widget niet gekoppeld")
-                .font(.headline)
-            Text(sharedContainerAvailable ? "Open Echo en voeg muziek toe." : "Geen toegang tot gedeelde opslag. Installeer de nieuwste Echo-build met de widgetextensie via SideStore en open Echo.")
-                .font(.caption).foregroundStyle(.white.opacity(0.8))
+            if sharedContainerAvailable {
+                Text("widget_empty_title").font(.headline)
+                Text("widget_empty_description")
+                    .font(.caption).foregroundStyle(.white.opacity(0.8))
+            } else {
+                // Connection errors intentionally stay in English in every locale.
+                Text(verbatim: "Widget not connected").font(.headline)
+                Text(verbatim: "Echo and this widget cannot share music data. Reinstall Echo with its widget extension, then open the app.")
+                    .font(.caption).foregroundStyle(.white.opacity(0.8))
+            }
         }
         .padding(16).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
@@ -206,8 +212,8 @@ struct EchoQuickPicksWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.quickPicks, provider: EchoWidgetProvider()) { entry in
             EchoQuickPicksView(entry: entry)
         }
-        .configurationDisplayName("Quick Picks")
-        .description("Jouw Quick Picks uit Echo. Tik op een cover om dat nummer af te spelen.")
+        .configurationDisplayName("widget_quick_picks_title")
+        .description("widget_quick_picks_description")
         .supportedFamilies([.systemMedium])
         .contentMarginsDisabled()
     }
@@ -222,7 +228,7 @@ struct EchoQuickPicksView: View {
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Quick Picks").font(.caption.weight(.bold))
+                        Text("widget_quick_picks_title").font(.caption.weight(.bold))
                         Spacer()
                         Image(systemName: "waveform").foregroundStyle(.white.opacity(0.65))
                     }

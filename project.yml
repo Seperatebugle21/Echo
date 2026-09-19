@@ -66,6 +66,8 @@ targets:
       - path: EchoWidget
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetModels.swift
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetIntents.swift
+      - path: Echo.swiftpm/Echo/Localizable.xcstrings
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.widget
