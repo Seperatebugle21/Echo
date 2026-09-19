@@ -192,7 +192,7 @@ struct SettingsView: View {
 
 private struct AppearanceSettingsView: View {
     @AppStorage("appearanceMode") private var appearanceMode = "system"
-    @AppStorage("darkBackgroundStyle") private var darkBackgroundStyle = "black"
+    @AppStorage("darkBackgroundStyle") private var darkBackgroundStyle = "charcoal"
 
     var body: some View {
         Form {

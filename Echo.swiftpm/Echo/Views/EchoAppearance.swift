@@ -1,7 +1,7 @@
 import SwiftUI
 
 private struct EchoBackgroundModifier: ViewModifier {
-    @AppStorage("darkBackgroundStyle") private var darkBackgroundStyle = "black"
+    @AppStorage("darkBackgroundStyle") private var darkBackgroundStyle = "charcoal"
     @Environment(\.colorScheme) private var colorScheme
 
     private var usesCharcoal: Bool { colorScheme == .dark && darkBackgroundStyle == "charcoal" }
