@@ -572,7 +572,8 @@ private struct PodcastEpisodeCompactCard: View {
             .buttonStyle(.glass)
         }
         .padding(16)
-        .frame(width: 280, minHeight: 174, alignment: .topLeading)
+        .frame(width: 280, alignment: .leading)
+        .frame(minHeight: 174, alignment: .topLeading)
         .glassEffect(.regular, in: .rect(cornerRadius: 24))
     }
 }
