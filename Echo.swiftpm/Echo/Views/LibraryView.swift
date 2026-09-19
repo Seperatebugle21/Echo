@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct AlbumGroup: Identifiable {
 
@@ -12,6 +13,11 @@ struct AlbumGroup: Identifiable {
 }
 
 struct LibraryView: View {
+    @State private var showImporter = false
+    @State private var isImporting = false
+    @State private var importProgress = 0
+    @State private var importTotal = 0
+
     @Environment(MusicLibraryManager.self)
     private var library
 
@@ -381,7 +387,90 @@ struct LibraryView: View {
             .navigationBarTitleDisplayMode(
                 .large
             )
+            .toolbar {
+                ToolbarItem(placement: .largeTitle) {
+                    HStack(alignment: .center) {
+                        Text("libraryview_title")
+                            .font(.largeTitle.bold())
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer(minLength: 16)
+                        Button {
+                            showImporter = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title3)
+                        }
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.circle)
+                        .disabled(isImporting)
+                        .accessibilityLabel("add_music_action")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .sharedBackgroundVisibility(.hidden)
+            }
+            .fileImporter(isPresented: $showImporter, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in
+                switch result {
+                case .success(let files):
+                    guard !files.isEmpty else { return }
+                    isImporting = true
+                    importProgress = 0
+                    importTotal = files.count
+                    Task { @MainActor in
+                        defer { isImporting = false }
+                        for file in files {
+                            await importFile(file)
+                            importProgress += 1
+                        }
+                    }
+                case .failure(let error):
+                    print("Import error:", error.localizedDescription)
+                }
+            }
+            .overlay {
+                if isImporting {
+                    ZStack {
+                        Color.black.opacity(0.4).ignoresSafeArea()
+                        VStack(spacing: 16) {
+                            ProgressView(value: Double(importProgress), total: Double(importTotal))
+                                .progressViewStyle(.circular)
+                                .scaleEffect(1.5)
+                            Text("songsview_importing").font(.headline)
+                            Text("\(importProgress) / \(importTotal)")
+                                .font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        .padding(24)
+                        .background(.regularMaterial, in: .rect(cornerRadius: 16))
+                        .shadow(radius: 10)
+                    }
+                }
+            }
+            .alert("alert_duplicate_title", isPresented: Binding(
+                // Do not compete with SongsView's alert when navigating there.
+                get: { isImporting && library.showDuplicateAlert },
+                set: { if isImporting { library.showDuplicateAlert = $0 } }
+            )) {
+                Button("action_skip") { library.resolveDuplicate(choice: .skip, applyToAll: false) }
+                Button("action_replace", role: .destructive) { library.resolveDuplicate(choice: .replace, applyToAll: false) }
+                Button("action_skip_all") { library.resolveDuplicate(choice: .skip, applyToAll: true) }
+                Button("action_replace_all", role: .destructive) { library.resolveDuplicate(choice: .replace, applyToAll: true) }
+                Button("action_cancel", role: .cancel) {}
+            } message: {
+                Text("alert_duplicate_message \(library.duplicateSongName)")
+            }
         }
+    }
+
+    @MainActor private func importFile(_ file: URL) async {
+        let hasAccess = file.startAccessingSecurityScopedResource()
+        defer { if hasAccess { file.stopAccessingSecurityScopedResource() } }
+        library.importSong(from: file)
+        // Keep this file accessible until the duplicate decision is finished,
+        // and do not overwrite the pending duplicate with the next selected file.
+        while library.showDuplicateAlert {
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        try? await Task.sleep(for: .milliseconds(10))
     }
 }
 
