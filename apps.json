@@ -1,0 +1,45 @@
+{
+  "name": "Echo - MusicApp",
+  "identifier": "com.echomusoc.repo",
+  "apps": [
+    {
+      "name": "Echo",
+      "bundleIdentifier": "com.echomusic.app",
+      "developerName": "Seperatebugle21",
+      "version": "v1.0",
+      "versionDate": "2026-09-19T22:10:45Z",
+      "downloadURL": "https://github.com/Seperatebugle21/Echo/releases/download/v1.0/Echo.ipa",
+      "localizedDescription": "## Echo — First Release
+
+The first release of Echo brings local music, podcasts, and audio discovery together in a native iPhone and iPad app built with Swift and SwiftUI.
+
+### Highlights
+
+- **Your music, organized:** Import audio files, build playlists, and manage metadata and artwork for your personal offline library.
+- **Podcasts in the same player:** Discover shows, stream or download episodes, and continue listening from your saved position.
+- **Spotify playlist transfer:** Bring playlists into Echo, reuse matching songs from your library, and queue missing tracks through Fetch.
+- **Integrated audio downloads:** Search supported sources and import audio with configurable quality, metadata, and artwork.
+- **Playback and sound control:** Background listening, AirPlay, a shared music and podcast queue, and a six-band equalizer for local music.
+- **Synchronized lyrics:** Follow lyrics during playback and jump to individual lines when timing data is available.
+- **Interactive widgets:** Control playback and access recommended tracks directly from your Home Screen.
+
+### Installation
+
+1. Download **Echo.ipa** from the release assets.
+2. Install it through **SideStore**, keeping the widget extension enabled.
+3. Open Echo and start playback before adding widgets.
+
+### Requirements
+
+**iOS or iPadOS 26.0 or later.**
+
+Some online features require provider credentials or additional configuration. See the [README](https://github.com/Seperatebugle21/Echo/blob/Widget/README.md) for setup details.
+
+### Feedback
+
+Feedback and bug reports are welcome through [GitHub Issues](https://github.com/Seperatebugle21/Echo/issues).",
+      "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/main/icon.png",
+      "tintColor": "007AFF"
+    }
+  ]
+}
