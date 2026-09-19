@@ -22,6 +22,7 @@ jobs:
           {
             "name": "Echo - MusicApp",
             "identifier": "com.echomusic.repo",
+            "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/Widget/Echo.swiftpm/Assets.xcassets/AppIcon.appiconset/AppIcon24.png",
             "apps": [
               {
                 "name": "Echo",
@@ -31,7 +32,7 @@ jobs:
                 "versionDate": "${{ github.event.release.published_at }}",
                 "downloadURL": "${{ github.event.release.assets[0].browser_download_url }}",
                 "localizedDescription": "The first release of Echo brings local music, podcasts, and audio discovery together.",
-                "iconURL": "https://raw.githubusercontent.com/${{ github.repository }}/main/icon.png",
+                "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/Widget/Echo.swiftpm/Assets.xcassets/AppIcon.appiconset/AppIcon24.png",
                 "tintColor": "007AFF",
                 "size": ${{ github.event.release.assets[0].size }}
               }
