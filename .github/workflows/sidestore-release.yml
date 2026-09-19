@@ -13,13 +13,15 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          ref: Widget # Vervang 'main' door 'Widget' als apps.json in de Widget branch moet staan
 
       - name: Generate apps.json
         run: |
           cat << 'EOF' > apps.json
           {
-            "name": "Echo-MusicApp",
-            "identifier": "com.echomusic.repo",
+            "name": "Echo - MusicApp",
+            "identifier": "com.echomusoc.repo",
             "apps": [
               {
                 "name": "Echo",
@@ -42,4 +44,4 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add apps.json
           git commit -m "Update SideStore source for release ${{ github.event.release.tag_name }}" || exit 0
-          git push
+          git push origin HEAD:${{ github.event.repository.default_branch }}
