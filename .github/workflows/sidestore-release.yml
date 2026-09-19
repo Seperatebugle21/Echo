@@ -32,7 +32,7 @@ jobs:
             "versionDate": "2026-09-19T22:10:45Z",
             "downloadURL": "https://github.com/Seperatebugle21/Echo/releases/download/v1.0/Echo.ipa",
             "localizedDescription": "The first release of Echo brings local music, podcasts, and audio discovery together in a native iPhone and iPad app built with Swift and SwiftUI.",
-            "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/Widget/Widget/Echo.swiftpm/Assets.xcassets/AppIcon.appiconset/AppIcon24.png",
+            "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/Widget/Echo.swiftpm/Assets.xcassets/AppIcon.appiconset/AppIcon24.png",
             "tintColor": "007AFF",
             "size": ${{ github.event.release.assets[0].size }}
           }
