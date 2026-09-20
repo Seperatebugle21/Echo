@@ -12,12 +12,8 @@ struct PodcastsView: View {
     @State private var loading = false
     @State private var failed = false
     @State private var retry = 0
-    @State private var recommendations: [PodcastShow] = []
-    @State private var recommendationsLoading = true
-    @State private var recommendationsFailed = false
-    @State private var recommendationsRetry = 0
+    @State private var recommendations = PodcastRecommendationsModel()
     @State private var isOverviewVisible = false
-    private let store = PodcastStore.shared
 
     var body: some View {
         NavigationStack {
@@ -26,11 +22,12 @@ struct PodcastsView: View {
                 ScrollView {
                     if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         PodcastsOverview(
-                            recommendations: recommendations,
-                            recommendationsLoading: recommendationsLoading,
-                            recommendationsFailed: recommendationsFailed,
-                            retryRecommendations: { recommendationsRetry += 1 }
+                            recommendations: recommendations.shows,
+                            recommendationsLoading: recommendations.loading,
+                            recommendationsFailed: recommendations.failed,
+                            retryRecommendations: { recommendations.retry += 1 }
                         )
+                        .animation(reduceMotion ? nil : .smooth(duration: 0.45), value: recommendations.shows.map(\.id))
                         .opacity(isOverviewVisible ? 1 : 0)
                         .offset(y: isOverviewVisible ? 0 : 18)
                     } else {
@@ -62,7 +59,7 @@ struct PodcastsView: View {
             }
             .animation(reduceMotion ? nil : .smooth(duration: 0.42), value: query.isEmpty)
             .task(id: "\(searchGeneration):\(query):\(retry)") { await search() }
-            .task(id: recommendationsTaskID) { await loadRecommendations() }
+            .task(id: recommendations.taskID) { await recommendations.load() }
             .task {
                 await Task.yield()
                 withAnimation(reduceMotion ? nil : .smooth(duration: 0.55)) {
@@ -127,11 +124,6 @@ struct PodcastsView: View {
         retry = 0
     }
 
-    private var recommendationsTaskID: String {
-        let savedIDs = store.savedShows.map(\.id).sorted().map { String($0) }.joined(separator: ",")
-        return "\(recommendationsRetry):\(savedIDs)"
-    }
-
     private func search() async {
         let generation = searchGeneration
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -160,33 +152,6 @@ struct PodcastsView: View {
             guard !Task.isCancelled, generation == searchGeneration else { return }
             failed = true
             loading = false
-        }
-    }
-
-    private func loadRecommendations() async {
-        recommendationsLoading = recommendations.isEmpty
-        recommendationsFailed = false
-        let country = Locale.current.region?.identifier ?? "US"
-        let savedShows = store.savedShows
-        let savedIDs = Set(savedShows.map(\.id))
-        let seed = savedShows.first(where: { !$0.author.isEmpty })?.author ?? "podcast"
-
-        do {
-            var shows = try await PodcastCatalog.shared.search(seed, country: country)
-                .filter { !savedIDs.contains($0.id) }
-            if shows.isEmpty && seed != "podcast" {
-                shows = try await PodcastCatalog.shared.search("podcast", country: country)
-                    .filter { !savedIDs.contains($0.id) }
-            }
-            try Task.checkCancellation()
-            withAnimation(reduceMotion ? nil : .smooth(duration: 0.45)) {
-                recommendations = Array(shows.prefix(12))
-                recommendationsLoading = false
-            }
-        } catch {
-            guard !Task.isCancelled else { return }
-            recommendationsFailed = recommendations.isEmpty
-            recommendationsLoading = false
         }
     }
 }
@@ -424,7 +389,7 @@ private struct PodcastLibraryShortcut: View {
     }
 }
 
-private struct PodcastRecommendationsSection: View {
+struct PodcastRecommendationsSection: View {
     let shows: [PodcastShow]
     let loading: Bool
     let failed: Bool

@@ -18,6 +18,8 @@ struct HomeView: View {
     @State private var recentlyPlayedSnapshot: [Song] = []
     @State private var favoritesSnapshot: [Song] = []
 
+    @State private var podcastRecommendations = PodcastRecommendationsModel()
+
     @State private var showSettings = false
     @State private var selectedSong: Song?
 
@@ -135,6 +137,13 @@ struct HomeView: View {
                     }
 
 
+                    PodcastRecommendationsSection(
+                        shows: podcastRecommendations.shows,
+                        loading: podcastRecommendations.loading,
+                        failed: podcastRecommendations.failed,
+                        retry: { podcastRecommendations.retry += 1 }
+                    )
+
                     // MARK: - Favorites
 
                     if !favoritesSnapshot.isEmpty {
@@ -175,6 +184,10 @@ struct HomeView: View {
                         )
                         .padding(.top, 80)
                     }
+                    HomeDiscoverySection(
+                        recommendations: podcastRecommendations.shows,
+                        playSong: { song, queue in play(song, queue: queue) }
+                    )
                 }
                 .padding(.bottom, 120)
             }
@@ -223,6 +236,10 @@ struct HomeView: View {
                 }
             }
 
+
+            .task(id: podcastRecommendations.taskID) {
+                await podcastRecommendations.load()
+            }
 
             // MARK: - Session Snapshot
 

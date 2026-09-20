@@ -124,6 +124,8 @@ targets:
     platform: iOS
     sources:
       - path: Tests/EchoPodcastTests.swift
+      - path: Tests/HomeDiscoverySelectionTests.swift
+      - path: Echo.swiftpm/Echo/Models/HomeDiscoverySelection.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastModels.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastCatalog.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastTranscript.swift

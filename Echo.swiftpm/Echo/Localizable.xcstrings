@@ -2,6 +2,337 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "home_discovery_title": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Discover more"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontdek meer"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Découvrez davantage"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mehr entdecken"
+        }
+      }
+    }
+  },
+  "home_discovery_podcast": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "A podcast to discover"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Een podcast om te ontdekken"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Un podcast à découvrir"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ein Podcast zum Entdecken"
+        }
+      }
+    }
+  },
+  "home_discovery_explore_podcast": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Explore this podcast"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontdek deze podcast"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Découvrez ce podcast"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Diesen Podcast entdecken"
+        }
+      }
+    }
+  },
+  "home_discovery_artists": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Discover your artists"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontdek jouw artiesten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Découvrez vos artistes"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Entdecke deine Künstler"
+        }
+      }
+    }
+  },
+  "home_discovery_artists_detail": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spend some time with the artists in your library."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Duik in de muziek van de artiesten in je bibliotheek."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Explorez la musique des artistes de votre bibliothèque."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Entdecke die Musik der Künstler in deiner Mediathek."
+        }
+      }
+    }
+  },
+  "home_discovery_all_artists": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Explore all artists"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontdek alle artiesten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Découvrez tous les artistes"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alle Künstler entdecken"
+        }
+      }
+    }
+  },
+  "home_discovery_new_episode": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "A new episode for you"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Een nieuwe aflevering voor jou"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Un nouvel épisode pour vous"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Eine neue Folge für dich"
+        }
+      }
+    }
+  },
+  "home_discovery_listen_episode": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Listen to this episode"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Luister naar deze aflevering"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Écouter cet épisode"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Diese Folge anhören"
+        }
+      }
+    }
+  },
+  "home_discovery_unheard": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your next first listen"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nog niet beluisterd"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "À écouter pour la première fois"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zum ersten Mal hören"
+        }
+      }
+    }
+  },
+  "home_discovery_unheard_detail": {
+    "extractionState": "manual",
+    "comment": "Home discovery card.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Recently added songs you haven’t played yet."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Recent toegevoegde nummers die je nog niet hebt afgespeeld."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Des titres récemment ajoutés que vous n’avez pas encore écoutés."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kürzlich hinzugefügte Titel, die du noch nicht abgespielt hast."
+        }
+      }
+    }
+  },
+  "home_discovery_play_song %@": {
+    "extractionState": "manual",
+    "comment": "Accessibility action. %@ is the song title.",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Play %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speel %@ af"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lire %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ abspielen"
+        }
+      }
+    }
+  }
+,
 "widget_rounded_title": {
     "extractionState": "manual",
     "localizations": {
