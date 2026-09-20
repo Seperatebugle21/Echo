@@ -8,6 +8,7 @@ final class PodcastRecommendationsModel {
     private(set) var loading = true
     private(set) var failed = false
     var retry = 0
+    private var completedTaskID: String?
 
     var taskID: String {
         let ids = PodcastStore.shared.savedShows.map(\.id).sorted().map(String.init).joined(separator: ",")
@@ -15,6 +16,8 @@ final class PodcastRecommendationsModel {
     }
 
     func load() async {
+        let requestID = taskID
+        guard completedTaskID != requestID else { return }
         loading = shows.isEmpty
         failed = false
         let saved = PodcastStore.shared.savedShows
@@ -29,7 +32,9 @@ final class PodcastRecommendationsModel {
                     .filter { !savedIDs.contains($0.id) }
             }
             try Task.checkCancellation()
+            guard requestID == taskID else { return }
             shows = Array(results.prefix(12))
+            completedTaskID = requestID
             loading = false
         } catch {
             guard !Task.isCancelled else { return }

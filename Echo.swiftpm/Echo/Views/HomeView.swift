@@ -55,7 +55,9 @@ struct HomeView: View {
 
             ScrollView {
 
-                LazyVStack(
+                // Keep the small, bounded set of sections alive while scrolling.
+                // In particular, discovery tasks must not restart on reappearance.
+                VStack(
                     alignment: .leading,
                     spacing: 32
                 ) {

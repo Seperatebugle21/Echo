@@ -167,7 +167,9 @@ private struct PodcastsOverview: View {
         let continuing = store.continueListening
         let savedEpisodes = store.savedEpisodes
 
-        LazyVStack(alignment: .leading, spacing: 32) {
+        // This overview has a bounded number of sections. Preserve their state
+        // and layout as they leave the viewport; long result lists stay lazy.
+        VStack(alignment: .leading, spacing: 32) {
             PodcastsHeader()
 
             if let episode = continuing.first {
@@ -734,16 +736,15 @@ struct PodcastArtwork: View {
     let url: URL?
     var size: CGFloat = 64
     @State private var cachedImage: UIImage?
+    @State private var loadedURL: URL?
     var body: some View {
         Group {
-            if let image = cachedImage {
+            if let image = (loadedURL == url ? cachedImage : nil) ?? PodcastArtworkCache.shared.cachedImage(for: url) {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
-                AsyncImage(url: url) { image in image.resizable().scaledToFill() } placeholder: {
-                    ZStack {
-                        Color.accentColor.opacity(0.12)
-                        Image(systemName: "dot.radiowaves.left.and.right").font(.title).foregroundStyle(Color.accentColor)
-                    }
+                ZStack {
+                    Color.accentColor.opacity(0.12)
+                    Image(systemName: "dot.radiowaves.left.and.right").font(.title).foregroundStyle(Color.accentColor)
                 }
             }
         }
@@ -751,7 +752,11 @@ struct PodcastArtwork: View {
         .clipShape(RoundedRectangle(cornerRadius: size > 100 ? 28 : 14))
         .accessibilityHidden(true)
         .task(id: url) {
-            cachedImage = PodcastStore.shared.artwork(for: url).flatMap { UIImage(data: $0) }
+            guard let url else { cachedImage = nil; loadedURL = nil; return }
+            let image = await PodcastArtworkCache.shared.image(for: url)
+            guard !Task.isCancelled else { return }
+            cachedImage = image
+            loadedURL = url
         }
     }
 }

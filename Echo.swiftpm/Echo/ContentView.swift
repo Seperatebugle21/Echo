@@ -472,14 +472,17 @@ struct PlayerCoverLaunchSource: ViewModifier {
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @Environment(MiniPlayerPresentation.self) private var presentation
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var frame: CGRect = .zero
+    // Geometry is only needed when tapping. Updating it must not redraw cards
+    // (and decode their artwork) on every scrolling frame.
+    @State private var geometry = CoverLaunchGeometry()
 
     func body(content: Content) -> some View {
         content
             .onGeometryChange(for: CGRect.self) { proxy in
                 proxy.frame(in: .global)
-            } action: { frame = $0 }
+            } action: { geometry.frame = $0 }
             .onTapGesture {
+                let frame = geometry.frame
                 if audioPlayer.currentSong == nil && !reduceMotion && frame.width > 0 {
                     presentation.entranceFrame = CGRect(origin: frame.origin,
                         size: CGSize(width: coverSize, height: coverSize))
@@ -493,6 +496,10 @@ struct PlayerCoverLaunchSource: ViewModifier {
                 }
             }
     }
+}
+
+private final class CoverLaunchGeometry {
+    var frame: CGRect = .zero
 }
 
 private struct CoverToMiniPlayerEntrance: View {
