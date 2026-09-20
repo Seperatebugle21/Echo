@@ -7,6 +7,9 @@ struct CreatePlaylistView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var name = ""
+    @State private var isSmart = false
+    @State private var smartRules = SmartPlaylistConfiguration()
+    @Environment(\.locale) private var locale
     
     @State private var selectedImage: PhotosPickerItem?
     @State private var playlistImage: UIImage?
@@ -17,6 +20,24 @@ struct CreatePlaylistView: View {
         NavigationStack {
             
             Form {
+                Section {
+                    Picker("smart_playlist_type", selection: $isSmart) {
+                        Text("smart_type_regular").tag(false)
+                        Text("smart_type_smart").tag(true)
+                    }
+                }
+                if isSmart {
+                    Section("smart_examples") {
+                        Menu("smart_choose_example") {
+                            ForEach(SmartPlaylistPreset.allCases) { preset in
+                                Button(LocalizedStringKey(preset.nameKey)) {
+                                    smartRules = preset.configuration
+                                    name = String(localized: String.LocalizationValue(preset.nameKey), locale: locale)
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 Section {
                     HStack {
@@ -66,6 +87,9 @@ struct CreatePlaylistView: View {
                         text: $name
                     )
                 }
+                if isSmart {
+                    SmartPlaylistRulesForm(configuration: $smartRules)
+                }
             }
             .navigationTitle(Text(LocalizedStringKey("create_playlist_navigation_title")))
             .navigationBarTitleDisplayMode(.inline)
@@ -95,12 +119,14 @@ struct CreatePlaylistView: View {
                         
                         library.createPlaylist(
                             name: trimmed,
-                            imageData: imageData
+                            imageData: imageData,
+                            smartRules: isSmart ? smartRules : nil
                         )
                         
                         dismiss()
                     }
                     .bold()
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || (isSmart && !smartRules.isValid))
                 }
             }
         }

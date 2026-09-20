@@ -422,7 +422,8 @@ class MusicLibraryManager {
     
     func createPlaylist(
         name: String,
-        imageData: Data? = nil
+        imageData: Data? = nil,
+        smartRules: SmartPlaylistConfiguration? = nil
     ) {
         
         playlists.append(
@@ -430,7 +431,8 @@ class MusicLibraryManager {
                 id: UUID(),
                 name: name,
                 songIDs: [],
-                imageData: imageData
+                imageData: imageData,
+                smartRules: smartRules
             )
         )
     }
@@ -454,6 +456,29 @@ class MusicLibraryManager {
         print("Cache gewist")
     }
     
+    func songs(in playlist: Playlist, now: Date = Date()) -> [Song] {
+        if let configuration = playlist.smartRules {
+            return configuration.songs(in: songs, favorites: Set(favoriteSongIDs), now: now)
+        }
+        let byID = Dictionary(songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return playlist.songIDs.compactMap { byID[$0] }
+    }
+
+    func recordQualifiedPlay(songID: UUID, at date: Date = Date()) {
+        guard let index = songs.firstIndex(where: { $0.id == songID }) else { return }
+        var song = songs[index]
+        song.playCount = song.recordedPlayCount == Int.max ? Int.max : song.recordedPlayCount + 1
+        song.lastPlayed = date
+        songs[index] = song
+    }
+
+    func updateSmartRules(_ configuration: SmartPlaylistConfiguration, for playlistID: UUID) {
+        guard configuration.isValid,
+              let index = playlists.firstIndex(where: { $0.id == playlistID }),
+              playlists[index].isSmart else { return }
+        playlists[index].smartRules = configuration
+    }
+
     func markAsPlayed(_ song: Song) {
         
         if let index = songs.firstIndex(where: {
@@ -475,6 +500,7 @@ class MusicLibraryManager {
             $0.id == playlist.id
         }) else { return }
         
+        guard !playlists[index].isSmart else { return }
         if !playlists[index].songIDs.contains(song.id) {
             playlists[index].songIDs.append(song.id)
         }

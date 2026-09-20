@@ -1,0 +1,37 @@
+name: Smart playlist checks
+
+on:
+  pull_request:
+    paths:
+      - 'Echo.swiftpm/Echo/**'
+      - 'Tests/SmartPlaylists/**'
+      - '.github/workflows/smart-playlists.yml'
+  push:
+    branches: ['codex/smart-playlists']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check rule evaluation, migration and listening thresholds
+        run: |
+          swiftc Echo.swiftpm/Echo/Models/Song.swift \
+            Echo.swiftpm/Echo/Models/Playlist.swift \
+            Echo.swiftpm/Echo/Models/SmartPlaylist.swift \
+            Echo.swiftpm/Echo/Models/ListeningSession.swift \
+            Tests/SmartPlaylists/main.swift -o "$RUNNER_TEMP/smart-playlist-tests"
+          "$RUNNER_TEMP/smart-playlist-tests"
+      - name: Typecheck iOS application sources
+        run: |
+          xcodebuild -version
+          xcrun swiftc -typecheck -parse-as-library -swift-version 5 \
+            -sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
+            -target arm64-apple-ios26.0-simulator \
+            $(find Echo.swiftpm/Echo -name '*.swift' -print)
+      - name: Validate string catalog
+        run: python3 -m json.tool Echo.swiftpm/Echo/Localizable.xcstrings > /dev/null

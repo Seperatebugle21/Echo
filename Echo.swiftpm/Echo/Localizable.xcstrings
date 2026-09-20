@@ -2,6 +2,374 @@
   "sourceLanguage" : "en",
   "version" : "1.0",
   "strings" : {
+    "smart_playlist_type" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Playlist type"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Type playlist"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Type de playlist"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Playlist-Typ"}}
+      }
+    },
+    "smart_type_regular" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Regular playlist"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Gewone playlist"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Playlist classique"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Normale Playlist"}}
+      }
+    },
+    "smart_type_smart" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Smart playlist"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Slimme playlist"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Playlist intelligente"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Intelligente Playlist"}}
+      }
+    },
+    "smart_examples" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Examples"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Voorbeelden"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Exemples"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Beispiele"}}
+      }
+    },
+    "smart_choose_example" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Start from an example"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Begin met een voorbeeld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Choisir un exemple"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Mit einem Beispiel beginnen"}}
+      }
+    },
+    "smart_preset_recentlyAdded" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Recently added"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Vers toegevoegd"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Ajouts récents"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Kürzlich hinzugefügt"}}
+      }
+    },
+    "smart_preset_topSongs" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "My top songs"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Mijn toppers"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Mes titres préférés"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Meine Top-Titel"}}
+      }
+    },
+    "smart_preset_forgottenFavorites" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Forgotten favorites"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Vergeten favorieten"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Favoris oubliés"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Vergessene Favoriten"}}
+      }
+    },
+    "smart_preset_undiscovered" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Undiscovered"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Nog te ontdekken"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "À découvrir"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Noch zu entdecken"}}
+      }
+    },
+    "smart_edit_rules" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Edit rules"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Regels wijzigen"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Modifier les règles"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Regeln bearbeiten"}}
+      }
+    },
+    "smart_match" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Match"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Voldoet aan"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Correspondance"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Übereinstimmung"}}
+      }
+    },
+    "smart_match_all" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "All rules"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Alle regels"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Toutes les règles"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Alle Regeln"}}
+      }
+    },
+    "smart_match_any" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Any rule"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Minstens één regel"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Au moins une règle"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Mindestens eine Regel"}}
+      }
+    },
+    "smart_rules" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Rules"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Regels"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Règles"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Regeln"}}
+      }
+    },
+    "smart_rules_help" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Songs update automatically. A queue already playing keeps its order."}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Nummers worden automatisch bijgewerkt. Een gestarte wachtrij behoudt zijn volgorde."}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Les titres se mettent à jour automatiquement. La file en cours conserve son ordre."}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Titel werden automatisch aktualisiert. Eine laufende Warteschlange behält ihre Reihenfolge."}}
+      }
+    },
+    "smart_remove_rule" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Remove rule"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Regel verwijderen"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Supprimer la règle"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Regel entfernen"}}
+      }
+    },
+    "smart_add_rule" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Add rule"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Regel toevoegen"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Ajouter une règle"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Regel hinzufügen"}}
+      }
+    },
+    "smart_order_limit" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Order and limit"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Volgorde en maximum"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Ordre et limite"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Reihenfolge und Limit"}}
+      }
+    },
+    "smart_sort" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Sort by"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Sorteer op"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Trier par"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Sortieren nach"}}
+      }
+    },
+    "smart_sort_newest" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Newest first"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Nieuwste eerst"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Plus récents"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Neueste zuerst"}}
+      }
+    },
+    "smart_sort_mostPlayed" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Most played"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Meest afgespeeld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Plus écoutés"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Meistgespielt"}}
+      }
+    },
+    "smart_sort_recentlyPlayed" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Recently played"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Recent afgespeeld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Écoutés récemment"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Zuletzt gespielt"}}
+      }
+    },
+    "smart_sort_title" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Title"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Titel"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Titre"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Titel"}}
+      }
+    },
+    "smart_sort_random" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Random"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Willekeurig"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Aléatoire"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Zufällig"}}
+      }
+    },
+    "smart_reshuffle" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Reshuffle"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Opnieuw schudden"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Mélanger à nouveau"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Neu mischen"}}
+      }
+    },
+    "smart_limit" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Maximum songs"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Maximum aantal nummers"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Nombre maximal de titres"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Maximale Titelanzahl"}}
+      }
+    },
+    "smart_unlimited" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "No limit"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Geen maximum"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Sans limite"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Kein Limit"}}
+      }
+    },
+    "smart_matches_count %lld" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Matching songs: %lld"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Passende nummers: %lld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Titres correspondants : %lld"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Passende Titel: %lld"}}
+      }
+    },
+    "smart_empty_description" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "No songs match yet. Change the rules or add matching music to your library."}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Er passen nog geen nummers. Wijzig de regels of voeg passende muziek toe aan je bibliotheek."}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Aucun titre ne correspond. Modifiez les règles ou ajoutez de la musique correspondante."}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Noch keine passenden Titel. Ändere die Regeln oder füge passende Musik hinzu."}}
+      }
+    },
+    "smart_invalid_rules" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Complete every rule to see matching songs."}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Vul elke regel in om passende nummers te zien."}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Complétez chaque règle pour voir les titres correspondants."}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Vervollständige alle Regeln, um passende Titel zu sehen."}}
+      }
+    },
+    "smart_preview" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Preview"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Voorbeeld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Aperçu"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Vorschau"}}
+      }
+    },
+    "smart_history_help" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "New plays count after half a song or four minutes of listening. Existing listening dates are preserved; old play counts are not reconstructed. Never played means no recorded listening history."}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Nieuwe afspeelbeurten tellen na een half nummer of vier minuten luisteren. Bestaande luisterdatums blijven behouden; oude aantallen worden niet gereconstrueerd. Nooit afgespeeld betekent geen bekende luistergeschiedenis."}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Une nouvelle écoute compte après la moitié du titre ou quatre minutes. Les anciennes dates sont conservées ; les anciens compteurs ne sont pas reconstruits. Jamais écouté signifie aucun historique connu."}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Neue Wiedergaben zählen nach einem halben Titel oder vier Minuten. Bestehende Hördaten bleiben erhalten; alte Zähler werden nicht rekonstruiert. Nie gespielt bedeutet kein bekannter Hörverlauf."}}
+      }
+    },
+    "smart_field" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Condition"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Voorwaarde"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Condition"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Bedingung"}}
+      }
+    },
+    "smart_contains" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Contains…"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Bevat…"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Contient…"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Enthält…"}}
+      }
+    },
+    "smart_is_favorite" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Is a favorite"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Is favoriet"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Est un favori"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Ist ein Favorit"}}
+      }
+    },
+    "smart_days_count %lld" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Days: %lld"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Dagen: %lld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Jours : %lld"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Tage: %lld"}}
+      }
+    },
+    "smart_plays_count %lld" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Plays: %lld"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Afspeelbeurten: %lld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Écoutes : %lld"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Wiedergaben: %lld"}}
+      }
+    },
+    "smart_field_favorite" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Favorite status"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Favorietstatus"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Statut favori"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Favoritenstatus"}}
+      }
+    },
+    "smart_field_artist" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Artist contains"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Artiest bevat"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Artiste contient"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Interpret enthält"}}
+      }
+    },
+    "smart_field_album" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Album contains"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Album bevat"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Album contient"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Album enthält"}}
+      }
+    },
+    "smart_field_addedWithinDays" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Added in the last days"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Toegevoegd in de afgelopen dagen"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Ajouté ces derniers jours"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "In den letzten Tagen hinzugefügt"}}
+      }
+    },
+    "smart_field_playedWithinDays" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Played in the last days"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Afgespeeld in de afgelopen dagen"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Écouté ces derniers jours"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "In den letzten Tagen gespielt"}}
+      }
+    },
+    "smart_field_notPlayedInDays" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Last played more than days ago"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Laatst afgespeeld langer dan dagen geleden"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Dernière écoute il y a plus de jours"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Zuletzt vor mehr Tagen gespielt"}}
+      }
+    },
+    "smart_field_neverPlayed" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Never played"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Nooit afgespeeld"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Jamais écouté"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Nie gespielt"}}
+      }
+    },
+    "smart_field_playCountAtLeast" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Play count is at least"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Aantal afspeelbeurten minimaal"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Nombre minimal d’écoutes"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Mindestens so oft gespielt"}}
+      }
+    },
+    "smart_field_playCountAtMost" : {
+      "localizations" : {
+        "en" : {"stringUnit": {"state": "translated", "value": "Play count is at most"}},
+        "nl" : {"stringUnit": {"state": "translated", "value": "Aantal afspeelbeurten maximaal"}},
+        "fr" : {"stringUnit": {"state": "translated", "value": "Nombre maximal d’écoutes"}},
+        "de" : {"stringUnit": {"state": "translated", "value": "Höchstens so oft gespielt"}}
+      }
+    },
     "tab_songs" : {
       "localizations" : {
         "nl" : { "stringUnit" : { "state" : "translated", "value" : "Nummers" } },

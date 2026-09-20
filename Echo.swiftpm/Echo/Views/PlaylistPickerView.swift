@@ -29,6 +29,8 @@ struct PlaylistPickerView: View {
         return songs.allSatisfy { playlist.songIDs.contains($0.id) }
     }
     
+    private var manualPlaylists: [Playlist] { library.playlists.filter { !$0.isSmart } }
+
     var body: some View {
         NavigationStack {
             List {
@@ -51,7 +53,7 @@ struct PlaylistPickerView: View {
                 }
                 
                 // Eigen playlists
-                ForEach(library.playlists) { playlist in
+                ForEach(manualPlaylists) { playlist in
                     Button {
                         for song in songs {
                             library.addSong(song, to: playlist)

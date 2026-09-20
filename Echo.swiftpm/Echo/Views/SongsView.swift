@@ -121,7 +121,6 @@ struct SongsView: View {
                         guard editMode == .inactive else { return }
                         
                         if let url = library.getURL(for: song) {
-                            library.markAsPlayed(song)
                             audioPlayer.lastPlaybackDirection = .fade
                             audioPlayer.play(
                                 song: song,

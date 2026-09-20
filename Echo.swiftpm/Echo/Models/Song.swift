@@ -1,4 +1,3 @@
-import SwiftUI
 import Foundation
 
 struct Song: Identifiable, Codable, Hashable {
@@ -14,6 +13,10 @@ struct Song: Identifiable, Codable, Hashable {
     
     var dateAdded: Date
     var lastPlayed: Date?
+    // Missing in older libraries: no historical play count is inferred.
+    var playCount: Int? = nil
+
+    var recordedPlayCount: Int { max(0, playCount ?? 0) }
     
     var lyrics: String?
     var syncedLyrics: String?

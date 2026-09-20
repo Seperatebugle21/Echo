@@ -32,6 +32,7 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
     
     private var player: AVAudioPlayer?
     private var timer: Timer?
+    private var listeningSession: ListeningSession?
     
     private var preloadedSong: Song?
     private var preloadedPlayer: AVAudioPlayer?
@@ -153,6 +154,8 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         url: URL,
         queue: [Song] = []
     ) {
+        sampleListening()
+        listeningSession = nil
         setupAudioSession()
         
         if !queue.isEmpty {
@@ -184,6 +187,7 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
             
             loadLyrics(for: song)
             
+            listeningSession = ListeningSession(songID: song.id, duration: duration)
             player?.play()
             UIApplication.shared.beginReceivingRemoteControlEvents()
             isPlaying = true
@@ -286,6 +290,7 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         if preloadedSong?.id == song.id,
            let preparedPlayer = preloadedPlayer {
             
+            sampleListening()
             player?.stop()
             player = preparedPlayer
             player?.delegate = self
@@ -294,6 +299,7 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
             currentTime = 0
             duration = player?.duration ?? 0
             
+            listeningSession = ListeningSession(songID: song.id, duration: duration)
             preloadedSong = nil
             preloadedPlayer = nil
             
@@ -366,6 +372,8 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
     func playPreviousSong(_ song: Song) {
         guard let url = getURL(for: song) else { return }
         
+        sampleListening()
+        listeningSession = nil
         player?.stop()
         
         player = try? AVAudioPlayer(contentsOf: url)
@@ -380,6 +388,7 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         currentSyncedLyrics = nil
         
         loadLyrics(for: song)
+        listeningSession = ListeningSession(songID: song.id, duration: duration)
         
         player?.play()
         isPlaying = true
@@ -430,6 +439,7 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         guard let player else { return }
         
         if player.isPlaying {
+            sampleListening()
             player.pause()
             isPlaying = false
         } else {
@@ -480,17 +490,21 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
         
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
+            self.sampleListening()
             self.currentTime = self.player?.currentTime ?? 0
         }
     }
     
     func seek(to time: Double) {
+        sampleListening()
         player?.currentTime = time
+        listeningSession?.rebase(to: player?.currentTime ?? time)
         currentTime = time
         updateNowPlaying()
     }
     
     func pauseForSeeking() {
+        sampleListening()
         player?.pause()
     }
     
@@ -505,7 +519,22 @@ class AudioPlayerManager: NSObject, AVAudioPlayerDelegate {
             .appendingPathComponent(song.fileName)
     }
     
+    private func sampleListening() {
+        guard let player, player.isPlaying else { return }
+        recordListening(position: player.currentTime)
+    }
+
+    private func recordListening(position: TimeInterval) {
+        guard var session = listeningSession else { return }
+        let qualified = session.sample(position: position)
+        listeningSession = session
+        if qualified {
+            MusicLibraryManager.shared.recordQualifiedPlay(songID: session.songID)
+        }
+    }
+
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        if flag { recordListening(position: player.duration) }
         if repeatMode == .one {
             if let song = currentSong, let url = getURL(for: song) {
                 play(

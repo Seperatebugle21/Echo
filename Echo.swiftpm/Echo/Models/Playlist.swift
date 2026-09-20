@@ -7,5 +7,9 @@ struct Playlist: Identifiable, Codable {
     var songIDs: [UUID]
     
     var imageData: Data?
+    // Optional so existing manually managed playlists decode unchanged.
+    var smartRules: SmartPlaylistConfiguration? = nil
+
+    var isSmart: Bool { smartRules != nil }
     
 }

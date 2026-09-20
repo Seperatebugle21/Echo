@@ -9,6 +9,13 @@ struct PlaylistDetailView: View {
     let playlist: Playlist
     
     @State private var showSongPicker = false
+    @State private var showRules = false
+    @State private var smartNow = Date()
+
+    private var currentPlaylist: Playlist {
+        library.playlists.first(where: { $0.id == playlist.id }) ?? playlist
+    }
+    private var isSmart: Bool { currentPlaylist.isSmart }
     @State private var editMode: EditMode = .inactive
     @State private var selectedSongs: Set<UUID> = []
     @State private var showDeleteConfirmation = false
@@ -25,9 +32,7 @@ struct PlaylistDetailView: View {
             return []
         }
         
-        return currentPlaylist.songIDs.compactMap { id in
-            library.songs.first { $0.id == id }
-        }
+        return library.songs(in: currentPlaylist, now: smartNow)
     }
     
     var processedSongs: [Song] {
@@ -37,6 +42,7 @@ struct PlaylistDetailView: View {
             song.artist.localizedCaseInsensitiveContains(searchText)
         }
         
+        if isSmart { return filtered }
         switch sortOption {
         case .custom:
             return filtered
@@ -81,7 +87,7 @@ struct PlaylistDetailView: View {
                             }
                         }
                         
-                        Text(playlist.name)
+                        Text(currentPlaylist.name)
                             .font(.largeTitle)
                             .bold()
                         
@@ -89,6 +95,14 @@ struct PlaylistDetailView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         
+                        if isSmart {
+                            Label("smart_type_smart", systemImage: "sparkles")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Button("smart_edit_rules", systemImage: "slider.horizontal.3") {
+                                showRules = true
+                            }
+                        }
                         if !songs.isEmpty {
                             HStack(spacing: 12) {
                                 Button {
@@ -119,14 +133,14 @@ struct PlaylistDetailView: View {
                 ContentUnavailableView {
                     Label(LocalizedStringKey("no_songs_title"), systemImage: "music.note.list")
                 } description: {
-                    Text(LocalizedStringKey("add_songs_to_playlist_description"))
+                    Text(LocalizedStringKey(isSmart ? "smart_empty_description" : "add_songs_to_playlist_description"))
                 } actions: {
                     Button {
-                        showSongPicker = true
+                        if isSmart { showRules = true } else { showSongPicker = true }
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
-                            Text(LocalizedStringKey("add_music_action"))
+                            Text(LocalizedStringKey(isSmart ? "smart_edit_rules" : "add_music_action"))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -182,7 +196,7 @@ struct PlaylistDetailView: View {
                         }
                     }
                 }
-                .onMove(perform: (searchText.isEmpty && sortOption == .custom) ? moveSongs : nil)
+                .onMove(perform: (!isSmart && searchText.isEmpty && sortOption == .custom) ? moveSongs : nil)
             }
         }
         .searchable(
@@ -190,7 +204,11 @@ struct PlaylistDetailView: View {
             prompt: Text(LocalizedStringKey("MUSIC_APP_PLAYLIST_SEARCH_PLACEHOLDER_TEXT"))
         )
         .environment(\.editMode, $editMode)
-        .navigationTitle(playlist.name)
+        .navigationTitle(currentPlaylist.name)
+        .modifier(SmartPlaylistDateRefresh(now: $smartNow))
+        .sheet(isPresented: $showRules) {
+            SmartPlaylistEditorView(playlist: currentPlaylist)
+        }
         .onAppear {
             loadPlaylistImage()
         }
@@ -213,6 +231,7 @@ struct PlaylistDetailView: View {
                 HStack(spacing: 16) {
 
      
+                    if !isSmart {
                     Button {
                         withAnimation {
                             if editMode == .active {
@@ -231,7 +250,8 @@ struct PlaylistDetailView: View {
                     }
 
                     
-                    if editMode == .inactive && !songs.isEmpty {
+                    }
+                    if !isSmart && editMode == .inactive && !songs.isEmpty {
                         Menu {
                             Picker(
                                 LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"),
@@ -269,7 +289,7 @@ struct PlaylistDetailView: View {
                     
                     
                     
-                    if editMode == .inactive {
+                    if !isSmart && editMode == .inactive {
                         Button {
                             showSongPicker = true
                         } label: {
@@ -312,6 +332,7 @@ struct PlaylistDetailView: View {
     }
     
     func deleteSelectedSongs() {
+        guard !isSmart else { return }
         guard let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         library.playlists[index].songIDs.removeAll { selectedSongs.contains($0) }
         selectedSongs.removeAll()
@@ -331,6 +352,7 @@ struct PlaylistDetailView: View {
     }
     
     func moveSongs(from source: IndexSet, to destination: Int) {
+        guard !isSmart else { return }
         guard let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         library.playlists[index].songIDs.move(fromOffsets: source, toOffset: destination)
     }

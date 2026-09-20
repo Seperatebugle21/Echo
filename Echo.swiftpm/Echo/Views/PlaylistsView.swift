@@ -6,6 +6,8 @@ struct PlaylistsView: View {
     @Environment(MusicLibraryManager.self) private var library
     
     @State private var showCreatePlaylist = false
+    @State private var rulesPlaylist: Playlist?
+    @State private var smartNow = Date()
     @State private var selectedPlaylist: Playlist?
     @State private var showDeleteConfirmation = false
     @State private var showRenameSheet = false
@@ -57,7 +59,7 @@ struct PlaylistsView: View {
                                     .frame(width: 55, height: 55)
                                     .clipShape(RoundedRectangle(cornerRadius: 14))
                             } else {
-                                Image(systemName: "music.note.list")
+                                Image(systemName: playlist.isSmart ? "sparkles" : "music.note.list")
                                     .font(.title2)
                                     .frame(width: 55, height: 55)
                                     .background(.thinMaterial)
@@ -68,7 +70,7 @@ struct PlaylistsView: View {
                                 Text(playlist.name)
                                     .font(.headline)
                                 
-                                Text("songs_count_format \(playlist.songIDs.count)")
+                                Text("songs_count_format \(library.songs(in: playlist, now: smartNow).count)")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -78,6 +80,11 @@ struct PlaylistsView: View {
                         .padding(.vertical, 4)
                     }
                     .contextMenu {
+                        if playlist.isSmart {
+                            Button("smart_edit_rules", systemImage: "slider.horizontal.3") {
+                                rulesPlaylist = playlist
+                            }
+                        }
                         Button {
                             renameText = playlist.name
                             selectedPlaylist = playlist
@@ -105,6 +112,10 @@ struct PlaylistsView: View {
                         }
                     }
                 }
+            }
+            .modifier(SmartPlaylistDateRefresh(now: $smartNow))
+            .sheet(item: $rulesPlaylist) { playlist in
+                SmartPlaylistEditorView(playlist: playlist)
             }
             .navigationTitle(LocalizedStringKey("playlists_title"))
             .toolbar {

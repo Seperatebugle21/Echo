@@ -91,7 +91,6 @@ struct SongOptionsView: View {
                         
                         if let url = library.getURL(for: song) {
                             
-                            library.markAsPlayed(song)
                             
                             audioPlayer.play(
                                 song: song,

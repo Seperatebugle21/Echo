@@ -10,8 +10,8 @@ struct EchoApp: App {
     @Environment(\.scenePhase) private var scenePhase
     
    
-    @State private var library = MusicLibraryManager()
-    @State private var audioPlayer = AudioPlayerManager()
+    @State private var library = MusicLibraryManager.shared
+    @State private var audioPlayer = AudioPlayerManager.shared
     
     var body: some Scene {
         
