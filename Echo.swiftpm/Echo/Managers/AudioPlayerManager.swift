@@ -627,6 +627,13 @@ class AudioPlayerManager:
                 song
 
 
+                let commands = MPRemoteCommandCenter.shared()
+                commands.skipBackwardCommand.isEnabled = false
+                commands.skipForwardCommand.isEnabled = false
+                commands.nextTrackCommand.isEnabled = true
+                commands.previousTrackCommand.isEnabled = true
+
+
             currentLyrics =
                 nil
 
