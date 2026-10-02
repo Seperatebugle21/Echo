@@ -73,9 +73,18 @@ enum BeatDetector {
             if correlation > best { best = correlation; bestLag = lag }
         }
         guard bestLag > 0 else { return BeatAnalysis() }
-        let phase = (0..<bestLag).max { a, b in
-            stride(from: a, to: count, by: bestLag).reduce(0) { $0 + onset[$1] } < stride(from: b, to: count, by: bestLag).reduce(0) { $0 + onset[$1] }
-        } ?? 0
+        var phase = 0
+        var strongestPhaseEnergy = -Double.infinity
+        for candidate in 0..<bestLag {
+            var phaseEnergy = 0.0
+            for index in stride(from: candidate, to: count, by: bestLag) {
+                phaseEnergy += onset[index]
+            }
+            if phaseEnergy > strongestPhaseEnergy {
+                strongestPhaseEnergy = phaseEnergy
+                phase = candidate
+            }
+        }
         return BeatAnalysis(bpm: 6000 / Double(bestLag), confidence: best, firstBeat: Double(phase) / 100,
                             energy: energy.reduce(0, +) / Double(count))
     }

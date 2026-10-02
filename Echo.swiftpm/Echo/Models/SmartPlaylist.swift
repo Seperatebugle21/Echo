@@ -57,8 +57,10 @@ struct SmartListeningSnapshot {
 enum SmartPlaylistEvaluator {
     static func songs(_ definition: SmartPlaylistDefinition, from songs: [Song], favorites: Set<UUID>, listening: SmartListeningSnapshot, now: Date = Date()) -> [Song] {
         let filtered = songs.filter { song in
-            let matches = definition.rules.map { matches($0, song: song, favorites: favorites, listening: listening, now: now) }
-            return matches.isEmpty || (definition.matchAll ? matches.allSatisfy { $0 } : matches.contains(true))
+            let ruleMatches: [Bool] = definition.rules.map { rule in
+                Self.matches(rule, song: song, favorites: favorites, listening: listening, now: now)
+            }
+            return ruleMatches.isEmpty || (definition.matchAll ? ruleMatches.allSatisfy { $0 } : ruleMatches.contains(true))
         }
         let sorted = filtered.sorted { a, b in
             let ac = listening.count(a.id, days: definition.periodDays, now: now)

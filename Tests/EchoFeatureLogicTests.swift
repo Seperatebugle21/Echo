@@ -66,6 +66,17 @@ final class EchoFeatureLogicTests: XCTestCase {
         XCTAssertFalse(incompatible.beatMatched); XCTAssertEqual(incompatible.incomingRate, 1)
         XCTAssertFalse(AudioTransitionPlan.make(mode: .mix, seconds: 5, outgoingDuration: 100, incomingDuration: 100).beatMatched)
     }
+    func testBeatDetectorFindsOffsetBeatPhase() {
+        var samples = [Float](repeating: 0, count: 12000)
+        for beat in 0..<24 {
+            let start = 170 + beat * 500
+            for frame in 0..<10 { samples[start + frame] = 1 }
+        }
+        let result = BeatDetector.analyze(samples, sampleRate: 1000)
+        XCTAssertEqual(result.bpm, 120, accuracy: 1)
+        XCTAssertEqual(result.firstBeat, 0.17, accuracy: 0.01)
+        XCTAssertGreaterThan(result.confidence, 0.35)
+    }
     func testBeatDetectorRecognizesSyntheticRhythmAndSilence() {
         let rate = 11025.0
         var samples = [Float](repeating: 0, count: Int(rate * 12))
