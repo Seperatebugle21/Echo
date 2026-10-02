@@ -51,7 +51,7 @@ struct PlaylistPickerView: View {
                 }
                 
                 // Eigen playlists
-                ForEach(library.playlists) { playlist in
+                ForEach(library.playlists.filter { $0.smartDefinition == nil }) { playlist in
                     Button {
                         for song in songs {
                             library.addSong(song, to: playlist)

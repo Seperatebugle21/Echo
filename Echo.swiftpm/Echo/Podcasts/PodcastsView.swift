@@ -2,6 +2,8 @@ import SwiftUI
 
 struct PodcastsView: View {
     var resetSearchID = 0
+    @Binding var routedShow: PodcastShow?
+    @State private var openedShow: PodcastShow?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var query = ""
     @State private var isSearchPresented = false
@@ -14,6 +16,16 @@ struct PodcastsView: View {
     @State private var retry = 0
     @State private var recommendations = PodcastRecommendationsModel()
     @State private var isOverviewVisible = false
+
+    init(resetSearchID: Int = 0, routedShow: Binding<PodcastShow?> = .constant(nil)) {
+        self.resetSearchID = resetSearchID
+        self._routedShow = routedShow
+    }
+    private func consumeDestination() {
+        guard let show = routedShow else { return }
+        openedShow = show
+        routedShow = nil
+    }
 
     var body: some View {
         NavigationStack {
@@ -45,6 +57,12 @@ struct PodcastsView: View {
                 .scrollIndicators(.hidden)
             }
             .echoBackground()
+            .navigationDestination(item: $openedShow) { PodcastDetailView(show: $0) }
+            .onChange(of: routedShow) { consumeDestination() }
+            .onAppear { consumeDestination() }
+            .onReceive(NotificationCenter.default.publisher(for: .echoOpenPodcast)) { notification in
+                if let show = notification.object as? PodcastShow { openedShow = show }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !isSearchPresented {
@@ -787,6 +805,7 @@ private struct PodcastShowLink: View {
 }
 
 struct PodcastDetailView: View {
+    private let notifications = PodcastNotifications.shared
     let show: PodcastShow
     @State private var query = ""
     @State private var episodes: [PodcastEpisode] = []
@@ -836,6 +855,24 @@ struct PodcastDetailView: View {
             episodes = store.state.cachedFeeds[show.id] ?? []
             await load()
         }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { Task { await notifications.toggle(show) } } label: {
+                    if notifications.busy.contains(show.id) { ProgressView() }
+                    else { Image(systemName: notifications.follows[show.id] == nil ? "bell" : "bell.badge.fill") }
+                }
+                .frame(minWidth: 44, minHeight: 44)
+                .disabled(notifications.busy.contains(show.id))
+                .accessibilityLabel(LocalizedStringKey(notifications.follows[show.id] == nil ? "podcast_notifications_enable" : "podcast_notifications_disable"))
+            }
+        }
+        .alert("podcast_notifications_permission", isPresented: Binding(get: { notifications.permissionDenied }, set: { notifications.permissionDenied = $0 })) {
+            Button("action_cancel", role: .cancel) {}
+            Button("podcast_notifications_settings") { if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) } }
+        } message: { Text("podcast_notifications_permission_detail") }
+        .alert("podcasts_error_title", isPresented: Binding(get: { notifications.errorKey != nil }, set: { if !$0 { notifications.errorKey = nil } })) {
+            Button("podcasts_ok") { notifications.errorKey = nil }
+        } message: { Text(LocalizedStringKey(notifications.errorKey ?? "podcast_notifications_error")) }
         .refreshable { await load() }
     }
     private func load() async {
@@ -846,6 +883,7 @@ struct PodcastDetailView: View {
             try Task.checkCancellation()
             store.cache(feed.episodes, description: feed.description, for: show)
             episodes = feed.episodes
+            try? await notifications.ingest(feed.episodes, show: show)
         } catch { if !Task.isCancelled { failed = true } }
         loading = false
     }

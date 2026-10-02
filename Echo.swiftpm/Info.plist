@@ -51,7 +51,7 @@
 
     <key>UIBackgroundModes</key>
     <array>
-        <string>audio</string>
+        <string>audio</string><string>fetch</string>
     </array>
 
     <key>UIFileSharingEnabled</key>
@@ -88,5 +88,7 @@
             </array>
         </dict>
     </array>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array><string>com.echomusic.app.podcast-refresh</string></array>
 </dict>
 </plist>

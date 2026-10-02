@@ -14,6 +14,10 @@ struct AlbumGroup: Identifiable {
 
 struct LibraryView: View {
     @State private var showImporter = false
+    @State private var showAddActions = false
+    @State private var pendingAdd: LibraryAddSheet.Action?
+    @State private var showCreate = false
+    @State private var showSmart = false
     @State private var isImporting = false
     @State private var importProgress = 0
     @State private var importTotal = 0
@@ -395,7 +399,7 @@ struct LibraryView: View {
                             .accessibilityAddTraits(.isHeader)
                         Spacer(minLength: 16)
                         Button {
-                            showImporter = true
+                            showAddActions = true
                         } label: {
                             Image(systemName: "plus")
                                 .font(.title3)
@@ -403,12 +407,17 @@ struct LibraryView: View {
                         .buttonStyle(.glass)
                         .buttonBorderShape(.circle)
                         .disabled(isImporting)
-                        .accessibilityLabel("add_music_action")
+                        .accessibilityLabel("library_add_title")
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .sharedBackgroundVisibility(.hidden)
             }
+            .sheet(isPresented: $showAddActions, onDismiss: finishAddAction) {
+                LibraryAddSheet { action in pendingAdd = action; showAddActions = false }
+            }
+            .sheet(isPresented: $showCreate) { CreatePlaylistView() }
+            .sheet(isPresented: $showSmart) { SmartPlaylistEditor() }
             .fileImporter(isPresented: $showImporter, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in
                 switch result {
                 case .success(let files):
@@ -458,6 +467,17 @@ struct LibraryView: View {
             } message: {
                 Text("alert_duplicate_message \(library.duplicateSongName)")
             }
+        }
+    }
+
+    private func finishAddAction() {
+        guard let action = pendingAdd else { return }
+        pendingAdd = nil
+        switch action {
+        case .playlist: showCreate = true
+        case .smart: showSmart = true
+        case .files: showImporter = true
+        case .fetch: AppRouter.shared.open(.fetch)
         }
     }
 

@@ -1,0 +1,14 @@
+{
+  "swift_files_parsed": 134,
+  "logic_cases_passed": 10,
+  "new_localization_keys": 115,
+  "languages": [
+    "en",
+    "nl",
+    "fr",
+    "de"
+  ],
+  "ios_build": "not run: Windows has no iOS SDK",
+  "ios_engine_tests": "added, not run",
+  "device_listening_tests": "not run"
+}

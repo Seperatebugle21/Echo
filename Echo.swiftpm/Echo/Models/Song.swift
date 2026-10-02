@@ -1,4 +1,3 @@
-import SwiftUI
 import Foundation
 
 struct Song: Identifiable, Codable, Hashable {
@@ -10,6 +9,9 @@ struct Song: Identifiable, Codable, Hashable {
     var fileName: String
     
     var album: String?
+    var genre: String?
+    var releaseYear: Int?
+    var tagsInspected: Bool?
     var coverData: Data?
     var imageData: Data?
     

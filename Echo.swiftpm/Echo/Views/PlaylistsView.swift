@@ -7,6 +7,7 @@ struct PlaylistsView: View {
     private var library
 
     @State private var showCreatePlaylist = false
+    @State private var smartEditing: Playlist?
     @State private var selectedPlaylist: Playlist?
     @State private var showDeleteConfirmation = false
     @State private var showRenameSheet = false
@@ -52,6 +53,7 @@ struct PlaylistsView: View {
         .sheet(isPresented: $showCreatePlaylist) {
             CreatePlaylistView()
         }
+        .sheet(item: $smartEditing) { SmartPlaylistEditor(playlist: $0) }
         .sheet(isPresented: $showRenameSheet) {
             renamePlaylistSheet
         }
@@ -201,6 +203,7 @@ struct PlaylistsView: View {
     }
 
     private func preparePlaylistForEditing(_ playlist: Playlist) {
+        if playlist.smartDefinition != nil { smartEditing = playlist; return }
         renameText = playlist.name
         selectedPlaylist = playlist
         imageData = playlist.imageData
@@ -328,7 +331,10 @@ private struct PlaylistOverviewCard: View {
             PlaylistOverviewArtwork(playlist: playlist)
                 .aspectRatio(1, contentMode: .fit)
 
-            Text(playlist.name)
+            HStack(spacing: 4) {
+                if playlist.smartDefinition != nil { Image(systemName: "sparkles").accessibilityLabel("smart_editor_title") }
+                Text(playlist.name)
+            }
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .lineLimit(1)

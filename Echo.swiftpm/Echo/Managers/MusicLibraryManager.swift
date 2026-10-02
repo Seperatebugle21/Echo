@@ -10,6 +10,7 @@ class MusicLibraryManager {
     // MARK: - Song Editing
     
     var editingSong: Song?
+    @ObservationIgnored var isEnrichingTags = false
     var showEditSheet = false
     var songToAddToPlaylist: Song?
     
@@ -148,7 +149,9 @@ class MusicLibraryManager {
     func updateSong(
         _ song: Song,
         title: String,
-        artist: String
+        artist: String,
+        genre: String? = nil,
+        releaseYear: Int? = nil
     ) {
         
         if let index = songs.firstIndex(where: {
@@ -158,6 +161,8 @@ class MusicLibraryManager {
             songs[index].title = title
             songs[index].artist = artist
             songs[index].artistNames = nil
+            songs[index].genre = genre
+            songs[index].releaseYear = releaseYear
         }
     }
     
@@ -289,6 +294,7 @@ class MusicLibraryManager {
             )
             
             songs.append(song)
+            Task { @MainActor in await self.enrichMissingTags() }
             print("Opgeslagen:", song.title)
             
         } catch {
@@ -365,6 +371,7 @@ class MusicLibraryManager {
                 
                 let newSong = Song(title: title, artist: artist, fileName: fileName, album: album, coverData: coverData)
                 songs.append(newSong)
+                Task { @MainActor in await self.enrichMissingTags() }
                 print("Nummer succesvol vervangen:", title)
                 
             } catch {
@@ -545,12 +552,16 @@ class MusicLibraryManager {
             $0.id == playlist.id
         }) else { return }
         
+        guard playlists[index].smartDefinition == nil else { return }
         if !playlists[index].songIDs.contains(song.id) {
             playlists[index].songIDs.append(song.id)
         }
     }
 
-    func songs(in playlist: Playlist) -> [Song] {
+    @MainActor func songs(in playlist: Playlist) -> [Song] {
+        if let definition = playlist.smartDefinition {
+            return SmartPlaylistEvaluator.songs(definition, from: songs, favorites: Set(favoriteSongIDs), listening: RecommendationManager.shared.smartSnapshot, now: SmartPlaylistClock.shared.now)
+        }
         let songsByID = Dictionary(
             uniqueKeysWithValues: songs.map { ($0.id, $0) }
         )
@@ -558,7 +569,8 @@ class MusicLibraryManager {
         return playlist.songIDs.compactMap { songsByID[$0] }
     }
 
-    func songCount(in playlist: Playlist) -> Int {
+    @MainActor func songCount(in playlist: Playlist) -> Int {
+        if playlist.smartDefinition != nil { return songs(in: playlist).count }
         let availableSongIDs = Set(songs.map(\.id))
         return playlist.songIDs.filter(availableSongIDs.contains).count
     }

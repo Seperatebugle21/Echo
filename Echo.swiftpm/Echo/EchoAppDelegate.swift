@@ -21,6 +21,7 @@ final class EchoAppDelegate:
             [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
 
+        PodcastNotifications.shared.registerBackgroundTask()
         configureSiriMediaContext()
 
         return true
@@ -1045,21 +1046,7 @@ final class EchoMediaIntentHandler:
         intent: INPlayMediaIntent
     ) -> Bool {
 
-        var songs =
-            playlist.songIDs
-                .compactMap {
-                    id in
-
-
-                    library.songs
-                        .first(
-                            where: {
-
-                                $0.id ==
-                                    id
-                            }
-                        )
-                }
+        var songs = library.songs(in: playlist)
 
 
         guard !songs.isEmpty

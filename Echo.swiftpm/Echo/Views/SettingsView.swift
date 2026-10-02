@@ -139,7 +139,7 @@ struct SettingsView: View {
 
     private var personalization: some View {
         Section("settingsview_personalization") {
-            NavigationLink { AudioSettingsView() } label: {
+            NavigationLink { AudioOptionsView() } label: {
                 SettingsRow(title: "settingsview_audio", symbol: "speaker.wave.2.fill", color: .orange)
             }
             NavigationLink { EqualizerView() } label: {
@@ -149,7 +149,7 @@ struct SettingsView: View {
                 SettingsRow(title: "settingsview_tab_bar", subtitle: "settingsview_tab_bar_detail", symbol: "rectangle.bottomthird.inset.filled", color: .purple)
             }
             NavigationLink {
-                AppearanceSettingsView()
+                ThemeSettingsView()
             } label: {
                 SettingsRow(title: "settings_appearance_title", symbol: "circle.lefthalf.filled", color: .indigo)
             }
@@ -187,38 +187,6 @@ struct SettingsView: View {
         } header: {
             Label("settings_section_danger", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.red)
         } footer: { Text("settingsview_danger_detail") }
-    }
-}
-
-private struct AppearanceSettingsView: View {
-    @AppStorage("appearanceMode") private var appearanceMode = "system"
-    @AppStorage("darkBackgroundStyle") private var darkBackgroundStyle = "charcoal"
-
-    var body: some View {
-        Form {
-            Section("settings_appearance_title") {
-                Picker("settings_appearance_title", selection: $appearanceMode) {
-                    Text("appearance_system").tag("system")
-                    Text("appearance_light").tag("light")
-                    Text("appearance_dark").tag("dark")
-                }
-                .pickerStyle(.segmented)
-            }
-            Section {
-                Picker("appearance_dark_background", selection: $darkBackgroundStyle) {
-                    Text("appearance_background_black").tag("black")
-                    Text("appearance_background_charcoal").tag("charcoal")
-                }
-                .pickerStyle(.inline)
-            } header: {
-                Text("appearance_dark_background")
-            } footer: {
-                Text("appearance_dark_background_detail")
-            }
-        }
-        .echoBackground()
-        .navigationTitle("settings_appearance_title")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -261,35 +229,5 @@ private struct SettingsLyricsServicesView: View {
         .echoBackground()
         .navigationTitle("settingsview_lyrics_services")
         .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-private struct AudioSettingsView: View {
-    @AppStorage(AudioSettings.monoKey) private var monoAudio = false
-
-    var body: some View {
-        Form {
-            Section {
-                Picker("audio_output_mode", selection: $monoAudio) {
-                    Text("audio_stereo").tag(false)
-                    Text("audio_mono").tag(true)
-                }
-                .pickerStyle(.segmented)
-            } header: {
-                Text("audio_output_mode")
-            } footer: {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("audio_mono_explanation")
-                    Text("audio_stereo_explanation")
-                    Text("audio_saved_hint")
-                }
-            }
-        }
-        .echoBackground()
-        .navigationTitle("settingsview_audio")
-        .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: monoAudio) {
-            NotificationCenter.default.post(name: AudioSettings.didChange, object: nil)
-        }
     }
 }

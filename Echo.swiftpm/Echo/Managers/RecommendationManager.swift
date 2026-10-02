@@ -17,6 +17,16 @@ final class RecommendationManager {
 
     private(set) var learningData: [UUID: SongLearningData] = [:]
     private(set) var revision: Int = 0
+    private var dailyCounts: [UUID: [String: Int]] = [:]
+    var smartSnapshot: SmartListeningSnapshot {
+        _ = revision
+        return SmartListeningSnapshot(total: learningData.mapValues(\.playCount), daily: dailyCounts)
+    }
+    func playbackStarted(_ song: Song) {
+        guard song.podcastEpisodeID == nil else { return }
+        finishObservedSongIfNeeded()
+        beginObserving(song)
+    }
 
     private let storageKey = "EchoRecommendationLearningDataV1"
 
@@ -194,6 +204,7 @@ final class RecommendationManager {
 
     func resetLearning() {
         learningData.removeAll()
+        dailyCounts.removeAll()
         saveAndPublish()
     }
 
@@ -221,20 +232,18 @@ final class RecommendationManager {
         let player =
             AudioPlayerManager.shared
 
+        guard !player.isPreviewing else { return }
         guard let currentSong =
-                player.currentSong
+                player.currentSong, currentSong.podcastEpisodeID == nil
         else {
             finishObservedSongIfNeeded()
             return
         }
 
         if observedSongID != currentSong.id {
-
-            finishObservedSongIfNeeded()
-
-            beginObserving(
-                currentSong
-            )
+            // Starts are registered by the audio engine, including repeats.
+            // During a crossfade metadata still belongs to the outgoing song.
+            return
         }
 
         observedMaximumTime =
@@ -292,6 +301,7 @@ final class RecommendationManager {
             ?? SongLearningData()
 
         data.playCount += 1
+        dailyCounts[song.id, default: [:]][SmartListeningSnapshot.dayKey(Date()), default: 0] += 1
         data.lastStartedAt = Date()
 
         learningData[song.id] =
@@ -520,6 +530,7 @@ final class RecommendationManager {
     // MARK: - Persistence
 
     private func saveAndPublish() {
+        if let daily = try? JSONEncoder().encode(dailyCounts) { UserDefaults.standard.set(daily, forKey: "EchoDailyListeningV1") }
 
         if let data =
             try? JSONEncoder()
@@ -535,6 +546,8 @@ final class RecommendationManager {
     }
 
     private func load() {
+        if let data = UserDefaults.standard.data(forKey: "EchoDailyListeningV1"),
+           let counts = try? JSONDecoder().decode([UUID: [String: Int]].self, from: data) { dailyCounts = counts }
 
         guard
             let data =

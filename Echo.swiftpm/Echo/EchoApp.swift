@@ -118,7 +118,7 @@ struct EchoApp: App {
            // .tint(.red)
 
             .preferredColorScheme(
-                colorScheme
+                EchoTheme.shared.colorScheme
             )
 
 
@@ -126,6 +126,8 @@ struct EchoApp: App {
 
             .task {
                 PodcastStore.shared.prepare()
+                await library.enrichMissingTags()
+                await PodcastNotifications.shared.refresh()
                 EchoWidgetSnapshotPublisher.refresh()
 
                 FetchDownloadEngine.shared
@@ -169,6 +171,10 @@ struct EchoApp: App {
 
                 library
                     .syncDocumentsFolder()
+                Task {
+                    await library.enrichMissingTags()
+                    await PodcastNotifications.shared.refresh()
+                }
             }
         }
 

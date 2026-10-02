@@ -9,6 +9,11 @@ struct PlaylistDetailView: View {
     let playlist: Playlist
     
     @State private var showSongPicker = false
+    @State private var showSmartEditor = false
+    @State private var clockDate = Date()
+    private let clock = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
+    private var currentPlaylist: Playlist { library.playlists.first { $0.id == playlist.id } ?? playlist }
+    private var isSmart: Bool { currentPlaylist.smartDefinition != nil }
     @State private var editMode: EditMode = .inactive
     @State private var selectedSongs: Set<UUID> = []
     @State private var showDeleteConfirmation = false
@@ -19,6 +24,7 @@ struct PlaylistDetailView: View {
     @State private var sortOption: FavoritesSortOption = .custom
     
     var songs: [Song] {
+        _ = clockDate
         guard let currentPlaylist = library.playlists.first(where: {
             $0.id == playlist.id
         }) else {
@@ -79,7 +85,7 @@ struct PlaylistDetailView: View {
                             }
                         }
                         
-                        Text(playlist.name)
+                        Text(currentPlaylist.name)
                             .font(.largeTitle)
                             .bold()
                         
@@ -117,14 +123,14 @@ struct PlaylistDetailView: View {
                 ContentUnavailableView {
                     Label(LocalizedStringKey("no_songs_title"), systemImage: "music.note.list")
                 } description: {
-                    Text(LocalizedStringKey("add_songs_to_playlist_description"))
+                    Text(LocalizedStringKey(isSmart ? "smart_empty" : "add_songs_to_playlist_description"))
                 } actions: {
                     Button {
-                        showSongPicker = true
+                        if isSmart { showSmartEditor = true } else { showSongPicker = true }
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
-                            Text(LocalizedStringKey("add_music_action"))
+                            Text(LocalizedStringKey(isSmart ? "smart_edit_rules" : "add_music_action"))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -180,7 +186,7 @@ struct PlaylistDetailView: View {
                         }
                     }
                 }
-                .onMove(perform: (searchText.isEmpty && sortOption == .custom) ? moveSongs : nil)
+                .onMove(perform: (!isSmart && searchText.isEmpty && sortOption == .custom) ? moveSongs : nil)
             }
         }
         .searchable(
@@ -190,6 +196,8 @@ struct PlaylistDetailView: View {
         .environment(\.editMode, $editMode)
         .echoBackground()
         .navigationTitle(playlist.name)
+        .onReceive(clock) { clockDate = $0 }
+        .sheet(isPresented: $showSmartEditor) { SmartPlaylistEditor(playlist: currentPlaylist) }
         .onAppear {
             loadPlaylistImage()
         }
@@ -213,6 +221,7 @@ struct PlaylistDetailView: View {
 
      
                     Button {
+                        if isSmart { showSmartEditor = true; return }
                         withAnimation {
                             if editMode == .active {
                                 editMode = .inactive
@@ -268,7 +277,7 @@ struct PlaylistDetailView: View {
                     
                     
                     
-                    if editMode == .inactive {
+                    if editMode == .inactive && !isSmart {
                         Button {
                             showSongPicker = true
                         } label: {

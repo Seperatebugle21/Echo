@@ -4,6 +4,13 @@ import UIKit
 
 struct ContentView: View {
     @State private var miniPlayerHidden = false
+    private let router = AppRouter.shared
+    @State private var routedSheet: RoutedSheet?
+    @State private var routedPodcast: PodcastShow?
+    private enum RoutedSheet: String, Identifiable {
+        case fetch, podcast
+        var id: String { rawValue }
+    }
     @State private var selectedTab = TabBarConfiguration.load().startTab
     @State private var podcastSearchResetID = 0
     @AppStorage(TabBarConfiguration.storageKey) private var storedTabs = ""
@@ -121,6 +128,15 @@ struct ContentView: View {
             }
         }
         .environment(presentation)
+        .sheet(item: $routedSheet) { item in
+            switch item {
+            case .fetch: FetchView()
+            case .podcast:
+                if let routedPodcast { NavigationStack { PodcastDetailView(show: routedPodcast) } }
+            }
+        }
+        .onChange(of: router.revision) { consumeRoute() }
+        .onAppear { consumeRoute() }
         .alert("podcasts_error_title", isPresented: Binding(
             get: { PodcastStore.shared.errorKey != nil },
             set: { if !$0 { PodcastStore.shared.errorKey = nil } }
@@ -147,6 +163,23 @@ struct ContentView: View {
 }
 
 private extension ContentView {
+    func consumeRoute() {
+        guard let route = router.pending else { return }
+        router.pending = nil
+        showTabSettings = false
+        switch route {
+        case .fetch:
+            if tabConfiguration.tabs.contains(.fetch) { selectedTab = .fetch }
+            else { routedSheet = .fetch }
+        case .podcast(let show):
+            routedPodcast = show
+            if tabConfiguration.tabs.contains(.podcasts) {
+                selectedTab = .podcasts
+                NotificationCenter.default.post(name: .echoOpenPodcast, object: show)
+            } else { routedSheet = .podcast }
+        }
+    }
+
     var tabSelection: Binding<AppTab> {
         Binding(
             get: { selectedTab },
@@ -163,7 +196,7 @@ private extension ContentView {
     func tabContent(_ tab: AppTab) -> some View {
         switch tab {
         case .home: HomeView()
-        case .podcasts: PodcastsView(resetSearchID: podcastSearchResetID)
+        case .podcasts: PodcastsView(resetSearchID: podcastSearchResetID, routedShow: $routedPodcast)
         case .library: LibraryView()
         case .fetch: FetchView()
         case .search: SearchView()

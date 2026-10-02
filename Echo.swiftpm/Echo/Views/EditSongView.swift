@@ -9,11 +9,15 @@ struct EditSongView: View {
     
     @State private var title: String
     @State private var artist: String
+    @State private var genre: String
+    @State private var year: String
     
     init(song: Song) {
         self.song = song
         _title = State(initialValue: song.title)
         _artist = State(initialValue: song.artist)
+        _genre = State(initialValue: song.genre ?? "")
+        _year = State(initialValue: song.releaseYear.map(String.init) ?? "")
     }
     
     var body: some View {
@@ -31,6 +35,8 @@ struct EditSongView: View {
                         LocalizedStringKey("song_artist_placeholder"),
                         text: $artist
                     )
+                    TextField("smart_field_genre", text: $genre)
+                    TextField("smart_field_releaseYear", text: $year).keyboardType(.numberPad)
                 }
             }
             .echoBackground()
@@ -48,7 +54,9 @@ struct EditSongView: View {
                         library.updateSong(
                             song,
                             title: title,
-                            artist: artist
+                            artist: artist,
+                            genre: genre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : genre,
+                            releaseYear: Int(year)
                         )
                         dismiss()
                     }

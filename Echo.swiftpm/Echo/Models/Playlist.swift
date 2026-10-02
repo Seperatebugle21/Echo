@@ -7,5 +7,6 @@ struct Playlist: Identifiable, Codable {
     var songIDs: [UUID]
     
     var imageData: Data?
+    var smartDefinition: SmartPlaylistDefinition? = nil
     
 }

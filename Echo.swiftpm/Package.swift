@@ -155,6 +155,8 @@ let package = Package(
                 "ProMotion.plist"
             ],
 
+            resources: [.process("Echo/Resources"), .process("Echo/Localizable.xcstrings")],
+
             swiftSettings: [
 
                 .enableUpcomingFeature(

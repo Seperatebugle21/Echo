@@ -48,6 +48,19 @@ class AudioPlayerManager:
 
     private var player:
         EqualizedAudioPlayer?
+    private var playbackRequest = UUID()
+    private var transitionTask: Task<Void, Never>?
+    private var transitionStarts: [UUID: Song] = [:]
+    private var transitionTarget: (token: UUID, song: Song, index: Int?, automatic: Bool)?
+    private var lastTransitionMode = AudioSettings.transition
+    private var lastFadeSeconds = AudioSettings.crossfadeSeconds
+    private var lastPublishedRate = 1.0
+    var isPreviewing = false
+    private var previewPlayer: EqualizedAudioPlayer?
+    private var previewResume = false
+    private var previewTimeout: Task<Void, Never>?
+    private var previewNextURL: URL?
+    var previewFinished: (() -> Void)?
 
     @ObservationIgnored private var podcastPlayer: AVPlayer?
     @ObservationIgnored private var podcastTimeObserver: Any?
@@ -300,6 +313,7 @@ class AudioPlayerManager:
     // ========================================================
 
     func updateNowPlaying() {
+        guard !isPreviewing else { return }
         if isPodcast { updatePodcastNowPlaying(); return }
 
         guard
@@ -346,7 +360,7 @@ class AudioPlayerManager:
             MPNowPlayingInfoPropertyPlaybackRate
         ] =
             isPlaying
-            ? 1.0
+            ? player.currentRate
             : 0.0
 
 
@@ -547,6 +561,12 @@ class AudioPlayerManager:
         queue: [Song] = [], queuePosition: Int? = nil, repeatingCurrent: Bool = false
     ) {
 
+        stopTransitionPreview(resume: false)
+        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        transitionStarts.removeAll()
+        playbackRequest = UUID()
+        lastTransitionMode = AudioSettings.transition
+        lastFadeSeconds = AudioSettings.crossfadeSeconds
         setupAudioSession()
 
         stopPodcastPlayback()
@@ -582,11 +602,17 @@ class AudioPlayerManager:
                 .invalidate()
 
 
-            player =
-                try EqualizedAudioPlayer(
-                    contentsOf:
-                        url
-                )
+            if let player { try player.replace(with: url) }
+            else { player = try EqualizedAudioPlayer(contentsOf: url) }
+            let request = playbackRequest
+            player?.onStarted = { [weak self] identifier in
+                Task { @MainActor in
+                    guard let self, self.playbackRequest == request, !self.isPreviewing else { return }
+                    let started = identifier.flatMap { self.transitionStarts.removeValue(forKey: $0) } ?? (identifier == nil ? self.currentSong : nil)
+                    if let started { RecommendationManager.shared.playbackStarted(started); MusicLibraryManager.shared.markAsPlayed(started) }
+                }
+            }
+            player?.onPromote = { [weak self] token in self?.promoteTransition(token) }
 
 
             player?
@@ -694,6 +720,114 @@ class AudioPlayerManager:
     }
 
 
+    private func nextTransitionSong() -> (song: Song, index: Int?, automatic: Bool)? {
+        if repeatMode == .one, let song = currentSong { return (song, currentIndex, false) }
+        if queue.indices.contains(currentIndex + 1) { return (queue[currentIndex + 1], currentIndex + 1, false) }
+        if repeatMode == .all, let first = queue.first { return (first, 0, false) }
+        return autoNextQueue.first.map { ($0, nil, true) }
+    }
+    private func prepareAutomaticTransition() {
+        guard !isPreviewing, !isPodcast, let player, player.isPlaying, let currentSong else { return }
+        let mode = AudioSettings.transition, seconds = AudioSettings.crossfadeSeconds
+        let next = nextTransitionSong()
+        if lastTransitionMode != mode || lastFadeSeconds != seconds ||
+           (transitionTarget != nil && (transitionTarget?.song.id != next?.song.id || transitionTarget?.index != next?.index || transitionTarget?.automatic != next?.automatic)) {
+            transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+            player.cancelPreparedNext()
+            lastTransitionMode = mode; lastFadeSeconds = seconds
+        }
+        guard mode != .direct, player.canPrepareNext, transitionTask == nil,
+              player.duration - player.currentTime > (mode == .gapless ? 0.5 : min(mode == .crossfade ? seconds : 12, player.duration / 2) + 0.5),
+              let next, next.song.podcastEpisodeID == nil,
+              let outgoingURL = getURL(for: currentSong), let incomingURL = getURL(for: next.song) else { return }
+        let request = playbackRequest, token = UUID(), outgoingDuration = player.duration
+        transitionTarget = (token, next.song, next.index, next.automatic)
+        transitionStarts[token] = next.song
+        transitionTask = Task { @MainActor [weak self] in
+            defer { if self?.playbackRequest == request { self?.transitionTask = nil } }
+            do {
+                let duration = try await AVURLAsset(url: incomingURL).load(.duration).seconds
+                var outro = BeatAnalysis(), intro = BeatAnalysis()
+                if mode == .mix {
+                    outro = (try? await AudioBeatCache.shared.analysis(outgoingURL).outro) ?? BeatAnalysis()
+                    intro = (try? await AudioBeatCache.shared.analysis(incomingURL).intro) ?? BeatAnalysis()
+                }
+                try Task.checkCancellation()
+                guard let self, self.playbackRequest == request, self.transitionTarget?.token == token,
+                      self.nextTransitionSong()?.song.id == next.song.id else { return }
+                let plan = AudioTransitionPlan.make(mode: mode, seconds: seconds, outgoingDuration: outgoingDuration,
+                                                    incomingDuration: duration, outro: outro, intro: intro)
+                player.prepareNext(url: incomingURL, identifier: token, plan: plan)
+            } catch { if self?.transitionTarget?.token == token { self?.transitionTarget = nil } }
+        }
+    }
+    private func promoteTransition(_ token: UUID) {
+        guard let target = transitionTarget, target.token == token, !isPreviewing else { return }
+        lastPlaybackDirection = .next
+        if let old = currentSong, old.id != target.song.id { history.append(old) }
+        if let index = target.index { currentIndex = index }
+        else {
+            queue.append(target.song); currentIndex = queue.count - 1
+            autoNextQueue.removeAll { $0.id == target.song.id }; fillAutoNext(from: allSongs)
+        }
+        currentSong = target.song
+        currentTime = player?.currentTime ?? 0; duration = player?.duration ?? 0
+        currentLyrics = nil; currentSyncedLyrics = nil
+        loadLyrics(for: target.song); donatePlaybackToSiri(song: target.song); updateNowPlaying()
+        transitionTarget = nil
+    }
+
+    @MainActor func startTransitionPreview(first: URL, second: URL) async throws {
+        stopTransitionPreview()
+        let request = playbackRequest
+        previewResume = isPlaying
+        if let podcastPlayer { podcastPlayer.pause() } else { player?.pause() }
+        isPreviewing = true
+        do {
+            let demo = try EqualizedAudioPlayer(contentsOf: first)
+            previewPlayer = demo
+            let mode = AudioSettings.transition
+            let nextDuration = try await AVURLAsset(url: second).load(.duration).seconds
+            var intro = BeatAnalysis(), outro = BeatAnalysis()
+            if mode == .mix {
+                outro = try await AudioBeatCache.shared.analysis(first).outro
+                intro = try await AudioBeatCache.shared.analysis(second).intro
+            }
+            try Task.checkCancellation()
+            guard request == playbackRequest, isPreviewing else { return }
+            let plan = AudioTransitionPlan.make(mode: mode, seconds: AudioSettings.crossfadeSeconds,
+                outgoingDuration: demo.duration, incomingDuration: nextDuration, outro: outro, intro: intro)
+            demo.currentTime = max(0, demo.duration - min(15, max(4, plan.overlap + 2)))
+            demo.onStarted = { [weak self, weak demo] id in
+                guard id == nil, let self, self.isPreviewing else { return }
+                if mode == .direct {
+                    // Direct demo starts B only after A has finished.
+                    return
+                }
+                demo?.prepareNext(url: second, identifier: UUID(), plan: plan)
+            }
+            demo.delegate = self
+            if mode == .direct { previewNextURL = second }
+            demo.play()
+            previewTimeout = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(20))
+                if !Task.isCancelled { self?.stopTransitionPreview() }
+            }
+        } catch { stopTransitionPreview(); throw error }
+    }
+    func stopTransitionPreview(resume: Bool = true) {
+        guard isPreviewing else { return }
+        previewTimeout?.cancel(); previewTimeout = nil
+        previewPlayer?.stop(); previewPlayer = nil; previewNextURL = nil
+        isPreviewing = false
+        if resume && previewResume {
+            if let podcastPlayer, podcastWantsPlayback { podcastPlayer.playImmediately(atRate: podcastSpeed) }
+            else { player?.play() }
+        }
+        previewResume = false
+        let finished = previewFinished; previewFinished = nil; finished?()
+    }
+
     // ========================================================
     // MARK: - Lyrics
     // ========================================================
@@ -756,6 +890,7 @@ class AudioPlayerManager:
     // ========================================================
 
     func next(manuallyInitiated: Bool = true) {
+        stopTransitionPreview(resume: false)
         if isPodcast && currentIndex + 1 >= queue.count {
             podcastPlayer?.pause()
             podcastWantsPlayback = false
@@ -839,6 +974,7 @@ class AudioPlayerManager:
     // ========================================================
 
     func previous() {
+        stopTransitionPreview(resume: false)
         lastPlaybackDirection = .previous
 
         if currentTime > 3 { updateRepeatForSelection(); seek(to: 0); return }
@@ -1094,6 +1230,11 @@ class AudioPlayerManager:
     // ========================================================
 
     func togglePlayPause() {
+        if isPreviewing {
+            stopTransitionPreview(resume: false)
+            podcastWantsPlayback = false; isPlaying = false; updateNowPlaying()
+            return
+        }
         if let podcastPlayer {
             if podcastPlayer.currentItem?.status == .failed, let song = currentSong, let url = getURL(for: song) {
                 play(song: song, url: url, queue: queue, queuePosition: currentIndex)
@@ -1255,16 +1396,28 @@ class AudioPlayerManager:
                 }
 
 
+                guard !self.isPreviewing else { return }
                 let playing = self.player?.isPlaying ?? false
                 if self.isPlaying != playing {
                     self.isPlaying = playing
                     self.updateNowPlaying()
                 }
+                guard !self.isPreviewing else { return }
+                self.prepareAutomaticTransition()
                 self.currentTime =
                     self.player?
                         .currentTime
                     ??
                     0
+                let rate = self.player?.currentRate ?? 1
+                if abs(rate - self.lastPublishedRate) > 0.001 {
+                    self.lastPublishedRate = rate
+                    if var info = MPNowPlayingInfoCenter.default().nowPlayingInfo {
+                        info[MPNowPlayingInfoPropertyPlaybackRate] = self.isPlaying ? rate : 0
+                        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = self.currentTime
+                        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+                    }
+                }
             }
     }
 
@@ -1276,6 +1429,7 @@ class AudioPlayerManager:
     func seek(
         to time: Double
     ) {
+        stopTransitionPreview(resume: false)
         if let podcastPlayer {
             guard time.isFinite else { return }
             let target = max(0, duration > 0 ? min(time, duration) : time)
@@ -1356,6 +1510,14 @@ class AudioPlayerManager:
         successfully flag: Bool
     ) {
 
+        if previewPlayer === player {
+            if let next = previewNextURL, flag {
+                previewNextURL = nil
+                do { try player.replace(with: next); player.play() }
+                catch { stopTransitionPreview() }
+            } else { stopTransitionPreview() }
+            return
+        }
         guard self.player === player else { return }
         guard flag else {
             isPlaying = false
@@ -1454,6 +1616,9 @@ extension AudioPlayerManager {
     }
 
     private func startPodcastPlayback(_ episode: PodcastEpisode, song: Song) {
+        stopTransitionPreview(resume: false)
+        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        playbackRequest = UUID()
         player?.stop()
         player = nil
         timer?.invalidate()
@@ -1498,7 +1663,7 @@ extension AudioPlayerManager {
                         DispatchQueue.main.async {
                             guard let self, let item, self.podcastPlayer?.currentItem === item, finished else { return }
                             self.currentTime = position
-                            if self.podcastWantsPlayback { self.podcastPlayer?.playImmediately(atRate: self.podcastSpeed) }
+                            if self.podcastWantsPlayback && !self.isPreviewing { self.podcastPlayer?.playImmediately(atRate: self.podcastSpeed) }
                             self.updateNowPlaying()
                         }
                     }

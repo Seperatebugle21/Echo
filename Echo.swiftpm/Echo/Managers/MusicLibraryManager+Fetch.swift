@@ -15,6 +15,7 @@ extension MusicLibraryManager {
         reuseExistingDuplicate: Bool = false
     ) -> Song? {
 
+        Task { @MainActor in await self.enrichMissingTags() }
         let fileName =
             fileURL.lastPathComponent
 

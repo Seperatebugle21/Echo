@@ -136,7 +136,37 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.podcast-tests
         GENERATE_INFOPLIST_FILE: YES
 
+  EchoFeatureTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/EchoFeatureLogicTests.swift
+      - path: Tests/EchoReleaseDetectionTests.swift
+      - path: Tests/EchoAudioEngineTests.swift
+      - path: Tests/EchoThemeTests.swift
+      - path: Echo.swiftpm/Echo/Models/Song.swift
+      - path: Echo.swiftpm/Echo/Models/Playlist.swift
+      - path: Echo.swiftpm/Echo/Models/SmartPlaylist.swift
+      - path: Echo.swiftpm/Echo/Managers/AudioTransition.swift
+      - path: Echo.swiftpm/Echo/Managers/AudioSettings.swift
+      - path: Echo.swiftpm/Echo/Managers/EqualizerSettings.swift
+      - path: Echo.swiftpm/Echo/Managers/EqualizedAudioPlayer.swift
+      - path: Echo.swiftpm/Echo/Podcasts/PodcastModels.swift
+      - path: Echo.swiftpm/Echo/Podcasts/PodcastReleaseDetection.swift
+      - path: Echo.swiftpm/Echo/Views/EchoAppearance.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.feature-tests
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
+  EchoFeatureTests:
+    build:
+      targets:
+        EchoFeatureTests: all
+    test:
+      targets:
+        - EchoFeatureTests
   EchoPodcastTests:
     build:
       targets:
