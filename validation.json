@@ -1,6 +1,7 @@
 {
-  "swift_files_parsed": 134,
-  "logic_cases_passed": 10,
+  "swift_files_parsed": 136,
+  "logic_cases_passed": 14,
+  "logic_compile_mode": "Swift 5 language mode, optimized whole-module compilation",
   "new_localization_keys": 115,
   "languages": [
     "en",
@@ -8,7 +9,21 @@
     "fr",
     "de"
   ],
-  "ios_build": "not run: Windows has no iOS SDK",
+  "ios_build": "not rerun: Windows has no iOS SDK",
   "ios_engine_tests": "added, not run",
-  "device_listening_tests": "not run"
+  "device_listening_tests": "not run",
+  "build_fix_run": "37038588065",
+  "build_diagnostics_fixed": [
+    "SmartPlaylist.swift:60 name shadowing",
+    "AudioTransition.swift:76 expression type-check timeout"
+  ],
+  "performance_benchmark": {
+    "fixture_songs": 1500,
+    "daily_days": 90,
+    "iterations": 5,
+    "before_seconds": 5.0120237,
+    "after_seconds": 0.0567923,
+    "same_results": true,
+    "platform": "Windows Swift 6.4, Swift 5 mode, optimized; not iPhone navigation timing"
+  }
 }

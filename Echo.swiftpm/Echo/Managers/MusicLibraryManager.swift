@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 import AVFoundation
 
 @Observable
@@ -27,16 +28,46 @@ class MusicLibraryManager {
     }
     
     var favoriteSongIDs: [UUID] = [] {
-        didSet { EchoWidgetSnapshotPublisher.requestUpdate() }
+        didSet {
+            favoriteRevision &+= 1
+            EchoWidgetSnapshotPublisher.requestUpdate()
+        }
     }
     
     // MARK: - Songs
     
     var songs: [Song] = [] {
         didSet {
+            songRevision &+= 1
             scheduleArtistUpdate()
-            saveSongs()
+            if !isRestoringLibrary { saveSongs() }
         }
+    }
+
+    @ObservationIgnored private var isRestoringLibrary = true
+    private(set) var songRevision: UInt64 = 0
+    private(set) var favoriteRevision: UInt64 = 0
+    @ObservationIgnored private lazy var songPersistence = SongLibraryPersistence(url: songsFileURL)
+    @ObservationIgnored private var backgroundSaveTask: UIBackgroundTaskIdentifier = .invalid
+    @ObservationIgnored private var indexedRevision: UInt64?
+    @ObservationIgnored private var indexedSongs: [UUID: Song] = [:]
+    @ObservationIgnored private var smartResults: [UUID: SmartResult] = [:]
+    private struct SmartResult {
+        var definition: SmartPlaylistDefinition
+        var songRevision: UInt64
+        var favoriteRevision: UInt64
+        var listeningRevision: Int
+        var now: Date
+        var songs: [Song]
+    }
+
+    private var songsByID: [UUID: Song] {
+        let revision = songRevision
+        if indexedRevision != revision {
+            indexedSongs = Dictionary(songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+            indexedRevision = revision
+        }
+        return indexedSongs
     }
 
     private(set) var artistGroups: [ArtistGroup] = []
@@ -52,7 +83,7 @@ class MusicLibraryManager {
         artistUpdateGeneration += 1
         let generation = artistUpdateGeneration
         pendingArtistUpdate?.cancel()
-        isLoadingArtists = true
+        if !isLoadingArtists { isLoadingArtists = true }
 
         // Coalesce synchronous edits/imports before capturing the library snapshot.
         DispatchQueue.main.async { [weak self] in
@@ -71,7 +102,7 @@ class MusicLibraryManager {
                 }
             }
             self.pendingArtistUpdate = work
-            self.artistQueue.async(execute: work)
+            self.artistQueue.asyncAfter(deadline: .now() + 0.25, execute: work)
         }
     }
     
@@ -93,6 +124,7 @@ class MusicLibraryManager {
         loadPlaylists()
         loadFavorites()
         removeMissingSongReferences()
+        isRestoringLibrary = false
         syncDocumentsFolder()
     }
     
@@ -450,8 +482,9 @@ class MusicLibraryManager {
     }
     
     var favoriteSongs: [Song] {
-        favoriteSongIDs.compactMap { id in
-            songs.first { $0.id == id }
+        let index = songsByID
+        return favoriteSongIDs.compactMap { id in
+            index[id]
         }
     }
     
@@ -560,19 +593,27 @@ class MusicLibraryManager {
 
     @MainActor func songs(in playlist: Playlist) -> [Song] {
         if let definition = playlist.smartDefinition {
-            return SmartPlaylistEvaluator.songs(definition, from: songs, favorites: Set(favoriteSongIDs), listening: RecommendationManager.shared.smartSnapshot, now: SmartPlaylistClock.shared.now)
+            let recommendations = RecommendationManager.shared
+            let now = SmartPlaylistClock.shared.now
+            let revision = songRevision, favorites = favoriteRevision, listening = recommendations.revision
+            if let cached = smartResults[playlist.id], cached.definition == definition,
+               cached.songRevision == revision, cached.favoriteRevision == favorites,
+               cached.listeningRevision == listening, cached.now == now {
+                return cached.songs
+            }
+            let result = SmartPlaylistEvaluator.songs(definition, from: songs, favorites: Set(favoriteSongIDs), listening: recommendations.smartSnapshot, now: now)
+            smartResults[playlist.id] = SmartResult(definition: definition, songRevision: revision,
+                favoriteRevision: favorites, listeningRevision: listening, now: now, songs: result)
+            return result
         }
-        let songsByID = Dictionary(
-            uniqueKeysWithValues: songs.map { ($0.id, $0) }
-        )
-
-        return playlist.songIDs.compactMap { songsByID[$0] }
+        let index = songsByID
+        return playlist.songIDs.compactMap { index[$0] }
     }
 
     @MainActor func songCount(in playlist: Playlist) -> Int {
         if playlist.smartDefinition != nil { return songs(in: playlist).count }
-        let availableSongIDs = Set(songs.map(\.id))
-        return playlist.songIDs.filter(availableSongIDs.contains).count
+        let index = songsByID
+        return playlist.songIDs.reduce(0) { $0 + (index[$1] == nil ? 0 : 1) }
     }
 
     private func removeMissingSongReferences() {
@@ -700,29 +741,25 @@ class MusicLibraryManager {
     
     
     private func saveSongs() {
-        
-        do {
-            
-            let data = try JSONEncoder().encode(songs)
-            
-            try data.write(
-                to: songsFileURL,
-                options: [.atomic]
-            )
+        songPersistence.submit(songs)
+        EchoWidgetSnapshotPublisher.requestUpdate()
+    }
 
-            EchoWidgetSnapshotPublisher.publish(
-                songs: songs
-            )
-            
-            print("Songs opgeslagen:", songs.count)
-            
-        } catch {
-            
-            print(
-                "Songs opslaan mislukt:",
-                error.localizedDescription
-            )
+    @MainActor func flushSongChanges() {
+        if backgroundSaveTask == .invalid {
+            backgroundSaveTask = UIApplication.shared.beginBackgroundTask(withName: "Echo library save") { [weak self] in
+                Task { @MainActor in self?.endBackgroundSongSave() }
+            }
         }
+        songPersistence.submit(songs, immediately: true) { [weak self] in
+            Task { @MainActor in self?.endBackgroundSongSave() }
+        }
+    }
+
+    @MainActor private func endBackgroundSongSave() {
+        guard backgroundSaveTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(backgroundSaveTask)
+        backgroundSaveTask = .invalid
     }
     
     

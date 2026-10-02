@@ -17,9 +17,19 @@
 
 The Foundation-based production playlist models, evaluator and transition DSP were compiled with Swift and exercised using the same test methods as the new XCTest suite, through a lightweight assertion runner because this Windows toolchain does not ship XCTest. The podcast release detector and Codable follow storage were also exercised; the generated Windows model subset excludes only the CryptoKit-dependent artwork/playback hash accessors.
 
-Ten logic cases passed: decade boundaries, missing metadata, any/all rules and ordering, legacy storage, daily windows, equal-power headroom, tempo compatibility/fallback, synthetic beat detection, episode deduplication/future dates and follow persistence.
+Fourteen logic cases passed in Swift 5 language mode with optimized whole-module compilation: decade boundaries, missing metadata, any/all rules and ordering, legacy storage, daily windows, equal-power headroom, tempo compatibility/fallback, synthetic beat detection, offset beat phase, episode deduplication/future dates, follow persistence, metadata batch preservation, precomputed listening windows and background persistence with stale-snapshot/deletion protection.
+
+The two compiler errors reported by GitHub Actions run 37038588065 were addressed: the evaluator's local results no longer shadow its `matches` function, and beat-phase selection uses explicit loops instead of an expression that exceeded Xcode's type-checking limit. A new iOS archive still needs to confirm the fix on Xcode.
 
 All app and test Swift files were checked with `swiftc -frontend -parse`. The string catalog was parsed, all four translations and format arguments checked, and existing values compared with the Git baseline. Both background-refresh manifests and both preview WAV files were validated. Parsing is not iOS SDK type-checking.
+
+## Navigation performance repair
+
+The genre/year migration previously mutated the observable song array up to three times per track. Each mutation synchronously encoded and atomically wrote the entire library, including artwork, and requested artist/widget updates. Metadata now publishes one change per batch of at most 24 songs and requests only relevant metadata values. JSON encoding and atomic persistence run on a coalescing serial utility queue. Backgrounding requests an immediate save and holds an iOS background task until persistence completes. Loading the library no longer writes it straight back to disk.
+
+Playlist evaluation previously recalculated listening windows in every sort comparison. Counts are now computed once per required window. The library also reuses its song index and smart results while their inputs are unchanged. Cache invalidation observes song/favorite/listening revisions, rule changes and the playlist clock. Artist work is debounced; metadata and podcast checks run independently from Fetch initialization.
+
+A Windows Swift 5-mode optimized benchmark evaluated the same playlist five times for 1,500 synthetic tracks with 90 days of counts. The previous evaluator took 5.012 seconds; the updated evaluator took 0.057 seconds and produced identical playlists. This measures evaluator CPU work, not navigation latency on an iPhone. Native build and device responsiveness still need verification.
 
 ## Required Mac validation
 

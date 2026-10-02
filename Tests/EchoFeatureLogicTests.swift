@@ -56,6 +56,60 @@ final class EchoFeatureLogicTests: XCTestCase {
         }
         XCTAssertEqual(AudioTransitionPlan.make(mode: .gapless, seconds: 5, outgoingDuration: 100, incomingDuration: 100).overlap, 0)
     }
+    func testMetadataBatchPreservesEditsAndIgnoresRemovedSongs() {
+        var edited = song("Edited", year: 1987, genre: "My genre")
+        edited.tagsInspected = nil
+        let empty = song("Empty"), removed = song("Removed"), replaced = song("Replaced")
+        let updates = [edited, empty, removed, replaced].map {
+            SongMetadataUpdate(id: $0.id, fileName: $0.fileName, genre: "Rock", year: 2001, readable: true)
+        }
+        var current = [edited, empty, replaced]
+        current[2].fileName = "new-file.wav"
+        XCTAssertTrue(SongMetadataUpdates.apply(updates, to: &current))
+        XCTAssertEqual(current[0].genre, "My genre"); XCTAssertEqual(current[0].releaseYear, 1987)
+        XCTAssertEqual(current[1].genre, "Rock"); XCTAssertEqual(current[1].releaseYear, 2001)
+        XCTAssertNil(current[2].genre); XCTAssertNil(current[2].tagsInspected)
+        XCTAssertEqual(current.count, 3)
+        XCTAssertFalse(SongMetadataUpdates.apply(updates, to: &current))
+    }
+    func testPrecomputedCountsMatchWindowsAndSort() {
+        var calendar = Calendar(identifier: .gregorian); calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let now = Date(timeIntervalSince1970: 1_759_406_400)
+        let a = song("A"), b = song("B"), c = song("C")
+        let today = SmartListeningSnapshot.dayKey(now, calendar: calendar)
+        let older = SmartListeningSnapshot.dayKey(calendar.date(byAdding: .day, value: -10, to: now)!, calendar: calendar)
+        let future = SmartListeningSnapshot.dayKey(calendar.date(byAdding: .day, value: 1, to: now)!, calendar: calendar)
+        let snapshot = SmartListeningSnapshot(total: [a.id: 99, b.id: 20], daily: [a.id: [today: 2, older: 8, future: 100], b.id: [today: 4]])
+        for days: Int? in [nil, 0, 7, 30, 90] {
+            let counts = snapshot.counts(days: days, now: now, calendar: calendar)
+            for track in [a, b, c] {
+                XCTAssertEqual(counts[track.id] ?? 0, snapshot.count(track.id, days: days, now: now, calendar: calendar))
+            }
+        }
+        let localToday = SmartListeningSnapshot.dayKey(now)
+        let localSnapshot = SmartListeningSnapshot(total: [a.id: 99, b.id: 20], daily: [a.id: [localToday: 2], b.id: [localToday: 4]])
+        let definition = SmartPlaylistDefinition(rules: [SmartRule(periodDays: 7)], sort: .mostPlayed, periodDays: 7)
+        XCTAssertEqual(SmartPlaylistEvaluator.songs(definition, from: [a, c, b], favorites: [], listening: localSnapshot, now: now).map(\.title), ["B", "A"])
+    }
+    func testBackgroundStorageKeepsLatestSnapshotAndDeletion() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let persistence = SongLibraryPersistence(url: url)
+        let completed = DispatchSemaphore(value: 0)
+        var updated = song("Updated")
+        updated.genre = "Rock"; updated.releaseYear = 1990
+        for index in 0..<100 { persistence.submit([song("Old \(index)")]) }
+        persistence.submit([updated], immediately: true) {
+            XCTAssertFalse(Thread.isMainThread)
+            completed.signal()
+        }
+        XCTAssertEqual(completed.wait(timeout: .now() + 10), .success)
+        XCTAssertEqual(try JSONDecoder().decode([Song].self, from: Data(contentsOf: url)), [updated])
+        persistence.submit([], immediately: true) { completed.signal() }
+        XCTAssertEqual(completed.wait(timeout: .now() + 10), .success)
+        Thread.sleep(forTimeInterval: 0.5)
+        XCTAssertEqual(try JSONDecoder().decode([Song].self, from: Data(contentsOf: url)), [])
+    }
     func testMixMatchesCompatibleTempoAndFallsBackForOthers() {
         let outro = BeatAnalysis(bpm: 120, confidence: 0.9, firstBeat: 0.2), intro = BeatAnalysis(bpm: 116, confidence: 0.9, firstBeat: 0.1)
         let matched = AudioTransitionPlan.make(mode: .mix, seconds: 5, outgoingDuration: 120, incomingDuration: 120, outro: outro, intro: intro)

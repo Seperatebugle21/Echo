@@ -53,18 +53,35 @@ struct SmartListeningSnapshot {
         let lower = Self.dayKey(first, calendar: calendar), upper = Self.dayKey(today, calendar: calendar)
         return (daily[id] ?? [:]).reduce(0) { $0 + ($1.key >= lower && $1.key <= upper ? $1.value : 0) }
     }
+    func counts(days: Int?, now: Date, calendar: Calendar = .current) -> [UUID: Int] {
+        guard let days else { return total }
+        let today = calendar.startOfDay(for: now)
+        let first = calendar.date(byAdding: .day, value: -(max(1, days) - 1), to: today) ?? today
+        let lower = Self.dayKey(first, calendar: calendar), upper = Self.dayKey(today, calendar: calendar)
+        return daily.mapValues { entries in
+            entries.reduce(0) { $0 + ($1.key >= lower && $1.key <= upper ? $1.value : 0) }
+        }
+    }
 }
 enum SmartPlaylistEvaluator {
     static func songs(_ definition: SmartPlaylistDefinition, from songs: [Song], favorites: Set<UUID>, listening: SmartListeningSnapshot, now: Date = Date()) -> [Song] {
+        // Compute each listening window once, rather than during every sort comparison.
+        var counts: [Int?: [UUID: Int]] = [:]
+        let periods = Set(definition.rules.filter { $0.field == .playCount }.map(\.periodDays))
+        for period in periods { counts[period] = listening.counts(days: period, now: now) }
+        let sortPeriod = definition.periodDays
+        if definition.sort == .mostPlayed || definition.sort == .leastPlayed, counts[sortPeriod] == nil {
+            counts[sortPeriod] = listening.counts(days: definition.periodDays, now: now)
+        }
         let filtered = songs.filter { song in
             let ruleMatches: [Bool] = definition.rules.map { rule in
-                Self.matches(rule, song: song, favorites: favorites, listening: listening, now: now)
+                Self.matches(rule, song: song, favorites: favorites, counts: counts, now: now)
             }
             return ruleMatches.isEmpty || (definition.matchAll ? ruleMatches.allSatisfy { $0 } : ruleMatches.contains(true))
         }
         let sorted = filtered.sorted { a, b in
-            let ac = listening.count(a.id, days: definition.periodDays, now: now)
-            let bc = listening.count(b.id, days: definition.periodDays, now: now)
+            let ac = counts[sortPeriod]?[a.id] ?? 0
+            let bc = counts[sortPeriod]?[b.id] ?? 0
             switch definition.sort {
             case .newest: if a.dateAdded != b.dateAdded { return a.dateAdded > b.dateAdded }
             case .lastPlayed: if a.lastPlayed != b.lastPlayed { return (a.lastPlayed ?? .distantPast) > (b.lastPlayed ?? .distantPast) }
@@ -80,7 +97,7 @@ enum SmartPlaylistEvaluator {
         }
         return definition.limit.map { Array(sorted.prefix(max(0, $0))) } ?? sorted
     }
-    private static func matches(_ rule: SmartRule, song: Song, favorites: Set<UUID>, listening: SmartListeningSnapshot, now: Date) -> Bool {
+    private static func matches(_ rule: SmartRule, song: Song, favorites: Set<UUID>, counts: [Int?: [UUID: Int]], now: Date) -> Bool {
         guard rule.value.isFinite, rule.upper.isFinite, abs(rule.value) <= 1_000_000, abs(rule.upper) <= 1_000_000 else { return false }
         if rule.field == .favorite { return favorites.contains(song.id) == (rule.value != 0) }
         if rule.field.text {
@@ -101,7 +118,7 @@ enum SmartPlaylistEvaluator {
             let cutoff = Calendar.current.date(byAdding: .day, value: -Int(rule.value), to: now) ?? now
             return rule.comparison == .withinDays ? date >= cutoff && date <= now : date < cutoff
         }
-        let number = rule.field == .releaseYear ? song.releaseYear.map(Double.init) : Double(listening.count(song.id, days: rule.periodDays, now: now))
+        let number = rule.field == .releaseYear ? song.releaseYear.map(Double.init) : Double(counts[rule.periodDays]?[song.id] ?? 0)
         guard let number else { return rule.comparison == .missing }
         switch rule.comparison {
         case .equals: return number == rule.value

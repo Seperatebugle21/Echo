@@ -126,8 +126,6 @@ struct EchoApp: App {
 
             .task {
                 PodcastStore.shared.prepare()
-                await library.enrichMissingTags()
-                await PodcastNotifications.shared.refresh()
                 EchoWidgetSnapshotPublisher.refresh()
 
                 FetchDownloadEngine.shared
@@ -137,6 +135,8 @@ struct EchoApp: App {
                 await FetchManager.shared
                     .restoreBackgroundDownloads()
             }
+            .task { await library.enrichMissingTags() }
+            .task { await PodcastNotifications.shared.refresh() }
 
 
             // MARK: - Spotify Callback
@@ -187,6 +187,7 @@ struct EchoApp: App {
         ) { _, newPhase in
             audioPlayer.savePodcastPosition()
             PodcastStore.shared.flush()
+            if newPhase == .background { library.flushSongChanges() }
             EchoWidgetSnapshotPublisher.refresh()
 
             if newPhase ==

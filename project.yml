@@ -147,6 +147,8 @@ targets:
       - path: Echo.swiftpm/Echo/Models/Song.swift
       - path: Echo.swiftpm/Echo/Models/Playlist.swift
       - path: Echo.swiftpm/Echo/Models/SmartPlaylist.swift
+      - path: Echo.swiftpm/Echo/Models/SongMetadataUpdates.swift
+      - path: Echo.swiftpm/Echo/Managers/SongLibraryPersistence.swift
       - path: Echo.swiftpm/Echo/Managers/AudioTransition.swift
       - path: Echo.swiftpm/Echo/Managers/AudioSettings.swift
       - path: Echo.swiftpm/Echo/Managers/EqualizerSettings.swift
