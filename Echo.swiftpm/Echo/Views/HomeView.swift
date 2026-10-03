@@ -501,8 +501,6 @@ struct HomeView: View {
             return
         }
 
-        library.markAsPlayed(song)
-
         audioPlayer.lastPlaybackDirection =
             .fade
 

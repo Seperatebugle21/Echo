@@ -48,6 +48,8 @@ final class EqualizerSettings {
     static let didChange = Notification.Name("EchoEqualizerSettingsDidChange")
     private(set) var configuration: EqualizerConfiguration
 
+    @ObservationIgnored private var pendingSave: DispatchWorkItem?
+
     private init() {
         configuration = .decode(UserDefaults.standard.data(forKey: Self.storageKey))
     }
@@ -59,7 +61,9 @@ final class EqualizerSettings {
 
     func setGain(_ gain: Float, for band: EqualizerBand) {
         guard gain.isFinite else { return }
-        configuration.gains[band.rawValue] = min(12, max(-12, gain))
+        let clamped = min(12, max(-12, gain))
+        guard configuration.gains[band.rawValue] != clamped else { return }
+        configuration.gains[band.rawValue] = clamped
         configuration.preset = .custom
         save()
     }
@@ -72,8 +76,17 @@ final class EqualizerSettings {
     }
 
     private func save() {
-        guard let data = try? JSONEncoder().encode(configuration) else { return }
-        UserDefaults.standard.set(data, forKey: Self.storageKey)
         NotificationCenter.default.post(name: Self.didChange, object: nil)
+        pendingSave?.cancel()
+        let value = configuration
+        let work = DispatchWorkItem {
+            if let data = try? JSONEncoder().encode(value) { UserDefaults.standard.set(data, forKey: Self.storageKey) }
+        }
+        pendingSave = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+    }
+    func flush() {
+        pendingSave?.cancel(); pendingSave = nil
+        if let data = try? JSONEncoder().encode(configuration) { UserDefaults.standard.set(data, forKey: Self.storageKey) }
     }
 }

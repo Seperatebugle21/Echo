@@ -145,6 +145,8 @@ targets:
       - path: Tests/EchoAudioEngineTests.swift
       - path: Tests/EchoThemeTests.swift
       - path: Echo.swiftpm/Echo/Models/Song.swift
+      - path: Echo.swiftpm/Echo/Models/PlaylistCoverGeometry.swift
+      - path: Echo.swiftpm/Echo/Models/EchoLocalization.swift
       - path: Echo.swiftpm/Echo/Models/Playlist.swift
       - path: Echo.swiftpm/Echo/Models/SmartPlaylist.swift
       - path: Echo.swiftpm/Echo/Models/SongMetadataUpdates.swift

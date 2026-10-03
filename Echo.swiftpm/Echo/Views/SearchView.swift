@@ -224,7 +224,7 @@ struct SearchView: View {
 
         return library.playlists.filter {
 
-            $0.name
+            $0.displayName()
                 .localizedCaseInsensitiveContains(
                     query
                 )
@@ -768,7 +768,7 @@ struct SearchView: View {
                                     height: 150
                                 )
 
-                                Text(playlist.name)
+                                Text(playlist.displayName())
                                     .font(.headline)
                                     .foregroundStyle(
                                         .primary
@@ -1217,7 +1217,7 @@ struct SearchView: View {
                                     height: 150
                                 )
 
-                                Text(playlist.name)
+                                Text(playlist.displayName())
                                     .font(.headline)
                                     .foregroundStyle(
                                         .primary
@@ -1409,8 +1409,6 @@ struct SearchView: View {
             return
         }
 
-        library.markAsPlayed(song)
-
         audioPlayer.lastPlaybackDirection =
             .fade
 
@@ -1433,60 +1431,9 @@ struct SearchView: View {
 // MARK: - Playlist Artwork
 
 struct PlaylistSearchArtwork: View {
-
     let playlist: Playlist
-
     var body: some View {
-
-        GeometryReader { geometry in
-
-            Group {
-
-                if
-                    let data =
-                        playlist.imageData,
-                    let image =
-                        UIImage(data: data)
-                {
-
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-
-                } else {
-
-                    ZStack {
-
-                        Rectangle()
-                            .fill(
-                                .thinMaterial
-                            )
-
-                        Image(
-                            systemName:
-                                "music.note.list"
-                        )
-                        .font(.title2)
-                        .foregroundStyle(
-                            .secondary
-                        )
-                    }
-                }
-            }
-            .frame(
-                width:
-                    geometry.size.width,
-                height:
-                    geometry.size.height
-            )
-            .clipped()
-        }
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: 16,
-                style: .continuous
-            )
-        )
+        PlaylistCoverArtwork(data: playlist.imageData, builtin: playlist.builtinCoverID, pixels: 256)
+            .clipShape(.rect(cornerRadius: 16))
     }
 }
-

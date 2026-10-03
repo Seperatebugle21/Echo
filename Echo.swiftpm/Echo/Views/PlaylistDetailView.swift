@@ -18,8 +18,9 @@ struct PlaylistDetailView: View {
     @State private var selectedSongs: Set<UUID> = []
     @State private var showDeleteConfirmation = false
     
-    @State private var selectedImage: PhotosPickerItem?
-    @State private var playlistImage: UIImage?
+    @State private var showCoverGallery = false
+    @State private var coverData: Data?
+    @State private var builtinCover: String?
     @State private var searchText = ""
     @State private var sortOption: FavoritesSortOption = .custom
     
@@ -66,26 +67,16 @@ struct PlaylistDetailView: View {
             if searchText.isEmpty {
                 Section {
                     VStack(spacing: 16) {
-                        PhotosPicker(
-                            selection: $selectedImage,
-                            matching: .images
-                        ) {
-                            if let playlistImage {
-                                Image(uiImage: playlistImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 150, height: 150)
-                                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                            } else {
-                                Image(systemName: "music.note")
-                                    .font(.system(size: 70))
-                                    .frame(width: 150, height: 150)
-                                    .background(.thinMaterial)
-                                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                            }
-                        }
-                        
-                        Text(currentPlaylist.name)
+                        Button {
+                            coverData = currentPlaylist.imageData
+                            builtinCover = currentPlaylist.builtinCoverID
+                            showCoverGallery = true
+                        } label: {
+                            PlaylistCoverArtwork(data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID)
+                                .frame(width: 150, height: 150).clipShape(.rect(cornerRadius: 20))
+                        }.buttonStyle(.plain).accessibilityLabel("select_cover_image_accessibility")
+
+                        Text(currentPlaylist.displayName())
                             .font(.largeTitle)
                             .bold()
                         
@@ -195,11 +186,11 @@ struct PlaylistDetailView: View {
         )
         .environment(\.editMode, $editMode)
         .echoBackground()
-        .navigationTitle(playlist.name)
+        .navigationTitle(currentPlaylist.displayName())
         .onReceive(clock) { clockDate = $0 }
         .sheet(isPresented: $showSmartEditor) { SmartPlaylistEditor(playlist: currentPlaylist) }
-        .onAppear {
-            loadPlaylistImage()
+        .sheet(isPresented: $showCoverGallery, onDismiss: saveCover) {
+            PlaylistCoverGallery(imageData: $coverData, builtinCoverID: $builtinCover)
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -290,15 +281,6 @@ struct PlaylistDetailView: View {
         .sheet(isPresented: $showSongPicker) {
             SongPickerView(playlist: playlist)
         }
-        .onChange(of: selectedImage) {
-            Task {
-                if let data = try? await selectedImage?.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    playlistImage = uiImage
-                    savePlaylistImage(data)
-                }
-            }
-        }
         .alert(LocalizedStringKey("delete_songs_title"), isPresented: $showDeleteConfirmation) {
             Button(LocalizedStringKey("action_cancel"), role: .cancel) { }
             Button(LocalizedStringKey("action_delete"), role: .destructive) {
@@ -309,16 +291,14 @@ struct PlaylistDetailView: View {
         }
     }
     
-    func loadPlaylistImage() {
-        guard let data = playlist.imageData, let image = UIImage(data: data) else { return }
-        playlistImage = image
-    }
-    
-    func savePlaylistImage(_ data: Data) {
+    private func saveCover() {
         guard let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
-        library.playlists[index].imageData = data
+        var updated = library.playlists[index]
+        guard updated.imageData != coverData || updated.builtinCoverID != builtinCover else { return }
+        updated.imageData = coverData; updated.builtinCoverID = builtinCover
+        library.playlists[index] = updated
     }
-    
+
     func deleteSelectedSongs() {
         guard let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
         library.playlists[index].songIDs.removeAll { selectedSongs.contains($0) }

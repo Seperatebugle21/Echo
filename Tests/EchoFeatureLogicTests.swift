@@ -2,6 +2,42 @@ import Foundation
 import XCTest
 
 final class EchoFeatureLogicTests: XCTestCase {
+    func testCoverAndAutomaticNameStorageMigration() throws {
+        let json = "{\"id\":\"\(UUID().uuidString)\",\"name\":\"Meest beluisterd\",\"songIDs\":[]}"
+        let legacy = try JSONDecoder().decode(Playlist.self, from: Data(json.utf8))
+        XCTAssertNil(legacy.builtinCoverID); XCTAssertNil(legacy.automaticNameKey)
+        XCTAssertEqual(legacy.displayName(language: "de"), "Meest beluisterd")
+        var custom = legacy; custom.name = "  My name 🎶  "; custom.builtinCoverID = "illustration-04"
+        let decoded = try JSONDecoder().decode(Playlist.self, from: JSONEncoder().encode(custom))
+        XCTAssertEqual(decoded.name, custom.name); XCTAssertEqual(decoded.builtinCoverID, "illustration-04")
+        XCTAssertEqual(decoded.displayName(language: "fr"), custom.name)
+    }
+    func testAutomaticNamesUseSelectedBundleLanguage() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".bundle")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let translations = ["en": "Most played", "nl": "Meest beluisterd", "fr": "Les plus écoutés", "de": "Meistgespielt"]
+        for (language, name) in translations {
+            let path = folder.appendingPathComponent(language + ".lproj")
+            try FileManager.default.createDirectory(at: path, withIntermediateDirectories: true)
+            try "\"smart_preset_mostPlayed\" = \"\(name)\";".write(to: path.appendingPathComponent("Localizable.strings"), atomically: true, encoding: .utf8)
+        }
+        guard let bundle = Bundle(path: folder.path) else { preconditionFailure("Test bundle missing") }
+        for (language, name) in translations {
+            XCTAssertEqual(EchoLocalization.string("smart_preset_mostPlayed", language: language, bundle: bundle), name)
+        }
+    }
+    func testSquareCropClampsPanAndPreservesCoverage() {
+        for size in [CGSize(width: 800, height: 1200), CGSize(width: 1600, height: 900), CGSize(width: 1024, height: 1024)] {
+            for zoom: CGFloat in [1, 2, 4] {
+                let geometry = PlaylistCoverGeometry(imageSize: size, side: 300, zoom: zoom)
+                for offset in [CGSize.zero, CGSize(width: -10000, height: 10000), CGSize(width: 10000, height: -10000)] {
+                    let rect = geometry.drawingRect(offset: offset)
+                    XCTAssertLessThanOrEqual(rect.minX, 0); XCTAssertLessThanOrEqual(rect.minY, 0)
+                    XCTAssertGreaterThanOrEqual(rect.maxX, 300); XCTAssertGreaterThanOrEqual(rect.maxY, 300)
+                }
+            }
+        }
+    }
     private func song(_ title: String, year: Int? = nil, genre: String? = nil) -> Song {
         var value = Song(title: title, artist: "Artist", fileName: title + ".wav", dateAdded: Date(timeIntervalSince1970: 100))
         value.releaseYear = year; value.genre = genre; return value

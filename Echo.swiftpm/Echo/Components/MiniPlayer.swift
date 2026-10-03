@@ -88,13 +88,17 @@ struct MiniPlayer: View {
                 Button {
                     audioPlayer.togglePlayPause()
                 } label: {
+                    if audioPlayer.isPreparingAudio {
+                        ProgressView().frame(width: 44, height: 44).accessibilityLabel("audio_preparing")
+                    } else {
                     Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 19, weight: .semibold))
                         .contentTransition(.symbolEffect(.replace))
                         .frame(width: 44, height: 44)
+                    }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(audioPlayer.isPlaying ? "Pause" : "Play")
+                .accessibilityLabel(audioPlayer.playbackErrorKey != nil ? LocalizedStringKey("audio_retry") : LocalizedStringKey(audioPlayer.isPlaying ? "Pause" : "Play"))
             }
             .padding(.leading, 14)
             .padding(.trailing, 4)
@@ -254,11 +258,15 @@ struct MiniPlayer: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(height: 17)
                 }
+                if let error = audioPlayer.playbackErrorKey, song.id == audioPlayer.currentSong?.id {
+                    Text(LocalizedStringKey(error)).font(.system(size: 11, weight: .medium)).lineLimit(1)
+                } else {
                 Text(song.artist)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(colorScheme == .dark
                                      ? Color(white: 0.88) : Color(white: 0.28))
                     .lineLimit(1)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .id(song.id)

@@ -60,8 +60,9 @@ struct PlaylistPickerView: View {
                     } label: {
                         playlistRow(
                             image: playlist.imageData,
+                            builtin: playlist.builtinCoverID,
                             systemImage: "music.note.list",
-                            title: Text(playlist.name),
+                            title: Text(playlist.displayName()),
                             count: library.songCount(in: playlist),
                             isSelected: areAllInPlaylist(playlist)
                         )
@@ -84,32 +85,16 @@ struct PlaylistPickerView: View {
     @ViewBuilder
     func playlistRow(
         image: Data?,
+        builtin: String? = nil,
         systemImage: String,
         title: Text,
         count: Int,
         isSelected: Bool
     ) -> some View {
         HStack(spacing: 12) {
-            if let image,
-               let uiImage = UIImage(data: image) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 55, height: 55)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            } else {
-                Image(systemName: systemImage)
-                    .font(.title2)
-                    .foregroundStyle(
-                        systemImage == "heart.fill"
-                        ? .red
-                        : .primary
-                    )
-                    .frame(width: 55, height: 55)
-                    .background(.thinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            
+            PlaylistCoverArtwork(data: image, builtin: builtin, pixels: 128, symbol: systemImage)
+                .frame(width: 55, height: 55).clipShape(.rect(cornerRadius: 14))
+
             VStack(alignment: .leading, spacing: 4) {
                 title
                     .font(.headline)

@@ -55,6 +55,13 @@ class AudioPlayerManager:
     private var lastTransitionMode = AudioSettings.transition
     private var lastFadeSeconds = AudioSettings.crossfadeSeconds
     private var lastPublishedRate = 1.0
+    var localPlaybackState: LocalPlaybackState = .idle
+    var playbackErrorKey: String?
+    var isPreparingAudio: Bool { !isPodcast && localPlaybackState.isBusy }
+    @ObservationIgnored private var seekingWasPlaying = false
+    @ObservationIgnored private var artworkSongID: UUID?
+    @ObservationIgnored private var lockscreenArtwork: MPMediaItemArtwork?
+    @ObservationIgnored private var lockscreenArtworkTask: Task<Void, Never>?
     var isPreviewing = false
     private var previewPlayer: EqualizedAudioPlayer?
     private var previewResume = false
@@ -364,33 +371,17 @@ class AudioPlayerManager:
             : 0.0
 
 
-        if
-            let data =
-                song.coverData,
-
-            let image =
-                UIImage(
-                    data:
-                        data
-                ) {
-
-            let artwork =
-                MPMediaItemArtwork(
-                    boundsSize:
-                        image.size
-                ) {
-                    _ in
-
-                    image
-                }
-
-
-            info[
-                MPMediaItemPropertyArtwork
-            ] =
-                artwork
+        if artworkSongID != song.id {
+            artworkSongID = song.id; lockscreenArtwork = nil; lockscreenArtworkTask?.cancel()
+            let data = song.coverData
+            lockscreenArtworkTask = Task { @MainActor [weak self] in
+                let image = await CoverThumbnailCache.shared.image(data: data, builtin: nil, pixels: 512)
+                guard !Task.isCancelled, let self, self.currentSong?.id == song.id, !self.isPreviewing else { return }
+                if let image { self.lockscreenArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image } }
+                self.updateNowPlaying()
+            }
         }
-
+        if let lockscreenArtwork { info[MPMediaItemPropertyArtwork] = lockscreenArtwork }
 
         MPNowPlayingInfoCenter
             .default()
@@ -567,7 +558,8 @@ class AudioPlayerManager:
         playbackRequest = UUID()
         lastTransitionMode = AudioSettings.transition
         lastFadeSeconds = AudioSettings.crossfadeSeconds
-        setupAudioSession()
+        playbackErrorKey = nil
+        localPlaybackState = .preparing
 
         stopPodcastPlayback()
 
@@ -606,11 +598,14 @@ class AudioPlayerManager:
             else { player = try EqualizedAudioPlayer(contentsOf: url) }
             let request = playbackRequest
             player?.onStarted = { [weak self] identifier in
-                Task { @MainActor in
                     guard let self, self.playbackRequest == request, !self.isPreviewing else { return }
                     let started = identifier.flatMap { self.transitionStarts.removeValue(forKey: $0) } ?? (identifier == nil ? self.currentSong : nil)
-                    if let started { RecommendationManager.shared.playbackStarted(started); MusicLibraryManager.shared.markAsPlayed(started) }
-                }
+                    if let started {
+                        RecommendationManager.shared.playbackStarted(started)
+                        MusicLibraryManager.shared.markAsPlayed(started)
+                        self.donatePlaybackToSiri(song: started)
+                        if identifier == nil { self.loadLyrics(for: started); self.fillQueue(from: queue) }
+                    }
             }
             player?.onPromote = { [weak self] token in self?.promoteTransition(token) }
 
@@ -668,10 +663,7 @@ class AudioPlayerManager:
                 nil
 
 
-            loadLyrics(
-                for:
-                    song
-            )
+
 
 
             player?
@@ -689,23 +681,6 @@ class AudioPlayerManager:
             updateNowPlaying()
 
             startTimer()
-
-
-            // --------------------------------------------
-            // Tell Siri that Echo played this song.
-            // Helps Siri learn Echo as a music app.
-            // --------------------------------------------
-
-            donatePlaybackToSiri(
-                song:
-                    song
-            )
-
-
-            fillQueue(
-                from:
-                    queue
-            )
 
 
             if !repeatingCurrent { updateRepeatForSelection() }
@@ -773,7 +748,7 @@ class AudioPlayerManager:
         currentSong = target.song
         currentTime = player?.currentTime ?? 0; duration = player?.duration ?? 0
         currentLyrics = nil; currentSyncedLyrics = nil
-        loadLyrics(for: target.song); donatePlaybackToSiri(song: target.song); updateNowPlaying()
+        loadLyrics(for: target.song); updateNowPlaying()
         transitionTarget = nil
     }
 
@@ -786,6 +761,7 @@ class AudioPlayerManager:
         do {
             let demo = try EqualizedAudioPlayer(contentsOf: first)
             previewPlayer = demo
+            let demoDuration = try await demo.preparedDuration()
             let mode = AudioSettings.transition
             let nextDuration = try await AVURLAsset(url: second).load(.duration).seconds
             var intro = BeatAnalysis(), outro = BeatAnalysis()
@@ -796,8 +772,8 @@ class AudioPlayerManager:
             try Task.checkCancellation()
             guard request == playbackRequest, isPreviewing else { return }
             let plan = AudioTransitionPlan.make(mode: mode, seconds: AudioSettings.crossfadeSeconds,
-                outgoingDuration: demo.duration, incomingDuration: nextDuration, outro: outro, intro: intro)
-            demo.currentTime = max(0, demo.duration - min(15, max(4, plan.overlap + 2)))
+                outgoingDuration: demoDuration, incomingDuration: nextDuration, outro: outro, intro: intro)
+            demo.currentTime = max(0, demoDuration - min(15, max(4, plan.overlap + 2)))
             demo.onStarted = { [weak self, weak demo] id in
                 guard id == nil, let self, self.isPreviewing else { return }
                 if mode == .direct {
@@ -844,7 +820,7 @@ class AudioPlayerManager:
             currentSyncedLyrics = nil
             currentLyricsSource = nil
             currentLyricsSourceURL = nil
-            if let saved = MusicLibraryManager.shared.songs.first(where: { $0.id == song.id }),
+            if let saved = MusicLibraryManager.shared.song(withID: song.id),
                saved.lyrics != nil || saved.syncedLyrics != nil {
                 currentLyrics = saved.lyrics
                 currentSyncedLyrics = saved.syncedLyrics
@@ -1046,23 +1022,8 @@ class AudioPlayerManager:
         if missing >
             0 {
 
-            let availableSongs =
-                songs.filter {
-                    song in
-
-
-                    song.id !=
-                        currentSong.id
-                    &&
-                    !queue.contains(
-                        where: {
-                            queuedSong in
-
-                            queuedSong.id ==
-                                song.id
-                        }
-                    )
-                }
+            let queuedIDs = Set(queue.map(\.id))
+            let availableSongs = songs.filter { $0.id != currentSong.id && !queuedIDs.contains($0.id) }
 
 
             let extra =
@@ -1099,7 +1060,7 @@ class AudioPlayerManager:
             currentIndex = 0
         }
         play(song: song, url: url, queue: queue, queuePosition: currentIndex)
-        guard player?.isPlaying == true || podcastPlayer != nil else {
+        guard player?.stateValue != .failed || podcastPlayer != nil else {
             queue = savedQueue
             currentIndex = savedIndex
             history = savedHistory
@@ -1161,6 +1122,9 @@ class AudioPlayerManager:
             toOffset:
                 destination
         )
+        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        player?.cancelPreparedNext()
+
     }
 
 
@@ -1172,6 +1136,9 @@ class AudioPlayerManager:
             atOffsets:
                 offsets
         )
+        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        player?.cancelPreparedNext()
+
     }
 
 
@@ -1183,45 +1150,9 @@ class AudioPlayerManager:
         from songs: [Song]
     ) {
 
-        while autoNextQueue.count <
-            10 {
-
-            let availableSongs =
-                songs.filter {
-                    song in
-
-
-                    song.id !=
-                        currentSong?.id
-                    &&
-                    !queue.contains(
-                        where: {
-                            $0.id ==
-                                song.id
-                        }
-                    )
-                    &&
-                    !autoNextQueue.contains(
-                        where: {
-                            $0.id ==
-                                song.id
-                        }
-                    )
-                }
-
-
-            guard let randomSong =
-                availableSongs
-                    .randomElement()
-            else {
-                return
-            }
-
-
-            autoNextQueue.append(
-                randomSong
-            )
-        }
+        let excluded = Set(queue.map(\.id) + autoNextQueue.map(\.id) + (currentSong.map { [$0.id] } ?? []))
+        let missing = max(0, 10 - autoNextQueue.count)
+        autoNextQueue.append(contentsOf: songs.filter { !excluded.contains($0.id) }.shuffled().prefix(missing))
     }
 
 
@@ -1229,6 +1160,10 @@ class AudioPlayerManager:
     // MARK: - Play / Pause
     // ========================================================
 
+    func retryPlayback() {
+        guard let song = currentSong, let url = getURL(for: song) else { return }
+        play(song: song, url: url, queue: queue, queuePosition: currentIndex)
+    }
     func togglePlayPause() {
         if isPreviewing {
             stopTransitionPreview(resume: false)
@@ -1253,7 +1188,8 @@ class AudioPlayerManager:
         }
 
 
-        if player.isPlaying {
+        if player.stateValue == .failed { retryPlayback(); return }
+        if player.isPlaying || player.stateValue.isBusy {
 
             player.pause()
 
@@ -1343,6 +1279,9 @@ class AudioPlayerManager:
                     originalIndex
             }
         }
+        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        player?.cancelPreparedNext()
+
     }
 
 
@@ -1397,6 +1336,8 @@ class AudioPlayerManager:
 
 
                 guard !self.isPreviewing else { return }
+                self.localPlaybackState = self.player?.stateValue ?? .idle
+                self.duration = self.player?.duration ?? self.duration
                 let playing = self.player?.isPlaying ?? false
                 if self.isPlaying != playing {
                     self.isPlaying = playing
@@ -1440,9 +1381,8 @@ class AudioPlayerManager:
             return
         }
 
-        player?
-            .currentTime =
-            time
+        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        player?.currentTime = time
 
 
         currentTime =
@@ -1454,6 +1394,7 @@ class AudioPlayerManager:
 
 
     func pauseForSeeking() {
+        seekingWasPlaying = isPodcast ? podcastWantsPlayback : (isPlaying || isPreparingAudio)
         if let podcastPlayer { podcastPlayer.pause(); return }
 
         player?
@@ -1462,6 +1403,7 @@ class AudioPlayerManager:
 
 
     func resumeAfterSeeking() {
+        guard seekingWasPlaying else { return }
         if let podcastPlayer {
             if podcastWantsPlayback { podcastPlayer.playImmediately(atRate: podcastSpeed) }
             updateNowPlaying()
@@ -1505,7 +1447,7 @@ class AudioPlayerManager:
     // MARK: - EqualizedAudioPlayer Delegate
     // ========================================================
 
-    func audioPlayerDidFinishPlaying(
+    @MainActor func audioPlayerDidFinishPlaying(
         _ player: EqualizedAudioPlayer,
         successfully flag: Bool
     ) {
@@ -1520,6 +1462,8 @@ class AudioPlayerManager:
         }
         guard self.player === player else { return }
         guard flag else {
+            playbackErrorKey = "audio_playback_failed"
+            localPlaybackState = .failed
             isPlaying = false
             updateNowPlaying()
             return

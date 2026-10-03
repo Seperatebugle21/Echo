@@ -798,7 +798,7 @@ struct EchoPlaylistEntity:
             playlist.id.uuidString
 
         name =
-            playlist.name
+            playlist.displayName()
     }
 
 
@@ -881,7 +881,7 @@ struct EchoPlaylistQuery:
                             EchoSiriMatcher
                                 .score(
                                     candidate:
-                                        playlist.name,
+                                        playlist.displayName(),
 
                                     query:
                                         query

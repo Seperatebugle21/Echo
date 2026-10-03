@@ -11,13 +11,13 @@
 - Mix analyzes intro/outro energy and periodic onsets, aligns reliable beats, limits tempo adjustment to ±8%, and preserves pitch. Incompatible or uncertain beats use an automatic energy-based crossfade.
 - Built-in and library-based transition previews, limited to 20 seconds, with normal playback restoration. The two bundled WAV recordings are original synthesized examples created for this change; no third-party music is included.
 - Per-show podcast notifications, baseline/deduplication storage, background refresh and notification navigation. Following remains independent of saving a podcast.
-- 115 new string-catalog keys with English, Dutch, French and German values. Existing catalog entries are unchanged.
+- 138 new string-catalog keys with English, Dutch, French and German values. Existing catalog entries are unchanged.
 
 ## Validation available on Windows
 
 The Foundation-based production playlist models, evaluator and transition DSP were compiled with Swift and exercised using the same test methods as the new XCTest suite, through a lightweight assertion runner because this Windows toolchain does not ship XCTest. The podcast release detector and Codable follow storage were also exercised; the generated Windows model subset excludes only the CryptoKit-dependent artwork/playback hash accessors.
 
-Fourteen logic cases passed in Swift 5 language mode with optimized whole-module compilation: decade boundaries, missing metadata, any/all rules and ordering, legacy storage, daily windows, equal-power headroom, tempo compatibility/fallback, synthetic beat detection, offset beat phase, episode deduplication/future dates, follow persistence, metadata batch preservation, precomputed listening windows and background persistence with stale-snapshot/deletion protection.
+Seventeen logic cases passed in Swift 5 language mode with optimized whole-module compilation: decade boundaries, missing metadata, any/all rules and ordering, legacy storage, daily windows, equal-power headroom, tempo compatibility/fallback, synthetic beat detection, offset beat phase, episode deduplication/future dates, follow persistence, metadata batch preservation, precomputed listening windows and background persistence with stale-snapshot/deletion protection.
 
 The two compiler errors reported by GitHub Actions run 37038588065 were addressed: the evaluator's local results no longer shadow its `matches` function, and beat-phase selection uses explicit loops instead of an expression that exceeded Xcode's type-checking limit. A new iOS archive still needs to confirm the fix on Xcode.
 
@@ -56,3 +56,23 @@ Before release, exercise:
 7. Verify AirPlay, lock-screen metadata, EQ, lyrics and widgets on a physical device.
 
 Without a server, iOS chooses background refresh timing. The requested one-hour earliest date is not a delivery guarantee. See [Apple background-task documentation](https://developer.apple.com/documentation/backgroundtasks/bgtaskrequest/earliestbegindate).
+
+## Audio and playlist reliability update
+
+Local playback now has asynchronous open/decoder/control queues and locked UI snapshots, with preparing, playing, paused, seeking, transitioning, recovering and failed states. Seek reuses the decoder rather than rebuilding a graph. Old commands and buffer callbacks are rejected by generation/version; only render progress confirms playback. Converter starvation triggers refill rather than premature completion. The prepared two-deck graph bypasses tempo processing at unity rate. EQ configurations are captured before audio-queue delivery and persistence is coalesced while dragging.
+
+A two-second no-progress watchdog (plus output latency) rebuilds once at the intended position. Another failure exposes a localized retry action. Incoming promotion updates the recovery URL and progress baseline. Opening a new track remains possible after failure. Final played-back callbacks cover very short tracks that finish between progress samples. Listening updates occur once per actual start, outside the critical start path; view-level duplicate registrations were removed. Album artwork for the lock screen is decoded by the shared background thumbnail cache. Podcasts retain their AVPlayer path.
+
+The playlist editor is shared between normal and smart creation/editing, retaining name/cover drafts across the mode switch. Forty-eight text-free JPEG covers are bundled: 24 original procedural gradients/patterns/symbols and 24 illustrations generated separately with the imagegen tool for this app. Their files are 512 pixels square and decoded as small thumbnails outside the main thread. Custom photos are orientation-corrected and cropped with drag/zoom, VoiceOver directional actions and explicit confirmation to a 1024-pixel square JPEG. Unknown built-in IDs fall back to the default icon. Built-in IDs and automatic name keys are optional Codable fields; no legacy name-origin guesses are made. Name resolution explicitly uses the selected app-language bundle. Manually entered names remain literal, including spacing.
+
+The equalizer uses theme materials, an interpolated curve, six accessible faders and preset tiles. Accessibility text sizes switch to horizontal controls. Reset, six original bands, gain limits, presets, headroom and saved configuration remain available; live EQ updates do not restart the engine.
+
+The three additional Windows logic cases cover cover/name migration with literal legacy names, explicit four-language bundles, and crop coverage/pan bounds. The live iOS engine suite was rewritten for asynchronous playback and includes format replacement, paused seek, gapless promotion, rapid replacements/seeks, corrupt-file recovery, temporary empty converter output, and one-time stall recovery followed by an actionable failure. Debug-only fault injection is absent from Release. These native cases have not been executed here.
+
+## Native latency protocol
+
+Use the same physical iPhone, build, route and local files for all runs. Test 100, 1,000 and 5,000 library tracks, each with sparse and dense listening history. Perform at least 30 cold local starts, warm starts and playing/paused seeks per condition. Include MP3/AAC/WAV, 22.05/44.1/48 kHz, very short/silent/corrupt files and repeated rapid selections. Inspect the Playback OSLog category's `First advancing render` events (or `onFirstRender` in a native test harness). They use the player's render host/sample clock and include preparation rather than measuring only the UI play icon; the monitor observes them at most 50 ms later. Independently confirm output on iPhone because rendered frames do not establish audible route behavior.
+
+Record median, P95, maximum, recoveries and failures. Targets are P95 <500 ms for warm starts/seeks and <1 second for cold starts. No start/seek target has been measured or claimed on Windows. Run the injected starvation/stall cases, then repeat queue/repeat/preview/interruption/AirPlay/lockscreen/widget scenarios listed above. Check cover cancel/orientation/storage, both editor modes, literal and automatic names after language/preset changes, and EQ with all themes and accessibility settings.
+
+EOF in a separate empty converter output waits for render-clock tail completion and output latency; it does not inject or trim silence. Very short incoming tracks are promoted at completion if they finish between monitor ticks. Both very-short-track scenarios have explicit native regression tests.

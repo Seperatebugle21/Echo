@@ -187,7 +187,7 @@ struct EchoApp: App {
         ) { _, newPhase in
             audioPlayer.savePodcastPosition()
             PodcastStore.shared.flush()
-            if newPhase == .background { library.flushSongChanges() }
+            if newPhase == .background { library.flushSongChanges(); EqualizerSettings.shared.flush(); RecommendationManager.shared.flush() }
             EchoWidgetSnapshotPublisher.refresh()
 
             if newPhase ==

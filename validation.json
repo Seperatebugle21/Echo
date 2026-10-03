@@ -1,8 +1,8 @@
 {
-  "swift_files_parsed": 136,
-  "logic_cases_passed": 14,
+  "swift_files_parsed": 139,
+  "logic_cases_passed": 17,
   "logic_compile_mode": "Swift 5 language mode, optimized whole-module compilation",
-  "new_localization_keys": 115,
+  "new_localization_keys": 138,
   "languages": [
     "en",
     "nl",
@@ -25,5 +25,10 @@
     "after_seconds": 0.0567923,
     "same_results": true,
     "platform": "Windows Swift 6.4, Swift 5 mode, optimized; not iPhone navigation timing"
-  }
+  },
+  "builtin_covers": 48,
+  "cover_dimensions": "512x512 JPEG",
+  "custom_crop": "1024x1024 JPEG, native export not executed",
+  "ios_audio_latency": "not measured; native protocol and render-clock instrumentation included",
+  "diff_check": "passed"
 }

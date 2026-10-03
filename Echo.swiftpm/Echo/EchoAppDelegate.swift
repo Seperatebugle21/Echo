@@ -955,7 +955,7 @@ final class EchoMediaIntentHandler:
                         EchoSiriMatcher
                             .score(
                                 candidate:
-                                    playlist.name,
+                                    playlist.displayName(),
 
                                 query:
                                     query
@@ -1200,7 +1200,7 @@ final class EchoMediaIntentHandler:
         _ playlist: Playlist
     ) -> INMediaItem {
 
-        let artwork =
+        let artwork = playlist.builtinCoverID.flatMap(PlaylistCovers.url).flatMap { INImage(url: $0) } ??
             playlist.imageData.map {
 
                 INImage(
@@ -1215,7 +1215,7 @@ final class EchoMediaIntentHandler:
                 playlist.id.uuidString,
 
             title:
-                playlist.name,
+                playlist.displayName(),
 
             type:
                 .playlist,

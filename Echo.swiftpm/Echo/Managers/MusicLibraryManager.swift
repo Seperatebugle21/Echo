@@ -61,6 +61,8 @@ class MusicLibraryManager {
         var songs: [Song]
     }
 
+    func song(withID id: UUID) -> Song? { songsByID[id] }
+
     private var songsByID: [UUID: Song] {
         let revision = songRevision
         if indexedRevision != revision {

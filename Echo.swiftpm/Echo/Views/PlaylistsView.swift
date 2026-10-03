@@ -1,5 +1,4 @@
 import SwiftUI
-import PhotosUI
 
 struct PlaylistsView: View {
 
@@ -10,12 +9,6 @@ struct PlaylistsView: View {
     @State private var smartEditing: Playlist?
     @State private var selectedPlaylist: Playlist?
     @State private var showDeleteConfirmation = false
-    @State private var showRenameSheet = false
-    @State private var renameText = ""
-    @State private var selectedImage: PhotosPickerItem?
-    @State private var playlistImage: UIImage?
-    @State private var imageData: Data?
-
     private let columns = [
         GridItem(
             .adaptive(minimum: 148, maximum: 220),
@@ -54,9 +47,6 @@ struct PlaylistsView: View {
             CreatePlaylistView()
         }
         .sheet(item: $smartEditing) { SmartPlaylistEditor(playlist: $0) }
-        .sheet(isPresented: $showRenameSheet) {
-            renamePlaylistSheet
-        }
         .alert(
             "delete_playlist_alert_title",
             isPresented: $showDeleteConfirmation
@@ -147,103 +137,15 @@ struct PlaylistsView: View {
         }
     }
 
-    private var renamePlaylistSheet: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    HStack {
-                        Spacer()
-
-                        PhotosPicker(
-                            selection: $selectedImage,
-                            matching: .images
-                        ) {
-                            PlaylistEditArtwork(image: playlistImage)
-                        }
-
-                        Spacer()
-                    }
-                }
-
-                Section("playlist_name_section") {
-                    TextField(
-                        "playlist_name_placeholder",
-                        text: $renameText
-                    )
-                }
-            }
-            .onChange(of: selectedImage) {
-                loadSelectedImage()
-            }
-            .echoBackground()
-            .navigationTitle("edit_info_title")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("action_cancel") {
-                        showRenameSheet = false
-                    }
-                }
-
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("action_save", action: savePlaylistChanges)
-                        .disabled(
-                            renameText
-                                .trimmingCharacters(
-                                    in: .whitespacesAndNewlines
-                                )
-                                .isEmpty
-                        )
-                }
-            }
-        }
-    }
-
     private func showCreatePlaylistSheet() {
         showCreatePlaylist = true
     }
 
     private func preparePlaylistForEditing(_ playlist: Playlist) {
-        if playlist.smartDefinition != nil { smartEditing = playlist; return }
-        renameText = playlist.name
-        selectedPlaylist = playlist
-        imageData = playlist.imageData
-        playlistImage = playlist.imageData.flatMap(UIImage.init(data:))
-        selectedImage = nil
-        showRenameSheet = true
+        smartEditing = playlist
     }
 
-    private func loadSelectedImage() {
-        Task {
-            guard
-                let data = try? await selectedImage?.loadTransferable(
-                    type: Data.self
-                ),
-                let image = UIImage(data: data)
-            else {
-                return
-            }
 
-            playlistImage = image
-            imageData = data
-        }
-    }
-
-    private func savePlaylistChanges() {
-        guard
-            let selectedPlaylist,
-            let index = library.playlists.firstIndex(
-                where: { $0.id == selectedPlaylist.id }
-            )
-        else {
-            return
-        }
-
-        library.playlists[index].name = renameText.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-        library.playlists[index].imageData = imageData
-        showRenameSheet = false
-    }
 }
 
 private struct PlaylistOverviewSummary: View {
@@ -333,7 +235,7 @@ private struct PlaylistOverviewCard: View {
 
             HStack(spacing: 4) {
                 if playlist.smartDefinition != nil { Image(systemName: "sparkles").accessibilityLabel("smart_editor_title") }
-                Text(playlist.name)
+                Text(playlist.displayName())
             }
                 .font(.headline)
                 .foregroundStyle(.primary)
@@ -350,66 +252,9 @@ private struct PlaylistOverviewCard: View {
 }
 
 private struct PlaylistOverviewArtwork: View {
-
     let playlist: Playlist
-
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.thinMaterial)
-
-            if
-                let data = playlist.imageData,
-                let image = UIImage(data: data)
-            {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                VStack(spacing: 10) {
-                    Image(systemName: "music.note.list")
-                        .font(.system(size: 38, weight: .medium))
-
-                    Text(playlist.name)
-                        .font(.caption.bold())
-                        .lineLimit(1)
-                        .padding(.horizontal, 12)
-                }
-            }
-        }
-        .compositingGroup()
-        .clipShape(.rect(cornerRadius: 22))
-    }
-}
-
-private struct PlaylistEditArtwork: View {
-
-    let image: UIImage?
-
-    var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 140, height: 140)
-                    .clipped()
-                    .clipShape(.rect(cornerRadius: 20))
-            } else {
-                Image(systemName: "music.note")
-                    .font(.system(size: 60))
-                    .frame(width: 140, height: 140)
-                    .background(.thinMaterial)
-                    .clipShape(.rect(cornerRadius: 20))
-            }
-
-            Image(systemName: "camera.fill")
-                .font(.title3)
-                .foregroundStyle(.white)
-                .padding(8)
-                .background(.gray, in: Circle())
-                .offset(x: -6, y: -6)
-        }
-        .accessibilityLabel("action_edit_playlist")
+        PlaylistCoverArtwork(data: playlist.imageData, builtin: playlist.builtinCoverID)
+            .clipShape(.rect(cornerRadius: 22))
     }
 }

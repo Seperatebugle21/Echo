@@ -721,47 +721,7 @@ struct PlaylistStackArtwork: View {
             let playlist =
                 playlists[index]
 
-            ZStack {
-
-                if
-                    let data =
-                        playlist.imageData,
-                    let image =
-                        UIImage(data: data)
-                {
-
-                    Image(
-                        uiImage: image
-                    )
-                    .resizable()
-                    .scaledToFill()
-
-                } else {
-
-                    RoundedRectangle(
-                        cornerRadius: 18,
-                        style: .continuous
-                    )
-                    .fill(.regularMaterial)
-
-                    VStack(spacing: 6) {
-
-                        Image(
-                            systemName:
-                                "music.note.list"
-                        )
-                        .font(.title2)
-
-                        Text(playlist.name)
-                            .font(.caption.bold())
-                            .lineLimit(1)
-                            .padding(
-                                .horizontal,
-                                6
-                            )
-                    }
-                }
-            }
+            PlaylistCoverArtwork(data: playlist.imageData, builtin: playlist.builtinCoverID, pixels: 256)
             .frame(
                 width: size,
                 height: size
@@ -1317,8 +1277,6 @@ struct ArtistDetailView: View {
             return
         }
 
-        library.markAsPlayed(song)
-
         audioPlayer.lastPlaybackDirection =
             .fade
 
@@ -1560,8 +1518,6 @@ struct AlbumDetailView: View {
             return
         }
 
-        library.markAsPlayed(song)
-
         audioPlayer.lastPlaybackDirection =
             .fade
 
@@ -1663,8 +1619,6 @@ struct SongCollectionView: View {
         else {
             return
         }
-
-        library.markAsPlayed(song)
 
         audioPlayer.lastPlaybackDirection =
             .fade

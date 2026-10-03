@@ -118,6 +118,13 @@ struct NowPlayingView: View {
                 }
 
 
+                if let errorKey = audioPlayer.playbackErrorKey {
+                    HStack(spacing: 12) {
+                        Text(LocalizedStringKey(errorKey)).font(.footnote).foregroundStyle(.white)
+                        Button("audio_retry") { audioPlayer.retryPlayback() }.buttonStyle(.bordered).tint(.white)
+                    }.padding(.horizontal, 28).accessibilityElement(children: .contain)
+                }
+
                 // MARK: - Progress
 
                 NowPlayingProgress(sliderFrame: $sliderFrame,
@@ -181,6 +188,9 @@ struct NowPlayingView: View {
                         audioPlayer.togglePlayPause()
                     } label: {
 
+                        if audioPlayer.isPreparingAudio {
+                            ProgressView().tint(.white).frame(width: 65, height: 65).accessibilityLabel("audio_preparing")
+                        } else {
                         Image(
                             systemName:
                                 audioPlayer.isPlaying
@@ -191,6 +201,7 @@ struct NowPlayingView: View {
                             .system(size: 70)
                         )
                         .foregroundStyle(.white)
+                        }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(
@@ -649,6 +660,10 @@ struct NowPlayingBackdrop: View {
 
 // Time updates only invalidate this small subtree, not the artwork and full player.
 private struct NowPlayingProgress: View {
+    @State private var sliderEditing = false
+    @State private var sliderPosition = 0.0
+    @State private var sliderSongID: UUID?
+
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @Binding var sliderFrame: CGRect
     let tracksGeometry: Bool
@@ -658,12 +673,11 @@ private struct NowPlayingProgress: View {
                     Slider(
                         value: Binding(
                             get: {
-                                audioPlayer.currentTime
+                                sliderEditing ? sliderPosition : audioPlayer.currentTime
                             },
                             set: { value in
-                                audioPlayer.seek(
-                                    to: value
-                                )
+                                sliderPosition = value
+                                if !sliderEditing { audioPlayer.seek(to: value) }
                             }
                         ),
                         in: 0...max(
@@ -673,14 +687,16 @@ private struct NowPlayingProgress: View {
                         onEditingChanged: { editing in
 
                             if editing {
-
-                                audioPlayer
-                                    .pauseForSeeking()
-
+                                sliderPosition = audioPlayer.currentTime
+                                sliderSongID = audioPlayer.currentSong?.id
+                                sliderEditing = true
+                                audioPlayer.pauseForSeeking()
                             } else {
-
-                                audioPlayer
-                                    .resumeAfterSeeking()
+                                if sliderSongID == audioPlayer.currentSong?.id {
+                                    audioPlayer.seek(to: sliderPosition)
+                                    audioPlayer.resumeAfterSeeking()
+                                }
+                                sliderEditing = false
                             }
                         }
                     )
@@ -695,7 +711,7 @@ private struct NowPlayingProgress: View {
 
                         Text(
                             Self.formatTime(
-                                audioPlayer.currentTime
+                                sliderEditing ? sliderPosition : audioPlayer.currentTime
                             )
                         )
 

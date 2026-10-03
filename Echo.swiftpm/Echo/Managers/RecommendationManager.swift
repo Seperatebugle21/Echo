@@ -28,6 +28,9 @@ final class RecommendationManager {
         beginObserving(song)
     }
 
+    @ObservationIgnored private let storageQueue = DispatchQueue(label: "com.echomusic.listening-storage", qos: .utility)
+    @ObservationIgnored private var pendingSave: DispatchWorkItem?
+
     private let storageKey = "EchoRecommendationLearningDataV1"
 
     private var monitorTimer: Timer?
@@ -529,20 +532,21 @@ final class RecommendationManager {
 
     // MARK: - Persistence
 
-    private func saveAndPublish() {
-        if let daily = try? JSONEncoder().encode(dailyCounts) { UserDefaults.standard.set(daily, forKey: "EchoDailyListeningV1") }
-
-        if let data =
-            try? JSONEncoder()
-                .encode(learningData) {
-
-            UserDefaults.standard.set(
-                data,
-                forKey: storageKey
-            )
-        }
-
+    func flush() {
+        pendingSave?.cancel()
+        saveAndPublish(immediately: true)
+    }
+    private func saveAndPublish(immediately: Bool = false) {
         revision &+= 1
+        pendingSave?.cancel()
+        let daily = dailyCounts, learning = learningData, key = storageKey
+        let work = DispatchWorkItem {
+            if let data = try? JSONEncoder().encode(daily) { UserDefaults.standard.set(data, forKey: "EchoDailyListeningV1") }
+            if let data = try? JSONEncoder().encode(learning) { UserDefaults.standard.set(data, forKey: key) }
+        }
+        pendingSave = work
+        if immediately { storageQueue.async(execute: work) }
+        else { storageQueue.asyncAfter(deadline: .now() + 0.2, execute: work) }
     }
 
     private func load() {

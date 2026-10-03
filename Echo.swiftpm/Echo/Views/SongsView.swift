@@ -837,11 +837,6 @@ struct SongsView: View {
             }
 
 
-            library.markAsPlayed(
-                song
-            )
-
-
             audioPlayer.lastPlaybackDirection =
                 .fade
 

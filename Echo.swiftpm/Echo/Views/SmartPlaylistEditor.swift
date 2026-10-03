@@ -7,15 +7,21 @@ struct SmartPlaylistEditor: View {
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let playlist: Playlist?
+    @State private var smartMode: Bool
+    @State private var automaticNameKey: String?
+    @State private var builtinCoverID: String?
     @State private var name: String
     @State private var definition: SmartPlaylistDefinition
     @State private var preset: SmartPreset = .custom
-    @State private var photo: PhotosPickerItem?
     @State private var imageData: Data?
     @State private var now = Date()
     private let clock = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
-    init(playlist: Playlist? = nil) {
+    init(playlist: Playlist? = nil, startSmart: Bool = true) {
         self.playlist = playlist
+        _smartMode = State(initialValue: playlist?.smartDefinition != nil || (playlist == nil && startSmart))
+        _automaticNameKey = State(initialValue: playlist?.automaticNameKey ?? (playlist == nil && startSmart ? SmartPreset.mostPlayed.key : nil))
+        _builtinCoverID = State(initialValue: playlist?.builtinCoverID)
+        _preset = State(initialValue: playlist == nil ? .mostPlayed : SmartPreset.allCases.first { $0.key == playlist?.automaticNameKey } ?? .custom)
         _name = State(initialValue: playlist?.name ?? "")
         _definition = State(initialValue: playlist?.smartDefinition ?? SmartPreset.mostPlayed.definition)
         _imageData = State(initialValue: playlist?.imageData)
@@ -23,32 +29,46 @@ struct SmartPlaylistEditor: View {
     private var matches: [Song] {
         SmartPlaylistEvaluator.songs(definition, from: library.songs, favorites: Set(library.favoriteSongIDs), listening: RecommendationManager.shared.smartSnapshot, now: now)
     }
+    private var effectiveName: String {
+        automaticNameKey.map { EchoLocalization.string($0, fallback: name) } ?? name
+    }
+    private var nameBinding: Binding<String> {
+        Binding(get: { effectiveName }, set: { value in
+            name = value
+            automaticNameKey = value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && smartMode ? preset.key : nil
+        })
+    }
     private var valid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && definition.rules.allSatisfy {
+        !effectiveName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && (!smartMode || definition.rules.allSatisfy {
             $0.value.isFinite && $0.upper.isFinite && abs($0.value) <= 1_000_000 && abs($0.upper) <= 1_000_000 &&
             (!$0.field.text || $0.comparison == .missing || !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        }
+        })
     }
     var body: some View {
+        let result = smartMode ? matches : []
         NavigationStack {
             Form {
                 Section {
-                    PhotosPicker(selection: $photo, matching: .images) {
-                        HStack {
-                            if let imageData, let image = UIImage(data: imageData) {
-                                Image(uiImage: image).resizable().scaledToFill().frame(width: 64, height: 64).clipShape(.rect(cornerRadius: 16))
-                            } else { Image(systemName: "sparkles").font(.title).frame(width: 64, height: 64).background(.thinMaterial, in: .rect(cornerRadius: 16)) }
-                            Text("select_cover_image_accessibility")
+                    if playlist == nil {
+                        Picker("playlist_kind", selection: $smartMode) {
+                            Text("playlist_kind_regular").tag(false)
+                            Text("playlist_kind_smart").tag(true)
+                        }.pickerStyle(.segmented).onChange(of: smartMode) {
+                            if smartMode && name.isEmpty && automaticNameKey == nil { automaticNameKey = preset.key }
                         }
                     }
-                    TextField("playlist_name_placeholder", text: $name)
+                    PlaylistCoverSelector(imageData: $imageData, builtinCoverID: $builtinCoverID)
+                    TextField("playlist_name_placeholder", text: nameBinding)
+                    if smartMode {
                     Picker("smart_presets", selection: $preset) {
                         ForEach(SmartPreset.allCases) { Text(LocalizedStringKey($0.key)).tag($0) }
                     }.onChange(of: preset) {
                         definition = preset.definition
-                        if name.isEmpty { name = String(localized: String.LocalizationValue(preset.key), locale: locale) }
+                        if automaticNameKey != nil || name.isEmpty { automaticNameKey = preset.key }
+                    }
                     }
                 }
+                if smartMode {
                 Section("smart_rules") {
                     Picker("smart_match", selection: $definition.matchAll) {
                         Text("smart_all").tag(true); Text("smart_any").tag(false)
@@ -73,29 +93,34 @@ struct SmartPlaylistEditor: View {
                     }
                 }
                 Section {
-                    if matches.isEmpty { Text("smart_empty").foregroundStyle(.secondary) }
-                    ForEach(Array(matches.prefix(8))) { song in
+                    if result.isEmpty { Text("smart_empty").foregroundStyle(.secondary) }
+                    ForEach(Array(result.prefix(8))) { song in
                         Label { VStack(alignment: .leading) { Text(song.title); Text(song.artist).font(.caption).foregroundStyle(.secondary) } } icon: { Image(systemName: "music.note") }
                     }
-                } header: { Text("smart_matches \(matches.count)") } footer: { Text("smart_automatic_detail") }
-            }.echoBackground().navigationTitle("smart_editor_title").navigationBarTitleDisplayMode(.inline)
+                } header: { Text("smart_matches \(result.count)") } footer: { Text("smart_automatic_detail") }
+                }
+            }.echoBackground().navigationTitle(LocalizedStringKey(smartMode ? "smart_editor_title" : "create_playlist_navigation_title")).navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { Button("action_cancel") { dismiss() } }
                     ToolbarItem(placement: .confirmationAction) { Button("action_save", action: save).disabled(!valid) }
                 }
                 .onReceive(clock) { now = $0 }
-                .onChange(of: photo) { Task { imageData = try? await photo?.loadTransferable(type: Data.self) } }
+
         }
     }
     private func save() {
-        let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = effectiveName
         if let playlist, let index = library.playlists.firstIndex(where: { $0.id == playlist.id }) {
-            library.playlists[index].name = title
-            library.playlists[index].imageData = imageData
-            library.playlists[index].smartDefinition = definition
+            var updated = library.playlists[index]
+            updated.name = title; updated.imageData = imageData; updated.builtinCoverID = builtinCoverID
+            updated.automaticNameKey = smartMode ? automaticNameKey : nil
+            updated.smartDefinition = smartMode ? definition : nil
+            library.playlists[index] = updated
         } else {
             var created = library.createPlaylist(name: title, imageData: imageData)
-            created.smartDefinition = definition
+            created.smartDefinition = smartMode ? definition : nil
+            created.builtinCoverID = builtinCoverID
+            created.automaticNameKey = smartMode ? automaticNameKey : nil
             if let index = library.playlists.firstIndex(where: { $0.id == created.id }) { library.playlists[index] = created }
         }
         dismiss()
