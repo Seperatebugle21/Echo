@@ -205,7 +205,15 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         }
         return true // Command accepted; isPlaying confirms rendered progress.
     }
-    func pause() { control.async { [weak self] in self?.pauseOnControl() } }
+    func pause(completion: (@MainActor () -> Void)? = nil) {
+        control.async { [weak self] in
+            guard let self else { return }
+            self.pauseOnControl()
+            if let completion {
+                DispatchQueue.main.async { completion() }
+            }
+        }
+    }
     func stop() {
         let token = invalidate(.idle)
         control.async { [weak self] in
