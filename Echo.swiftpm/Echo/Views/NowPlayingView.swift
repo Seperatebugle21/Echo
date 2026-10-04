@@ -671,15 +671,7 @@ private struct NowPlayingProgress: View {
         VStack(spacing: 5) {
 
                     Slider(
-                        value: Binding(
-                            get: {
-                                sliderEditing ? sliderPosition : audioPlayer.currentTime
-                            },
-                            set: { value in
-                                sliderPosition = value
-                                if !sliderEditing { audioPlayer.seek(to: value) }
-                            }
-                        ),
+                        value: $sliderPosition,
                         in: 0...max(
                             audioPlayer.duration,
                             1
@@ -687,20 +679,44 @@ private struct NowPlayingProgress: View {
                         onEditingChanged: { editing in
 
                             if editing {
-                                sliderPosition = audioPlayer.currentTime
                                 sliderSongID = audioPlayer.currentSong?.id
                                 sliderEditing = true
-                                audioPlayer.pauseForSeeking()
                             } else {
-                                if sliderSongID == audioPlayer.currentSong?.id {
+                                if sliderEditing, sliderSongID == audioPlayer.currentSong?.id {
                                     audioPlayer.seek(to: sliderPosition)
-                                    audioPlayer.resumeAfterSeeking()
                                 }
                                 sliderEditing = false
+                                sliderSongID = nil
                             }
                         }
                     )
                     .tint(.white)
+                    .onAppear { sliderPosition = audioPlayer.currentTime }
+                    .onDisappear {
+                        sliderEditing = false
+                        sliderSongID = nil
+                    }
+                    .onChange(of: audioPlayer.currentTime) {
+                        if !sliderEditing { sliderPosition = audioPlayer.currentTime }
+                    }
+                    .onChange(of: audioPlayer.currentSong?.id) {
+                        // A drag for the previous track must never seek the next one.
+                        sliderEditing = false
+                        sliderSongID = nil
+                        sliderPosition = audioPlayer.currentTime
+                    }
+                    .accessibilityAdjustableAction { direction in
+                        guard audioPlayer.duration > 0 else { return }
+                        let step = 10.0
+                        let target: Double
+                        switch direction {
+                        case .increment: target = min(audioPlayer.duration, audioPlayer.currentTime + step)
+                        case .decrement: target = max(0, audioPlayer.currentTime - step)
+                        @unknown default: return
+                        }
+                        sliderPosition = target
+                        audioPlayer.seek(to: target)
+                    }
                     .onGeometryChange(for: CGRect.self) { proxy in
                         tracksGeometry ? proxy.frame(in: .global) : .zero
                     } action: { frame in
