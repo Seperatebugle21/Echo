@@ -57,6 +57,37 @@ final class EchoAudioEngineTests: XCTestCase {
         try await Task.sleep(for: .milliseconds(200))
         XCTAssertEqual(promotions, 1); XCTAssertEqual(starts, 2); XCTAssertNotEqual(player.stateValue, .failed)
     }
+    func testPauseCompletionObservesStoppedPlayback() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 5))
+        defer { player.stop() }
+        player.play()
+        try await until { player.isPlaying && player.currentTime > 0.1 }
+        var completed = false
+        var pausedPosition = 0.0
+        player.pause {
+            XCTAssertTrue(Thread.isMainThread)
+            XCTAssertEqual(player.stateValue, .paused)
+            XCTAssertFalse(player.isPlaying)
+            pausedPosition = player.currentTime
+            completed = true
+        }
+        try await until { completed }
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertEqual(player.currentTime, pausedPosition, accuracy: 0.01)
+        player.play()
+        try await until { player.isPlaying && player.currentTime > pausedPosition + 0.1 }
+    }
+    func testSeekWhilePlayingContinuesWithoutAnotherPlayCommand() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 5))
+        defer { player.stop() }
+        var starts = 0
+        player.onStarted = { _ in starts += 1 }
+        player.play()
+        try await until { player.isPlaying && starts == 1 }
+        player.currentTime = 2
+        try await until { player.isPlaying && player.currentTime > 2.1 }
+        XCTAssertEqual(starts, 1)
+    }
     func testVeryShortIncomingGaplessFileCompletesAfterPromotion() async throws {
         let a = try fixture(rate: 44100, channels: 1, seconds: 1), b = try fixture(rate: 48000, channels: 2, seconds: 0.02)
         let player = try EqualizedAudioPlayer(contentsOf: a), id = UUID()
