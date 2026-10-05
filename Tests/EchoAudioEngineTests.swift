@@ -154,7 +154,7 @@ final class EchoAudioEngineTests: XCTestCase {
         let player = try EqualizedAudioPlayer(contentsOf: corrupt)
         defer { player.stop() }
         // Core Audio initializes decoder plugins on the first open on a fresh simulator.
-        player.play(); try await until({ player.stateValue == .failed }, timeout: 15); XCTAssertFalse(player.isPlaying)
+        player.play(); try await until({ player.stateValue == .failed }, timeout: 30); XCTAssertFalse(player.isPlaying)
         try player.replace(with: fixture(rate: 44100, channels: 2)); player.play()
         try await until { player.isPlaying }
     }
