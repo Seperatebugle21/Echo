@@ -14,6 +14,7 @@ struct NowPlayingView: View {
     var tracksSliderGeometry = true
 
     @State private var sliderFrame: CGRect = .zero
+    @State private var isScrubbing = false
     @State private var dragMayClose: Bool?
     @State private var localArtwork = PlayerArtworkImages.empty
     @GestureState private var closeDragActive = false
@@ -127,7 +128,7 @@ struct NowPlayingView: View {
 
                 // MARK: - Progress
 
-                NowPlayingProgress(sliderFrame: $sliderFrame,
+                NowPlayingProgress(sliderFrame: $sliderFrame, isScrubbing: $isScrubbing,
                                    tracksGeometry: tracksSliderGeometry && !closingDragInProgress)
 
                 // MARK: - Playback Controls
@@ -456,6 +457,7 @@ struct NowPlayingView: View {
         DragGesture(minimumDistance: 8, coordinateSpace: .global)
             .updating($closeDragActive) { _, active, _ in active = true }
             .onChanged { value in
+                guard !isScrubbing else { return }
                 if dragMayClose == nil {
                     // Preserve seeking, even if a slider drag is slightly diagonal.
                     let startedOnSlider = sliderFrame
@@ -660,74 +662,105 @@ struct NowPlayingBackdrop: View {
 
 // Time updates only invalidate this small subtree, not the artwork and full player.
 private struct NowPlayingProgress: View {
-    @State private var sliderEditing = false
-    @State private var sliderPosition = 0.0
-    @State private var sliderSongID: UUID?
+    @State private var scrub = PlaybackScrubState()
+    @GestureState private var dragActive = false
+    @State private var invalidatedDrag = false
+    @State private var scrubPlaybackGeneration: UUID?
 
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @Binding var sliderFrame: CGRect
+    @Binding var isScrubbing: Bool
     let tracksGeometry: Bool
+    private var displayPosition: Double { scrub.isActive ? scrub.position : audioPlayer.currentTime }
     var body: some View {
         VStack(spacing: 5) {
 
-                    Slider(
-                        value: $sliderPosition,
-                        in: 0...max(
-                            audioPlayer.duration,
-                            1
-                        ),
-                        onEditingChanged: { editing in
-
-                            if editing {
-                                sliderSongID = audioPlayer.currentSong?.id
-                                sliderEditing = true
-                            } else {
-                                if sliderEditing, sliderSongID == audioPlayer.currentSong?.id {
-                                    audioPlayer.seek(to: sliderPosition)
-                                }
-                                sliderEditing = false
-                                sliderSongID = nil
+            GeometryReader { geometry in
+                let width = max(1, geometry.size.width - 14)
+                let fraction = min(1, max(0, displayPosition / max(1, audioPlayer.duration)))
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.25)).frame(height: 4)
+                    Capsule().fill(.white).frame(width: max(0, width * fraction + 7), height: 4)
+                    Circle().fill(.white).frame(width: 14, height: 14)
+                        .offset(x: width * fraction)
+                }
+                .frame(height: 44)
+                .contentShape(Rectangle())
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 0)
+                        .updating($dragActive) { _, active, _ in active = true }
+                        .onChanged { value in
+                            guard !invalidatedDrag else { return }
+                            if !scrub.isActive {
+                                scrub.begin(songID: audioPlayer.currentSong?.id,
+                                    position: audioPlayer.currentTime, duration: audioPlayer.duration)
+                                scrubPlaybackGeneration = audioPlayer.playbackGeneration
                             }
+                            guard scrub.isActive else { return }
+                            isScrubbing = true
+                            scrub.update((value.location.x - 7) / width * scrub.duration)
                         }
-                    )
-                    .tint(.white)
-                    .onAppear { sliderPosition = audioPlayer.currentTime }
-                    .onDisappear {
-                        sliderEditing = false
-                        sliderSongID = nil
-                    }
-                    .onChange(of: audioPlayer.currentTime) {
-                        if !sliderEditing { sliderPosition = audioPlayer.currentTime }
-                    }
-                    .onChange(of: audioPlayer.currentSong?.id) {
-                        // A drag for the previous track must never seek the next one.
-                        sliderEditing = false
-                        sliderSongID = nil
-                        sliderPosition = audioPlayer.currentTime
-                    }
-                    .accessibilityAdjustableAction { direction in
-                        guard audioPlayer.duration > 0 else { return }
-                        let step = 10.0
-                        let target: Double
-                        switch direction {
-                        case .increment: target = min(audioPlayer.duration, audioPlayer.currentTime + step)
-                        case .decrement: target = max(0, audioPlayer.currentTime - step)
-                        @unknown default: return
+                        .onEnded { value in
+                            if !invalidatedDrag && scrubPlaybackGeneration == audioPlayer.playbackGeneration {
+                                scrub.update((value.location.x - 7) / width * scrub.duration)
+                                if let target = scrub.finish(songID: audioPlayer.currentSong?.id) {
+                                    audioPlayer.seek(to: target)
+                                }
+                            }
+                            scrub.cancel()
+                            isScrubbing = false
+                            invalidatedDrag = false
                         }
-                        sliderPosition = target
-                        audioPlayer.seek(to: target)
+                )
+                .accessibilityElement()
+                .accessibilityLabel("now_playing_position")
+                .accessibilityValue(Self.formatTime(displayPosition))
+                .accessibilityAdjustableAction { direction in
+                    guard audioPlayer.duration > 0 else { return }
+                    let target: Double
+                    switch direction {
+                    case .increment: target = min(audioPlayer.duration, audioPlayer.currentTime + 10)
+                    case .decrement: target = max(0, audioPlayer.currentTime - 10)
+                    @unknown default: return
                     }
-                    .onGeometryChange(for: CGRect.self) { proxy in
-                        tracksGeometry ? proxy.frame(in: .global) : .zero
-                    } action: { frame in
-                        if frame != .zero && sliderFrame != frame { sliderFrame = frame }
-                    }
+                    audioPlayer.seek(to: target)
+                }
+                .onGeometryChange(for: CGRect.self) { proxy in
+                    tracksGeometry ? proxy.frame(in: .global) : .zero
+                } action: { frame in
+                    if frame != .zero && sliderFrame != frame { sliderFrame = frame }
+                }
+            }
+            .frame(height: 44)
+            .task(id: dragActive) {
+                guard !dragActive else { return }
+                // onEnded consumes the transaction first. Cancellation only discards it.
+                await Task.yield()
+                guard !Task.isCancelled else { return }
+                scrub.cancel()
+                isScrubbing = false
+                invalidatedDrag = false
+            }
+            .onDisappear {
+                scrub.cancel()
+                isScrubbing = false
+            }
+            .onChange(of: audioPlayer.currentSong?.id) {
+                invalidatedDrag = dragActive
+                scrub.cancel()
+                isScrubbing = false
+            }
+            .onChange(of: audioPlayer.playbackGeneration) {
+                invalidatedDrag = dragActive
+                scrub.cancel()
+                isScrubbing = false
+            }
 
                     HStack {
 
                         Text(
                             Self.formatTime(
-                                sliderEditing ? sliderPosition : audioPlayer.currentTime
+                                displayPosition
                             )
                         )
 

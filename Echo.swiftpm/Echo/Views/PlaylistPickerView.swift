@@ -4,6 +4,7 @@ struct PlaylistPickerView: View {
     
     @Environment(MusicLibraryManager.self) private var library
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     
     let songs: [Song]
     
@@ -26,7 +27,14 @@ struct PlaylistPickerView: View {
     // Controleert of alle geselecteerde nummers in een specifieke playlist staan
     private func areAllInPlaylist(_ playlist: Playlist) -> Bool {
         guard !songs.isEmpty else { return false }
-        return songs.allSatisfy { playlist.songIDs.contains($0.id) }
+        let ids = Set(library.songs(in: playlist).map(\.id))
+        return songs.allSatisfy { ids.contains($0.id) }
+    }
+
+    private func blockedUntil(_ playlist: Playlist) -> Date? {
+        let now = SmartPlaylistClock.shared.now
+        return songs.compactMap { playlist.smartOverrides?[$0.id]?.excludedUntil }
+            .filter { $0 > now }.max()
     }
     
     var body: some View {
@@ -67,6 +75,30 @@ struct PlaylistPickerView: View {
                             isSelected: areAllInPlaylist(playlist)
                         )
                     }
+                }
+                Section {
+                    ForEach(library.playlists.filter { $0.smartDefinition != nil }) { playlist in
+                        let blocked = blockedUntil(playlist)
+                        Button {
+                            for song in songs { library.addSong(song, to: playlist) }
+                            dismiss()
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                playlistRow(image: playlist.imageData, builtin: playlist.builtinCoverID,
+                                    systemImage: "sparkles", title: Text(playlist.displayName()),
+                                    count: library.songCount(in: playlist), isSelected: areAllInPlaylist(playlist))
+                                if let blocked {
+                                    Text(String(format: String(localized: "smart_add_available", locale: locale),
+                                        blocked.formatted(.dateTime.day().month().hour().minute().locale(locale))))
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }.disabled(blocked != nil)
+                    }
+                } header: {
+                    Text("smart_picker_section")
+                } footer: {
+                    Text("smart_manual_detail")
                 }
             }
             .echoBackground()

@@ -117,9 +117,7 @@ struct EchoApp: App {
 
            // .tint(.red)
 
-            .preferredColorScheme(
-                EchoTheme.shared.colorScheme
-            )
+            .echoThemeRoot()
 
 
             // MARK: - Prepare Background Fetch
@@ -187,7 +185,10 @@ struct EchoApp: App {
         ) { _, newPhase in
             audioPlayer.savePodcastPosition()
             PodcastStore.shared.flush()
-            if newPhase == .background { library.flushSongChanges(); EqualizerSettings.shared.flush(); RecommendationManager.shared.flush() }
+            if newPhase == .background {
+                library.flushSongChanges(); EqualizerSettings.shared.flush(); RecommendationManager.shared.flush()
+                PodcastNotifications.shared.schedule()
+            }
             EchoWidgetSnapshotPublisher.refresh()
 
             if newPhase ==

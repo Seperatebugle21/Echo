@@ -7,6 +7,10 @@ on:
     branches:
       - Widget
 
+  pull_request:
+    branches:
+      - Widget
+
 
 jobs:
 
@@ -49,6 +53,24 @@ jobs:
      
 
       # ============================================
+      # Regression tests use a real iOS Simulator render clock.
+      - name: Test playlist, theme, playback and podcast behavior
+        run: |
+          xcodebuild -version
+          SIMULATOR_ID=$(xcrun simctl list devices available --json | python3 -c 'import json, sys; data=json.load(sys.stdin); devices=[d["udid"] for runtime, entries in data["devices"].items() if "iOS-" in runtime and int(runtime.split("iOS-")[-1].split("-")[0]) >= 26 for d in entries if d.get("isAvailable") and "iPhone" in d["name"]]; assert devices, "An iOS 26+ iPhone simulator is required"; print(devices[0])')
+          xcodebuild test \
+            -project Echo.xcodeproj -scheme EchoFeatureTests \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath build/FeatureTests.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+          xcodebuild test \
+            -project Echo.xcodeproj -scheme EchoPodcastTests \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath build/PodcastTests.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
       # 3. Locate Python library
       # ============================================
 
@@ -353,6 +375,14 @@ jobs:
             -c "Add :UIBackgroundModes:0 string audio" \
             "$INFO_PLIST"
 
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes:1 string fetch" \
+            "$INFO_PLIST"
+
+          /usr/libexec/PlistBuddy -c "Delete :BGTaskSchedulerPermittedIdentifiers" "$INFO_PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers array" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:0 string com.echomusic.app.podcast-refresh" "$INFO_PLIST"
+
 
           # ============================================
           # Files access
@@ -547,6 +577,15 @@ jobs:
           # ============================================
 
           # Preserve the Echo launcher as well as the Spotify callback.
+          python3 - "$INFO_PLIST" <<'PY'
+          import plistlib
+          import sys
+          from pathlib import Path
+          info = plistlib.loads(Path(sys.argv[1]).read_bytes())
+          assert {"audio", "fetch"}.issubset(info.get("UIBackgroundModes", [])), "Missing background audio/fetch"
+          assert "com.echomusic.app.podcast-refresh" in info.get("BGTaskSchedulerPermittedIdentifiers", []), "Missing podcast refresh identifier"
+          PY
+
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1 dict" "$INFO_PLIST"
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLName string echo.widgets" "$INFO_PLIST"
           /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:1:CFBundleURLSchemes array" "$INFO_PLIST"

@@ -2,6 +2,296 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+"smart_picker_section": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Smart Playlists"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Slimme playlists"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playlists intelligentes"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Intelligente Playlists"
+        }
+      }
+    }
+  },
+  "smart_manual_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Manually added songs stay included regardless of the rules and do not count toward the automatic limit. Removed songs cannot be added again for 5 days."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Handmatig toegevoegde nummers blijven erin ongeacht de regels en tellen niet mee voor de automatische limiet. Verwijderde nummers kunnen 5 dagen lang niet opnieuw worden toegevoegd."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Les titres ajoutés manuellement restent inclus quelles que soient les règles et ne comptent pas dans la limite automatique. Les titres retirés ne peuvent pas être ajoutés à nouveau pendant 5 jours."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Manuell hinzugefügte Titel bleiben unabhängig von den Regeln enthalten und zählen nicht zur automatischen Begrenzung. Entfernte Titel können 5 Tage lang nicht erneut hinzugefügt werden."
+        }
+      }
+    }
+  },
+  "smart_add_available": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Available to add from %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opnieuw toevoegen mogelijk vanaf %@"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajout possible à partir du %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Erneutes Hinzufügen möglich ab %@"
+        }
+      }
+    }
+  },
+  "smart_remove_five_days": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Remove for at least 5 days"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verwijder voor minstens 5 dagen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Retirer pour au moins 5 jours"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Für mindestens 5 Tage entfernen"
+        }
+      }
+    }
+  },
+  "smart_remove_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Removing a song hides it for 5 days and resets its playcount only for this playlist. After that, the rules decide whether it returns."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Een nummer verwijderen verbergt het 5 dagen en reset de playcount alleen voor deze playlist. Daarna bepalen de regels of het terugkomt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Retirer un titre le masque pendant 5 jours et remet son compteur d’écoutes à zéro uniquement pour cette playlist. Ensuite, les règles déterminent s’il revient."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Das Entfernen eines Titels blendet ihn 5 Tage lang aus und setzt seine Wiedergabezahl nur für diese Playlist zurück. Danach entscheiden die Regeln, ob er zurückkehrt."
+        }
+      }
+    }
+  },
+  "theme_separate_palettes": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Separate colors for light and dark mode"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aparte kleuren voor lichte en donkere modus"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Couleurs distinctes pour les modes clair et sombre"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Separate Farben für hellen und dunklen Modus"
+        }
+      }
+    }
+  },
+  "theme_separate_palettes_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "When enabled, Custom follows the iOS light or dark mode. Change the colors for the active mode. When disabled, one Custom palette is used in both modes."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Als dit aanstaat, volgt Aangepast de lichte of donkere iOS-modus. Je wijzigt de kleuren voor de actieve modus. Als dit uitstaat, wordt één aangepast palet in beide modi gebruikt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lorsque cette option est activée, Personnalisé suit le mode clair ou sombre d’iOS. Modifiez les couleurs du mode actif. Sinon, une seule palette personnalisée est utilisée dans les deux modes."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wenn aktiviert, folgt Benutzerdefiniert dem hellen oder dunklen iOS-Modus. Du bearbeitest die Farben des aktiven Modus. Wenn deaktiviert, wird in beiden Modi dieselbe Palette verwendet."
+        }
+      }
+    }
+  },
+  "theme_editing_dark": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Editing dark mode colors"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je bewerkt de kleuren voor donkere modus"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Modification des couleurs du mode sombre"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Farben für den dunklen Modus bearbeiten"
+        }
+      }
+    }
+  },
+  "theme_editing_light": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Editing light mode colors"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je bewerkt de kleuren voor lichte modus"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Modification des couleurs du mode clair"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Farben für den hellen Modus bearbeiten"
+        }
+      }
+    }
+  },
+  "now_playing_position": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playback position"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeelpositie"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Position de lecture"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wiedergabeposition"
+        }
+      }
+    }
+  },
   "theme_custom": {
     "extractionState": "manual",
     "localizations": {

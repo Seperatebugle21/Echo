@@ -54,6 +54,7 @@ class MusicLibraryManager {
     @ObservationIgnored private var smartResults: [UUID: SmartResult] = [:]
     private struct SmartResult {
         var definition: SmartPlaylistDefinition
+        var overrides: [UUID: SmartSongOverride]
         var songRevision: UInt64
         var favoriteRevision: UInt64
         var listeningRevision: Int
@@ -421,6 +422,7 @@ class MusicLibraryManager {
         playlists = playlists.map { playlist in
             var updatedPlaylist = playlist
             updatedPlaylist.songIDs.removeAll { $0 == song.id }
+            updatedPlaylist.smartOverrides?.removeValue(forKey: song.id)
             return updatedPlaylist
         }
 
@@ -587,7 +589,14 @@ class MusicLibraryManager {
             $0.id == playlist.id
         }) else { return }
         
-        guard playlists[index].smartDefinition == nil else { return }
+        if playlists[index].smartDefinition != nil {
+            var overrides = playlists[index].smartOverrides ?? [:]
+            var override = overrides[song.id] ?? SmartSongOverride()
+            guard override.include(at: Date()) else { return }
+            overrides[song.id] = override
+            playlists[index].smartOverrides = overrides
+            return
+        }
         if !playlists[index].songIDs.contains(song.id) {
             playlists[index].songIDs.append(song.id)
         }
@@ -597,14 +606,16 @@ class MusicLibraryManager {
         if let definition = playlist.smartDefinition {
             let recommendations = RecommendationManager.shared
             let now = SmartPlaylistClock.shared.now
+            let overrides = playlist.smartOverrides ?? [:]
             let revision = songRevision, favorites = favoriteRevision, listening = recommendations.revision
             if let cached = smartResults[playlist.id], cached.definition == definition,
+               cached.overrides == overrides,
                cached.songRevision == revision, cached.favoriteRevision == favorites,
                cached.listeningRevision == listening, cached.now == now {
                 return cached.songs
             }
-            let result = SmartPlaylistEvaluator.songs(definition, from: songs, favorites: Set(favoriteSongIDs), listening: recommendations.smartSnapshot, now: now)
-            smartResults[playlist.id] = SmartResult(definition: definition, songRevision: revision,
+            let result = SmartPlaylistEvaluator.songs(definition, from: songs, favorites: Set(favoriteSongIDs), listening: recommendations.smartSnapshot, now: now, overrides: overrides)
+            smartResults[playlist.id] = SmartResult(definition: definition, overrides: overrides, songRevision: revision,
                 favoriteRevision: favorites, listeningRevision: listening, now: now, songs: result)
             return result
         }
@@ -618,6 +629,33 @@ class MusicLibraryManager {
         return playlist.songIDs.reduce(0) { $0 + (index[$1] == nil ? 0 : 1) }
     }
 
+    func removeSong(_ song: Song, from playlist: Playlist, now: Date = Date()) {
+        guard let index = playlists.firstIndex(where: { $0.id == playlist.id }) else { return }
+        if playlists[index].smartDefinition != nil {
+            var overrides = playlists[index].smartOverrides ?? [:]
+            var override = overrides[song.id] ?? SmartSongOverride()
+            override.remove(at: now)
+            overrides[song.id] = override
+            playlists[index].smartOverrides = overrides
+        } else {
+            playlists[index].songIDs.removeAll { $0 == song.id }
+        }
+        smartResults.removeValue(forKey: playlist.id)
+    }
+
+    /// Called exactly where a global listening start is recorded, including repeats.
+    func recordSmartPlaylistPlay(_ song: Song, at now: Date) {
+        var updated = playlists
+        var changed = false
+        for index in updated.indices where updated[index].smartDefinition != nil {
+            guard var override = updated[index].smartOverrides?[song.id], override.totalSinceReset != nil else { continue }
+            override.recordPlay(at: now)
+            updated[index].smartOverrides?[song.id] = override
+            changed = true
+        }
+        if changed { playlists = updated }
+    }
+
     private func removeMissingSongReferences() {
         let availableSongIDs = Set(songs.map(\.id))
 
@@ -626,6 +664,7 @@ class MusicLibraryManager {
             updatedPlaylist.songIDs.removeAll {
                 !availableSongIDs.contains($0)
             }
+            updatedPlaylist.smartOverrides = updatedPlaylist.smartOverrides?.filter { availableSongIDs.contains($0.key) }
             return updatedPlaylist
         }
 
@@ -640,6 +679,11 @@ class MusicLibraryManager {
         toPlaylistID playlistID: UUID,
         at position: Int
     ) {
+
+        if let playlist = playlists.first(where: { $0.id == playlistID }), playlist.smartDefinition != nil {
+            addSong(song, to: playlist)
+            return
+        }
 
         guard let playlistIndex =
             playlists.firstIndex(

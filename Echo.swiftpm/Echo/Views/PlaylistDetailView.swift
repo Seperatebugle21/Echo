@@ -132,6 +132,7 @@ struct PlaylistDetailView: View {
                 ContentUnavailableView.search(text: searchText)
                     .selectionDisabled(true)
             } else {
+                Section {
                 ForEach(processedSongs) { song in
                     HStack(spacing: 12) {
                         if let data = song.coverData,
@@ -176,8 +177,25 @@ struct PlaylistDetailView: View {
                             audioPlayer.fillAutoNext(from: library.songs)
                         }
                     }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        if isSmart {
+                            Button("smart_remove_five_days", systemImage: "minus.circle", role: .destructive) {
+                                library.removeSong(song, from: currentPlaylist)
+                            }
+                        }
+                    }
+                    .contextMenu {
+                        if isSmart {
+                            Button("smart_remove_five_days", systemImage: "minus.circle", role: .destructive) {
+                                library.removeSong(song, from: currentPlaylist)
+                            }
+                        }
+                    }
                 }
                 .onMove(perform: (!isSmart && searchText.isEmpty && sortOption == .custom) ? moveSongs : nil)
+                } footer: {
+                    if isSmart { Text("smart_remove_detail") }
+                }
             }
         }
         .searchable(
