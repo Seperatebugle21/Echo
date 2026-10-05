@@ -18,24 +18,24 @@ struct EchoThemePalette: Codable, Equatable {
     static let shared = EchoTheme()
     var mode: String { didSet { defaults.set(mode, forKey: "appearanceMode") } }
     var darkStyle: String { didSet { defaults.set(darkStyle, forKey: "darkBackgroundStyle") } }
-    var shared: EchoThemePalette { didSet { save() } }
+    var sharedPalette: EchoThemePalette { didSet { save() } }
     var light: EchoThemePalette { didSet { save() } }
     var dark: EchoThemePalette { didSet { save() } }
     var separatePalettes: Bool {
         didSet {
             if separatePalettes && !palettesInitialized {
-                light = shared; dark = shared
+                light = sharedPalette; dark = sharedPalette
                 palettesInitialized = true
             }
             save()
         }
     }
     // Preserve the original shared settings and their API for existing installs.
-    var gradient: Bool { get { shared.gradient } set { shared.gradient = newValue } }
-    var first: String { get { shared.first } set { shared.first = newValue } }
-    var second: String { get { shared.second } set { shared.second = newValue } }
-    var direction: String { get { shared.direction } set { shared.direction = newValue } }
-    var whiteText: Bool { get { shared.whiteText } set { shared.whiteText = newValue } }
+    var gradient: Bool { get { sharedPalette.gradient } set { sharedPalette.gradient = newValue } }
+    var first: String { get { sharedPalette.first } set { sharedPalette.first = newValue } }
+    var second: String { get { sharedPalette.second } set { sharedPalette.second = newValue } }
+    var direction: String { get { sharedPalette.direction } set { sharedPalette.direction = newValue } }
+    var whiteText: Bool { get { sharedPalette.whiteText } set { sharedPalette.whiteText = newValue } }
     @ObservationIgnored private var palettesInitialized: Bool
     @ObservationIgnored private let defaults: UserDefaults
     init(defaults: UserDefaults = .standard) {
@@ -47,7 +47,7 @@ struct EchoThemePalette: Codable, Equatable {
             second: defaults.string(forKey: "theme.second") ?? "64478C",
             direction: defaults.string(forKey: "theme.direction") ?? "diagonal",
             whiteText: defaults.object(forKey: "theme.whiteText") as? Bool ?? true)
-        shared = legacy
+        sharedPalette = legacy
         light = defaults.data(forKey: "theme.light").flatMap { try? JSONDecoder().decode(EchoThemePalette.self, from: $0) } ?? legacy
         dark = defaults.data(forKey: "theme.dark").flatMap { try? JSONDecoder().decode(EchoThemePalette.self, from: $0) } ?? legacy
         separatePalettes = defaults.bool(forKey: "theme.separatePalettes")
@@ -65,13 +65,13 @@ struct EchoThemePalette: Codable, Equatable {
         defaults.set(palettesInitialized, forKey: "theme.palettesInitialized")
     }
     var colorScheme: ColorScheme? {
-        switch mode { case "dark": .dark; case "light": .light; case "custom": separatePalettes ? nil : shared.textScheme; default: nil }
+        switch mode { case "dark": .dark; case "light": .light; case "custom": separatePalettes ? nil : sharedPalette.textScheme; default: nil }
     }
     func palette(for systemScheme: ColorScheme) -> EchoThemePalette {
-        separatePalettes ? (systemScheme == .dark ? dark : light) : shared
+        separatePalettes ? (systemScheme == .dark ? dark : light) : sharedPalette
     }
     func setPalette(_ palette: EchoThemePalette, for systemScheme: ColorScheme) {
-        if !separatePalettes { shared = palette }
+        if !separatePalettes { sharedPalette = palette }
         else if systemScheme == .dark { dark = palette }
         else { light = palette }
     }

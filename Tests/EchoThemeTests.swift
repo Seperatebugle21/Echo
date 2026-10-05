@@ -8,7 +8,7 @@ final class EchoThemeTests: XCTestCase {
         let theme = EchoTheme(defaults: defaults)
         theme.mode = "custom"
         theme.first = "DCEDE6"
-        let original = theme.shared
+        let original = theme.sharedPalette
         XCTAssertFalse(theme.separatePalettes)
         theme.separatePalettes = true
         XCTAssertEqual(theme.light, original); XCTAssertEqual(theme.dark, original)

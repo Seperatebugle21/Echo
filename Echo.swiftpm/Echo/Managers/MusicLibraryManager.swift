@@ -602,7 +602,8 @@ class MusicLibraryManager {
         }
     }
 
-    @MainActor func songs(in playlist: Playlist) -> [Song] {
+    @MainActor func songs(in snapshot: Playlist) -> [Song] {
+        let playlist = playlists.first { $0.id == snapshot.id } ?? snapshot
         if let definition = playlist.smartDefinition {
             let recommendations = RecommendationManager.shared
             let now = SmartPlaylistClock.shared.now

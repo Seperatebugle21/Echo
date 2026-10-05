@@ -736,7 +736,7 @@ private struct NowPlayingProgress: View {
                 guard !dragActive else { return }
                 // onEnded consumes the transaction first. Cancellation only discards it.
                 await Task.yield()
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled, !dragActive else { return }
                 scrub.cancel()
                 isScrubbing = false
                 invalidatedDrag = false
