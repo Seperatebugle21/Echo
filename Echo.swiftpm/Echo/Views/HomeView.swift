@@ -113,6 +113,8 @@ struct HomeView: View {
                     }
 
 
+                    HomeLocalAlbumSection()
+
                     // MARK: - Recently Played
 
                     if !recentlyPlayedSnapshot.isEmpty {
@@ -190,6 +192,7 @@ struct HomeView: View {
                         recommendations: podcastRecommendations.shows,
                         playSong: { song, queue in play(song, queue: queue) }
                     )
+                    HomeOnlineAlbumSection()
                 }
                 .padding(.bottom, 120)
             }

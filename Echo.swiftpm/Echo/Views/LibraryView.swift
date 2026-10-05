@@ -1,17 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct AlbumGroup: Identifiable {
-
-    var id: String {
-        "\(artist)-\(name)"
-    }
-
-    let name: String
-    let artist: String
-    let songs: [Song]
-}
-
 struct LibraryView: View {
     @State private var showImporter = false
     @State private var showAddActions = false
@@ -30,56 +19,7 @@ struct LibraryView: View {
     }
 
     private var albumGroups: [AlbumGroup] {
-
-        let songs =
-            library.songs.filter {
-
-                guard
-                    let album =
-                        $0.album?
-                            .trimmingCharacters(
-                                in:
-                                    .whitespacesAndNewlines
-                            )
-                else {
-                    return false
-                }
-
-                return !album.isEmpty
-            }
-
-        let grouped =
-            Dictionary(
-                grouping: songs
-            ) {
-                "\($0.artist)|\($0.album ?? "")"
-            }
-
-        return grouped
-            .compactMap { _, songs in
-
-                guard
-                    let first =
-                        songs.first,
-                    let album =
-                        first.album
-                else {
-                    return nil
-                }
-
-                return AlbumGroup(
-                    name: album,
-                    artist: first.artist,
-                    songs: songs
-                )
-            }
-            .sorted {
-                $0.name
-                    .localizedCaseInsensitiveCompare(
-                        $1.name
-                    )
-                == .orderedAscending
-            }
+        LibraryAlbums.groups(from: library.songs)
     }
 
     private var recentlyAddedSongs: [Song] {

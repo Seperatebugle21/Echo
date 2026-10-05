@@ -1124,6 +1124,10 @@ final class FetchManager {
             return "Spotify Album"
 
 
+        case .artist:
+
+            return String(localized: "catalog_artist")
+
         case .playlist:
 
             return "Spotify Playlist"

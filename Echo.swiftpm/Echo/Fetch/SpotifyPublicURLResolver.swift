@@ -115,7 +115,7 @@ final class SpotifyPublicURLResolver:
                 )
 
 
-        case .album:
+        case .album, .artist:
 
             throw SpotifyPublicURLResolverError
                 .unsupportedType

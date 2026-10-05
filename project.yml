@@ -140,6 +140,12 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
+      - path: Tests/EchoCatalogTests.swift
+      - path: Echo.swiftpm/Echo/Models/OnlineMusicCatalog.swift
+      - path: Echo.swiftpm/Echo/Models/SpotifyCatalogJSON.swift
+      - path: Echo.swiftpm/Echo/Models/LibraryAlbums.swift
+      - path: Echo.swiftpm/Echo/Spotify/SpotifyURLParser.swift
+      - path: Echo.swiftpm/Echo/YoutubeMusic/YouTubeMusicMetadata.swift
       - path: Tests/EchoFeatureLogicTests.swift
       - path: Tests/EchoReleaseDetectionTests.swift
       - path: Tests/EchoAudioEngineTests.swift

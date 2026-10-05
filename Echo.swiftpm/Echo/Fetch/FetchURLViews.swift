@@ -479,7 +479,7 @@ struct FetchURLInputSheet:
     }
 }
 
-struct FetchURLPreviewView:
+struct LegacyFetchURLPreviewView:
     View
 {
 
@@ -1001,6 +1001,7 @@ struct FetchURLPreviewView:
         String {
 
         switch content {
+        case .artist, .album: return ""
 
         case .spotifyTrack(
             let track
@@ -1057,6 +1058,9 @@ struct FetchURLPreviewView:
 
             return
                 "music.note"
+
+        case .artist, .album:
+            return "person.fill"
 
         case .youtubeTrack,
              .youtubePlaylist:
@@ -1193,6 +1197,7 @@ struct FetchURLPreviewView:
             do {
 
                 switch content {
+                case .artist, .album: break
 
                 case .spotifyTrack(
                     let track

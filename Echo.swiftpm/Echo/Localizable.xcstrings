@@ -2,6 +2,1079 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "home_online_albums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "More albums by your artists"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Meer albums van jouw artiesten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Plus d’albums de vos artistes"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Weitere Alben deiner Künstler"
+        }
+      }
+    }
+  },
+  "home_local_albums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your albums"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vos albums"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Alben"
+        }
+      }
+    }
+  },
+  "catalog_download_new %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download %lld new songs"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld nieuwe nummers downloaden"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger %lld nouveaux morceaux"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld neue Titel herunterladen"
+        }
+      }
+    }
+  },
+  "catalog_download_track %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ downloaden"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ herunterladen"
+        }
+      }
+    }
+  },
+  "catalog_skipped_tracks %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld unavailable songs skipped"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld niet-beschikbare nummers overgeslagen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld morceaux indisponibles ignorés"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld nicht verfügbare Titel übersprungen"
+        }
+      }
+    }
+  },
+  "catalog_loading_albums %lld %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Loading albums: %lld of %lld"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albums laden: %lld van %lld"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Chargement des albums : %lld sur %lld"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alben werden geladen: %lld von %lld"
+        }
+      }
+    }
+  },
+  "catalog_tracks_count %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld songs"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld nummers"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld morceaux"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld Titel"
+        }
+      }
+    }
+  },
+  "catalog_download_result": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d new downloads, %d already available or queued, %d could not be queued."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d nieuwe downloads, %d al beschikbaar of ingepland, %d konden niet worden ingepland."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d nouveaux téléchargements, %d déjà disponibles ou en attente, %d n’ont pas pu être ajoutés."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d neue Downloads, %d bereits verfügbar oder vorgemerkt, %d konnten nicht hinzugefügt werden."
+        }
+      }
+    }
+  },
+  "catalog_download_result_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Downloads"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Downloads"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Téléchargements"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Downloads"
+        }
+      }
+    }
+  },
+  "catalog_bulk_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo adds missing songs to the download queue. Songs already in your library or queue are skipped."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo voegt ontbrekende nummers toe aan de downloadwachtrij. Nummers die al in je bibliotheek of wachtrij staan, worden overgeslagen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo ajoute les morceaux manquants à la file de téléchargement. Ceux déjà présents dans votre bibliothèque ou la file sont ignorés."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo fügt fehlende Titel zur Download-Warteschlange hinzu. Titel, die bereits in deiner Mediathek oder Warteschlange sind, werden übersprungen."
+        }
+      }
+    }
+  },
+  "catalog_confirm_download": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download these songs?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze nummers downloaden?"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger ces morceaux ?"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Diese Titel herunterladen?"
+        }
+      }
+    }
+  },
+  "catalog_no_search_results": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No matching songs or albums."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geen overeenkomende nummers of albums."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aucun morceau ou album correspondant."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Keine passenden Titel oder Alben."
+        }
+      }
+    }
+  },
+  "catalog_download_failed": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download failed — tap to retry"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download mislukt — tik om opnieuw te proberen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Échec du téléchargement — touchez pour réessayer"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download fehlgeschlagen — zum Wiederholen tippen"
+        }
+      }
+    }
+  },
+  "catalog_queued": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "In the download queue"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "In de downloadwachtrij"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dans la file de téléchargement"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "In der Download-Warteschlange"
+        }
+      }
+    }
+  },
+  "catalog_downloaded": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "In your library"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "In je bibliotheek"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dans votre bibliothèque"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "In deiner Mediathek"
+        }
+      }
+    }
+  },
+  "catalog_download_all": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download songs"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nummers downloaden"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger les morceaux"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Titel herunterladen"
+        }
+      }
+    }
+  },
+  "catalog_download_album": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download album"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album downloaden"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger l’album"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album herunterladen"
+        }
+      }
+    }
+  },
+  "catalog_download_artist": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download all songs by this artist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alle nummers van deze artiest downloaden"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger tous les morceaux de cet artiste"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alle Titel dieses Künstlers herunterladen"
+        }
+      }
+    }
+  },
+  "catalog_loading": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Loading music…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek laden…"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Chargement de la musique…"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musik wird geladen…"
+        }
+      }
+    }
+  },
+  "catalog_search": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search titles, artists or albums"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoek titels, artiesten of albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechercher des titres, artistes ou albums"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Titel, Künstler oder Alben suchen"
+        }
+      }
+    }
+  },
+  "catalog_connect_spotify": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Connect Spotify"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spotify koppelen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Connecter Spotify"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spotify verbinden"
+        }
+      }
+    }
+  },
+  "catalog_done": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Done"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gereed"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Terminé"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fertig"
+        }
+      }
+    }
+  },
+  "catalog_retry": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Try again"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opnieuw proberen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Réessayer"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Erneut versuchen"
+        }
+      }
+    }
+  },
+  "catalog_content": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Show"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Tonen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afficher"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Anzeigen"
+        }
+      }
+    }
+  },
+  "catalog_albums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albums"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albums"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alben"
+        }
+      }
+    }
+  },
+  "catalog_songs": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songs"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nummers"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Morceaux"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Titel"
+        }
+      }
+    }
+  },
+  "catalog_album": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album"
+        }
+      }
+    }
+  },
+  "catalog_artist": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Artist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Artiest"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Artiste"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Künstler"
+        }
+      }
+    }
+  },
+  "catalog_playlist": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playlist"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playlist"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playlist"
+        }
+      }
+    }
+  },
+  "catalog_unsupported_spotify": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This Spotify link type is not supported."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit type Spotify-link wordt niet ondersteund."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ce type de lien Spotify n’est pas pris en charge."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dieser Spotify-Linktyp wird nicht unterstützt."
+        }
+      }
+    }
+  },
+  "catalog_network_error": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The music service could not be reached. Check your connection and try again."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De muziekdienst kon niet worden bereikt. Controleer je verbinding en probeer opnieuw."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Le service musical est inaccessible. Vérifiez votre connexion et réessayez."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Der Musikdienst ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut."
+        }
+      }
+    }
+  },
+  "catalog_spotify_connection": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Connect Spotify to open the full artist or album catalog."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Koppel Spotify om de volledige artiest- of albumcatalogus te openen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Connectez Spotify pour ouvrir le catalogue complet de l’artiste ou de l’album."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verbinde Spotify, um den vollständigen Künstler- oder Albumkatalog zu öffnen."
+        }
+      }
+    }
+  },
+  "catalog_incomplete": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The complete catalog could not be loaded. Try again before downloading everything."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De volledige catalogus kon niet worden geladen. Probeer opnieuw voordat je alles downloadt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Le catalogue complet n’a pas pu être chargé. Réessayez avant de tout télécharger."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Der vollständige Katalog konnte nicht geladen werden. Versuche es erneut, bevor du alles herunterlädst."
+        }
+      }
+    }
+  },
+  "catalog_response_changed": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo could not read the music information. The service may have changed its response."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo kon de muziekinformatie niet lezen. De dienst heeft mogelijk zijn antwoord gewijzigd."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo n’a pas pu lire les informations musicales. Le service a peut-être modifié sa réponse."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo konnte die Musikinformationen nicht lesen. Der Dienst hat möglicherweise seine Antwort geändert."
+        }
+      }
+    }
+  },
+  "catalog_empty": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No available songs were found."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Er zijn geen beschikbare nummers gevonden."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aucun morceau disponible n’a été trouvé."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Keine verfügbaren Titel gefunden."
+        }
+      }
+    }
+  },
+  "catalog_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This content is private, unavailable or not accessible to Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze inhoud is privé, niet beschikbaar of niet toegankelijk voor Echo."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ce contenu est privé, indisponible ou inaccessible à Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dieser Inhalt ist privat, nicht verfügbar oder für Echo nicht zugänglich."
+        }
+      }
+    }
+  },
+  "catalog_invalid_link": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enter a valid Spotify or YouTube Music song, playlist, album or artist link."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voer een geldige Spotify- of YouTube Music-link naar een nummer, playlist, album of artiest in."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saisissez un lien Spotify ou YouTube Music valide vers un morceau, une playlist, un album ou un artiste."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gib einen gültigen Spotify- oder YouTube-Music-Link zu einem Titel, einer Playlist, einem Album oder einem Künstler ein."
+        }
+      }
+    }
+  },
 "smart_picker_section": {
     "extractionState": "manual",
     "localizations": {
@@ -13746,28 +14819,28 @@
     "fetchurlviews_inline_footer": {
       "extractionState": "manual",
       "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plak een Spotify- of YouTube Music-link naar een nummer of playlist."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Paste a Spotify or YouTube Music song or playlist link."
+            "value": "Paste a Spotify or YouTube Music song, playlist, album or artist link."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plak een Spotify- of YouTube Music-link naar een nummer, playlist, album of artiest."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Collez un lien Spotify ou YouTube Music vers un morceau ou une liste de lecture."
+            "value": "Collez un lien Spotify ou YouTube Music vers un morceau, une playlist, un album ou un artiste."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Füge einen Spotify- oder YouTube-Music-Link zu einem Titel oder einer Wiedergabeliste ein."
+            "value": "Füge einen Spotify- oder YouTube-Music-Link zu einem Titel, einer Playlist, einem Album oder einem Künstler ein."
           }
         }
       }
@@ -13949,28 +15022,28 @@
     "fetchurlviews_sheet_footer": {
       "extractionState": "manual",
       "localizations": {
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spotify- en YouTube Music-nummers en playlists worden ondersteund."
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Spotify and YouTube Music songs and playlists are supported."
+            "value": "Spotify and YouTube Music songs, playlists, albums and artist links are supported."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Links naar Spotify- en YouTube Music-nummers, playlists, albums en artiesten worden ondersteund."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les morceaux et listes de lecture Spotify et YouTube Music sont pris en charge."
+            "value": "Les liens Spotify et YouTube Music vers des morceaux, playlists, albums et artistes sont pris en charge."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Spotify- und YouTube-Music-Titel sowie Wiedergabelisten werden unterstützt."
+            "value": "Spotify- und YouTube-Music-Links zu Titeln, Playlists, Alben und Künstlern werden unterstützt."
           }
         }
       }

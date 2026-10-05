@@ -8,6 +8,7 @@ final class HomeSessionManager {
     private(set) var recommendedSongs: [Song]?
     private(set) var recentlyPlayedSongs: [Song]?
     private(set) var favoriteSongs: [Song]?
+    private var albumIDs: [String] = []
     private var artistIDs: [String] = []
 
     private init() {}
@@ -20,6 +21,11 @@ final class HomeSessionManager {
         let remaining = artists.map(\.id).filter { !selected.contains($0) }.shuffled()
         artistIDs.append(contentsOf: remaining.prefix(max(0, 12 - artistIDs.count)))
         return artistIDs
+    }
+
+    func albumSelection(from available: [String]) -> [String] {
+        albumIDs = OnlineCatalogLogic.refillSelection(albumIDs, available: available)
+        return albumIDs
     }
 
     func prepareIfNeeded(
