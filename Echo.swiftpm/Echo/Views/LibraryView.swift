@@ -1382,7 +1382,7 @@ struct AlbumDetailView: View {
         case .custom: return filtered
         case .title: return filtered.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
         case .artist: return filtered.sorted { $0.artist.localizedStandardCompare($1.artist) == .orderedAscending }
-        case .dateAdded: return filtered.sorted { $0.dateAdded > $1.dateAdded }
+        case .dateAdded: return filtered.sorted { ($0.dateAdded ?? .distantPast) > ($1.dateAdded ?? .distantPast) }
         case .lastPlayed: return filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
         }
     }
