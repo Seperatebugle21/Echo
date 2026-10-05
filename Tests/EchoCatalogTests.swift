@@ -27,6 +27,49 @@ final class EchoCatalogTests: XCTestCase {
         return YouTubeMusicMetadata(session: URLSession(configuration: config))
     }
     override func tearDown() { CatalogURLProtocol.handler = nil; super.tearDown() }
+    private func fixture(_ name: String) throws -> [String: Any] {
+        let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "youtube-" + name, withExtension: "json"))
+        return try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as! [String: Any]
+    }
+
+    func testCapturedPublicResponsesParseTracksArtistAlbumsAndContinuation() throws {
+        let song = try fixture("song")
+        let selected = try XCTUnwrap(YouTubeMusicJSON.nodes("playlistPanelVideoRenderer", in: song).first)
+        let track = try XCTUnwrap(YouTubeMusicJSON.track(selected))
+        XCTAssertEqual(track.title, "Never Gonna Give You Up")
+        XCTAssertEqual(track.artistName, "Rick Astley")
+        let playlist = YouTubeMusicJSON.trackPage(try fixture("playlist"))
+        let next = YouTubeMusicJSON.trackPage(try fixture("playlist-next"))
+        XCTAssertTrue(playlist.recognized); XCTAssertTrue(next.recognized)
+        XCTAssertEqual(playlist.tracks.count, 2); XCTAssertEqual(next.tracks.count, 2)
+        XCTAssertNotNil(playlist.continuation)
+        XCTAssertEqual(playlist.tracks[0].sourceID, "hpSrLjc5SMs")
+        let artistJSON = try fixture("artist")
+        let header = YouTubeMusicJSON.header(artistJSON)
+        XCTAssertEqual(YouTubeMusicJSON.text(header["title"]), "Oasis")
+        let oasis = OnlineArtistReference(provider: .youtubeMusic, sourceID: "UCmMUZbaYdNH0bEd1PAlAqsA", name: "Oasis")
+        XCTAssertEqual(YouTubeMusicJSON.albums(artistJSON, artist: oasis).count, 2)
+        XCTAssertEqual(YouTubeMusicJSON.albums(try fixture("artist-albums"), artist: oasis).count, 2)
+        let albumJSON = try fixture("album")
+        let credits = YouTubeMusicJSON.artists(YouTubeMusicJSON.header(albumJSON))
+        let albumPage = YouTubeMusicJSON.trackPage(albumJSON, fallbackArtists: credits, album: "Morning Glory")
+        XCTAssertTrue(albumPage.recognized)
+        XCTAssertEqual(albumPage.tracks.map(\.title), ["Hello", "Roll With It"])
+        XCTAssertTrue(albumPage.tracks.allSatisfy { OnlineCatalogLogic.belongs($0, to: oasis) })
+    }
+    func testArtistSearchUsesRowEndpointAndRejectsAmbiguousNames() async throws {
+        let search = try fixture("artist-search")
+        let api = service { _ in (200, search) }
+        let match = try await api.searchArtist("Oasis")
+        XCTAssertEqual(match?.sourceID, "UCmMUZbaYdNH0bEd1PAlAqsA")
+        let title: [String: Any] = ["flexColumns": [["musicResponsiveListItemFlexColumnRenderer": ["text": ["runs": [["text": "Oasis"]]]]]]]
+        var a = title, b = title
+        a["navigationEndpoint"] = ["browseEndpoint": ["browseId": "UCfirst"]]
+        b["navigationEndpoint"] = ["browseEndpoint": ["browseId": "UCsecond"]]
+        let ambiguous = service { _ in (200, ["items": [["musicResponsiveListItemRenderer": a], ["musicResponsiveListItemRenderer": b]]]) }
+        let ambiguousMatch = try await ambiguous.searchArtist("Oasis")
+        XCTAssertNil(ambiguousMatch)
+    }
 
     func testSongLinkDoesNotBecomePlaylistAndShareParametersAreIgnored() throws {
         XCTAssertEqual(try YouTubeMusicReference.parse(URL(string: "https://music.youtube.com/watch?v=video123&list=PLother&si=abc")!), .song("video123"))
@@ -129,6 +172,20 @@ final class EchoCatalogTests: XCTestCase {
         XCTAssertEqual(OnlineCatalogLogic.refillSelection(pick, available: ["b", "c", "d"], shuffle: { $0 }), ["b", "c", "d"])
         XCTAssertEqual(OnlineCatalogLogic.refillSelection([], available: (0..<20).map(String.init), shuffle: { $0 }).count, 10)
         XCTAssertTrue(OnlineCatalogLogic.refillSelection(pick, available: []).isEmpty)
+    }
+    func testDiscoveryCacheSurvivesRestartWithoutNeedingNetwork() throws {
+        let suite = "EchoCatalogTests." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        XCTAssertTrue(OnlineCatalogPersistence.load(from: defaults).albums.isEmpty)
+        let album = OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "MPREalbum", title: "Album",
+            artistName: artist.name, artists: [artist], artworkURL: URL(string: "https://example.com/cover.jpg"))
+        OnlineCatalogPersistence.save(artists: [artist], albums: [album], to: defaults)
+        let restored = OnlineCatalogPersistence.load(from: UserDefaults(suiteName: suite)!)
+        XCTAssertEqual(restored.artists, [artist]); XCTAssertEqual(restored.albums, [album])
+        defaults.set(Data("invalid cache".utf8), forKey: "echo.online.albums.v1")
+        XCTAssertTrue(OnlineCatalogPersistence.load(from: defaults).albums.isEmpty)
+        XCTAssertEqual(OnlineCatalogPersistence.load(from: defaults).artists, [artist])
     }
     func testLocalAlbumGroupingExcludesMissingAlbumsAndPodcasts() {
         var a = Song(title: "A", artist: "Artist", fileName: "a.mp3", dateAdded: Date())

@@ -103,6 +103,18 @@ enum OnlineCatalogLogic {
     }
 }
 
+enum OnlineCatalogPersistence {
+    static func load(from defaults: UserDefaults) -> (artists: [OnlineArtistReference], albums: [OnlineMusicAlbum]) {
+        let artists = defaults.data(forKey: "echo.online.artists.v1").flatMap { try? JSONDecoder().decode([OnlineArtistReference].self, from: $0) } ?? []
+        let albums = defaults.data(forKey: "echo.online.albums.v1").flatMap { try? JSONDecoder().decode([OnlineMusicAlbum].self, from: $0) } ?? []
+        return (artists, albums)
+    }
+    static func save(artists: [OnlineArtistReference], albums: [OnlineMusicAlbum], to defaults: UserDefaults) {
+        defaults.set(try? JSONEncoder().encode(artists), forKey: "echo.online.artists.v1")
+        defaults.set(try? JSONEncoder().encode(albums), forKey: "echo.online.albums.v1")
+    }
+}
+
 enum YouTubeMusicReference: Equatable, Sendable {
     case song(String), playlist(String), artist(String), album(String)
     static func parse(_ url: URL) throws -> Self {

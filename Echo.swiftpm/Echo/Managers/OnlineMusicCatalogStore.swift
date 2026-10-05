@@ -15,8 +15,9 @@ final class OnlineMusicCatalogStore {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        if let data = defaults.data(forKey: "echo.online.artists.v1"), let artists = try? JSONDecoder().decode([OnlineArtistReference].self, from: data) { knownArtists = artists }
-        if let data = defaults.data(forKey: "echo.online.albums.v1"), let albums = try? JSONDecoder().decode([OnlineMusicAlbum].self, from: data) { cachedAlbums = albums }
+        let saved = OnlineCatalogPersistence.load(from: defaults)
+        knownArtists = saved.artists
+        cachedAlbums = saved.albums
     }
     func remember(_ artist: OnlineArtistReference) {
         knownArtists.removeAll { $0.id == artist.id }
@@ -33,8 +34,7 @@ final class OnlineMusicCatalogStore {
         refreshSelection()
     }
     private func save() {
-        defaults.set(try? JSONEncoder().encode(knownArtists), forKey: "echo.online.artists.v1")
-        defaults.set(try? JSONEncoder().encode(cachedAlbums), forKey: "echo.online.albums.v1")
+        OnlineCatalogPersistence.save(artists: knownArtists, albums: cachedAlbums, to: defaults)
     }
     func albums(for reference: OnlineArtistReference, includeSongs: Bool = true) async throws -> (OnlineArtistReference, [OnlineMusicAlbum], [OnlineMusicTrack]) {
         let artist: OnlineArtistReference, albums: [OnlineMusicAlbum], songs: [OnlineMusicTrack]
