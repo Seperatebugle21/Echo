@@ -721,9 +721,11 @@ final class FetchManager {
         while let next =
             claimNextQueuedItem() {
 
-            await process(
-                next
-            )
+            if next.automaticRetryCount > 0 {
+                do { try await Task.sleep(for: .seconds(1)) } catch { return }
+            }
+            guard items.contains(where: { $0.id == next.id }) else { continue }
+            await process(next)
         }
     }
 
@@ -1056,6 +1058,7 @@ final class FetchManager {
 
 
         } catch {
+            if retryAutomatically(item, after: error) { return }
 
             item.status =
                 .failed(
@@ -1071,6 +1074,17 @@ final class FetchManager {
         }
     }
 
+
+    /// A retry resolves a fresh source URL and clears failed temporary records.
+    /// The budget lives on the queue item and is carried into background records.
+    private func retryAutomatically(_ item: FetchItem, after error: Error? = nil) -> Bool {
+        guard !Task.isCancelled, items.contains(where: { $0.id == item.id }),
+              item.consumeAutomaticRetry(after: error) else { return false }
+        FetchDownloadEngine.shared.removeRecords(spotifyURL: item.spotifyURL, title: item.title)
+        item.status = .queued
+        startIfNeeded()
+        return true
+    }
 
     // MARK: - Apify Temp Filename
 
@@ -1210,6 +1224,8 @@ final class FetchManager {
             if let error =
                 record.errorMessage {
 
+                if retryAutomatically(item) { continue }
+
                 item.status =
                     .failed(
                         error
@@ -1241,6 +1257,7 @@ final class FetchManager {
 
                 else {
 
+                    if retryAutomatically(item) { continue }
                     item.status =
                         .failed(
                             "Downloaded source file is missing."
@@ -1601,6 +1618,7 @@ final class FetchManager {
 
 
         } catch {
+            if retryAutomatically(item, after: error) { return }
 
             item.status =
                 .failed(
@@ -1700,7 +1718,8 @@ final class FetchManager {
                 record.permissionConfirmed,
 
             destinationPlaylistPositions:
-                record.destinationPlaylistPositions ?? [:]
+                record.destinationPlaylistPositions ?? [:],
+            automaticRetryCount: record.automaticRetryCount ?? 0
         )
     }
 

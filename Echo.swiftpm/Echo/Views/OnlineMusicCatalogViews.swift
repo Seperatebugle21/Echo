@@ -47,10 +47,11 @@ struct CatalogArtwork: View {
 struct CatalogTrackRow: View {
     let track: OnlineMusicTrack
     let action: () -> Void
+    var play: (() -> Void)? = nil
     private let downloads = CatalogDownloads.shared
     var body: some View {
         let status = downloads.statusKey(track)
-        Button(action: action) {
+        Button(action: status == "catalog_downloaded" ? play ?? action : action) {
             HStack(spacing: 12) {
                 CatalogArtwork(url: track.artworkURL, size: 48)
                 VStack(alignment: .leading, spacing: 3) {
@@ -65,8 +66,9 @@ struct CatalogTrackRow: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .disabled(status == "catalog_downloaded" || status == "catalog_queued" || downloads.busy)
-        .accessibilityLabel(Text("catalog_download_track \(track.title)"))
+        .disabled((status == "catalog_downloaded" && play == nil) || status == "catalog_queued" || (downloads.busy && status != "catalog_downloaded"))
+        .accessibilityLabel(status == "catalog_downloaded" && play != nil
+            ? Text("catalog_play_track \(track.title)") : Text("catalog_download_track \(track.title)"))
     }
 }
 
@@ -192,6 +194,9 @@ struct OnlineAlbumDetailView: View {
 }
 
 struct OnlineTrackCollectionView: View {
+    @Environment(MusicLibraryManager.self) private var library
+    @Environment(AudioPlayerManager.self) private var player
+    @State private var selectedSong: Song?
     let title: String
     let artworkURL: URL?
     let tracks: [OnlineMusicTrack]
@@ -211,6 +216,7 @@ struct OnlineTrackCollectionView: View {
                 HStack { Spacer(); CatalogArtwork(url: artworkURL, size: 180); Spacer() }
                 Text(title).font(.title2.bold())
                 Text("catalog_tracks_count \(tracks.count)").foregroundStyle(.secondary)
+                if isAlbum { AlbumPlaybackControls(songs: localSongs) }
                 if skippedCount > 0 { Text("catalog_skipped_tracks \(skippedCount)").font(.caption).foregroundStyle(.secondary) }
                 Button {
                     if tracks.count == 1 { Task { await download(tracks) } }
@@ -223,13 +229,20 @@ struct OnlineTrackCollectionView: View {
                 }
             }
             ForEach(OnlineCatalogLogic.uniqueTracks(filtered)) { track in
-                CatalogTrackRow(track: track) { Task { await download([track]) } }
+                CatalogTrackRow(track: track, action: { Task { await download([track]) } },
+                    play: isAlbum ? { play(track) } : nil)
+                    .contextMenu {
+                        if let song = downloads.localSong(track), isAlbum {
+                            Button("album_song_options", systemImage: "ellipsis") { selectedSong = song }
+                        }
+                    }
             }
             if filtered.isEmpty { Text(LocalizedStringKey(query.isEmpty ? "catalog_empty" : "catalog_no_search_results")).foregroundStyle(.secondary) }
         }
         .echoBackground()
         .navigationTitle(LocalizedStringKey(isAlbum ? "catalog_album" : importable ? "catalog_playlist" : "catalog_songs"))
-        .searchable(text: $query, prompt: "catalog_search")
+        .searchable(text: $query, prompt: Text(LocalizedStringKey(isAlbum ? "album_search" : "catalog_search")))
+        .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
         .confirmationDialog("catalog_confirm_download", isPresented: $confirmDownload, titleVisibility: .visible) {
             Button("catalog_download_new \(downloads.pending(tracks).count)") { Task { await download(tracks) } }
         } message: { Text("catalog_bulk_detail") }
@@ -239,6 +252,14 @@ struct OnlineTrackCollectionView: View {
         .alert("catalog_download_result_title", isPresented: Binding(get: { result != nil }, set: { if !$0 { result = nil } })) {
             Button("catalog_done", role: .cancel) { result = nil }
         } message: { Text(result ?? "") }
+    }
+    private var localSongs: [Song] { OnlineCatalogLogic.uniqueTracks(filtered).compactMap { downloads.localSong($0) } }
+    private func play(_ track: OnlineMusicTrack) {
+        guard let song = downloads.localSong(track), let url = library.getURL(for: song) else { return }
+        player.lastPlaybackDirection = .fade
+        player.play(song: song, url: url, queue: localSongs)
+        player.allSongs = library.songs
+        player.fillAutoNext(from: library.songs)
     }
     private func download(_ tracks: [OnlineMusicTrack]) async {
         guard !busy else { return }

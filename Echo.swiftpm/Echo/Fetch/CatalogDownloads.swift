@@ -29,10 +29,10 @@ final class CatalogDownloads {
         if localSong(track) != nil { return "catalog_downloaded" }
         if reserved.contains(track.id) { return "catalog_queued" }
         guard let item = queueItem(track) else { return nil }
-        switch item.status {
+        switch item.queueState {
         case .failed: return "catalog_download_failed"
         case .completed: return nil // A removed local file may be downloaded again.
-        default: return "catalog_queued"
+        case .pending: return "catalog_queued"
         }
     }
     func pending(_ tracks: [OnlineMusicTrack]) -> [OnlineMusicTrack] {
@@ -47,6 +47,7 @@ final class CatalogDownloads {
         var result = CatalogDownloadResult()
         let unique = OnlineCatalogLogic.uniqueTracks(tracks)
         for (position, track) in unique.enumerated() {
+            if position > 0 && position.isMultiple(of: 10) { await Task.yield() }
             if Task.isCancelled { break }
             if let song = localSong(track) {
                 if let playlistID { library.addSong(song, toPlaylistID: playlistID, at: position) }

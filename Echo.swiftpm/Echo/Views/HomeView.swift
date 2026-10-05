@@ -113,8 +113,6 @@ struct HomeView: View {
                     }
 
 
-                    HomeLocalAlbumSection()
-
                     // MARK: - Recently Played
 
                     if !recentlyPlayedSnapshot.isEmpty {
@@ -147,6 +145,8 @@ struct HomeView: View {
                         failed: podcastRecommendations.failed,
                         retry: { podcastRecommendations.retry += 1 }
                     )
+
+                    HomeLocalAlbumSection()
 
                     // MARK: - Favorites
 
@@ -188,11 +188,11 @@ struct HomeView: View {
                         )
                         .padding(.top, 80)
                     }
+                    HomeOnlineAlbumSection()
                     HomeDiscoverySection(
                         recommendations: podcastRecommendations.shows,
                         playSong: { song, queue in play(song, queue: queue) }
                     )
-                    HomeOnlineAlbumSection()
                 }
                 .padding(.bottom, 120)
             }

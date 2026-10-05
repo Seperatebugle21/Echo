@@ -140,6 +140,12 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
+      - path: Tests/EchoDownloadInteractionTests.swift
+      - path: Echo.swiftpm/Echo/Fetch/FetchTransferWork.swift
+      - path: Echo.swiftpm/Echo/Fetch/FetchItem.swift
+      - path: Echo.swiftpm/Echo/Fetch/BackgroundFetchRecord.swift
+      - path: Echo.swiftpm/Echo/Models/LibrarySongMatchIndex.swift
+      - path: Echo.swiftpm/Echo/Models/AlbumSongSelection.swift
       - path: Tests/EchoCatalogTests.swift
       - path: Tests/Fixtures
         buildPhase: resources

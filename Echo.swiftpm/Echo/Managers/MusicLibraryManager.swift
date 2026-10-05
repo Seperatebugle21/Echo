@@ -50,6 +50,8 @@ class MusicLibraryManager {
     @ObservationIgnored private lazy var songPersistence = SongLibraryPersistence(url: songsFileURL)
     @ObservationIgnored private var backgroundSaveTask: UIBackgroundTaskIdentifier = .invalid
     @ObservationIgnored private var indexedRevision: UInt64?
+    @ObservationIgnored private var matchRevision: UInt64?
+    @ObservationIgnored private var songMatchIndex = LibrarySongMatchIndex()
     @ObservationIgnored private var indexedSongs: [UUID: Song] = [:]
     @ObservationIgnored private var smartResults: [UUID: SmartResult] = [:]
     private struct SmartResult {
@@ -714,57 +716,15 @@ class MusicLibraryManager {
             )
     }
 
-    func songMatching(
-        title: String,
-        artist: String
-    ) -> Song? {
-
-        let normalizedTitle =
-            normalizedLibraryValue(
-                title
-            )
-
-        let normalizedArtist =
-            normalizedLibraryValue(
-                artist
-            )
-
-        return songs.first { song in
-
-            normalizedLibraryValue(
-                song.title
-            ) == normalizedTitle
-            &&
-            normalizedLibraryValue(
-                song.artist
-            ) == normalizedArtist
+    func songMatching(title: String, artist: String) -> Song? {
+        let revision = songRevision
+        if matchRevision != revision {
+            songMatchIndex = LibrarySongMatchIndex(songs)
+            matchRevision = revision
         }
+        return songMatchIndex.song(title: title, artist: artist)
     }
 
-    private func normalizedLibraryValue(
-        _ value: String
-    ) -> String {
-
-        value
-            .trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
-            .folding(
-                options: [
-                    .caseInsensitive,
-                    .diacriticInsensitive
-                ],
-                locale: .current
-            )
-            .replacingOccurrences(
-                of: "\\s+",
-                with: " ",
-                options: .regularExpression
-            )
-            .lowercased()
-    }
-    
-    
     // MARK: - File URL
     
     func getURL(for song: Song) -> URL? {
