@@ -261,6 +261,8 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     }
     private func pauseOnControl() {
         let position = position(active); wantsPlayback = false
+        lastProgress = position
+        progressDate = ProcessInfo.processInfo.systemUptime
         if transitionActive { seekOnControl(position, version: version()) }
         else { graph?.nodes.forEach { $0.pause() }; state = .paused; publish(position: position) }
     }

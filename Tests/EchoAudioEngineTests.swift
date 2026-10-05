@@ -25,6 +25,7 @@ final class EchoAudioEngineTests: XCTestCase {
         XCTAssertEqual(player.currentTime, position, accuracy: 0.01)
         player.play(intentRevision: 5)
         try await until { updates.last?.intentRevision == 5 && updates.last?.state == .playing }
+        try await until { player.currentTime > position + 0.01 }
         XCTAssertGreaterThan(player.currentTime, position)
     }
     func testQueuedPauseIsPreservedWhenImmediatelySeeking() async throws {
@@ -152,7 +153,8 @@ final class EchoAudioEngineTests: XCTestCase {
         try Data("broken audio".utf8).write(to: corrupt); addTeardownBlock { try? FileManager.default.removeItem(at: corrupt) }
         let player = try EqualizedAudioPlayer(contentsOf: corrupt)
         defer { player.stop() }
-        player.play(); try await until { player.stateValue == .failed }; XCTAssertFalse(player.isPlaying)
+        // Core Audio initializes decoder plugins on the first open on a fresh simulator.
+        player.play(); try await until({ player.stateValue == .failed }, timeout: 15); XCTAssertFalse(player.isPlaying)
         try player.replace(with: fixture(rate: 44100, channels: 2)); player.play()
         try await until { player.isPlaying }
     }
