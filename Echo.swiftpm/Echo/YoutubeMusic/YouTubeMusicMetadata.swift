@@ -266,9 +266,13 @@ enum YouTubeMusicJSON {
         if credits.isEmpty { credits = fallbackArtists }
         let subtitle = text(row["longBylineText"]).isEmpty ? text(columns.dropFirst().first?["text"]) : text(row["longBylineText"])
         let albumColumn = columns.first { nodes("browseEndpoint", in: $0).contains { ($0["browseId"] as? String ?? "").hasPrefix("MPRE") } }
+        let length = text(row["lengthText"]).isEmpty ? text(nodes("musicResponsiveListItemFixedColumnRenderer", in: row).first?["text"]) : text(row["lengthText"])
+        let durationParts = length.split(separator: ":").compactMap { Int($0) }
+        let duration = durationParts.count >= 2 && durationParts.count == length.split(separator: ":").count
+            ? durationParts.reduce(0) { $0 * 60 + $1 } * 1000 : 0
         return OnlineMusicTrack(provider: .youtubeMusic, sourceID: id, title: title, artists: credits,
             artistName: credits.isEmpty ? subtitle : credits.map(\.name).joined(separator: ", "),
-            album: album ?? albumColumn.map { text($0["text"]) }, artworkURL: artwork(row))
+            album: album ?? albumColumn.map { text($0["text"]) }, artworkURL: artwork(row), durationMS: duration)
     }
     static func continuation(_ root: Any) -> String? {
         for key in ["nextContinuationData", "reloadContinuationData", "continuationCommand"] {

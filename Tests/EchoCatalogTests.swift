@@ -38,6 +38,7 @@ final class EchoCatalogTests: XCTestCase {
         let track = try XCTUnwrap(YouTubeMusicJSON.track(selected))
         XCTAssertEqual(track.title, "Never Gonna Give You Up")
         XCTAssertEqual(track.artistName, "Rick Astley")
+        XCTAssertGreaterThan(track.durationMS, 0)
         let playlist = YouTubeMusicJSON.trackPage(try fixture("playlist"))
         let next = YouTubeMusicJSON.trackPage(try fixture("playlist-next"))
         XCTAssertTrue(playlist.recognized); XCTAssertTrue(next.recognized)
