@@ -2,7 +2,12 @@ import SwiftUI
 
 struct FetchURLPreviewView: View {
     let content: FetchURLResolvedContent
+    @Environment(\.dismiss) private var dismiss
+    private var needsDoneButton: Bool {
+        switch content { case .spotifyTrack, .spotifyPlaylist: false; default: true }
+    }
     var body: some View {
+        Group {
         switch content {
         case .artist(let artist): OnlineArtistCatalogView(artist: artist)
         case .album(let album): OnlineAlbumDetailView(album: album)
@@ -13,6 +18,14 @@ struct FetchURLPreviewView: View {
             OnlineTrackCollectionView(title: playlist.title, artworkURL: playlist.artworkURL,
                 tracks: playlist.tracks.map(\.catalogTrack), skippedCount: playlist.skippedCount, importable: true)
         default: LegacyFetchURLPreviewView(content: content)
+        }
+        }
+        .toolbar {
+            if needsDoneButton {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("catalog_done") { dismiss() }
+                }
+            }
         }
     }
 }

@@ -31,7 +31,7 @@ final class OnlineMusicCatalogStore {
         // Bound persistent discovery metadata, never store media or credentials here.
         if cachedAlbums.count > 1000 { cachedAlbums = Array(cachedAlbums.suffix(1000)) }
         save()
-        refreshSelection()
+        if !discoveryStarted { refreshSelection() }
     }
     private func save() {
         OnlineCatalogPersistence.save(artists: knownArtists, albums: cachedAlbums, to: defaults)
@@ -86,33 +86,38 @@ final class OnlineMusicCatalogStore {
         homeIDs = OnlineCatalogLogic.refillSelection(homeIDs, available: allowed.map(\.id))
     }
     func discover(localArtistNames: [String]) async {
+        while discoveryStarted {
+            do { try await Task.sleep(for: .milliseconds(40)) }
+            catch { return }
+        }
         refreshSelection()
-        guard !discoveryStarted else { return }
         discoveryStarted = true
-        defer { discoveryStarted = false }
-        let explicit = knownArtists
+        defer { discoveryStarted = false; refreshSelection() }
+        // Discovery samples known artists; opening an artist still loads its entire catalog.
+        let explicit = Array(knownArtists.shuffled().prefix(6))
         for artist in explicit {
             if Task.isCancelled { return }
             guard artist.provider != .spotify || SpotifyManager.shared.isConnected else { continue }
             // Persistent cached releases render immediately; refresh once per process.
             guard attemptedNames.insert(artist.id).inserted else { continue }
-            do { _ = try await albums(for: artist, includeSongs: false); refreshSelection() }
+            do { _ = try await albums(for: artist, includeSongs: false) }
             catch is CancellationError { attemptedNames.remove(artist.id); return }
             catch { /* Cached discoveries remain available offline. */ }
         }
         let knownNames = Set(knownArtists.map { OnlineCatalogLogic.normalizedName($0.name) })
-        for name in localArtistNames.shuffled() {
+        var resolved = 0
+        for name in localArtistNames.shuffled().prefix(12) {
             if Task.isCancelled { return }
             let key = OnlineCatalogLogic.normalizedName(name)
             guard !key.isEmpty, !knownNames.contains(key), attemptedNames.insert(key).inserted else { continue }
             do {
                 if let artist = try await YouTubeMusicMetadata.shared.searchArtist(name) {
                     _ = try await albums(for: artist, includeSongs: false)
-                    refreshSelection()
+                    resolved += 1
                 }
             } catch is CancellationError { attemptedNames.remove(key); return }
             catch { }
-            if homeAlbums.count >= 10 { break }
+            if resolved >= 4 { break }
         }
     }
 }
@@ -130,7 +135,12 @@ final class OnlineArtistCatalogModel {
     private(set) var error: String?
     init(artist: OnlineArtistReference) { self.artist = artist }
     func load() async {
-        guard !loading, !complete else { return }
+        // A new view task may begin before its canceled predecessor unwinds.
+        while loading {
+            do { try await Task.sleep(for: .milliseconds(40)) }
+            catch { return }
+        }
+        guard !complete, !Task.isCancelled else { return }
         loading = true
         error = nil
         loadedAlbums = 0

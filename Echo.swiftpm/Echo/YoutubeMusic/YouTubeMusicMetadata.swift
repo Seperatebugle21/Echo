@@ -246,7 +246,8 @@ enum YouTubeMusicJSON {
                    let id = endpoint["browseId"] as? String, id.hasPrefix("UC") {
                     return [OnlineArtistReference(provider: .youtubeMusic, sourceID: id, name: label)]
                 }
-                return dict.keys.sorted().flatMap { walk(dict[$0] as Any) }
+                return dict.keys.sorted().filter { !["menu", "buttons", "overlay", "thumbnailOverlay"].contains($0) }
+                    .flatMap { walk(dict[$0] as Any) }
             }
             return (value as? [Any] ?? []).flatMap(walk)
         }
@@ -300,8 +301,10 @@ enum YouTubeMusicJSON {
             guard !title.isEmpty else { return nil }
             let subtitle = text(row["subtitle"])
             let year = subtitle.split(separator: " ").first { $0.count == 4 && Int($0) != nil }.map(String.init)
+            let credits = artists(row)
+            let albumArtists = credits.isEmpty ? [artist] : credits
             return OnlineMusicAlbum(provider: .youtubeMusic, sourceID: id, title: title,
-                artistName: artist.name, artists: [artist], artworkURL: artwork(row), year: year)
+                artistName: albumArtists.map(\.name).joined(separator: ", "), artists: albumArtists, artworkURL: artwork(row), year: year)
         }
     }
 }
