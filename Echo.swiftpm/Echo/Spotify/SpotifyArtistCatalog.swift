@@ -52,7 +52,7 @@ extension SpotifyAPI {
     }
 
     func catalogAlbums(_ artist: OnlineArtistReference) async throws -> [OnlineMusicAlbum] {
-        let items = try await catalogPages("artists/\(artist.sourceID)/albums?include_groups=album,single,appears_on,compilation&limit=50")
+        let items = try await catalogPages("artists/\(artist.sourceID)/albums?include_groups=album,single,appears_on,compilation&limit=10")
         var seen: Set<String> = []
         return items.compactMap(SpotifyCatalogJSON.album).filter { seen.insert($0.id).inserted }
     }
