@@ -268,7 +268,8 @@ enum YouTubeMusicJSON {
         let albumColumn = columns.first { nodes("browseEndpoint", in: $0).contains { ($0["browseId"] as? String ?? "").hasPrefix("MPRE") } }
         let length = text(row["lengthText"]).isEmpty ? text(nodes("musicResponsiveListItemFixedColumnRenderer", in: row).first?["text"]) : text(row["lengthText"])
         let durationParts = length.split(separator: ":").compactMap { Int($0) }
-        let duration = durationParts.count >= 2 && durationParts.count == length.split(separator: ":").count
+        let duration = (2...3).contains(durationParts.count) && durationParts.count == length.split(separator: ":").count
+            && durationParts.allSatisfy { (0...9999).contains($0) } && durationParts.dropFirst().allSatisfy { $0 < 60 }
             ? durationParts.reduce(0) { $0 * 60 + $1 } * 1000 : 0
         return OnlineMusicTrack(provider: .youtubeMusic, sourceID: id, title: title, artists: credits,
             artistName: credits.isEmpty ? subtitle : credits.map(\.name).joined(separator: ", "),

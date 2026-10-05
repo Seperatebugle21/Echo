@@ -23,7 +23,7 @@ final class CatalogDownloads {
         library.songMatching(title: track.title, artist: track.artistName)
     }
     func queueItem(_ track: OnlineMusicTrack) -> FetchItem? {
-        manager.items.first { $0.spotifyURL == track.sourceURL || $0.youtubeURL == track.sourceURL }
+        manager.items.first { OnlineCatalogLogic.identifies(track, urls: [$0.spotifyURL, $0.youtubeURL].compactMap { $0 }) }
     }
     func statusKey(_ track: OnlineMusicTrack) -> String? {
         if localSong(track) != nil { return "catalog_downloaded" }

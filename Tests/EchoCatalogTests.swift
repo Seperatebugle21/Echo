@@ -157,6 +157,15 @@ final class EchoCatalogTests: XCTestCase {
         let saved = try JSONDecoder().decode(OnlineMusicTrack.self, from: JSONEncoder().encode(original))
         XCTAssertEqual(saved, original)
     }
+    func testQueueMatchingRecognizesTheSameSongAcrossYouTubeShareURLs() {
+        let song = track("video123")
+        for raw in ["https://www.youtube.com/watch?v=video123", "https://music.youtube.com/watch?v=video123&list=PLcontext&si=share", "https://youtu.be/video123?si=share"] {
+            XCTAssertTrue(OnlineCatalogLogic.identifies(song, urls: [URL(string: raw)!]))
+        }
+        XCTAssertFalse(OnlineCatalogLogic.identifies(song, urls: [URL(string: "https://www.youtube.com/watch?v=other")!]))
+        XCTAssertNil(OnlineCatalogLogic.trackIdentity(URL(string: "https://music.youtube.com/playlist?list=PLcontext")!))
+        XCTAssertEqual(OnlineCatalogLogic.trackIdentity(URL(string: "https://open.spotify.com/intl-nl/track/123?si=share")!), "spotify:123")
+    }
     func testSpotifyCompilationMembershipUsesTrackArtists() {
         let json: [String: Any] = ["id": "compilation", "name": "Compilation", "artists": [["id": "various", "name": "Various Artists"]]]
         let album = SpotifyCatalogJSON.album(json)!

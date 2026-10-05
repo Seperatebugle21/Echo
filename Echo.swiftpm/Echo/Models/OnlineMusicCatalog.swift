@@ -74,6 +74,16 @@ enum MusicCatalogError: LocalizedError, Equatable {
 }
 
 enum OnlineCatalogLogic {
+    static func trackIdentity(_ url: URL) -> String? {
+        if case .song(let id) = try? YouTubeMusicReference.parse(url) { return "youtubeMusic:\(id)" }
+        if let reference = SpotifyURLParser.parse(url.absoluteString), reference.type == .track {
+            return "spotify:\(reference.id)"
+        }
+        return nil
+    }
+    static func identifies(_ track: OnlineMusicTrack, urls: [URL]) -> Bool {
+        urls.contains { $0 == track.sourceURL || trackIdentity($0) == track.id }
+    }
     static func uniqueTracks(_ tracks: [OnlineMusicTrack]) -> [OnlineMusicTrack] {
         var ids: Set<String> = [], recordings: Set<String> = []
         return tracks.filter { track in
