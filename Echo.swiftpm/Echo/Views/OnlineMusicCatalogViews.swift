@@ -119,13 +119,14 @@ struct OnlineArtistCatalogView: View {
                     NavigationLink { OnlineAlbumDetailView(album: album) } label: {
                         CatalogAlbumRow(album: album)
                     }
+                    .albumFavoriteActions(FavoriteAlbum(album: album), swipe: true)
                 }
             } else {
                 ForEach(filteredTracks) { track in
                     CatalogTrackRow(track: track) { Task { await download([track]) } }
                 }
             }
-            if model.complete && (albumsSelected ? filteredAlbums.isEmpty : filteredTracks.isEmpty) {
+                if !model.loading && model.error == nil && (albumsSelected ? filteredAlbums.isEmpty : filteredTracks.isEmpty) {
                 Text(LocalizedStringKey(query.isEmpty ? "catalog_empty" : "catalog_no_search_results")).foregroundStyle(.secondary)
             }
         }
@@ -183,6 +184,11 @@ struct OnlineAlbumDetailView: View {
         }
         .echoBackground()
         .navigationTitle(album.title)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                AlbumFavoriteButton(album: FavoriteAlbum(album: album)).labelStyle(.iconOnly)
+            }
+        }
         .task(id: "\(retry):\(SpotifyManager.shared.isConnected)") {
             guard collection == nil else { return }
             error = nil
@@ -222,7 +228,8 @@ struct OnlineTrackCollectionView: View {
                     if tracks.count == 1 { Task { await download(tracks) } }
                     else { confirmDownload = true }
                 } label: {
-                    Text(LocalizedStringKey(isAlbum ? "catalog_download_album" : "catalog_download_all"))
+                    if isAlbum { Text("album_download_missing \(downloads.pending(tracks).count)") }
+                    else { Text("catalog_download_all") }
                 }.disabled(downloads.pending(tracks).isEmpty || busy || downloads.busy)
                 if importable {
                     Button("fetchurlviews_transfer_to_echo") { confirmImport = true }.disabled(tracks.isEmpty || busy || downloads.busy)

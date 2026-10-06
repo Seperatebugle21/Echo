@@ -186,6 +186,13 @@ struct LibraryView: View {
                                     }
                                 }
                                 .buttonStyle(.plain)
+
+                                NavigationLink { FavoriteAlbumsView() } label: {
+                                    LibraryFeatureCard(title: "library_favorite_albums",
+                                        subtitle: String(format: String(localized: "favorite_albums_count"), FavoriteAlbumsStore.shared.albums.count)) {
+                                        FavoriteAlbumsFeatureArtwork(albums: FavoriteAlbumsStore.shared.albums)
+                                    }
+                                }.buttonStyle(.plain)
                             }
                             .padding(.horizontal)
                         }
@@ -1242,58 +1249,7 @@ struct AlbumsView: View {
 
     @State private var searchText = ""
 
-    private var allAlbums: [AlbumGroup] {
-
-        let songs =
-            library.songs.filter {
-
-                guard
-                    let album =
-                        $0.album?
-                            .trimmingCharacters(
-                                in:
-                                    .whitespacesAndNewlines
-                            )
-                else {
-                    return false
-                }
-
-                return !album.isEmpty
-            }
-
-        let grouped =
-            Dictionary(
-                grouping: songs
-            ) {
-                "\($0.artist)|\($0.album ?? "")"
-            }
-
-        return grouped
-            .compactMap { _, songs in
-
-                guard
-                    let first =
-                        songs.first,
-                    let album =
-                        first.album
-                else {
-                    return nil
-                }
-
-                return AlbumGroup(
-                    name: album,
-                    artist: first.artist,
-                    songs: songs
-                )
-            }
-            .sorted {
-                $0.name
-                    .localizedCaseInsensitiveCompare(
-                        $1.name
-                    )
-                == .orderedAscending
-            }
-    }
+    private var allAlbums: [AlbumGroup] { LibraryAlbums.groups(from: library.songs) }
 
     private var albums: [AlbumGroup] {
 
@@ -1350,6 +1306,7 @@ struct AlbumsView: View {
                     }
                 }
             }
+            .albumFavoriteActions(FavoriteAlbum(album: album), swipe: true)
         }
 
         .echoBackground()
@@ -1372,6 +1329,7 @@ struct AlbumDetailView: View {
     @State private var searchText = ""
     @State private var sortOption: FavoritesSortOption = .custom
     @State private var selectedSong: Song?
+    @State private var findMissing = false
 
     private var songs: [Song] {
         LibraryAlbums.groups(from: library.songs).first { $0.id == album.id }?.songs ?? []
@@ -1397,6 +1355,8 @@ struct AlbumDetailView: View {
                     Text(album.artist).foregroundStyle(.secondary)
                     Text("songs_count_format \(songs.count)").font(.subheadline).foregroundStyle(.secondary)
                     AlbumPlaybackControls(songs: processedSongs)
+                    Button("album_find_missing", systemImage: "arrow.down.circle") { findMissing = true }
+                        .buttonStyle(.bordered)
                 }
                 .frame(maxWidth: .infinity).padding(.vertical)
                 .listRowBackground(Color.clear)
@@ -1417,7 +1377,8 @@ struct AlbumDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "album_search")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                AlbumFavoriteButton(album: FavoriteAlbum(album: album)).labelStyle(.iconOnly)
                 Menu {
                     Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {
                         ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
@@ -1427,6 +1388,14 @@ struct AlbumDetailView: View {
             }
         }
         .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
+        .sheet(isPresented: $findMissing) {
+            NavigationStack {
+                AlbumCompletionView(title: album.name, artist: album.artist)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) { Button("catalog_done") { findMissing = false } }
+                    }
+            }
+        }
     }
     private func play(_ song: Song) {
         guard let url = library.getURL(for: song) else { return }

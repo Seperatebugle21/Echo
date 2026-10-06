@@ -147,6 +147,8 @@ targets:
       - path: Echo.swiftpm/Echo/Models/LibrarySongMatchIndex.swift
       - path: Echo.swiftpm/Echo/Models/AlbumSongSelection.swift
       - path: Tests/EchoCatalogTests.swift
+      - path: Tests/EchoAlbumFavoriteTests.swift
+      - path: Echo.swiftpm/Echo/Models/FavoriteAlbum.swift
       - path: Tests/Fixtures
         buildPhase: resources
       - path: Echo.swiftpm/Echo/Models/OnlineMusicCatalog.swift

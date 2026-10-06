@@ -4,6 +4,26 @@ import XCTest
 /// Live render-clock checks; run on an iOS Simulator or device.
 @MainActor
 final class EchoAudioEngineTests: XCTestCase {
+    func testRepeatedPauseResumeKeepsPositionAndDoesNotRestartTheSong() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 44100, channels: 1, seconds: 15))
+        defer { player.stop() }
+        var starts = 0
+        player.onStarted = { _ in starts += 1 }
+        player.play()
+        try await until { player.isPlaying && player.currentTime > 0.4 }
+        for _ in 0..<5 {
+            player.pause()
+            try await until { player.stateValue == .paused }
+            let position = player.currentTime
+            try await Task.sleep(for: .milliseconds(150))
+            XCTAssertEqual(player.currentTime, position, accuracy: 0.01)
+            player.play()
+            try await until { player.isPlaying && player.currentTime > position + 0.15 }
+            XCTAssertNotEqual(player.stateValue, .failed)
+            XCTAssertGreaterThanOrEqual(player.currentTime, position)
+        }
+        XCTAssertEqual(starts, 1)
+    }
     func testStateCallbacksPublishLatestTransportCommandOnMainThread() async throws {
         let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 5))
         defer { player.stop() }

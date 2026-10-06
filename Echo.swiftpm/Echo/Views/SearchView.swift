@@ -711,6 +711,7 @@ struct SearchView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .albumFavoriteActions(FavoriteAlbum(album: album))
                     }
                 }
                 .padding(.horizontal)
@@ -1155,6 +1156,7 @@ struct SearchView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .albumFavoriteActions(FavoriteAlbum(album: album))
                         .simultaneousGesture(
                             TapGesture()
                                 .onEnded {

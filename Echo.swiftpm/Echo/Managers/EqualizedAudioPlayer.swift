@@ -130,7 +130,9 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         observe(.AVAudioEngineConfigurationChange) { player, note in
             player.control.async {
                 guard let engine = note.object as? AVAudioEngine, engine === player.graph?.engine else { return }
-                if player.wantsPlayback && (!engine.isRunning || [.playing, .transitioning].contains(player.state)) { player.recover() }
+                // Starting an engine can enqueue a configuration notification too.
+                // Rebuilding a running graph here discards the resumed render clock.
+                if player.wantsPlayback && !engine.isRunning && player.state != .recovering { player.recover() }
             }
         }
         observe(AVAudioSession.interruptionNotification) { player, note in
@@ -216,6 +218,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
             if let intentRevision { self.intentRevision = intentRevision }
             if self.state == .paused && !self.wantsPlayback {
                 self.requestDate = requestedAt; self.awaitingRenderMeasurement = true
+                self.recovered = false
             }
             self.startOnControl()
         }
@@ -263,8 +266,10 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         let position = position(active); wantsPlayback = false
         lastProgress = position
         progressDate = ProcessInfo.processInfo.systemUptime
-        if transitionActive { seekOnControl(position, version: version()) }
-        else { graph?.nodes.forEach { $0.pause() }; state = .paused; publish(position: position) }
+        // Hardware/session suspension can invalidate a paused node's scheduled
+        // buffers and sample timeline. Freeze the audible position and retire
+        // those buffers now; resume decodes from this offset on a fresh timeline.
+        seekOnControl(position, version: version())
         // Pause hardware output too so iOS observes that playback has stopped.
         graph?.engine.pause()
     }

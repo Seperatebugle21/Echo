@@ -36,7 +36,8 @@ final class OnlineMusicCatalogStore {
     private func save() {
         OnlineCatalogPersistence.save(artists: knownArtists, albums: cachedAlbums, to: defaults)
     }
-    func albums(for reference: OnlineArtistReference, includeSongs: Bool = true) async throws -> (OnlineArtistReference, [OnlineMusicAlbum], [OnlineMusicTrack]) {
+    func albums(for reference: OnlineArtistReference, includeSongs: Bool = true) async throws -> (OnlineArtistReference, [OnlineMusicAlbum], [OnlineMusicTrack], Int) {
+        var unavailable = 0
         let artist: OnlineArtistReference, albums: [OnlineMusicAlbum], songs: [OnlineMusicTrack]
         switch reference.provider {
         case .spotify:
@@ -46,7 +47,9 @@ final class OnlineMusicCatalogStore {
         case .youtubeMusic:
             let (header, root) = try await YouTubeMusicMetadata.shared.artistHeader(reference.sourceID)
             artist = header
-            albums = try await YouTubeMusicMetadata.shared.artistAlbums(root, artist: artist)
+            let releases = try await YouTubeMusicMetadata.shared.artistAlbums(root, artist: artist)
+            albums = releases.albums
+            unavailable += releases.unavailable
             // The songs shelf includes appearances that might not be in album shelves.
             var artistSongs: [OnlineMusicTrack] = []
             for shelf in includeSongs ? YouTubeMusicJSON.nodes("musicShelfRenderer", in: root) : [] {
@@ -56,15 +59,18 @@ final class OnlineMusicCatalogStore {
                 artistSongs += tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
                 if let endpoint = YouTubeMusicJSON.nodes("browseEndpoint", in: shelf["bottomEndpoint"] as Any).first,
                    let id = endpoint["browseId"] as? String, id.hasPrefix("VL") {
-                    let collection = try await YouTubeMusicMetadata.shared.playlist(id)
-                    artistSongs += collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
+                    do {
+                        let collection = try await YouTubeMusicMetadata.shared.playlist(id)
+                        artistSongs += collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
+                    } catch is CancellationError { throw CancellationError() }
+                    catch { unavailable += 1 }
                 }
             }
             songs = artistSongs
         }
         remember(artist)
         cache(albums)
-        return (artist, albums, OnlineCatalogLogic.uniqueTracks(songs))
+        return (artist, albums, OnlineCatalogLogic.uniqueTracks(songs), unavailable)
     }
     func tracks(for album: OnlineMusicAlbum) async throws -> OnlineTrackCollection {
         if let cached = albumTracks[album.id] { return cached }
@@ -151,19 +157,23 @@ final class OnlineArtistCatalogModel {
             artist = result.0
             albums = result.1
             tracks = result.2
-            var includedAlbums: [OnlineMusicAlbum] = []
+            var unavailableAlbums = result.3
             for album in albums {
                 try Task.checkCancellation()
-                let collection = try await OnlineMusicCatalogStore.shared.tracks(for: album)
-                let memberTracks = collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
-                if !memberTracks.isEmpty { includedAlbums.append(album) }
-                tracks = OnlineCatalogLogic.uniqueTracks(tracks + memberTracks)
-                skippedCount += collection.skippedCount
+                do {
+                    let collection = try await OnlineMusicCatalogStore.shared.tracks(for: album)
+                    let memberTracks = collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
+                    tracks = OnlineCatalogLogic.uniqueTracks(tracks + memberTracks)
+                    skippedCount += collection.skippedCount
+                } catch is CancellationError { throw CancellationError() }
+                catch { unavailableAlbums += 1 }
                 loadedAlbums += 1
             }
-            albums = includedAlbums
             tracks.sort { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
-            complete = true
+            complete = unavailableAlbums == 0
+            if unavailableAlbums > 0 {
+                error = String(format: String(localized: "catalog_artist_partial"), unavailableAlbums)
+            }
         } catch is CancellationError { }
         catch { self.error = error.localizedDescription }
     }

@@ -49,6 +49,13 @@ struct OnlineMusicAlbum: Codable, Hashable, Identifiable, Sendable {
     var id: String { "\(provider.rawValue):\(sourceID)" }
 }
 
+struct MusicCatalogSearchResults: Sendable {
+    var tracks: [OnlineMusicTrack] = []
+    var artists: [OnlineArtistReference] = []
+    var albums: [OnlineMusicAlbum] = []
+    var isEmpty: Bool { tracks.isEmpty && artists.isEmpty && albums.isEmpty }
+}
+
 struct OnlineTrackCollection: Sendable {
     var title: String
     var artworkURL: URL?

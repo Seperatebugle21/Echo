@@ -2,6 +2,528 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "catalog_artists": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Artists"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Artiesten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Artistes"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Künstler"
+        }
+      }
+    }
+  },
+  "catalog_search_all": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search songs, artists and albums"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoek nummers, artiesten en albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechercher des titres, artistes et albums"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songs, Künstler und Alben suchen"
+        }
+      }
+    }
+  },
+  "catalog_search_discover": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Discover music"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontdek muziek"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Découvrir de la musique"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musik entdecken"
+        }
+      }
+    }
+  },
+  "catalog_search_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search for a song, artist or album to browse and download within Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoek een nummer, artiest of album om binnen Echo te bladeren en te downloaden."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Recherchez un titre, un artiste ou un album pour parcourir et télécharger dans Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Suche nach einem Song, Künstler oder Album, um in Echo zu stöbern und herunterzuladen."
+        }
+      }
+    }
+  },
+  "catalog_artist_partial": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Some releases could not be loaded (%d). You can open the available albums or retry before downloading the whole artist."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sommige uitgaven konden niet worden geladen (%d). Je kunt beschikbare albums openen of opnieuw proberen voordat je de hele artiest downloadt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Certaines sorties n’ont pas pu être chargées (%d). Ouvrez les albums disponibles ou réessayez avant de télécharger tout le catalogue."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Einige Veröffentlichungen konnten nicht geladen werden (%d). Öffne verfügbare Alben oder versuche es erneut, bevor du den gesamten Künstlerkatalog herunterlädst."
+        }
+      }
+    }
+  },
+  "album_add_favorite": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favorite album"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album favoriet maken"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter l’album aux favoris"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album zu Favoriten hinzufügen"
+        }
+      }
+    }
+  },
+  "album_remove_favorite": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Remove favorite album"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album uit favorieten verwijderen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Retirer l’album des favoris"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album aus Favoriten entfernen"
+        }
+      }
+    }
+  },
+  "library_favorite_albums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favorite albums"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favoriete albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albums favoris"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lieblingsalben"
+        }
+      }
+    }
+  },
+  "favorite_albums_count": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d albums"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d albums"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d Alben"
+        }
+      }
+    }
+  },
+  "favorite_albums_empty": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No favorite albums yet"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nog geen favoriete albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aucun album favori"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Noch keine Lieblingsalben"
+        }
+      }
+    }
+  },
+  "favorite_albums_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favorite an album from its page or touch and hold an album cover."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Maak een album favoriet op de albumpagina of houd een albumcover ingedrukt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajoutez un album aux favoris depuis sa page ou appuyez longuement sur sa pochette."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Füge ein Album auf seiner Seite zu den Favoriten hinzu oder halte ein Albumcover gedrückt."
+        }
+      }
+    }
+  },
+  "album_find_missing": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Find missing songs"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontbrekende nummers zoeken"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechercher les titres manquants"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fehlende Songs suchen"
+        }
+      }
+    }
+  },
+  "album_complete_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choose the matching album edition. Echo will only queue songs that are not already in your library or download queue."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kies de juiste albumuitgave. Echo zet alleen nummers in de wachtrij die nog niet in je bibliotheek of downloadwachtrij staan."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choisissez la bonne édition de l’album. Echo ne met en file que les titres absents de votre bibliothèque et de la file de téléchargement."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wähle die passende Albumausgabe. Echo lädt nur Songs, die noch nicht in deiner Mediathek oder Downloadwarteschlange sind."
+        }
+      }
+    }
+  },
+  "album_search_provider": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search service"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoekdienst"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Service de recherche"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Suchdienst"
+        }
+      }
+    }
+  },
+  "album_no_matching_release": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No albums found. Try the other search service."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geen albums gevonden. Probeer de andere zoekdienst."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aucun album trouvé. Essayez l’autre service de recherche."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Keine Alben gefunden. Versuche den anderen Suchdienst."
+        }
+      }
+    }
+  },
+  "album_download_missing %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download missing songs (%lld)"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontbrekende nummers downloaden (%lld)"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger les titres manquants (%lld)"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fehlende Songs herunterladen (%lld)"
+        }
+      }
+    }
+  },
+  "catalog_provider_spotify": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spotify"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spotify"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spotify"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spotify"
+        }
+      }
+    }
+  },
+  "catalog_provider_youtube_music": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "YouTube Music"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "YouTube Music"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "YouTube Music"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "YouTube Music"
+        }
+      }
+    }
+  },
   "catalog_play_track %@": {
     "extractionState": "manual",
     "localizations": {
