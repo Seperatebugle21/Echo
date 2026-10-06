@@ -37,13 +37,13 @@ struct AlbumCompletionView: View {
             loading = true; error = nil; albums = []
             do {
                 let query = title + " " + artist
-                let results: MusicCatalogSearchResults
+                let found: [OnlineMusicAlbum]
                 switch provider {
-                case .spotify: results = try await SpotifyAPI.shared.searchCatalog(query: query)
-                case .youtubeMusic: results = try await YouTubeMusicMetadata.shared.searchCatalog(query: query)
+                case .spotify: found = try await SpotifyAPI.shared.searchCatalog(query: query).albums
+                case .youtubeMusic: found = try await YouTubeMusicMetadata.shared.searchAlbums(query: query)
                 }
                 try Task.checkCancellation()
-                albums = results.albums
+                albums = found
                 loading = false
             } catch is CancellationError { }
             catch { if !Task.isCancelled { self.error = error.localizedDescription; loading = false } }

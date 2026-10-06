@@ -85,6 +85,11 @@ final class EchoCatalogTests: XCTestCase {
         XCTAssertEqual(result.albums.first?.sourceID, "album")
         XCTAssertEqual(result.artists.first?.sourceID, "artist")
     }
+    func testArtistHeroCardIsIncludedInMixedSearch() {
+        let root: [String: Any] = ["musicCardShelfRenderer": ["title": ["runs": [["text": "Artist",
+            "navigationEndpoint": ["browseEndpoint": ["browseId": "UCartist"]]]]]]]
+        XCTAssertEqual(YouTubeMusicJSON.searchResults(root).artists.map(\.sourceID), ["UCartist"])
+    }
     func testArtistHeaderPrefersPrimaryArtistOverNestedAlbumHeader() {
         let root: [String: Any] = ["header": ["musicImmersiveHeaderRenderer": ["title": ["runs": [["text": "Artist"]]]]],
             "contents": ["musicResponsiveHeaderRenderer": ["title": ["runs": [["text": "Album"]]]]]]

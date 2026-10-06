@@ -16,6 +16,11 @@ actor YouTubeMusicMetadata {
         return YouTubeMusicJSON.searchResults(root)
     }
 
+    func searchAlbums(query: String) async throws -> [OnlineMusicAlbum] {
+        let root = try await request("search", body: ["query": query, "params": "EgWKAQIYAWoKEAkQChAFEAMQBA%3D%3D"])
+        return YouTubeMusicJSON.searchResults(root).albums
+    }
+
     private func loadContext() async throws {
         guard !contextLoaded else { return }
         var request = URLRequest(url: URL(string: "https://music.youtube.com/")!)
@@ -149,16 +154,16 @@ actor YouTubeMusicMetadata {
             let endpoints = YouTubeMusicJSON.nodes("browseEndpoint", in: shelf["header"] as Any)
             guard let endpoint = endpoints.first(where: { $0["params"] != nil }), let browseID = endpoint["browseId"] as? String else { continue }
             do {
-            var body: [String: Any] = ["browseId": browseID]
-            body["params"] = endpoint["params"]
-            var response = try await request("browse", body: body)
-            albums += YouTubeMusicJSON.albums(response, artist: artist)
-            var seen: Set<String> = []
-            while let token = YouTubeMusicJSON.continuation(response) {
-                guard seen.insert(token).inserted else { throw MusicCatalogError.incomplete }
-                response = try await request("browse", body: ["continuation": token])
+                var body: [String: Any] = ["browseId": browseID]
+                body["params"] = endpoint["params"]
+                var response = try await request("browse", body: body)
                 albums += YouTubeMusicJSON.albums(response, artist: artist)
-            }
+                var seen: Set<String> = []
+                while let token = YouTubeMusicJSON.continuation(response) {
+                    guard seen.insert(token).inserted else { throw MusicCatalogError.incomplete }
+                    response = try await request("browse", body: ["continuation": token])
+                    albums += YouTubeMusicJSON.albums(response, artist: artist)
+                }
             } catch is CancellationError { throw CancellationError() }
             catch { unavailable += 1 }
         }
@@ -222,6 +227,7 @@ enum YouTubeMusicJSON {
         // Classify by the result's own navigation endpoint. Artist credits on a song
         // are not artist search results, and album links on a song are not album results.
         let rows = nodes("musicResponsiveListItemRenderer", in: root) + nodes("musicTwoRowItemRenderer", in: root)
+            + nodes("musicCardShelfRenderer", in: root)
         for row in rows {
             let columns = nodes("musicResponsiveListItemFlexColumnRenderer", in: row)
             let title = text(row["title"]).isEmpty ? text(columns.first?["text"]) : text(row["title"])
