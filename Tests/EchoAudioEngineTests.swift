@@ -49,10 +49,13 @@ final class EchoAudioEngineTests: XCTestCase {
         XCTAssertGreaterThan(player.currentTime, position)
     }
     func testQueuedPauseIsPreservedWhenImmediatelySeeking() async throws {
-        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 5))
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 15))
         defer { player.stop() }
+        // Measure pause/seek behavior after preparation. Fresh simulator audio
+        // startup can take several seconds and must not exhaust the short file.
+        _ = try await player.preparedDuration()
         player.play(intentRevision: 1)
-        try await until { player.isPlaying }
+        try await until({ player.isPlaying }, timeout: 10)
         player.pause(intentRevision: 2)
         player.currentTime = 2
         try await until { player.stateValue == .paused && abs(player.currentTime - 2) < 0.01 }
@@ -83,10 +86,11 @@ final class EchoAudioEngineTests: XCTestCase {
         }
         try file.write(from: buffer); addTeardownBlock { try? FileManager.default.removeItem(at: url) }; return url
     }
-    private func until(_ condition: () -> Bool, timeout: Double = 5) async throws {
+    private func until(_ condition: () -> Bool, timeout: Double = 5,
+                       file: StaticString = #filePath, line: UInt = #line) async throws {
         let end = Date().addingTimeInterval(timeout)
         while !condition() && Date() < end { try await Task.sleep(for: .milliseconds(20)) }
-        XCTAssertTrue(condition())
+        XCTAssertTrue(condition(), "Timed out waiting for playback condition", file: file, line: line)
     }
     func testDurationPausedSeekAndReplacingDifferentFormats() async throws {
         let a = try fixture(rate: 44100, channels: 1), b = try fixture(rate: 48000, channels: 2)
