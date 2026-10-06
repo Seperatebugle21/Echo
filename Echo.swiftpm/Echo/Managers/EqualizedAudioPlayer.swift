@@ -53,7 +53,11 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     private var observers: [NSObjectProtocol] = []
     #if DEBUG
     private var injectedEmptyReads = 0
+    private var injectedDecodeDelay: (remaining: Int, seconds: TimeInterval)?
     func injectTemporaryEmptyBuffers(_ count: Int) { control.async { [weak self] in self?.injectedEmptyReads = max(0, count) } }
+    func injectDecodeDelay(afterBuffers: Int, seconds: TimeInterval) {
+        control.async { [weak self] in self?.injectedDecodeDelay = (max(0, afterBuffers), max(0, seconds)) }
+    }
     func injectEngineStall() { control.async { [weak self] in self?.graph?.nodes.forEach { $0.pause() } } }
     #endif
 
@@ -354,10 +358,20 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
             #if DEBUG
             let empty = injectedEmptyReads > 0
             if empty { injectedEmptyReads -= 1 }
+            let delay: TimeInterval
+            if let injected = injectedDecodeDelay {
+                if injected.remaining == 0 {
+                    delay = injected.seconds; injectedDecodeDelay = nil
+                } else {
+                    delay = 0
+                    injectedDecodeDelay = (injected.remaining - 1, injected.seconds)
+                }
+            } else { delay = 0 }
             #endif
             deck.decoder.async { [weak self] in
                 let result: (AVAudioPCMBuffer?, AVAudioConverterOutputStatus, Error?)
                 #if DEBUG
+                if delay > 0 { Thread.sleep(forTimeInterval: delay) }
                 if empty { result = (AVAudioPCMBuffer(pcmFormat: graph.format, frameCapacity: 4096), .inputRanDry, nil) }
                 else { result = deck.read() }
                 #else
@@ -407,10 +421,16 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
                 deck.scheduled -= 1; self.pump(index); self.drained(index)
             }
         }
-        if !deck.nodeStarted, wantsPlayback {
+        // Starting on a single buffer can underrun while the remaining resume
+        // reads are still decoding. Prime the queue before starting the clock;
+        // short files can start as soon as their final buffer is scheduled.
+        if !deck.nodeStarted, wantsPlayback, deck.scheduled >= 4 || final {
             deck.nodeStarted = true
-            if deck.hostStart == 0 { deck.hostStart = AVAudioTime.hostTime(forSeconds: ProcessInfo.processInfo.systemUptime + 0.02) }
-            graph.nodes[index].play(at: AVAudioTime(hostTime: max(deck.hostStart, AVAudioTime.hostTime(forSeconds: ProcessInfo.processInfo.systemUptime))))
+            if deck.hostStart == 0 {
+                graph.nodes[index].play()
+            } else {
+                graph.nodes[index].play(at: AVAudioTime(hostTime: max(deck.hostStart, AVAudioTime.hostTime(forSeconds: ProcessInfo.processInfo.systemUptime))))
+            }
         }
         pump(index)
     }

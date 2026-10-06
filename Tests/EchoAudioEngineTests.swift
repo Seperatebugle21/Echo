@@ -183,6 +183,30 @@ final class EchoAudioEngineTests: XCTestCase {
         try await until { player.isPlaying }
     }
     #if DEBUG
+    func testResumePrimesDelayedAudioBeforeStartingAtNormalSpeed() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 15))
+        defer { player.stop() }
+        _ = try await player.preparedDuration()
+        player.play()
+        try await until({ player.isPlaying && player.currentTime > 0.2 }, timeout: 10)
+        player.pause()
+        try await until { player.stateValue == .paused }
+        let pausedPosition = player.currentTime
+        var resumeLatency: Double?
+        player.onFirstRender = { resumeLatency = $0 }
+        // A late second buffer must not produce a brief burst of audio followed
+        // by an underrun. Resume starts after the initial queue is ready.
+        player.injectDecodeDelay(afterBuffers: 1, seconds: 0.4)
+        player.play()
+        try await until({ player.isPlaying && resumeLatency != nil }, timeout: 10)
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(resumeLatency), 0.35)
+        XCTAssertGreaterThanOrEqual(player.currentTime, pausedPosition)
+        let startPosition = player.currentTime
+        let startTime = Date()
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertEqual(player.currentTime - startPosition, Date().timeIntervalSince(startTime), accuracy: 0.2)
+        XCTAssertEqual(player.stateValue, .playing)
+    }
     func testTemporaryConverterStarvationIsNotEndOfTrack() async throws {
         let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 22050, channels: 1, seconds: 4))
         defer { player.stop() }
