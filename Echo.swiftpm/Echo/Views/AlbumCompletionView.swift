@@ -26,8 +26,9 @@ struct AlbumCompletionView: View {
                 } else { Button("catalog_retry") { retry += 1 } }
             }
             ForEach(albums) { album in
-                NavigationLink { OnlineAlbumDetailView(album: album) } label: { CatalogAlbumRow(album: album) }
-                    .albumFavoriteActions(FavoriteAlbum(album: album), swipe: true)
+                NavigationLink {
+                    OnlineAlbumDetailView(album: album, showsFavoriteAction: false)
+                } label: { CatalogAlbumRow(album: album) }
             }
             if !loading && error == nil && albums.isEmpty { Text("album_no_matching_release").foregroundStyle(.secondary) }
         }

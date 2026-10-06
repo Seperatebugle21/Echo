@@ -12,8 +12,7 @@ struct FetchURLPreviewView: View {
         case .artist(let artist): OnlineArtistCatalogView(artist: artist)
         case .album(let album): OnlineAlbumDetailView(album: album)
         case .youtubeTrack(let track):
-            OnlineTrackCollectionView(title: track.title, artworkURL: track.artworkURL,
-                tracks: [track.catalogTrack], skippedCount: 0, importable: false)
+            OnlineSongDetailView(track: track.catalogTrack)
         case .youtubePlaylist(let playlist):
             OnlineTrackCollectionView(title: playlist.title, artworkURL: playlist.artworkURL,
                 tracks: playlist.tracks.map(\.catalogTrack), skippedCount: playlist.skippedCount, importable: true)
@@ -165,6 +164,7 @@ struct CatalogAlbumRow: View {
 
 struct OnlineAlbumDetailView: View {
     let album: OnlineMusicAlbum
+    var showsFavoriteAction = true
     @State private var collection: OnlineTrackCollection?
     @State private var error: String?
     @State private var retry = 0
@@ -185,8 +185,10 @@ struct OnlineAlbumDetailView: View {
         .echoBackground()
         .navigationTitle(album.title)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                AlbumFavoriteButton(album: FavoriteAlbum(album: album)).labelStyle(.iconOnly)
+            if showsFavoriteAction {
+                ToolbarItem(placement: .topBarTrailing) {
+                    AlbumFavoriteButton(album: FavoriteAlbum(album: album)).labelStyle(.iconOnly)
+                }
             }
         }
         .task(id: "\(retry):\(SpotifyManager.shared.isConnected)") {

@@ -2,6 +2,122 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "catalog_search_songs_albums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search songs and albums"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoek nummers en albums"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechercher des titres et albums"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songs und Alben suchen"
+        }
+      }
+    }
+  },
+  "catalog_search_songs_albums_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search for a song or album to browse and download within Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoek een nummer of album om binnen Echo te bladeren en te downloaden."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Recherchez un titre ou un album pour parcourir et télécharger dans Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Suche nach einem Song oder Album, um in Echo zu stöbern und herunterzuladen."
+        }
+      }
+    }
+  },
+  "catalog_song_provider": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Music source"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziekbron"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Source musicale"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musikquelle"
+        }
+      }
+    }
+  },
+  "catalog_song_recording_id": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "ISRC"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "ISRC"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "ISRC"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "ISRC"
+        }
+      }
+    }
+  },
   "catalog_artists": {
     "extractionState": "manual",
     "localizations": {

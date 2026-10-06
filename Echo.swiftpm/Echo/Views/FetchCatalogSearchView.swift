@@ -21,7 +21,7 @@ struct FetchCatalogSearchView: View {
                     } else { Button("catalog_retry") { retry += 1 } }
                 }
             }
-            if !results.artists.isEmpty {
+            if provider == .spotify && !results.artists.isEmpty {
                 Section("catalog_artists") {
                     ForEach(results.artists) { artist in
                         NavigationLink { OnlineArtistCatalogView(artist: artist) } label: {
@@ -45,8 +45,7 @@ struct FetchCatalogSearchView: View {
                 Section("catalog_songs") {
                     ForEach(results.tracks) { track in
                         NavigationLink {
-                            OnlineTrackCollectionView(title: track.title, artworkURL: track.artworkURL,
-                                tracks: [track], skippedCount: 0, importable: false)
+                            OnlineSongDetailView(track: track)
                         } label: {
                             HStack(spacing: 12) {
                                 CatalogArtwork(url: track.artworkURL, size: 48)
@@ -62,12 +61,14 @@ struct FetchCatalogSearchView: View {
             }
             if results.isEmpty && !loading && error == nil {
                 ContentUnavailableView(LocalizedStringKey(searched ? "catalog_no_search_results" : "catalog_search_discover"),
-                    systemImage: "magnifyingglass", description: Text("catalog_search_hint"))
+                    systemImage: "magnifyingglass", description: Text(LocalizedStringKey(provider == .spotify
+                        ? "catalog_search_hint" : "catalog_search_songs_albums_hint")))
             }
         }
         .echoBackground()
         .navigationTitle(provider.name)
-        .searchable(text: $query, prompt: "catalog_search_all")
+        .searchable(text: $query, prompt: Text(LocalizedStringKey(provider == .spotify
+            ? "catalog_search_all" : "catalog_search_songs_albums")))
         .onSubmit(of: .search) { submittedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines); retry += 1 }
         .onChange(of: query) {
             if query.isEmpty { submittedQuery = ""; results = MusicCatalogSearchResults(); searched = false }
@@ -87,7 +88,8 @@ struct FetchCatalogSearchView: View {
             case .youtubeMusic: found = try await YouTubeMusicMetadata.shared.searchCatalog(query: submittedQuery)
             }
             try Task.checkCancellation()
-            results = found
+            results = MusicCatalogSearchResults(tracks: found.tracks,
+                artists: provider == .spotify ? found.artists : [], albums: found.albums)
             searched = true
             loading = false
         } catch is CancellationError { }

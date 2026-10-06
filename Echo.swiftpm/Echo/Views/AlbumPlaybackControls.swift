@@ -8,7 +8,11 @@ struct AlbumPlaybackControls: View {
     var body: some View {
         HStack(spacing: 12) {
             Button { play(shuffled: false) } label: {
-                Label("play_all_action", systemImage: "play.fill")
+                Label {
+                    Text("play_all_action")
+                } icon: {
+                    Image(systemName: "play.fill").foregroundStyle(.white)
+                }
             }.buttonStyle(.borderedProminent)
             Button { play(shuffled: true) } label: {
                 Label("shuffle_action", systemImage: "shuffle")
