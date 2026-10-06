@@ -1,0 +1,102 @@
+{
+  "playlistPanelVideoRenderer": {
+    "title": {
+      "runs": [
+        {
+          "text": "Never Gonna Give You Up"
+        }
+      ]
+    },
+    "longBylineText": {
+      "runs": [
+        {
+          "text": "Rick Astley",
+          "navigationEndpoint": {
+            "browseEndpoint": {
+              "browseId": "UCwZEU0wAwIyZb4x5G_KJp2w",
+              "browseEndpointContextSupportedConfigs": {
+                "browseEndpointContextMusicConfig": {
+                  "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                }
+              }
+            }
+          }
+        },
+        {
+          "text": " • "
+        },
+        {
+          "text": "1.8B views"
+        },
+        {
+          "text": " • "
+        },
+        {
+          "text": "19M likes"
+        }
+      ]
+    },
+    "thumbnail": {
+      "thumbnails": [
+        {
+          "url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg?sqp=-oaymwEWCJADEOEBIAQqCggAEOADGC0guwJIWg&rs=AMzJL3lrEQLVd7aUH6RTaLjc4JkVVNINHQ",
+          "width": 400,
+          "height": 225
+        },
+        {
+          "url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hq720.jpg?sqp=-oaymwEKCKAGEMIDIABIWg&rs=AMzJL3lfpZeEOiVk4TdFkCMcOh0F7fbuiQ",
+          "width": 800,
+          "height": 450
+        },
+        {
+          "url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hq720.jpg?sqp=-oaymwEKCNUGEN8DIABIWg&rs=AMzJL3nLqpAFoB_PJT8x1nZhejChLHwnKg",
+          "width": 853,
+          "height": 479
+        }
+      ]
+    },
+    "lengthText": {
+      "runs": [
+        {
+          "text": "3:34"
+        }
+      ],
+      "accessibility": {
+        "accessibilityData": {
+          "label": "3 minutes, 34 seconds"
+        }
+      }
+    },
+    "selected": true,
+    "navigationEndpoint": {
+      "watchEndpoint": {
+        "videoId": "dQw4w9WgXcQ",
+        "params": "OAHyAQIIAeoEC2RRdzR3OVdnWGNR",
+        "watchEndpointMusicSupportedConfigs": {
+          "watchEndpointMusicConfig": {
+            "hasPersistentPlaylistPanel": true,
+            "musicVideoType": "MUSIC_VIDEO_TYPE_OMV"
+          }
+        }
+      }
+    },
+    "videoId": "dQw4w9WgXcQ",
+    "shortBylineText": {
+      "runs": [
+        {
+          "text": "Rick Astley"
+        }
+      ]
+    },
+    "canReorder": true,
+    "queueNavigationEndpoint": {
+      "queueAddEndpoint": {
+        "queueTarget": {
+          "videoId": "dQw4w9WgXcQ"
+        },
+        "queueInsertPosition": "INSERT_AT_END",
+        "params": "Q0FJJTNE"
+      }
+    }
+  }
+}

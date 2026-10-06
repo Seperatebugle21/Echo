@@ -1,0 +1,304 @@
+{
+  "header": {
+    "musicResponsiveHeaderRenderer": {
+      "thumbnail": {
+        "musicThumbnailRenderer": {
+          "thumbnail": {
+            "thumbnails": [
+              {
+                "url": "https://yt3.googleusercontent.com/SP0cN9Mypy_WeKEajm03ERYOU_53KkHZpu4EQpSJUzcQ1H_3HhS1FmjR34KTstf-0DX83JLCCj9ouc-k1g=w60-h60-l90-rj",
+                "width": 60,
+                "height": 60
+              },
+              {
+                "url": "https://yt3.googleusercontent.com/SP0cN9Mypy_WeKEajm03ERYOU_53KkHZpu4EQpSJUzcQ1H_3HhS1FmjR34KTstf-0DX83JLCCj9ouc-k1g=w120-h120-l90-rj",
+                "width": 120,
+                "height": 120
+              },
+              {
+                "url": "https://yt3.googleusercontent.com/SP0cN9Mypy_WeKEajm03ERYOU_53KkHZpu4EQpSJUzcQ1H_3HhS1FmjR34KTstf-0DX83JLCCj9ouc-k1g=w226-h226-l90-rj",
+                "width": 226,
+                "height": 226
+              },
+              {
+                "url": "https://yt3.googleusercontent.com/SP0cN9Mypy_WeKEajm03ERYOU_53KkHZpu4EQpSJUzcQ1H_3HhS1FmjR34KTstf-0DX83JLCCj9ouc-k1g=w544-h544-l90-rj",
+                "width": 544,
+                "height": 544
+              }
+            ]
+          },
+          "thumbnailCrop": "MUSIC_THUMBNAIL_CROP_UNSPECIFIED",
+          "thumbnailScale": "MUSIC_THUMBNAIL_SCALE_UNSPECIFIED"
+        }
+      },
+      "title": {
+        "runs": [
+          {
+            "text": "(What's The Story) Morning Glory?"
+          }
+        ]
+      },
+      "subtitle": {
+        "runs": [
+          {
+            "text": "Album"
+          },
+          {
+            "text": " • "
+          },
+          {
+            "text": "1995"
+          }
+        ]
+      },
+      "straplineTextOne": {
+        "runs": [
+          {
+            "text": "Oasis",
+            "navigationEndpoint": {
+              "browseEndpoint": {
+                "browseId": "UCmMUZbaYdNH0bEd1PAlAqsA",
+                "browseEndpointContextSupportedConfigs": {
+                  "browseEndpointContextMusicConfig": {
+                    "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "straplineThumbnail": {
+        "musicThumbnailRenderer": {
+          "thumbnail": {
+            "thumbnails": [
+              {
+                "url": "https://yt3.googleusercontent.com/U5ierX4J6fdj6vlmiIjKKHQhYphsOYHBd43bJRao1T2qrojHb_xcPsnL-gprIEn_y900oPEZhp-iPXs=w60-h60-p-l90-rj",
+                "width": 60,
+                "height": 60
+              },
+              {
+                "url": "https://yt3.googleusercontent.com/U5ierX4J6fdj6vlmiIjKKHQhYphsOYHBd43bJRao1T2qrojHb_xcPsnL-gprIEn_y900oPEZhp-iPXs=w120-h120-p-l90-rj",
+                "width": 120,
+                "height": 120
+              },
+              {
+                "url": "https://yt3.googleusercontent.com/U5ierX4J6fdj6vlmiIjKKHQhYphsOYHBd43bJRao1T2qrojHb_xcPsnL-gprIEn_y900oPEZhp-iPXs=w226-h226-p-l90-rj",
+                "width": 226,
+                "height": 226
+              },
+              {
+                "url": "https://yt3.googleusercontent.com/U5ierX4J6fdj6vlmiIjKKHQhYphsOYHBd43bJRao1T2qrojHb_xcPsnL-gprIEn_y900oPEZhp-iPXs=w544-h544-p-l90-rj",
+                "width": 544,
+                "height": 544
+              }
+            ]
+          },
+          "thumbnailCrop": "MUSIC_THUMBNAIL_CROP_UNSPECIFIED",
+          "thumbnailScale": "MUSIC_THUMBNAIL_SCALE_UNSPECIFIED"
+        }
+      },
+      "secondSubtitle": {
+        "runs": [
+          {
+            "text": "12 songs"
+          },
+          {
+            "text": " • "
+          },
+          {
+            "text": "50 minutes"
+          }
+        ]
+      }
+    }
+  },
+  "musicShelfRenderer": {
+    "contents": [
+      {
+        "musicResponsiveListItemRenderer": {
+          "flexColumns": [
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "Hello",
+                      "navigationEndpoint": {
+                        "watchEndpoint": {
+                          "videoId": "7HF1Sfos3v4",
+                          "playlistId": "OLAK5uy_lZ90LvUqQdKrByCbk99v54d8XpUOmFavo",
+                          "loggingContext": {
+                            "vssLoggingContext": {
+                              "serializedContextData": "GilPTEFLNXV5X2xaOTBMdlVxUWRLckJ5Q2JrOTl2NTRkOFhwVU9tRmF2bw%3D%3D"
+                            }
+                          },
+                          "watchEndpointMusicSupportedConfigs": {
+                            "watchEndpointMusicConfig": {
+                              "musicVideoType": "MUSIC_VIDEO_TYPE_OMV"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {},
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "14M plays"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "14 million plays"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            }
+          ],
+          "fixedColumns": [
+            {
+              "musicResponsiveListItemFixedColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "3:24"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "3 minutes, 24 seconds"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH",
+                "size": "MUSIC_RESPONSIVE_LIST_ITEM_FIXED_COLUMN_SIZE_SMALL"
+              }
+            }
+          ],
+          "playlistItemData": {
+            "playlistSetVideoId": "BC3507C50C3E9CAB",
+            "videoId": "7HF1Sfos3v4"
+          },
+          "itemHeight": "MUSIC_RESPONSIVE_LIST_ITEM_HEIGHT_MEDIUM",
+          "index": {
+            "runs": [
+              {
+                "text": "1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "musicResponsiveListItemRenderer": {
+          "flexColumns": [
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "Roll With It",
+                      "navigationEndpoint": {
+                        "watchEndpoint": {
+                          "videoId": "DrARl0dzd-0",
+                          "playlistId": "OLAK5uy_lZ90LvUqQdKrByCbk99v54d8XpUOmFavo",
+                          "loggingContext": {
+                            "vssLoggingContext": {
+                              "serializedContextData": "GilPTEFLNXV5X2xaOTBMdlVxUWRLckJ5Q2JrOTl2NTRkOFhwVU9tRmF2bw%3D%3D"
+                            }
+                          },
+                          "watchEndpointMusicSupportedConfigs": {
+                            "watchEndpointMusicConfig": {
+                              "musicVideoType": "MUSIC_VIDEO_TYPE_OMV"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {},
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "27M plays"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "27 million plays"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            }
+          ],
+          "fixedColumns": [
+            {
+              "musicResponsiveListItemFixedColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "4:00"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "4 minutes"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH",
+                "size": "MUSIC_RESPONSIVE_LIST_ITEM_FIXED_COLUMN_SIZE_SMALL"
+              }
+            }
+          ],
+          "playlistItemData": {
+            "playlistSetVideoId": "E181A2B2ED6AEE7B",
+            "videoId": "DrARl0dzd-0"
+          },
+          "itemHeight": "MUSIC_RESPONSIVE_LIST_ITEM_HEIGHT_MEDIUM",
+          "index": {
+            "runs": [
+              {
+                "text": "2"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "shelfDivider": {
+      "musicShelfDividerRenderer": {
+        "hidden": true
+      }
+    },
+    "contentsMultiSelectable": true
+  }
+}

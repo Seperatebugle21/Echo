@@ -304,8 +304,10 @@ final class RecommendationManager {
             ?? SongLearningData()
 
         data.playCount += 1
-        dailyCounts[song.id, default: [:]][SmartListeningSnapshot.dayKey(Date()), default: 0] += 1
-        data.lastStartedAt = Date()
+        let now = Date()
+        dailyCounts[song.id, default: [:]][SmartListeningSnapshot.dayKey(now), default: 0] += 1
+        data.lastStartedAt = now
+        MusicLibraryManager.shared.recordSmartPlaylistPlay(song, at: now)
 
         learningData[song.id] =
             data

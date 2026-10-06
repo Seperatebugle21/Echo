@@ -1,0 +1,298 @@
+{
+  "appendContinuationItemsAction": {
+    "continuationItems": [
+      {
+        "musicResponsiveListItemRenderer": {
+          "thumbnail": {
+            "musicThumbnailRenderer": {
+              "thumbnail": {
+                "thumbnails": [
+                  {
+                    "url": "https://yt3.googleusercontent.com/-16L2gZPSumAhOg2Neq8JZVI9741PM9DRLU__0YG14pnZr45dv_RbOcdP42MBXUJWU1aCFik2y4V5Hwb=w60-h60-l90-rj",
+                    "width": 60,
+                    "height": 60
+                  },
+                  {
+                    "url": "https://yt3.googleusercontent.com/-16L2gZPSumAhOg2Neq8JZVI9741PM9DRLU__0YG14pnZr45dv_RbOcdP42MBXUJWU1aCFik2y4V5Hwb=w120-h120-l90-rj",
+                    "width": 120,
+                    "height": 120
+                  }
+                ]
+              },
+              "thumbnailCrop": "MUSIC_THUMBNAIL_CROP_UNSPECIFIED",
+              "thumbnailScale": "MUSIC_THUMBNAIL_SCALE_ASPECT_FIT"
+            }
+          },
+          "flexColumns": [
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "(Probably) All In My Mind",
+                      "navigationEndpoint": {
+                        "watchEndpoint": {
+                          "videoId": "b4-QVuW1fAw",
+                          "playlistId": "PLMpM3Z0118S42R1npOhcjoakLIv1aqnS1",
+                          "loggingContext": {
+                            "vssLoggingContext": {
+                              "serializedContextData": "GiJQTE1wTTNaMDExOFM0MlIxbnBPaGNqb2FrTEl2MWFxblMx"
+                            }
+                          },
+                          "watchEndpointMusicSupportedConfigs": {
+                            "watchEndpointMusicConfig": {
+                              "musicVideoType": "MUSIC_VIDEO_TYPE_ATV"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "Oasis",
+                      "navigationEndpoint": {
+                        "browseEndpoint": {
+                          "browseId": "UCmMUZbaYdNH0bEd1PAlAqsA",
+                          "browseEndpointContextSupportedConfigs": {
+                            "browseEndpointContextMusicConfig": {
+                              "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "Oasis"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "640K plays"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "640 thousand plays"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "Heathen Chemistry",
+                      "navigationEndpoint": {
+                        "browseEndpoint": {
+                          "browseId": "MPREb_4obNWjDVCfX",
+                          "browseEndpointContextSupportedConfigs": {
+                            "browseEndpointContextMusicConfig": {
+                              "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_MEDIUM"
+              }
+            }
+          ],
+          "fixedColumns": [
+            {
+              "musicResponsiveListItemFixedColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "4:02"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "4 minutes, 2 seconds"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH",
+                "size": "MUSIC_RESPONSIVE_LIST_ITEM_FIXED_COLUMN_SIZE_SMALL"
+              }
+            }
+          ],
+          "playlistItemData": {
+            "playlistSetVideoId": "A75DC9043B2637B7",
+            "videoId": "b4-QVuW1fAw",
+            "voteSortValue": 1675602586
+          }
+        }
+      },
+      {
+        "musicResponsiveListItemRenderer": {
+          "thumbnail": {
+            "musicThumbnailRenderer": {
+              "thumbnail": {
+                "thumbnails": [
+                  {
+                    "url": "https://yt3.googleusercontent.com/hIik7OYT6AUQaRFxyHl5_J6qsxpowuPW4hJqoI58QjvCxoFG_vwI25XCEkK1uZIQ9nv4TSYNHPKwmA=w60-h60-l90-rj",
+                    "width": 60,
+                    "height": 60
+                  },
+                  {
+                    "url": "https://yt3.googleusercontent.com/hIik7OYT6AUQaRFxyHl5_J6qsxpowuPW4hJqoI58QjvCxoFG_vwI25XCEkK1uZIQ9nv4TSYNHPKwmA=w120-h120-l90-rj",
+                    "width": 120,
+                    "height": 120
+                  }
+                ]
+              },
+              "thumbnailCrop": "MUSIC_THUMBNAIL_CROP_UNSPECIFIED",
+              "thumbnailScale": "MUSIC_THUMBNAIL_SCALE_ASPECT_FIT"
+            }
+          },
+          "flexColumns": [
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "I Can See a Liar",
+                      "navigationEndpoint": {
+                        "watchEndpoint": {
+                          "videoId": "HAF61EEvKXw",
+                          "playlistId": "PLMpM3Z0118S42R1npOhcjoakLIv1aqnS1",
+                          "playerParams": "0gcJCTMC0OBS9m0t",
+                          "loggingContext": {
+                            "vssLoggingContext": {
+                              "serializedContextData": "GiJQTE1wTTNaMDExOFM0MlIxbnBPaGNqb2FrTEl2MWFxblMx"
+                            }
+                          },
+                          "watchEndpointMusicSupportedConfigs": {
+                            "watchEndpointMusicConfig": {
+                              "musicVideoType": "MUSIC_VIDEO_TYPE_ATV"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "Oasis",
+                      "navigationEndpoint": {
+                        "browseEndpoint": {
+                          "browseId": "UCmMUZbaYdNH0bEd1PAlAqsA",
+                          "browseEndpointContextSupportedConfigs": {
+                            "browseEndpointContextMusicConfig": {
+                              "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "Oasis"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "860K plays"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "860 thousand plays"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH"
+              }
+            },
+            {
+              "musicResponsiveListItemFlexColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "Standing On The Shoulder Of Giants",
+                      "navigationEndpoint": {
+                        "browseEndpoint": {
+                          "browseId": "MPREb_6uHkr4FTpt8",
+                          "browseEndpointContextSupportedConfigs": {
+                            "browseEndpointContextMusicConfig": {
+                              "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_MEDIUM"
+              }
+            }
+          ],
+          "fixedColumns": [
+            {
+              "musicResponsiveListItemFixedColumnRenderer": {
+                "text": {
+                  "runs": [
+                    {
+                      "text": "3:13"
+                    }
+                  ],
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "3 minutes, 13 seconds"
+                    }
+                  }
+                },
+                "displayPriority": "MUSIC_RESPONSIVE_LIST_ITEM_COLUMN_DISPLAY_PRIORITY_HIGH",
+                "size": "MUSIC_RESPONSIVE_LIST_ITEM_FIXED_COLUMN_SIZE_SMALL"
+              }
+            }
+          ],
+          "playlistItemData": {
+            "playlistSetVideoId": "3BC56E9C0B9C5B4F",
+            "videoId": "HAF61EEvKXw",
+            "voteSortValue": 1675602586
+          }
+        }
+      }
+    ],
+    "targetId": "PLMpM3Z0118S42R1npOhcjoakLIv1aqnS1"
+  }
+}

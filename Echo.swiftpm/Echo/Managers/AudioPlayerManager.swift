@@ -49,7 +49,8 @@ class AudioPlayerManager:
     private var player:
         EqualizedAudioPlayer?
     private var playbackRequest = UUID()
-    @ObservationIgnored private var pendingPauseRequest: UUID?
+    private var localIntent = PlaybackIntent()
+    var playbackGeneration: UUID { playbackRequest }
     private var transitionTask: Task<Void, Never>?
     private var transitionStarts: [UUID: Song] = [:]
     private var transitionTarget: (token: UUID, song: Song, index: Int?, automatic: Bool)?
@@ -354,13 +355,13 @@ class AudioPlayerManager:
         info[
             MPNowPlayingInfoPropertyElapsedPlaybackTime
         ] =
-            player.currentTime
+            currentTime
 
 
         info[
             MPMediaItemPropertyPlaybackDuration
         ] =
-            player.duration
+            duration
 
 
         info[
@@ -456,7 +457,7 @@ class AudioPlayerManager:
                 _ in
 
 
-                if self?.isPlaying == false { self?.togglePlayPause() }
+                self?.setPlaybackDesired(true)
 
 
                 return .success
@@ -470,7 +471,7 @@ class AudioPlayerManager:
                 _ in
 
 
-                if self?.isPlaying == true { self?.togglePlayPause() }
+                self?.setPlaybackDesired(false)
 
 
                 return .success
@@ -556,7 +557,7 @@ class AudioPlayerManager:
         transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
         transitionStarts.removeAll()
         playbackRequest = UUID()
-        pendingPauseRequest = nil
+        localIntent.set(true)
         lastTransitionMode = AudioSettings.transition
         lastFadeSeconds = AudioSettings.crossfadeSeconds
         playbackErrorKey = nil
@@ -598,6 +599,17 @@ class AudioPlayerManager:
             if let player { try player.replace(with: url) }
             else { player = try EqualizedAudioPlayer(contentsOf: url) }
             let request = playbackRequest
+            player?.onStateChanged = { [weak self, weak player = self.player] update in
+                guard let self, let player, self.player === player,
+                    self.playbackRequest == request, !self.isPreviewing,
+                    update.intentRevision == self.localIntent.revision else { return }
+                self.localIntent.reconcile(update.wantsPlayback, revision: update.intentRevision)
+                self.localPlaybackState = update.state
+                self.currentTime = update.position
+                self.duration = update.duration
+                self.isPlaying = update.wantsPlayback && update.state != .failed && update.state != .idle
+                self.updateNowPlaying()
+            }
             player?.onStarted = { [weak self] identifier in
                     guard let self, self.playbackRequest == request, !self.isPreviewing else { return }
                     let started = identifier.flatMap { self.transitionStarts.removeValue(forKey: $0) } ?? (identifier == nil ? self.currentSong : nil)
@@ -668,15 +680,14 @@ class AudioPlayerManager:
 
 
             player?
-                .play()
+                .play(intentRevision: localIntent.revision)
 
 
             UIApplication.shared
                 .beginReceivingRemoteControlEvents()
 
 
-            isPlaying =
-                player?.isPlaying ?? false
+            isPlaying = true
 
 
             updateNowPlaying()
@@ -757,8 +768,8 @@ class AudioPlayerManager:
         stopTransitionPreview()
         let request = playbackRequest
         previewResume = isPlaying
-        if let podcastPlayer { podcastPlayer.pause() } else { player?.pause() }
         isPreviewing = true
+        if let podcastPlayer { podcastPlayer.pause() } else { player?.pause() }
         do {
             let demo = try EqualizedAudioPlayer(contentsOf: first)
             previewPlayer = demo
@@ -799,7 +810,9 @@ class AudioPlayerManager:
         isPreviewing = false
         if resume && previewResume {
             if let podcastPlayer, podcastWantsPlayback { podcastPlayer.playImmediately(atRate: podcastSpeed) }
-            else { player?.play() }
+            else { setPlaybackDesired(true) }
+        } else if !isPodcast {
+            setPlaybackDesired(false)
         }
         previewResume = false
         let finished = previewFinished; previewFinished = nil; finished?()
@@ -929,6 +942,8 @@ class AudioPlayerManager:
             return
         }
         player?.stop()
+        localIntent.set(false)
+        localPlaybackState = .idle
         isPlaying =
             false
 
@@ -1166,64 +1181,47 @@ class AudioPlayerManager:
         play(song: song, url: url, queue: queue, queuePosition: currentIndex)
     }
     func togglePlayPause() {
+        setPlaybackDesired(!(isPodcast ? podcastWantsPlayback : localIntent.wantsPlayback))
+    }
+
+    func setPlaybackDesired(_ playing: Bool) {
         if isPreviewing {
             stopTransitionPreview(resume: false)
-            podcastWantsPlayback = false; isPlaying = false; updateNowPlaying()
-            return
         }
         if let podcastPlayer {
-            if podcastPlayer.currentItem?.status == .failed, let song = currentSong, let url = getURL(for: song) {
+            if playing, podcastPlayer.currentItem?.status == .failed,
+                let song = currentSong, let url = getURL(for: song) {
                 play(song: song, url: url, queue: queue, queuePosition: currentIndex)
                 return
             }
-            podcastWantsPlayback.toggle()
-            if podcastWantsPlayback { podcastPlayer.playImmediately(atRate: podcastSpeed) }
+            podcastWantsPlayback = playing
+            if playing { podcastPlayer.playImmediately(atRate: podcastSpeed) }
             else { podcastPlayer.pause(); savePodcastPosition() }
-            isPlaying = podcastWantsPlayback
+            isPlaying = playing
             updateNowPlaying()
             return
         }
-
-        guard let player else {
-            return
-        }
-
-
-        if player.stateValue == .failed { retryPlayback(); return }
-        if pendingPauseRequest == nil && (player.isPlaying || player.stateValue.isBusy) {
-
-            let pauseRequest = UUID()
-            let request = playbackRequest
-            pendingPauseRequest = pauseRequest
-            localPlaybackState = .paused
-            player.pause { [weak self, weak player] in
+        guard let player else { return }
+        if playing, player.stateValue == .failed { retryPlayback(); return }
+        let revision = localIntent.set(playing)
+        let request = playbackRequest
+        isPlaying = playing
+        localPlaybackState = playing ? .preparing : .paused
+        currentTime = player.currentTime
+        if playing {
+            player.play(intentRevision: revision)
+            startTimer()
+        } else {
+            player.pause(intentRevision: revision) { [weak self, weak player] in
                 guard let self, let player, self.player === player,
-                      self.playbackRequest == request, self.pendingPauseRequest == pauseRequest else { return }
-                self.pendingPauseRequest = nil
+                    self.playbackRequest == request, self.localIntent.revision == revision else { return }
                 self.localPlaybackState = player.stateValue
                 self.currentTime = player.currentTime
-                // Publish again after the engine has stopped, even if isPlaying
-                // was already false when the user tapped pause.
                 self.updateNowPlaying()
             }
-
-            isPlaying =
-                false
-
-
-        } else {
-
-            pendingPauseRequest = nil
-            player.play()
-
-            isPlaying =
-                player.isPlaying
-
-
-            startTimer()
         }
-
-
+        // The engine's queued command may not have changed its snapshot yet.
+        // Publish the latest intention now, then re-anchor on its state callback.
         updateNowPlaying()
     }
 
@@ -1351,14 +1349,7 @@ class AudioPlayerManager:
 
 
                 guard !self.isPreviewing else { return }
-                self.localPlaybackState = self.pendingPauseRequest == nil ? (self.player?.stateValue ?? .idle) : .paused
                 self.duration = self.player?.duration ?? self.duration
-                // The engine snapshot can still say playing while pause is queued.
-                let playing = self.pendingPauseRequest == nil && (self.player?.isPlaying ?? false)
-                if self.isPlaying != playing {
-                    self.isPlaying = playing
-                    self.updateNowPlaying()
-                }
                 guard !self.isPreviewing else { return }
                 self.prepareAutomaticTransition()
                 self.currentTime =
@@ -1397,12 +1388,12 @@ class AudioPlayerManager:
             return
         }
 
+        guard time.isFinite, let player, duration > 0 else { return }
+        let target = min(duration, max(0, time))
         transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
-        player?.currentTime = time
-
-
-        currentTime =
-            time
+        player.currentTime = target
+        currentTime = target
+        localPlaybackState = localIntent.wantsPlayback ? .seeking : .paused
 
 
         updateNowPlaying()

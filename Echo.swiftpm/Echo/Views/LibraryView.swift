@@ -1,17 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct AlbumGroup: Identifiable {
-
-    var id: String {
-        "\(artist)-\(name)"
-    }
-
-    let name: String
-    let artist: String
-    let songs: [Song]
-}
-
 struct LibraryView: View {
     @State private var showImporter = false
     @State private var showAddActions = false
@@ -30,56 +19,7 @@ struct LibraryView: View {
     }
 
     private var albumGroups: [AlbumGroup] {
-
-        let songs =
-            library.songs.filter {
-
-                guard
-                    let album =
-                        $0.album?
-                            .trimmingCharacters(
-                                in:
-                                    .whitespacesAndNewlines
-                            )
-                else {
-                    return false
-                }
-
-                return !album.isEmpty
-            }
-
-        let grouped =
-            Dictionary(
-                grouping: songs
-            ) {
-                "\($0.artist)|\($0.album ?? "")"
-            }
-
-        return grouped
-            .compactMap { _, songs in
-
-                guard
-                    let first =
-                        songs.first,
-                    let album =
-                        first.album
-                else {
-                    return nil
-                }
-
-                return AlbumGroup(
-                    name: album,
-                    artist: first.artist,
-                    songs: songs
-                )
-            }
-            .sorted {
-                $0.name
-                    .localizedCaseInsensitiveCompare(
-                        $1.name
-                    )
-                == .orderedAscending
-            }
+        LibraryAlbums.groups(from: library.songs)
     }
 
     private var recentlyAddedSongs: [Song] {
@@ -1426,113 +1366,74 @@ struct AlbumsView: View {
 }
 
 struct AlbumDetailView: View {
-
-    @Environment(MusicLibraryManager.self)
-    private var library
-
-    @Environment(AudioPlayerManager.self)
-    private var audioPlayer
-
+    @Environment(MusicLibraryManager.self) private var library
+    @Environment(AudioPlayerManager.self) private var audioPlayer
     let album: AlbumGroup
+    @State private var searchText = ""
+    @State private var sortOption: FavoritesSortOption = .custom
+    @State private var selectedSong: Song?
 
+    private var songs: [Song] {
+        LibraryAlbums.groups(from: library.songs).first { $0.id == album.id }?.songs ?? []
+    }
+    private var processedSongs: [Song] {
+        let filtered = AlbumSongSelection.filtered(songs, query: searchText)
+        switch sortOption {
+        case .custom: return filtered
+        case .title: return filtered.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        case .artist: return filtered.sorted { $0.artist.localizedStandardCompare($1.artist) == .orderedAscending }
+        case .dateAdded: return filtered.sorted { ($0.dateAdded ?? .distantPast) > ($1.dateAdded ?? .distantPast) }
+        case .lastPlayed: return filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
+        }
+    }
     var body: some View {
-
         List {
-
             Section {
-
-                HStack {
-
-                    Spacer()
-
-                    VStack(spacing: 12) {
-
-                        if
-                            let first =
-                                album.songs.first
-                        {
-
-                            SongArtworkView(
-                                song: first,
-                                cornerRadius: 20
-                            )
-                            .frame(
-                                width: 180,
-                                height: 180
-                            )
-                        }
-
-                        Text(album.name)
-                            .font(.title2.bold())
-
-                        Text(album.artist)
-                            .foregroundStyle(.secondary)
+                VStack(spacing: 12) {
+                    if let first = songs.first {
+                        SongArtworkView(song: first, cornerRadius: 20).frame(width: 180, height: 180)
                     }
-
-                    Spacer()
+                    Text(album.name).font(.title2.bold())
+                    Text(album.artist).foregroundStyle(.secondary)
+                    Text("songs_count_format \(songs.count)").font(.subheadline).foregroundStyle(.secondary)
+                    AlbumPlaybackControls(songs: processedSongs)
                 }
-                .listRowBackground(
-                    Color.clear
-                )
+                .frame(maxWidth: .infinity).padding(.vertical)
+                .listRowBackground(Color.clear)
             }
-
-            Section(
-                "libraryview_songs"
-            ) {
-
-                ForEach(
-                    album.songs
-                ) { song in
-
-                    Button {
-
-                        play(song)
-
-                    } label: {
-
-                        LibrarySongRow(
-                            song: song
-                        )
-                    }
-                    .buttonStyle(.plain)
+            Section("libraryview_songs") {
+                ForEach(processedSongs) { song in
+                    Button { play(song) } label: { LibrarySongRow(song: song) }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button("album_song_options", systemImage: "ellipsis") { selectedSong = song }
+                        }
                 }
+                if processedSongs.isEmpty { Text("catalog_no_search_results").foregroundStyle(.secondary) }
             }
         }
-
         .echoBackground()
-
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func play(
-        _ song: Song
-    ) {
-
-        guard
-            let url =
-                library.getURL(
-                    for: song
-                )
-        else {
-            return
+        .searchable(text: $searchText, prompt: "album_search")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {
+                        ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
+                    }
+                } label: { Image(systemName: "arrow.up.arrow.down.circle") }
+                .accessibilityLabel("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE")
+            }
         }
-
-        audioPlayer.lastPlaybackDirection =
-            .fade
-
-        audioPlayer.play(
-            song: song,
-            url: url,
-            queue: album.songs
-        )
-
-        audioPlayer.allSongs =
-            library.songs
-
-        audioPlayer.fillAutoNext(
-            from: library.songs
-        )
+        .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
+    }
+    private func play(_ song: Song) {
+        guard let url = library.getURL(for: song) else { return }
+        audioPlayer.lastPlaybackDirection = .fade
+        audioPlayer.play(song: song, url: url, queue: processedSongs)
+        audioPlayer.allSongs = library.songs
+        audioPlayer.fillAutoNext(from: library.songs)
     }
 }
 

@@ -4,9 +4,18 @@ import OSLog
 protocol EqualizedAudioPlayerDelegate: AnyObject {
     @MainActor func audioPlayerDidFinishPlaying(_ player: EqualizedAudioPlayer, successfully flag: Bool)
 }
-enum LocalPlaybackState: String {
+enum LocalPlaybackState: String, Sendable {
     case idle, preparing, playing, paused, seeking, transitioning, recovering, failed
     var isBusy: Bool { self == .preparing || self == .seeking || self == .recovering }
+}
+
+struct LocalPlaybackUpdate: Sendable {
+    var state: LocalPlaybackState
+    var position: Double
+    var duration: Double
+    var rate: Double
+    var wantsPlayback: Bool
+    var intentRevision: UInt64
 }
 
 /// UI snapshots never wait on decoding or graph operations. Each deck decodes on
@@ -15,6 +24,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     weak var delegate: EqualizedAudioPlayerDelegate?
     var onPromote: (@MainActor (UUID) -> Void)?
     var onStarted: (@MainActor (UUID?) -> Void)?
+    var onStateChanged: (@MainActor (LocalPlaybackUpdate) -> Void)?
     /// Latency to the first advancing render frame, including opening/seek work.
     var onFirstRender: (@MainActor (Double) -> Void)?
     private struct Snapshot {
@@ -22,15 +32,18 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         var position = 0.0, duration = 0.0, rate = 1.0
         var generation = UUID(), identity = UUID()
         var canPrepare = false
+        var wantsPlayback = false
+        var intentRevision: UInt64 = 0
     }
     private let lock = NSLock()
-    private var cached = Snapshot(), commandVersion: UInt64 = 0
+    private var cached = Snapshot(), commandVersion: UInt64 = 0, mediaVersion: UInt64 = 0
     private let control = DispatchQueue(label: "com.echomusic.audio-control", qos: .userInitiated)
     private let opening = DispatchQueue(label: "com.echomusic.audio-open", qos: .userInitiated, attributes: .concurrent)
     private let logger = Logger(subsystem: "com.echomusic.app", category: "Playback")
     private var graph: Graph?, decks: [Deck?] = [nil, nil], active = 0
     private var generation = UUID(), wantsPlayback = false, preparedNext: UUID?, currentURL: URL?
     private var playbackIdentity = UUID()
+    private var intentRevision: UInt64 = 0
     private var state: LocalPlaybackState = .idle
     private var transitionActive = false, recovered = false, interruptionResume = false
     private var lastProgress = 0.0
@@ -147,8 +160,10 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     }
     private func snapshot() -> Snapshot { lock.lock(); defer { lock.unlock() }; return cached }
     private func version() -> UInt64 { lock.lock(); defer { lock.unlock() }; return commandVersion }
-    private func invalidate(_ state: LocalPlaybackState) -> UInt64 {
+    private func mediaToken() -> UInt64 { lock.lock(); defer { lock.unlock() }; return mediaVersion }
+    private func invalidate(_ state: LocalPlaybackState, newMedia: Bool = false) -> UInt64 {
         lock.lock(); defer { lock.unlock() }; commandVersion &+= 1; cached.state = state
+        if newMedia { mediaVersion &+= 1 }
         if state == .preparing { cached.duration = 0; cached.position = 0 }
         return commandVersion
     }
@@ -185,7 +200,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     }
     func replace(with url: URL) throws {
         let requestedAt = ProcessInfo.processInfo.systemUptime
-        let token = invalidate(.preparing)
+        let token = invalidate(.preparing, newMedia: true)
         control.async { [weak self] in
             guard let self, self.version() == token else { return }
             self.currentURL = url; self.wantsPlayback = false; self.recovered = false; self.playbackIdentity = UUID()
@@ -193,11 +208,12 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
             self.reload(offset: 0, preserveStart: false, state: .preparing, version: token)
         }
     }
-    @discardableResult func play() -> Bool {
-        let token = version()
+    @discardableResult func play(intentRevision: UInt64? = nil) -> Bool {
+        let token = mediaToken()
         let requestedAt = ProcessInfo.processInfo.systemUptime
         control.async { [weak self] in
-            guard let self, self.version() == token else { return }
+            guard let self, self.mediaToken() == token else { return }
+            if let intentRevision { self.intentRevision = intentRevision }
             if self.state == .paused && !self.wantsPlayback {
                 self.requestDate = requestedAt; self.awaitingRenderMeasurement = true
             }
@@ -205,9 +221,11 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         }
         return true // Command accepted; isPlaying confirms rendered progress.
     }
-    func pause(completion: (@MainActor () -> Void)? = nil) {
+    func pause(intentRevision: UInt64? = nil, completion: (@MainActor () -> Void)? = nil) {
+        let token = mediaToken()
         control.async { [weak self] in
-            guard let self else { return }
+            guard let self, self.mediaToken() == token else { return }
+            if let intentRevision { self.intentRevision = intentRevision }
             self.pauseOnControl()
             if let completion {
                 DispatchQueue.main.async { completion() }
@@ -215,7 +233,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         }
     }
     func stop() {
-        let token = invalidate(.idle)
+        let token = invalidate(.idle, newMedia: true)
         control.async { [weak self] in
             guard let self, self.version() == token else { return }
             self.wantsPlayback = false; self.generation = UUID(); self.playbackIdentity = UUID(); self.graph?.nodes.forEach { $0.stop() }
@@ -243,8 +261,12 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     }
     private func pauseOnControl() {
         let position = position(active); wantsPlayback = false
+        lastProgress = position
+        progressDate = ProcessInfo.processInfo.systemUptime
         if transitionActive { seekOnControl(position, version: version()) }
         else { graph?.nodes.forEach { $0.pause() }; state = .paused; publish(position: position) }
+        // Pause hardware output too so iOS observes that playback has stopped.
+        graph?.engine.pause()
     }
     private func seekOnControl(_ offset: Double, version token: UInt64) {
         guard let deck = decks[active], let graph else {
@@ -480,9 +502,26 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     private func publish(position: Double? = nil) {
         let deck = decks[active]
         lock.lock()
+        let previous = cached
         cached = Snapshot(state: state, position: position ?? cached.position, duration: deck?.duration ?? cached.duration,
-            rate: deck?.rate ?? 1, generation: generation, identity: playbackIdentity, canPrepare: wantsPlayback && deck != nil && !transitionActive && preparedNext == nil && deck?.rate == 1)
+            rate: deck?.rate ?? 1, generation: generation, identity: playbackIdentity,
+            canPrepare: wantsPlayback && deck != nil && !transitionActive && preparedNext == nil && deck?.rate == 1,
+            wantsPlayback: wantsPlayback, intentRevision: intentRevision)
+        let value = cached
+        let command = commandVersion
         lock.unlock()
+        if previous.state != value.state || previous.wantsPlayback != value.wantsPlayback ||
+            previous.intentRevision != value.intentRevision || abs(previous.rate - value.rate) > 0.001 {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.version() == command else { return }
+                let latest = self.snapshot()
+                guard latest.generation == value.generation, latest.intentRevision == value.intentRevision,
+                      latest.state == value.state, latest.wantsPlayback == value.wantsPlayback else { return }
+                self.onStateChanged?(LocalPlaybackUpdate(state: latest.state, position: latest.position,
+                    duration: latest.duration, rate: latest.rate, wantsPlayback: latest.wantsPlayback,
+                    intentRevision: latest.intentRevision))
+            }
+        }
     }
     private func recordStart(_ deck: Deck) {
         guard !deck.started else { return }

@@ -146,6 +146,8 @@ struct HomeView: View {
                         retry: { podcastRecommendations.retry += 1 }
                     )
 
+                    HomeLocalAlbumSection()
+
                     // MARK: - Favorites
 
                     if !favoritesSnapshot.isEmpty {
@@ -186,6 +188,7 @@ struct HomeView: View {
                         )
                         .padding(.top, 80)
                     }
+                    HomeOnlineAlbumSection()
                     HomeDiscoverySection(
                         recommendations: podcastRecommendations.shows,
                         playSong: { song, queue in play(song, queue: queue) }

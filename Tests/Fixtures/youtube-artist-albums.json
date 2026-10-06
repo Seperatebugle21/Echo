@@ -1,0 +1,138 @@
+{
+  "items": [
+    {
+      "musicTwoRowItemRenderer": {
+        "thumbnailRenderer": {
+          "musicThumbnailRenderer": {
+            "thumbnail": {
+              "thumbnails": [
+                {
+                  "url": "https://yt3.googleusercontent.com/CYRTncU6MzK5YXfEkdG0vY5d_TAN8p6DTAhSN8TPm1wq9XZBlcbg9-OSyDKvC97EccclOe3tZLeUh_Ab=w226-h226-l90-rj",
+                  "width": 226,
+                  "height": 226
+                },
+                {
+                  "url": "https://yt3.googleusercontent.com/CYRTncU6MzK5YXfEkdG0vY5d_TAN8p6DTAhSN8TPm1wq9XZBlcbg9-OSyDKvC97EccclOe3tZLeUh_Ab=w544-h544-l90-rj",
+                  "width": 544,
+                  "height": 544
+                }
+              ]
+            },
+            "thumbnailCrop": "MUSIC_THUMBNAIL_CROP_UNSPECIFIED",
+            "thumbnailScale": "MUSIC_THUMBNAIL_SCALE_ASPECT_FILL"
+          }
+        },
+        "aspectRatio": "MUSIC_TWO_ROW_ITEM_THUMBNAIL_ASPECT_RATIO_SQUARE",
+        "title": {
+          "runs": [
+            {
+              "text": "(What's The Story) Morning Glory? (30th Anniversary Deluxe Edition)",
+              "navigationEndpoint": {
+                "browseEndpoint": {
+                  "browseId": "MPREb_9rUb85NwrKk",
+                  "params": "ggMrGilPTEFLNXV5X21iTkRTMHBaVnVkNjk5WnFIOFRfLU85RTVtN19YVVNGRQ%3D%3D",
+                  "browseEndpointContextSupportedConfigs": {
+                    "browseEndpointContextMusicConfig": {
+                      "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "subtitle": {
+          "runs": [
+            {
+              "text": "Album"
+            },
+            {
+              "text": " • "
+            },
+            {
+              "text": "2025"
+            }
+          ]
+        },
+        "navigationEndpoint": {
+          "browseEndpoint": {
+            "browseId": "MPREb_9rUb85NwrKk",
+            "params": "ggMrGilPTEFLNXV5X21iTkRTMHBaVnVkNjk5WnFIOFRfLU85RTVtN19YVVNGRQ%3D%3D",
+            "browseEndpointContextSupportedConfigs": {
+              "browseEndpointContextMusicConfig": {
+                "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "musicTwoRowItemRenderer": {
+        "thumbnailRenderer": {
+          "musicThumbnailRenderer": {
+            "thumbnail": {
+              "thumbnails": [
+                {
+                  "url": "https://yt3.googleusercontent.com/NBRl89JmDSQfqiO9DLeF3ttjx6sh1pILE_ezAGhJpkmkzvohwxUvjfR-dSnSPiO-9JFkCRARKI4DKqDE=w226-h226-l90-rj",
+                  "width": 226,
+                  "height": 226
+                },
+                {
+                  "url": "https://yt3.googleusercontent.com/NBRl89JmDSQfqiO9DLeF3ttjx6sh1pILE_ezAGhJpkmkzvohwxUvjfR-dSnSPiO-9JFkCRARKI4DKqDE=w544-h544-l90-rj",
+                  "width": 544,
+                  "height": 544
+                }
+              ]
+            },
+            "thumbnailCrop": "MUSIC_THUMBNAIL_CROP_UNSPECIFIED",
+            "thumbnailScale": "MUSIC_THUMBNAIL_SCALE_ASPECT_FILL"
+          }
+        },
+        "aspectRatio": "MUSIC_TWO_ROW_ITEM_THUMBNAIL_ASPECT_RATIO_SQUARE",
+        "title": {
+          "runs": [
+            {
+              "text": "The Masterplan (Remastered Edition)",
+              "navigationEndpoint": {
+                "browseEndpoint": {
+                  "browseId": "MPREb_IReNJBd5ynX",
+                  "params": "ggMrGilPTEFLNXV5X2xWR1FQR3l4VGdpazV4cW9IcnB3WU9DMHlzck1KYVJxOA%3D%3D",
+                  "browseEndpointContextSupportedConfigs": {
+                    "browseEndpointContextMusicConfig": {
+                      "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "subtitle": {
+          "runs": [
+            {
+              "text": "Album"
+            },
+            {
+              "text": " • "
+            },
+            {
+              "text": "2023"
+            }
+          ]
+        },
+        "navigationEndpoint": {
+          "browseEndpoint": {
+            "browseId": "MPREb_IReNJBd5ynX",
+            "params": "ggMrGilPTEFLNXV5X2xWR1FQR3l4VGdpazV4cW9IcnB3WU9DMHlzck1KYVJxOA%3D%3D",
+            "browseEndpointContextSupportedConfigs": {
+              "browseEndpointContextMusicConfig": {
+                "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

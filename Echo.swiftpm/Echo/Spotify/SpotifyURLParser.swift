@@ -4,6 +4,7 @@ enum SpotifyContentType {
     case track
     case album
     case playlist
+    case artist
 }
 
 struct SpotifyReference {
@@ -36,7 +37,7 @@ enum SpotifyURLParser {
             return nil
         }
 
-        let components = url.pathComponents
+        let components = url.pathComponents.filter { !$0.hasPrefix("intl-") }
 
         guard components.count >= 3 else {
             return nil
@@ -50,6 +51,9 @@ enum SpotifyURLParser {
         switch typeString {
         case "track":
             type = .track
+
+        case "artist":
+            type = .artist
 
         case "album":
             type = .album
@@ -85,6 +89,9 @@ enum SpotifyURLParser {
         switch parts[1] {
         case "track":
             type = .track
+
+        case "artist":
+            type = .artist
 
         case "album":
             type = .album

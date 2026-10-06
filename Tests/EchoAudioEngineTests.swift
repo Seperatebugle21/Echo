@@ -4,6 +4,42 @@ import XCTest
 /// Live render-clock checks; run on an iOS Simulator or device.
 @MainActor
 final class EchoAudioEngineTests: XCTestCase {
+    func testStateCallbacksPublishLatestTransportCommandOnMainThread() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 5))
+        defer { player.stop() }
+        var updates: [LocalPlaybackUpdate] = []
+        player.onStateChanged = { update in
+            XCTAssertTrue(Thread.isMainThread)
+            updates.append(update)
+        }
+        _ = try await player.preparedDuration()
+        player.play(intentRevision: 1)
+        try await until { updates.contains { $0.intentRevision == 1 && $0.state == .playing } }
+        player.pause(intentRevision: 2)
+        player.play(intentRevision: 3)
+        player.pause(intentRevision: 4)
+        try await until { updates.last?.intentRevision == 4 && updates.last?.state == .paused }
+        XCTAssertFalse(try XCTUnwrap(updates.last).wantsPlayback)
+        let position = player.currentTime
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertEqual(player.currentTime, position, accuracy: 0.01)
+        player.play(intentRevision: 5)
+        try await until { updates.last?.intentRevision == 5 && updates.last?.state == .playing }
+        try await until { player.currentTime > position + 0.01 }
+        XCTAssertGreaterThan(player.currentTime, position)
+    }
+    func testQueuedPauseIsPreservedWhenImmediatelySeeking() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 5))
+        defer { player.stop() }
+        player.play(intentRevision: 1)
+        try await until { player.isPlaying }
+        player.pause(intentRevision: 2)
+        player.currentTime = 2
+        try await until { player.stateValue == .paused && abs(player.currentTime - 2) < 0.01 }
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertFalse(player.isPlaying)
+        XCTAssertEqual(player.currentTime, 2, accuracy: 0.01)
+    }
     private final class FinishRecorder: EqualizedAudioPlayerDelegate {
         var finished = false
         @MainActor func audioPlayerDidFinishPlaying(_ player: EqualizedAudioPlayer, successfully flag: Bool) { finished = flag }
@@ -117,7 +153,8 @@ final class EchoAudioEngineTests: XCTestCase {
         try Data("broken audio".utf8).write(to: corrupt); addTeardownBlock { try? FileManager.default.removeItem(at: corrupt) }
         let player = try EqualizedAudioPlayer(contentsOf: corrupt)
         defer { player.stop() }
-        player.play(); try await until { player.stateValue == .failed }; XCTAssertFalse(player.isPlaying)
+        // Core Audio initializes decoder plugins on the first open on a fresh simulator.
+        player.play(); try await until({ player.stateValue == .failed }, timeout: 30); XCTAssertFalse(player.isPlaying)
         try player.replace(with: fixture(rate: 44100, channels: 2)); player.play()
         try await until { player.isPlaying }
     }

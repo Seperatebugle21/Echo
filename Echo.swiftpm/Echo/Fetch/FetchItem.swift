@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 enum FetchStatus: Equatable {
 
@@ -37,19 +38,19 @@ enum FetchStatus: Equatable {
         switch self {
 
         case .queued:
-            return "Queued"
+            return String(localized: "fetch_status_queued")
 
         case .preparing:
-            return "Preparing"
+            return String(localized: "fetch_status_preparing")
 
         case .downloading:
-            return "Downloading"
+            return String(localized: "fetch_status_downloading")
 
         case .processing:
-            return "Encoding MP3"
+            return String(localized: "fetch_status_encoding")
 
         case .completed:
-            return "Completed"
+            return String(localized: "fetch_status_completed")
 
         case .failed(let message):
             return message
@@ -57,6 +58,8 @@ enum FetchStatus: Equatable {
     }
 }
 
+
+enum FetchQueueState: Equatable { case pending, completed, failed }
 
 @Observable
 final class FetchItem: Identifiable {
@@ -88,9 +91,18 @@ final class FetchItem: Identifiable {
     var destinationPlaylistPositions:
         [UUID: Int]
 
-    var status:
-        FetchStatus =
-            .queued
+    private(set) var queueState: FetchQueueState = .pending
+    @ObservationIgnored private var retryBudget = FetchRetryBudget()
+    var automaticRetryCount: Int { retryBudget.used }
+    func consumeAutomaticRetry(after error: Error? = nil) -> Bool { retryBudget.consume(after: error) }
+
+    var status: FetchStatus = .queued {
+        didSet {
+            let next: FetchQueueState
+            switch status { case .completed: next = .completed; case .failed: next = .failed; default: next = .pending }
+            if queueState != next { queueState = next }
+        }
+    }
 
 
     init(
@@ -101,8 +113,11 @@ final class FetchItem: Identifiable {
         artworkURL: URL? = nil,
         youtubeURL: URL? = nil,
         permissionConfirmed: Bool = false,
-        destinationPlaylistPositions: [UUID: Int] = [:]
+        destinationPlaylistPositions: [UUID: Int] = [:],
+        automaticRetryCount: Int = 0
     ) {
+
+        self.retryBudget = FetchRetryBudget(used: automaticRetryCount)
 
         self.spotifyURL =
             spotifyURL

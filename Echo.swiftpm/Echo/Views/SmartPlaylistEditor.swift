@@ -27,7 +27,8 @@ struct SmartPlaylistEditor: View {
         _imageData = State(initialValue: playlist?.imageData)
     }
     private var matches: [Song] {
-        SmartPlaylistEvaluator.songs(definition, from: library.songs, favorites: Set(library.favoriteSongIDs), listening: RecommendationManager.shared.smartSnapshot, now: now)
+        let overrides = playlist.flatMap { original in library.playlists.first { $0.id == original.id }?.smartOverrides } ?? [:]
+        return SmartPlaylistEvaluator.songs(definition, from: library.songs, favorites: Set(library.favoriteSongIDs), listening: RecommendationManager.shared.smartSnapshot, now: now, overrides: overrides)
     }
     private var effectiveName: String {
         automaticNameKey.map { EchoLocalization.string($0, fallback: name) } ?? name

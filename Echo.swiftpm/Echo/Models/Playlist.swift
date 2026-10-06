@@ -10,6 +10,7 @@ struct Playlist: Identifiable, Codable {
     var smartDefinition: SmartPlaylistDefinition? = nil
     var builtinCoverID: String? = nil
     var automaticNameKey: String? = nil
+    var smartOverrides: [UUID: SmartSongOverride]? = nil
 
     func displayName(language: String? = nil) -> String {
         guard let automaticNameKey else { return name }

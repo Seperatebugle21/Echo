@@ -2,38 +2,6 @@ import Foundation
 import UIKit
 
 
-// MARK: - Persistent Background Record
-
-struct BackgroundFetchRecord:
-    Codable,
-    Identifiable,
-    Sendable {
-
-    let id: UUID
-
-    let spotifyURL: String
-
-    let title: String
-    let artist: String
-    let album: String?
-
-    let artworkURL: String?
-    let youtubeURL: String?
-
-    let permissionConfirmed: Bool
-
-    let destinationPlaylistPositions: [UUID: Int]?
-
-    let suggestedFileName: String?
-
-    var localFilePath: String?
-
-    var completed: Bool
-
-    var errorMessage: String?
-}
-
-
 // MARK: - Parallel Download Helpers
 
 private struct ParallelDownloadProbe:
@@ -199,6 +167,8 @@ final class FetchDownloadEngine:
                 (Double) -> Void
         ] = [:]
 
+
+    private var progressGates: [UUID: FetchProgressGate] = [:]
 
     private var claimedRecords:
         Set<UUID> = []
@@ -384,6 +354,8 @@ final class FetchDownloadEngine:
                 destinationPlaylistPositions:
                     item.destinationPlaylistPositions,
 
+                automaticRetryCount: item.automaticRetryCount,
+
                 suggestedFileName:
                     result.suggestedFileName,
 
@@ -450,6 +422,7 @@ final class FetchDownloadEngine:
 
             } catch {
 
+                if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled { throw CancellationError() }
                 print(
                     "Parallel download fallback:",
                     error.localizedDescription
@@ -586,6 +559,29 @@ final class FetchDownloadEngine:
 
     @MainActor
     private func downloadInParallel(
+        record originalRecord:
+            BackgroundFetchRecord,
+
+        downloadURL:
+            URL,
+
+        probe:
+            ParallelDownloadProbe,
+
+        progress:
+            @escaping
+            @MainActor
+            (Double) -> Void
+
+    ) async throws -> URL {
+
+        try await FetchTransferWork.run {
+            try await self.downloadParallelWorker(record: originalRecord, downloadURL: downloadURL,
+                probe: probe, progress: progress)
+        }
+    }
+
+    private func downloadParallelWorker(
         record originalRecord:
             BackgroundFetchRecord,
 
@@ -758,7 +754,7 @@ final class FetchDownloadEngine:
                 )
 
 
-            // Update UI about 12 times per second.
+            // Publish progress at most five times per second.
             // Enough for smooth progress without
             // spamming the main actor.
 
@@ -767,6 +763,7 @@ final class FetchDownloadEngine:
                     @MainActor in
 
 
+                    var lastValue = -1.0
                     while !Task.isCancelled {
 
                         let value =
@@ -774,23 +771,16 @@ final class FetchDownloadEngine:
                                 .fraction()
 
 
-                        emitParallelProgress(
-                            id:
-                                originalRecord.id,
-
-                            value:
-                                value,
-
-                            progress:
-                                progress
-                        )
-
-
+                        guard !Task.isCancelled else { return }
+                        if value != lastValue {
+                            lastValue = value
+                            self.emitParallelProgress(id: originalRecord.id, value: value, progress: progress)
+                        }
                         try? await
                             Task.sleep(
                                 for:
                                     .milliseconds(
-                                        80
+                                        200
                                     )
                             )
                     }
@@ -1046,7 +1036,7 @@ final class FetchDownloadEngine:
                 .cancel()
 
 
-            emitParallelProgress(
+            await emitParallelProgress(
                 id:
                     originalRecord.id,
 
@@ -1075,101 +1065,8 @@ final class FetchDownloadEngine:
             }
 
 
-            FileManager.default
-                .createFile(
-                    atPath:
-                        destination.path,
-
-                    contents:
-                        nil
-                )
-
-
-            let output =
-                try FileHandle(
-                    forWritingTo:
-                        destination
-                )
-
-
-            defer {
-
-                try? output
-                    .close()
-            }
-
-
-            // Merge chunks in correct order.
-
-            for chunk in
-                chunkResults {
-
-                let input =
-                    try FileHandle(
-                        forReadingFrom:
-                            chunk.fileURL
-                    )
-
-
-                while true {
-
-                    let data =
-                        try input.read(
-                            upToCount:
-                                512 * 1024
-                        )
-                        ??
-                        Data()
-
-
-                    if data.isEmpty {
-
-                        break
-                    }
-
-
-                    try output.write(
-                        contentsOf:
-                            data
-                    )
-                }
-
-
-                try? input
-                    .close()
-            }
-
-
-            let attributes =
-                try FileManager.default
-                    .attributesOfItem(
-                        atPath:
-                            destination.path
-                    )
-
-
-            let finalSize =
-                (
-                    attributes[
-                        .size
-                    ]
-                    as?
-                    NSNumber
-                )?
-                .int64Value
-                ??
-                -1
-
-
-            guard finalSize ==
-                totalBytes
-            else {
-
-                throw
-                    ParallelDownloadError
-                        .invalidChunkLength
-            }
-
+            try FetchTransferWork.merge(parts: chunkResults.map(\.fileURL),
+                destination: destination, expectedBytes: totalBytes)
 
             try? FileManager.default
                 .removeItem(
@@ -1210,7 +1107,7 @@ final class FetchDownloadEngine:
             stateLock.unlock()
 
 
-            emitParallelProgress(
+            await emitParallelProgress(
                 id:
                     record.id,
 
@@ -1411,7 +1308,12 @@ final class FetchDownloadEngine:
 
 
         stateLock.lock()
-
+        var gate = progressGates[id] ?? FetchProgressGate()
+        guard gate.publish(progress, at: ProcessInfo.processInfo.systemUptime) else {
+            stateLock.unlock()
+            return
+        }
+        progressGates[id] = gate
 
         let handler =
             progressHandlers[
@@ -2193,6 +2095,7 @@ final class FetchDownloadEngine:
     ) {
 
         stateLock.lock()
+        progressGates.removeValue(forKey: id)
 
 
         var values:

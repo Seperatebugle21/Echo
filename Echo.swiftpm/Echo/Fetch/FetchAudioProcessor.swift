@@ -235,12 +235,10 @@ final class FetchAudioProcessor {
 
         do {
 
-            // Higher priority than before.
-            // Encoding is user-visible work.
-
+            // Leave interactive rendering and audio playback ahead of encoding.
             try await Task.detached(
                 priority:
-                    .userInitiated
+                    .utility
             ) {
 
                 try await Self

@@ -39,6 +39,35 @@ struct SmartPlaylistDefinition: Codable, Equatable {
     var limit: Int? = 50
     var periodDays: Int? = nil
 }
+/// Only reset songs have local counts. All other songs retain global listening history.
+struct SmartSongOverride: Codable, Equatable {
+    var manuallyIncluded = false
+    var excludedUntil: Date?
+    var totalSinceReset: Int?
+    var dailySinceReset: [String: Int]?
+
+    func isExcluded(at now: Date) -> Bool { excludedUntil.map { now < $0 } ?? false }
+    mutating func remove(at now: Date) {
+        manuallyIncluded = false
+        excludedUntil = now.addingTimeInterval(120 * 3600)
+        totalSinceReset = 0
+        dailySinceReset = [:]
+    }
+    @discardableResult mutating func include(at now: Date) -> Bool {
+        guard !isExcluded(at: now) else { return false }
+        excludedUntil = nil
+        manuallyIncluded = true
+        return true
+    }
+    mutating func recordPlay(at now: Date) {
+        guard let count = totalSinceReset else { return }
+        totalSinceReset = count + 1
+        var daily = dailySinceReset ?? [:]
+        daily[SmartListeningSnapshot.dayKey(now), default: 0] += 1
+        dailySinceReset = daily
+    }
+}
+
 struct SmartListeningSnapshot {
     var total: [UUID: Int] = [:]
     var daily: [UUID: [String: Int]] = [:]
@@ -64,7 +93,14 @@ struct SmartListeningSnapshot {
     }
 }
 enum SmartPlaylistEvaluator {
-    static func songs(_ definition: SmartPlaylistDefinition, from songs: [Song], favorites: Set<UUID>, listening: SmartListeningSnapshot, now: Date = Date()) -> [Song] {
+    static func songs(_ definition: SmartPlaylistDefinition, from songs: [Song], favorites: Set<UUID>, listening: SmartListeningSnapshot, now: Date = Date(), overrides: [UUID: SmartSongOverride] = [:]) -> [Song] {
+        var listening = listening
+        for (id, override) in overrides {
+            if let count = override.totalSinceReset {
+                listening.total[id] = count
+                listening.daily[id] = override.dailySinceReset ?? [:]
+            }
+        }
         // Compute each listening window once, rather than during every sort comparison.
         var counts: [Int?: [UUID: Int]] = [:]
         let periods = Set(definition.rules.filter { $0.field == .playCount }.map(\.periodDays))
@@ -74,12 +110,15 @@ enum SmartPlaylistEvaluator {
             counts[sortPeriod] = listening.counts(days: definition.periodDays, now: now)
         }
         let filtered = songs.filter { song in
+            guard overrides[song.id]?.isExcluded(at: now) != true else { return false }
+            // Manual songs are added after applying the automatic selection limit.
+            guard overrides[song.id]?.manuallyIncluded != true else { return false }
             let ruleMatches: [Bool] = definition.rules.map { rule in
                 Self.matches(rule, song: song, favorites: favorites, counts: counts, now: now)
             }
             return ruleMatches.isEmpty || (definition.matchAll ? ruleMatches.allSatisfy { $0 } : ruleMatches.contains(true))
         }
-        let sorted = filtered.sorted { a, b in
+        let precedes: (Song, Song) -> Bool = { a, b in
             let ac = counts[sortPeriod]?[a.id] ?? 0
             let bc = counts[sortPeriod]?[b.id] ?? 0
             switch definition.sort {
@@ -95,7 +134,11 @@ enum SmartPlaylistEvaluator {
             let order = a.title.localizedStandardCompare(b.title)
             return order == .orderedSame ? a.id.uuidString < b.id.uuidString : order == .orderedAscending
         }
-        return definition.limit.map { Array(sorted.prefix(max(0, $0))) } ?? sorted
+        let sorted = filtered.sorted(by: precedes)
+        let automatic = definition.limit.map { Array(sorted.prefix(max(0, $0))) } ?? sorted
+        let manual = songs.filter { overrides[$0.id]?.manuallyIncluded == true && overrides[$0.id]?.isExcluded(at: now) != true }
+        var seen: Set<UUID> = []
+        return (automatic + manual).filter { seen.insert($0.id).inserted }.sorted(by: precedes)
     }
     private static func matches(_ rule: SmartRule, song: Song, favorites: Set<UUID>, counts: [Int?: [UUID: Int]], now: Date) -> Bool {
         guard rule.value.isFinite, rule.upper.isFinite, abs(rule.value) <= 1_000_000, abs(rule.upper) <= 1_000_000 else { return false }
