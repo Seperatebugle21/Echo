@@ -131,18 +131,21 @@ final class EchoFeatureLogicTests: XCTestCase {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
         defer { try? FileManager.default.removeItem(at: url) }
         let persistence = SongLibraryPersistence(url: url)
-        let completed = DispatchSemaphore(value: 0)
+        let snapshotWritten = expectation(description: "Latest song snapshot written")
         var updated = song("Updated")
         updated.genre = "Rock"; updated.releaseYear = 1990
         for index in 0..<100 { persistence.submit([song("Old \(index)")]) }
         persistence.submit([updated], immediately: true) {
             XCTAssertFalse(Thread.isMainThread)
-            completed.signal()
+            snapshotWritten.fulfill()
         }
-        XCTAssertEqual(completed.wait(timeout: .now() + 10), .success)
+        // XCTest's wait services the run loop; a semaphore blocks the test
+        // thread while the simulator is completing background file work.
+        wait(for: [snapshotWritten], timeout: 30)
         XCTAssertEqual(try JSONDecoder().decode([Song].self, from: Data(contentsOf: url)), [updated])
-        persistence.submit([], immediately: true) { completed.signal() }
-        XCTAssertEqual(completed.wait(timeout: .now() + 10), .success)
+        let deletionWritten = expectation(description: "Empty song snapshot written")
+        persistence.submit([], immediately: true) { deletionWritten.fulfill() }
+        wait(for: [deletionWritten], timeout: 30)
         Thread.sleep(forTimeInterval: 0.5)
         XCTAssertEqual(try JSONDecoder().decode([Song].self, from: Data(contentsOf: url)), [])
     }
