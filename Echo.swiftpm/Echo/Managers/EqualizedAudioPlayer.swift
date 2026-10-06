@@ -265,6 +265,8 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         progressDate = ProcessInfo.processInfo.systemUptime
         if transitionActive { seekOnControl(position, version: version()) }
         else { graph?.nodes.forEach { $0.pause() }; state = .paused; publish(position: position) }
+        // Pause hardware output too so iOS observes that playback has stopped.
+        graph?.engine.pause()
     }
     private func seekOnControl(_ offset: Double, version token: UInt64) {
         guard let deck = decks[active], let graph else {
