@@ -2,7 +2,6 @@ import SwiftUI
 
 struct FetchCatalogSearchView: View {
     let provider: MusicCatalogProvider
-    var initialQuery = ""
     @State private var query = ""
     @State private var submittedQuery = ""
     @State private var results = MusicCatalogSearchResults()
@@ -62,7 +61,7 @@ struct FetchCatalogSearchView: View {
                 }
             }
             if results.isEmpty && !loading && error == nil {
-                ContentUnavailableView(searched ? "catalog_no_search_results" : "catalog_search_discover",
+                ContentUnavailableView(LocalizedStringKey(searched ? "catalog_no_search_results" : "catalog_search_discover"),
                     systemImage: "magnifyingglass", description: Text("catalog_search_hint"))
             }
         }
@@ -72,9 +71,6 @@ struct FetchCatalogSearchView: View {
         .onSubmit(of: .search) { submittedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines); retry += 1 }
         .onChange(of: query) {
             if query.isEmpty { submittedQuery = ""; results = MusicCatalogSearchResults(); searched = false }
-        }
-        .onAppear {
-            if query.isEmpty && !initialQuery.isEmpty { query = initialQuery; submittedQuery = initialQuery }
         }
         .task(id: "\(submittedQuery):\(retry):\(SpotifyManager.shared.isConnected)") { await search() }
     }

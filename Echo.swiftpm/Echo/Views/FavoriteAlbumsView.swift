@@ -64,7 +64,7 @@ struct FavoriteAlbumsView: View {
         .searchable(text: $query, prompt: "libraryview_search_albums")
         .overlay {
             if albums.isEmpty {
-                ContentUnavailableView(query.isEmpty ? "favorite_albums_empty" : "catalog_no_search_results",
+                ContentUnavailableView(LocalizedStringKey(query.isEmpty ? "favorite_albums_empty" : "catalog_no_search_results"),
                     systemImage: "heart", description: Text("favorite_albums_hint"))
             }
         }

@@ -30,6 +30,10 @@ Fetch brings audio search, link resolution, downloads, and library import into a
 
 Downloads support selectable output bitrates of 128, 192, and 320 kbps, with metadata and artwork processing. Available sources and download results depend on the selected provider and its configuration.
 
+Fetch searches Spotify and YouTube Music for songs, artists, and albums. Open artist catalogs and album releases directly in Echo. From a local album, use **Find missing songs** to choose its online edition and download tracks that are not already in your library or download queue.
+
+Albums can be added to favorites from their detail page, by holding an album cover, or by swiping an album list row. **Favorite albums** appears beside song favorites in **Your library**, with covers from saved albums. Album favorites are saved independently from favorite songs.
+
 ### Playback and sound control
 
 Play music in the background, manage a shared music and podcast queue, and route audio to AirPlay devices. A six-band equalizer provides presets and custom adjustments for local music playback.
