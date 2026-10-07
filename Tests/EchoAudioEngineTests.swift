@@ -140,6 +140,77 @@ final class EchoAudioEngineTests: XCTestCase {
         player.play()
         try await until { player.isPlaying && player.currentTime > pausedPosition + 0.1 }
     }
+    func testRepeatedUpcomingChangesKeepTheCurrentRenderClockRunning() async throws {
+        let current = try fixture(rate: 48000, channels: 2, seconds: 15)
+        let next = try fixture(rate: 44100, channels: 1, seconds: 4)
+        let player = try EqualizedAudioPlayer(contentsOf: current)
+        defer { player.stop() }
+        var starts = 0, promotions = 0
+        player.onStarted = { _ in starts += 1 }
+        player.onPromote = { _ in promotions += 1 }
+        _ = try await player.preparedDuration()
+        player.play()
+        try await until({ player.isPlaying && starts == 1 }, timeout: 10)
+        for _ in 0..<5 {
+            player.prepareNext(url: next, identifier: UUID(), plan: AudioTransitionPlan(overlap: 1))
+            try await until { player.stateValue == .transitioning }
+            let position = player.currentTime
+            var cancelled = false
+            player.cancelPreparedNext { promoted in
+                XCTAssertNil(promoted)
+                XCTAssertEqual(player.stateValue, .playing)
+                XCTAssertGreaterThanOrEqual(player.currentTime, position)
+                cancelled = true
+            }
+            try await until { cancelled }
+            try await until { player.currentTime > position + 0.1 }
+        }
+        XCTAssertEqual(starts, 1)
+        XCTAssertEqual(promotions, 0)
+    }
+
+    func testCancellingAfterPromotionKeepsTheAudibleIncomingSong() async throws {
+        let current = try fixture(rate: 48000, channels: 2, seconds: 2)
+        let next = try fixture(rate: 44100, channels: 1, seconds: 8)
+        let player = try EqualizedAudioPlayer(contentsOf: current)
+        defer { player.stop() }
+        let id = UUID()
+        var promoted = false
+        player.onPromote = { _ in promoted = true }
+        _ = try await player.preparedDuration()
+        player.play()
+        try await until({ player.isPlaying }, timeout: 10)
+        player.prepareNext(url: next, identifier: id, plan: AudioTransitionPlan(overlap: 1))
+        try await until { promoted }
+        let position = player.currentTime
+        var cancelled = false
+        player.cancelPreparedNext { audible in
+            XCTAssertEqual(audible, id)
+            XCTAssertTrue(player.isPlaying)
+            XCTAssertGreaterThanOrEqual(player.currentTime, position)
+            cancelled = true
+        }
+        try await until { cancelled && player.currentTime > position + 0.1 }
+        XCTAssertEqual(player.duration, 8, accuracy: 0.001)
+    }
+
+    func testCancellingTrimmedTransitionPreservesTheFullCurrentSongTail() async throws {
+        let current = try fixture(rate: 48000, channels: 2, seconds: 6)
+        let next = try fixture(rate: 44100, channels: 1, seconds: 8)
+        let player = try EqualizedAudioPlayer(contentsOf: current)
+        defer { player.stop() }
+        let finished = FinishRecorder()
+        player.delegate = finished
+        _ = try await player.preparedDuration()
+        player.play()
+        try await until({ player.isPlaying }, timeout: 10)
+        player.prepareNext(url: next, identifier: UUID(), plan: AudioTransitionPlan(outgoingTrim: 2))
+        try await until { player.currentTime > 3.7 }
+        player.cancelPreparedNext()
+        try await until { finished.finished }
+        XCTAssertEqual(player.duration, 6, accuracy: 0.001)
+        XCTAssertEqual(player.currentTime, 6, accuracy: 0.001)
+    }
     func testSeekWhilePlayingContinuesWithoutAnotherPlayCommand() async throws {
         let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 5))
         defer { player.stop() }

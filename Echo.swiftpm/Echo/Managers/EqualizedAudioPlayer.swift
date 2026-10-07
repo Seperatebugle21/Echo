@@ -108,6 +108,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         var scheduled = 0, pending = 0
         var ended = false, completed = false, started = false, promoted = false, nodeStarted = false
         var finalBufferScheduled = false
+        var trimmedBuffers: [AVAudioPCMBuffer] = []
         var identifier: UUID?, fadeOutStart: Double?
         var fadeIn = 0.0, rate = 1.0, fadeRate = 1.0
         var hostStart: UInt64 = 0
@@ -296,6 +297,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         deck.offset = target; deck.end = deck.duration; deck.queuedFrames = 0; deck.scheduled = 0; deck.pending = 0
         deck.ended = false; deck.completed = false; deck.nodeStarted = false; deck.promoted = false
         deck.finalBufferScheduled = false
+        deck.trimmedBuffers = []
         deck.identifier = nil; deck.fadeIn = 0; deck.fadeOutStart = nil; deck.rate = 1; deck.fadeRate = 1; deck.hostStart = 0
         decks = [deck, nil]; active = 0; preparedNext = nil; transitionActive = false
         state = wantsPlayback ? .seeking : .paused; lastProgress = target; progressDate = ProcessInfo.processInfo.systemUptime; publish(position: target)
@@ -327,11 +329,46 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
             }
         }
     }
-    func cancelPreparedNext() {
+    func cancelPreparedNext(completion: (@MainActor (UUID?) -> Void)? = nil) {
         control.async { [weak self] in
             guard let self else { return }
-            if self.transitionActive { self.seekOnControl(self.position(self.active), version: self.version()) }
-            else { self.preparedNext = nil; self.publish(position: self.position(self.active)) }
+            let current = self.decks[self.active]
+            let promoted = current?.promoted == true ? current?.identifier : nil
+            defer {
+                if let completion { DispatchQueue.main.async { completion(promoted) } }
+            }
+            // Once the incoming song is current, finish its audible fade rather
+            // than cutting either side of the mix because a future queue changed.
+            if self.transitionActive, promoted != nil, promoted == self.preparedNext { return }
+            let cancelledIndex = 1 - self.active
+            // Cancel only the other deck. The current node, converter and render
+            // clock must keep running while queue/settings changes are applied.
+            self.graph?.nodes[cancelledIndex].stop()
+            self.decks[cancelledIndex] = nil
+            self.graph?.pitches[cancelledIndex].rate = 1
+            self.graph?.pitches[cancelledIndex].bypass = true
+            if let current {
+                let wasTrimmed = current.end < current.duration
+                current.end = current.duration
+                current.fadeOutStart = nil
+                if wasTrimmed && !current.completed {
+                    current.ended = false
+                    current.finalBufferScheduled = false
+                    let tail = current.trimmedBuffers
+                    current.trimmedBuffers = []
+                    if let graph = self.graph {
+                        for buffer in tail {
+                            self.schedule(buffer, result: .haveData, deck: current,
+                                index: self.active, graph: graph, request: self.generation)
+                        }
+                    }
+                }
+            }
+            self.transitionActive = false
+            self.preparedNext = nil
+            if self.wantsPlayback && current?.nodeStarted == true { self.state = .playing }
+            self.pump(self.active)
+            self.publish(position: self.position(self.active))
         }
     }
     func prepareNext(url: URL, identifier: UUID, plan: AudioTransitionPlan) {
@@ -396,9 +433,25 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         }
     }
     private func schedule(_ buffer: AVAudioPCMBuffer, result: AVAudioConverterOutputStatus, deck: Deck, index: Int, graph: Graph, request: UUID) {
-        guard !deck.ended else { drained(index); return }
+        guard !deck.ended else {
+            if deck.end < deck.duration && buffer.frameLength > 0 { deck.trimmedBuffers.append(buffer) }
+            drained(index); return
+        }
         let start = deck.offset + Double(deck.queuedFrames) / 48000
-        buffer.frameLength = AVAudioFrameCount(min(Int64(buffer.frameLength), max(0, Int64((deck.end - start) * 48000))))
+        let fullLength = buffer.frameLength
+        let length = AVAudioFrameCount(min(Int64(fullLength), max(0, Int64((deck.end - start) * 48000))))
+        // Keep decoded samples beyond a planned transition cut. Cancelling that
+        // cut can then play the full tail without seeking or losing read-ahead.
+        if length < fullLength, deck.end < deck.duration,
+           let tail = AVAudioPCMBuffer(pcmFormat: buffer.format, frameCapacity: fullLength - length),
+           let source = buffer.floatChannelData, let destination = tail.floatChannelData {
+            tail.frameLength = fullLength - length
+            for channel in 0..<Int(buffer.format.channelCount) {
+                destination[channel].update(from: source[channel].advanced(by: Int(length)), count: Int(tail.frameLength))
+            }
+            deck.trimmedBuffers.append(tail)
+        }
+        buffer.frameLength = length
         if buffer.frameLength == 0 {
             if result == .endOfStream || start >= deck.end { deck.ended = true; drained(index) }
             else { control.asyncAfter(deadline: .now() + 0.01) { [weak self] in if self?.generation == request { self?.pump(index) } } }
