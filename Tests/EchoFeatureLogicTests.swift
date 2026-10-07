@@ -2,6 +2,64 @@ import Foundation
 import XCTest
 
 final class EchoFeatureLogicTests: XCTestCase {
+    func testAlbumCompletionReusesSongsAndPreservesOriginalMetadata() throws {
+        var original = Song(title: "Track", artist: "Singer & Guest", fileName: "track.m4a", album: "Single",
+            coverData: Data([1, 2]), lyrics: "Lyrics", artistNames: ["Singer", "Guest"])
+        original.genre = "Pop"
+        original.lastPlayed = Date(timeIntervalSince1970: 123)
+        var songs = [original]
+        let target = LibraryAlbumDestination(name: "Album", artist: "Singer")
+        XCTAssertEqual(LibraryAlbums.add([original.id, original.id], to: target, songs: &songs), 1)
+        XCTAssertEqual(songs.count, 1)
+        var expected = original
+        expected.additionalAlbums = [target]
+        XCTAssertEqual(songs[0], expected)
+        let reloaded = try JSONDecoder().decode([Song].self, from: JSONEncoder().encode(songs))
+        XCTAssertEqual(reloaded, songs)
+        let groups = LibraryAlbums.groups(from: reloaded)
+        XCTAssertEqual(groups.first { $0.name == "Album" && $0.artist == "Singer" }?.songs.map(\.id), [original.id])
+        XCTAssertEqual(groups.first { $0.name == "Single" }?.songs.map(\.id), [original.id])
+    }
+
+    func testAlbumCompletionIsIdempotentAndRejectsDuplicateRecordings() {
+        let first = Song(title: "  A   Song ", artist: "Beyoncé", fileName: "first.m4a", album: "Single")
+        let duplicate = Song(title: "a song", artist: "Beyonce", fileName: "duplicate.m4a", album: "Other")
+        var songs = [first, duplicate]
+        let target = LibraryAlbumDestination(name: "Café", artist: "Artist")
+        XCTAssertEqual(LibraryAlbums.add([first.id, duplicate.id], to: target, songs: &songs), 1)
+        let snapshot = songs
+        XCTAssertEqual(LibraryAlbums.add([first.id, duplicate.id], to: target, songs: &songs), 0)
+        XCTAssertEqual(LibraryAlbums.add([first.id], to: LibraryAlbumDestination(name: " cafe ", artist: " ARTIST "), songs: &songs), 0)
+        XCTAssertEqual(songs, snapshot)
+        XCTAssertEqual(LibraryAlbums.groups(from: songs).first { $0.name == "Café" }?.songs.map(\.id), [first.id])
+    }
+
+    func testOriginalAlbumAndDuplicateMembershipProduceOneRow() {
+        let target = LibraryAlbumDestination(name: "Album", artist: "Artist")
+        var original = Song(title: "Track", artist: "Artist", fileName: "track.m4a", album: "Album")
+        original.additionalAlbums = [target, target]
+        let duplicate = Song(title: "track", artist: "ARTIST", fileName: "copy.m4a", album: "album")
+        let groups = LibraryAlbums.groups(from: [original, original, duplicate])
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups[0].songs.map(\.id), [original.id])
+        var songs = [original]
+        XCTAssertEqual(LibraryAlbums.add([original.id], to: target, songs: &songs), 0)
+    }
+
+    func testAlbumMembershipIgnoresPodcastsAndMissingIDsAndSupportsLegacySongs() throws {
+        let original = Song(title: "Track", artist: "Artist", fileName: "track.m4a", album: "Album")
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(original)) as? [String: Any])
+        object.removeValue(forKey: "additionalAlbums")
+        let legacy = try JSONDecoder().decode(Song.self, from: JSONSerialization.data(withJSONObject: object))
+        XCTAssertNil(legacy.additionalAlbums)
+        var episode = original
+        episode.podcastEpisodeID = "episode"
+        var songs = [episode]
+        XCTAssertEqual(LibraryAlbums.add([episode.id, UUID()], to: LibraryAlbumDestination(name: "Album", artist: "Artist"), songs: &songs), 0)
+        XCTAssertTrue(LibraryAlbums.groups(from: songs).isEmpty)
+        XCTAssertEqual(LibraryAlbumDestination.unique([LibraryAlbumDestination(name: " ", artist: "Artist")]), [])
+    }
+
     func testCoverAndAutomaticNameStorageMigration() throws {
         let json = "{\"id\":\"\(UUID().uuidString)\",\"name\":\"Meest beluisterd\",\"songIDs\":[]}"
         let legacy = try JSONDecoder().decode(Playlist.self, from: Data(json.utf8))

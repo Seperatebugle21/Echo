@@ -27,7 +27,8 @@ struct AlbumCompletionView: View {
             }
             ForEach(albums) { album in
                 NavigationLink {
-                    OnlineAlbumDetailView(album: album, showsFavoriteAction: false)
+                    OnlineAlbumDetailView(album: album, showsFavoriteAction: false,
+                        destinationAlbum: LibraryAlbumDestination(name: title, artist: artist))
                 } label: { CatalogAlbumRow(album: album) }
             }
             if !loading && error == nil && albums.isEmpty { Text("album_no_matching_release").foregroundStyle(.secondary) }

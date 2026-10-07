@@ -2,6 +2,180 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "album_completion_target %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add to album: %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Toevoegen aan album: %@"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter à l’album : %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zum Album hinzufügen: %@"
+        }
+      }
+    }
+  },
+  "album_completion_add_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Existing songs are added to this album without downloading another copy. Missing or queued songs are added when their downloads finish. Each song appears only once in this album."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bestaande nummers worden aan dit album toegevoegd zonder een extra kopie te downloaden. Ontbrekende of ingeplande nummers worden toegevoegd zodra de download klaar is. Elk nummer staat maar één keer in dit album."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Les titres existants sont ajoutés à cet album sans télécharger une autre copie. Les titres manquants ou en attente sont ajoutés une fois leur téléchargement terminé. Chaque titre n’apparaît qu’une fois dans cet album."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vorhandene Songs werden diesem Album ohne erneuten Download hinzugefügt. Fehlende oder vorgemerkte Songs werden nach dem Download hinzugefügt. Jeder Song erscheint nur einmal in diesem Album."
+        }
+      }
+    }
+  },
+  "album_add_existing %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add existing songs (%lld)"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bestaande nummers toevoegen (%lld)"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter les titres existants (%lld)"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vorhandene Songs hinzufügen (%lld)"
+        }
+      }
+    }
+  },
+  "album_add_existing_result": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d existing songs added to this album. No new downloads were started."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d bestaande nummers aan dit album toegevoegd. Er zijn geen nieuwe downloads gestart."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d titres existants ajoutés à cet album. Aucun nouveau téléchargement n’a été lancé."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d vorhandene Songs diesem Album hinzugefügt. Es wurden keine neuen Downloads gestartet."
+        }
+      }
+    }
+  },
+  "album_download_and_add": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download and add to this album"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Downloaden en aan dit album toevoegen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Télécharger et ajouter à cet album"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Herunterladen und diesem Album hinzufügen"
+        }
+      }
+    }
+  },
+  "album_completion_result": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d new downloads, %d existing songs added to this album, %d could not be queued."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d nieuwe downloads, %d bestaande nummers aan dit album toegevoegd, %d konden niet worden ingepland."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d nouveaux téléchargements, %d titres existants ajoutés à cet album, %d n’ont pas pu être mis en file."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%d neue Downloads, %d vorhandene Songs diesem Album hinzugefügt, %d konnten nicht vorgemerkt werden."
+        }
+      }
+    }
+  },
   "catalog_search_songs_albums": {
     "extractionState": "manual",
     "localizations": {
@@ -472,25 +646,25 @@
       "en": {
         "stringUnit": {
           "state": "translated",
-          "value": "Choose the matching album edition. Echo will only queue songs that are not already in your library or download queue."
+          "value": "Choose the matching album edition to add songs you already have to this album and download missing songs."
         }
       },
       "nl": {
         "stringUnit": {
           "state": "translated",
-          "value": "Kies de juiste albumuitgave. Echo zet alleen nummers in de wachtrij die nog niet in je bibliotheek of downloadwachtrij staan."
+          "value": "Kies de juiste albumuitgave om nummers die je al hebt aan dit album toe te voegen en ontbrekende nummers te downloaden."
         }
       },
       "fr": {
         "stringUnit": {
           "state": "translated",
-          "value": "Choisissez la bonne édition de l’album. Echo ne met en file que les titres absents de votre bibliothèque et de la file de téléchargement."
+          "value": "Choisissez la bonne édition de l’album pour ajouter les titres que vous avez déjà à cet album et télécharger les titres manquants."
         }
       },
       "de": {
         "stringUnit": {
           "state": "translated",
-          "value": "Wähle die passende Albumausgabe. Echo lädt nur Songs, die noch nicht in deiner Mediathek oder Downloadwarteschlange sind."
+          "value": "Wähle die passende Albumausgabe, um vorhandene Songs diesem Album hinzuzufügen und fehlende Songs herunterzuladen."
         }
       }
     }

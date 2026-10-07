@@ -165,6 +165,7 @@ struct CatalogAlbumRow: View {
 struct OnlineAlbumDetailView: View {
     let album: OnlineMusicAlbum
     var showsFavoriteAction = true
+    var destinationAlbum: LibraryAlbumDestination? = nil
     @State private var collection: OnlineTrackCollection?
     @State private var error: String?
     @State private var retry = 0
@@ -172,7 +173,8 @@ struct OnlineAlbumDetailView: View {
         Group {
             if let collection {
                 OnlineTrackCollectionView(title: album.title, artworkURL: collection.artworkURL,
-                    tracks: collection.tracks, skippedCount: collection.skippedCount, importable: false, isAlbum: true)
+                    tracks: collection.tracks, skippedCount: collection.skippedCount, importable: false, isAlbum: true,
+                    destinationAlbum: destinationAlbum ?? LibraryAlbumDestination(name: album.title, artist: album.artistName))
             } else if let error {
                 VStack(spacing: 16) {
                     Text(error)
@@ -211,6 +213,7 @@ struct OnlineTrackCollectionView: View {
     let skippedCount: Int
     let importable: Bool
     var isAlbum = false
+    var destinationAlbum: LibraryAlbumDestination? = nil
     @State private var query = ""
     @State private var confirmDownload = false
     @State private var confirmImport = false
@@ -226,13 +229,22 @@ struct OnlineTrackCollectionView: View {
                 Text("catalog_tracks_count \(tracks.count)").foregroundStyle(.secondary)
                 if isAlbum { AlbumPlaybackControls(songs: localSongs) }
                 if skippedCount > 0 { Text("catalog_skipped_tracks \(skippedCount)").font(.caption).foregroundStyle(.secondary) }
+                if let destinationAlbum {
+                    Text("album_completion_target \(destinationAlbum.name)").font(.subheadline).foregroundStyle(.secondary)
+                    Text("album_completion_add_hint").font(.caption).foregroundStyle(.secondary)
+                    Button("album_add_existing \(downloads.existingCount(tracks, toAddTo: destinationAlbum))", systemImage: "plus.circle") {
+                        let count = downloads.addExisting(tracks, to: destinationAlbum)
+                        result = String(format: String(localized: "album_add_existing_result"), count)
+                    }.disabled(downloads.existingCount(tracks, toAddTo: destinationAlbum) == 0 || busy || downloads.busy)
+                }
                 Button {
                     if tracks.count == 1 { Task { await download(tracks) } }
                     else { confirmDownload = true }
                 } label: {
-                    if isAlbum { Text("album_download_missing \(downloads.pending(tracks).count)") }
+                    if destinationAlbum != nil { Text("album_download_and_add") }
+                    else if isAlbum { Text("album_download_missing \(downloads.pending(tracks).count)") }
                     else { Text("catalog_download_all") }
-                }.disabled(downloads.pending(tracks).isEmpty || busy || downloads.busy)
+                }.disabled(!canDownload || busy || downloads.busy)
                 if importable {
                     Button("fetchurlviews_transfer_to_echo") { confirmImport = true }.disabled(tracks.isEmpty || busy || downloads.busy)
                 }
@@ -253,8 +265,12 @@ struct OnlineTrackCollectionView: View {
         .searchable(text: $query, prompt: Text(LocalizedStringKey(isAlbum ? "album_search" : "catalog_search")))
         .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
         .confirmationDialog("catalog_confirm_download", isPresented: $confirmDownload, titleVisibility: .visible) {
-            Button("catalog_download_new \(downloads.pending(tracks).count)") { Task { await download(tracks) } }
-        } message: { Text("catalog_bulk_detail") }
+            if destinationAlbum != nil {
+                Button("album_download_and_add") { Task { await download(tracks) } }
+            } else {
+                Button("catalog_download_new \(downloads.pending(tracks).count)") { Task { await download(tracks) } }
+            }
+        } message: { Text(LocalizedStringKey(destinationAlbum == nil ? "catalog_bulk_detail" : "album_completion_add_hint")) }
         .confirmationDialog("fetchurlviews_transfer_confirmation", isPresented: $confirmImport, titleVisibility: .visible) {
             Button("fetchurlviews_transfer_to_echo") { Task { await transfer() } }
         } message: { Text("fetchurlviews_transfer_message") }
@@ -262,7 +278,14 @@ struct OnlineTrackCollectionView: View {
             Button("catalog_done", role: .cancel) { result = nil }
         } message: { Text(result ?? "") }
     }
-    private var localSongs: [Song] { OnlineCatalogLogic.uniqueTracks(filtered).compactMap { downloads.localSong($0) } }
+    private var localSongs: [Song] {
+        var seen: Set<UUID> = []
+        return OnlineCatalogLogic.uniqueTracks(filtered).compactMap { downloads.localSong($0) }
+            .filter { seen.insert($0.id).inserted }
+    }
+    private var canDownload: Bool {
+        !downloads.pending(tracks).isEmpty || destinationAlbum.map { downloads.needsAlbumAssignment(tracks, to: $0) } == true
+    }
     private func play(_ track: OnlineMusicTrack) {
         guard let song = downloads.localSong(track), let url = library.getURL(for: song) else { return }
         player.lastPlaybackDirection = .fade
@@ -273,7 +296,8 @@ struct OnlineTrackCollectionView: View {
     private func download(_ tracks: [OnlineMusicTrack]) async {
         guard !busy else { return }
         busy = true
-        result = await downloads.enqueue(tracks).message
+        let outcome = await downloads.enqueue(tracks, destinationAlbum: destinationAlbum)
+        result = destinationAlbum == nil ? outcome.message : outcome.albumMessage
         busy = false
     }
     private func transfer() async {

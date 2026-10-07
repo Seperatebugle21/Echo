@@ -129,56 +129,7 @@ struct SearchView: View {
     // MARK: - Albums
 
     private var allAlbums: [AlbumGroup] {
-
-        let validSongs =
-            library.songs.filter { song in
-
-                guard
-                    let album =
-                        song.album?
-                            .trimmingCharacters(
-                                in:
-                                    .whitespacesAndNewlines
-                            )
-                else {
-                    return false
-                }
-
-                return !album.isEmpty
-            }
-
-        let grouped =
-            Dictionary(
-                grouping: validSongs
-            ) { song in
-
-                "\(song.artist)|\(song.album ?? "")"
-            }
-
-        return grouped
-            .compactMap { _, songs in
-
-                guard
-                    let first = songs.first,
-                    let album = first.album
-                else {
-                    return nil
-                }
-
-                return AlbumGroup(
-                    name: album,
-                    artist: first.artist,
-                    songs: songs
-                )
-            }
-            .sorted {
-
-                $0.name
-                    .localizedCaseInsensitiveCompare(
-                        $1.name
-                    )
-                == .orderedAscending
-            }
+        LibraryAlbums.groups(from: library.songs)
     }
 
     private var matchingAlbums: [AlbumGroup] {

@@ -2,7 +2,7 @@ import Foundation
 
 /// Build once per library revision instead of normalizing every song for every row.
 struct LibrarySongMatchIndex {
-    private struct Key: Hashable {
+    struct Key: Hashable {
         let title: String
         let artist: String
         init(title: String, artist: String) {
@@ -21,4 +21,8 @@ struct LibrarySongMatchIndex {
                                 uniquingKeysWith: { first, _ in first })
     }
     func song(title: String, artist: String) -> Song? { songs[Key(title: title, artist: artist)] }
+
+    static func matches(title: String, artist: String, otherTitle: String, otherArtist: String) -> Bool {
+        Key(title: title, artist: artist) == Key(title: otherTitle, artist: otherArtist)
+    }
 }
