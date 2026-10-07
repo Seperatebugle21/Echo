@@ -75,14 +75,17 @@ final class EchoAudioEngineTests: XCTestCase {
         player.play(); try await until { recorder.finished }
         XCTAssertEqual(starts, 1); XCTAssertFalse(player.isPlaying)
     }
-    private func fixture(rate: Double, channels: AVAudioChannelCount, seconds: Double = 2) throws -> URL {
+    private func fixture(rate: Double, channels: AVAudioChannelCount, seconds: Double = 2,
+                         constant: Float? = nil) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".caf")
         let format = try XCTUnwrap(AVAudioFormat(standardFormatWithSampleRate: rate, channels: channels))
         let file = try AVAudioFile(forWriting: url, settings: format.settings)
         let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(rate * seconds)))
         buffer.frameLength = buffer.frameCapacity
         for channel in 0..<Int(channels) {
-            for frame in 0..<Int(buffer.frameLength) { buffer.floatChannelData![channel][frame] = 0.05 * sin(Float(frame) * 0.03) }
+            for frame in 0..<Int(buffer.frameLength) {
+                buffer.floatChannelData![channel][frame] = constant ?? (0.05 * sin(Float(frame) * 0.03))
+            }
         }
         try file.write(from: buffer); addTeardownBlock { try? FileManager.default.removeItem(at: url) }; return url
     }
@@ -183,6 +186,65 @@ final class EchoAudioEngineTests: XCTestCase {
         try await until { player.isPlaying }
     }
     #if DEBUG
+    private final class RenderedAudio: @unchecked Sendable {
+        private let lock = NSLock()
+        private var afterHostTime: UInt64 = 0
+        private var beforeHostTime: UInt64 = .max
+        private var values: [Float] = []
+        func receive(_ samples: [Float], hostTime: UInt64) {
+            lock.lock(); defer { lock.unlock() }
+            guard hostTime >= afterHostTime, hostTime < beforeHostTime, values.count < 100_000 else { return }
+            values.append(contentsOf: samples.filter { abs($0) > 0.001 })
+        }
+        func begin(windowSeconds: TimeInterval? = nil) {
+            lock.lock(); defer { lock.unlock() }
+            afterHostTime = AVAudioTime.hostTime(forSeconds: ProcessInfo.processInfo.systemUptime)
+            beforeHostTime = windowSeconds.map { afterHostTime + AVAudioTime.hostTime(forSeconds: $0) } ?? .max
+            values = []
+        }
+        var samples: [Float] { lock.lock(); defer { lock.unlock() }; return values }
+    }
+
+    func testResumeRendersNoOldAudioWhileWaitingForFreshBuffers() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 15, constant: 0.08))
+        defer { player.stop() }
+        let audio = RenderedAudio()
+        player.captureRenderedAudio { audio.receive($0, hostTime: $1) }
+        _ = try await player.preparedDuration()
+        player.play()
+        try await until({ player.isPlaying && !audio.samples.isEmpty }, timeout: 10)
+        player.pause()
+        try await until { player.stateValue == .paused }
+        audio.begin(windowSeconds: 0.3)
+        player.injectDecodeDelay(afterBuffers: 1, seconds: 0.5)
+        player.play()
+        try await until({ player.isPlaying }, timeout: 10)
+        XCTAssertTrue(audio.samples.isEmpty, "Old mixer audio was rendered before resume buffers were ready")
+        audio.begin()
+        try await until({ player.isPlaying && !audio.samples.isEmpty }, timeout: 10)
+        XCTAssertGreaterThan(try XCTUnwrap(audio.samples.first), 0)
+    }
+
+    func testReplacingPausedSongRendersOnlyTheSelectedSongsAudio() async throws {
+        let first = try fixture(rate: 48000, channels: 2, seconds: 15, constant: 0.08)
+        let second = try fixture(rate: 48000, channels: 2, seconds: 15, constant: -0.08)
+        let player = try EqualizedAudioPlayer(contentsOf: first)
+        defer { player.stop() }
+        let audio = RenderedAudio()
+        player.captureRenderedAudio { audio.receive($0, hostTime: $1) }
+        _ = try await player.preparedDuration()
+        player.play()
+        try await until({ player.isPlaying && !audio.samples.isEmpty }, timeout: 10)
+        player.pause()
+        try await until { player.stateValue == .paused }
+        audio.begin()
+        try player.replace(with: second)
+        player.injectDecodeDelay(afterBuffers: 1, seconds: 0.5)
+        player.play()
+        try await until({ player.isPlaying && player.currentTime > 0.2 && !audio.samples.isEmpty }, timeout: 10)
+        XCTAssertLessThan(try XCTUnwrap(audio.samples.max()), 0, "The previous song leaked into the selected song")
+    }
+
     func testResumePrimesDelayedAudioBeforeStartingAtNormalSpeed() async throws {
         let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 15))
         defer { player.stop() }

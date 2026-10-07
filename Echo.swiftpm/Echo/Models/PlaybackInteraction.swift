@@ -39,3 +39,22 @@ struct PlaybackIntent {
         wantsPlayback = playing
     }
 }
+
+enum PlaybackRecommendations {
+    /// Admission consumes the recommendation; rendering confirms playback later.
+    @discardableResult
+    static func consume(_ songID: UUID, from recommendations: inout [Song]) -> Bool {
+        let count = recommendations.count
+        recommendations.removeAll { $0.id == songID }
+        return recommendations.count != count
+    }
+
+    static func refill(_ recommendations: inout [Song], from songs: [Song], queue: [Song],
+                       currentSongID: UUID?, limit: Int = 10,
+                       order: ([Song]) -> [Song] = { $0.shuffled() }) {
+        var excluded = Set(queue.map(\.id) + recommendations.map(\.id))
+        if let currentSongID { excluded.insert(currentSongID) }
+        let candidates = songs.filter { excluded.insert($0.id).inserted }
+        recommendations.append(contentsOf: order(candidates).prefix(max(0, limit - recommendations.count)))
+    }
+}

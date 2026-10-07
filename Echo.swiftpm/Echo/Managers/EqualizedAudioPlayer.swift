@@ -59,6 +59,15 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         control.async { [weak self] in self?.injectedDecodeDelay = (max(0, afterBuffers), max(0, seconds)) }
     }
     func injectEngineStall() { control.async { [weak self] in self?.graph?.nodes.forEach { $0.pause() } } }
+    func captureRenderedAudio(_ receive: @escaping @Sendable ([Float], UInt64) -> Void) {
+        control.async { [weak self] in
+            guard let mixer = self?.graph?.engine.mainMixerNode else { return }
+            mixer.installTap(onBus: 0, bufferSize: 1024, format: nil) { buffer, time in
+                guard let samples = buffer.floatChannelData?[0], time.isHostTimeValid else { return }
+                receive(Array(UnsafeBufferPointer(start: samples, count: Int(buffer.frameLength))), time.hostTime)
+            }
+        }
+    }
     #endif
 
     private final class Graph {
@@ -83,6 +92,13 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
                 filter.bandwidth = 1; filter.gain = value.gains[band.rawValue]; filter.bypass = !value.enabled
             }
             eq.globalGain = value.enabled ? -max(0, value.gains.max() ?? 0) : 0
+        }
+        func discardRenderedAudio() {
+            // Pausing preserves the mixer/effect render buffers. Stop and reset
+            // the entire graph so restarting cannot replay their old tail.
+            engine.stop()
+            nodes.forEach { $0.stop() }
+            engine.reset()
         }
     }
     private final class Deck: @unchecked Sendable {
@@ -136,7 +152,8 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
                 guard let engine = note.object as? AVAudioEngine, engine === player.graph?.engine else { return }
                 // Starting an engine can enqueue a configuration notification too.
                 // Rebuilding a running graph here discards the resumed render clock.
-                if player.wantsPlayback && !engine.isRunning && player.state != .recovering { player.recover() }
+                if player.wantsPlayback && !engine.isRunning,
+                   player.decks[player.active]?.nodeStarted == true, player.state != .recovering { player.recover() }
             }
         }
         observe(AVAudioSession.interruptionNotification) { player, note in
@@ -243,7 +260,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         let token = invalidate(.idle, newMedia: true)
         control.async { [weak self] in
             guard let self, self.version() == token else { return }
-            self.wantsPlayback = false; self.generation = UUID(); self.playbackIdentity = UUID(); self.graph?.nodes.forEach { $0.stop() }
+            self.wantsPlayback = false; self.generation = UUID(); self.playbackIdentity = UUID(); self.graph?.discardRenderedAudio()
             self.decks = [nil, nil]; self.preparedNext = nil; self.transitionActive = false; self.state = .idle; self.publish(position: 0)
         }
     }
@@ -255,16 +272,10 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
             reload(offset: 0, preserveStart: false, state: .preparing, version: version())
             return
         }
-        do {
-            if !graph.engine.isRunning {
-                let session = AVAudioSession.sharedInstance()
-                if session.category != .playback { try session.setCategory(.playback, mode: .default) }
-                try session.setActive(true); try graph.engine.start()
-            }
-            if deck.nodeStarted { graph.nodes[active].play(); state = .preparing }
-            else { pump(active) }
-            progressDate = ProcessInfo.processInfo.systemUptime; publish(position: position(active))
-        } catch { fail() }
+        if deck.nodeStarted && graph.engine.isRunning {
+            if !graph.nodes[active].isPlaying { graph.nodes[active].play(); state = .preparing }
+        } else { pump(active) }
+        progressDate = ProcessInfo.processInfo.systemUptime; publish(position: position(active))
     }
     private func pauseOnControl() {
         let position = position(active); wantsPlayback = false
@@ -274,15 +285,13 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         // buffers and sample timeline. Freeze the audible position and retire
         // those buffers now; resume decodes from this offset on a fresh timeline.
         seekOnControl(position, version: version())
-        // Pause hardware output too so iOS observes that playback has stopped.
-        graph?.engine.pause()
     }
     private func seekOnControl(_ offset: Double, version token: UInt64) {
         guard let deck = decks[active], let graph else {
             reload(offset: offset, preserveStart: true, state: .seeking, version: token); return
         }
         generation = UUID(); let request = generation
-        graph.nodes.forEach { $0.stop() }; graph.pitches.forEach { $0.rate = 1; $0.bypass = true }
+        graph.discardRenderedAudio(); graph.pitches.forEach { $0.rate = 1; $0.bypass = true }
         let target = min(deck.duration, offset)
         deck.offset = target; deck.end = deck.duration; deck.queuedFrames = 0; deck.scheduled = 0; deck.pending = 0
         deck.ended = false; deck.completed = false; deck.nodeStarted = false; deck.promoted = false
@@ -302,7 +311,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         guard let url = currentURL, let graph else { return }
         let wasStarted = preserveStart && (decks[active]?.started ?? false)
         generation = UUID(); let request = generation
-        graph.nodes.forEach { $0.stop() }; graph.pitches.forEach { $0.rate = 1; $0.bypass = true }
+        graph.discardRenderedAudio(); graph.pitches.forEach { $0.rate = 1; $0.bypass = true }
         decks = [nil, nil]; active = 0; transitionActive = false; preparedNext = nil
         state = nextState; lastProgress = offset; progressDate = ProcessInfo.processInfo.systemUptime; publish(position: offset)
         opening.async { [weak self] in
@@ -425,6 +434,17 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         // reads are still decoding. Prime the queue before starting the clock;
         // short files can start as soon as their final buffer is scheduled.
         if !deck.nodeStarted, wantsPlayback, deck.scheduled >= 4 || final {
+            // Activate hardware only once this generation's audio is queued.
+            // Starting it before decoding would render silence or an old tail
+            // between the play command and the first usable buffers.
+            do {
+                if !graph.engine.isRunning {
+                    let session = AVAudioSession.sharedInstance()
+                    if session.category != .playback { try session.setCategory(.playback, mode: .default) }
+                    try session.setActive(true)
+                    try graph.engine.start()
+                }
+            } catch { fail(); return }
             deck.nodeStarted = true
             if deck.hostStart == 0 {
                 graph.nodes[index].play()

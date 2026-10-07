@@ -586,6 +586,9 @@ class AudioPlayerManager:
             self.originalQueue = [song]
             currentIndex = 0
         }
+        if PlaybackRecommendations.consume(song.id, from: &autoNextQueue) {
+            fillAutoNext(from: allSongs)
+        }
         if let id = song.podcastEpisodeID, let episode = PodcastStore.shared.state.episodes[id] {
             startPodcastPlayback(episode, song: song)
             return
@@ -755,7 +758,8 @@ class AudioPlayerManager:
         if let index = target.index { currentIndex = index }
         else {
             queue.append(target.song); currentIndex = queue.count - 1
-            autoNextQueue.removeAll { $0.id == target.song.id }; fillAutoNext(from: allSongs)
+            PlaybackRecommendations.consume(target.song.id, from: &autoNextQueue)
+            fillAutoNext(from: allSongs)
         }
         currentSong = target.song
         currentTime = player?.currentTime ?? 0; duration = player?.duration ?? 0
@@ -927,18 +931,9 @@ class AudioPlayerManager:
 
         if let nextSong = autoNextQueue.first, let url = getURL(for: nextSong) {
             guard FileManager.default.fileExists(atPath: url.path) else { return }
-            let savedQueue = queue
-            let savedIndex = currentIndex
             queue.append(nextSong)
             currentIndex = queue.count - 1
             play(song: nextSong, url: url, queue: queue, queuePosition: currentIndex)
-            if player?.isPlaying == true {
-                autoNextQueue.removeFirst()
-                fillAutoNext(from: allSongs)
-            } else {
-                queue = savedQueue
-                currentIndex = savedIndex
-            }
             return
         }
         player?.stop()
@@ -1166,9 +1161,7 @@ class AudioPlayerManager:
         from songs: [Song]
     ) {
 
-        let excluded = Set(queue.map(\.id) + autoNextQueue.map(\.id) + (currentSong.map { [$0.id] } ?? []))
-        let missing = max(0, 10 - autoNextQueue.count)
-        autoNextQueue.append(contentsOf: songs.filter { !excluded.contains($0.id) }.shuffled().prefix(missing))
+        PlaybackRecommendations.refill(&autoNextQueue, from: songs, queue: queue, currentSongID: currentSong?.id)
     }
 
 
