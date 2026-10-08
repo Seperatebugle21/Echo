@@ -25,6 +25,7 @@ struct HomeLocalAlbumSection: View {
                                     Text(album.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                 }.frame(width: 144, alignment: .leading)
                             }.buttonStyle(.plain)
+                                .albumFavoriteActions(FavoriteAlbum(album: album))
                         }
                     }.padding(.horizontal).padding(.vertical, 6)
                 }
@@ -58,6 +59,7 @@ struct HomeOnlineAlbumSection: View {
                                         Text(album.artistName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                     }.frame(width: 144, alignment: .leading)
                                 }.buttonStyle(.plain)
+                                    .albumFavoriteActions(FavoriteAlbum(album: album))
                             }
                         }.padding(.horizontal).padding(.vertical, 6)
                     }

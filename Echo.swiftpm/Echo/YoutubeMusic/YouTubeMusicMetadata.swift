@@ -9,6 +9,18 @@ actor YouTubeMusicMetadata {
     private var contextLoaded = false
     init(session: URLSession = .shared) { self.session = session }
 
+    func searchCatalog(query: String) async throws -> MusicCatalogSearchResults {
+        let cleaned = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return MusicCatalogSearchResults() }
+        let root = try await request("search", body: ["query": cleaned])
+        return YouTubeMusicJSON.searchResults(root)
+    }
+
+    func searchAlbums(query: String) async throws -> [OnlineMusicAlbum] {
+        let root = try await request("search", body: ["query": query, "params": "EgWKAQIYAWoKEAkQChAFEAMQBA%3D%3D"])
+        return YouTubeMusicJSON.searchResults(root).albums
+    }
+
     private func loadContext() async throws {
         guard !contextLoaded else { return }
         var request = URLRequest(url: URL(string: "https://music.youtube.com/")!)
@@ -133,26 +145,30 @@ actor YouTubeMusicMetadata {
         return (OnlineArtistReference(provider: .youtubeMusic, sourceID: id, name: name, artworkURL: YouTubeMusicJSON.artwork(header)), root)
     }
 
-    func artistAlbums(_ root: [String: Any], artist: OnlineArtistReference) async throws -> [OnlineMusicAlbum] {
+    func artistAlbums(_ root: [String: Any], artist: OnlineArtistReference) async throws -> (albums: [OnlineMusicAlbum], unavailable: Int) {
         var albums = YouTubeMusicJSON.albums(root, artist: artist)
+        var unavailable = 0
         // Follow the explicit albums/singles/appearances shelves, not related artists or videos.
         for shelf in YouTubeMusicJSON.nodes("musicCarouselShelfRenderer", in: root) {
             guard !YouTubeMusicJSON.albums(shelf, artist: artist).isEmpty else { continue }
             let endpoints = YouTubeMusicJSON.nodes("browseEndpoint", in: shelf["header"] as Any)
             guard let endpoint = endpoints.first(where: { $0["params"] != nil }), let browseID = endpoint["browseId"] as? String else { continue }
-            var body: [String: Any] = ["browseId": browseID]
-            body["params"] = endpoint["params"]
-            var response = try await request("browse", body: body)
-            albums += YouTubeMusicJSON.albums(response, artist: artist)
-            var seen: Set<String> = []
-            while let token = YouTubeMusicJSON.continuation(response) {
-                guard seen.insert(token).inserted else { throw MusicCatalogError.incomplete }
-                response = try await request("browse", body: ["continuation": token])
+            do {
+                var body: [String: Any] = ["browseId": browseID]
+                body["params"] = endpoint["params"]
+                var response = try await request("browse", body: body)
                 albums += YouTubeMusicJSON.albums(response, artist: artist)
-            }
+                var seen: Set<String> = []
+                while let token = YouTubeMusicJSON.continuation(response) {
+                    guard seen.insert(token).inserted else { throw MusicCatalogError.incomplete }
+                    response = try await request("browse", body: ["continuation": token])
+                    albums += YouTubeMusicJSON.albums(response, artist: artist)
+                }
+            } catch is CancellationError { throw CancellationError() }
+            catch { unavailable += 1 }
         }
         var seen: Set<String> = []
-        return albums.filter { seen.insert($0.id).inserted }
+        return (albums.filter { seen.insert($0.id).inserted }, unavailable)
     }
 
     func album(_ album: OnlineMusicAlbum) async throws -> OnlineTrackCollection {
@@ -206,6 +222,35 @@ actor YouTubeMusicMetadata {
 }
 
 enum YouTubeMusicJSON {
+    static func searchResults(_ root: Any) -> MusicCatalogSearchResults {
+        var result = MusicCatalogSearchResults()
+        // Classify by the result's own navigation endpoint. Artist credits on a song
+        // are not artist search results, and album links on a song are not album results.
+        let rows = nodes("musicResponsiveListItemRenderer", in: root) + nodes("musicTwoRowItemRenderer", in: root)
+            + nodes("musicCardShelfRenderer", in: root)
+        for row in rows {
+            let columns = nodes("musicResponsiveListItemFlexColumnRenderer", in: row)
+            let title = text(row["title"]).isEmpty ? text(columns.first?["text"]) : text(row["title"])
+            guard !title.isEmpty else { continue }
+            let navigation = row["navigationEndpoint"] ?? columns.first?["text"] ?? row["title"] as Any
+            let id = nodes("browseEndpoint", in: navigation).first?["browseId"] as? String
+            if let id, id.hasPrefix("UC") {
+                result.artists.append(OnlineArtistReference(provider: .youtubeMusic, sourceID: id,
+                    name: title, artworkURL: artwork(row)))
+            } else if let id, id.hasPrefix("MPRE") {
+                let credits = artists(row)
+                result.albums.append(OnlineMusicAlbum(provider: .youtubeMusic, sourceID: id, title: title,
+                    artistName: credits.map(\.name).joined(separator: ", "), artists: credits, artworkURL: artwork(row)))
+            } else if let track = track(row) {
+                result.tracks.append(track)
+            }
+        }
+        var artistsSeen: Set<String> = [], albumsSeen: Set<String> = []
+        result.artists = result.artists.filter { artistsSeen.insert($0.id).inserted }
+        result.albums = result.albums.filter { albumsSeen.insert($0.id).inserted }
+        result.tracks = OnlineCatalogLogic.uniqueTracks(result.tracks)
+        return result
+    }
     static func nodes(_ key: String, in value: Any) -> [[String: Any]] {
         if let dict = value as? [String: Any] {
             if let node = dict[key] as? [String: Any] { return [node] }
@@ -233,6 +278,10 @@ enum YouTubeMusicJSON {
         return URL(string: raw.hasPrefix("//") ? "https:" + raw : raw)
     }
     static func header(_ root: Any) -> [String: Any] {
+        let primary = (root as? [String: Any])?["header"]
+        for key in ["musicResponsiveHeaderRenderer", "musicDetailHeaderRenderer", "musicImmersiveHeaderRenderer", "musicVisualHeaderRenderer", "musicHeaderRenderer"] {
+            if let primary, let result = nodes(key, in: primary).first { return result }
+        }
         for key in ["musicResponsiveHeaderRenderer", "musicDetailHeaderRenderer", "musicImmersiveHeaderRenderer", "musicVisualHeaderRenderer", "musicHeaderRenderer"] {
             if let result = nodes(key, in: root).first { return result }
         }

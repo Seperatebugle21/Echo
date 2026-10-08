@@ -189,9 +189,6 @@ struct NowPlayingView: View {
                         audioPlayer.togglePlayPause()
                     } label: {
 
-                        if audioPlayer.isPreparingAudio {
-                            ProgressView().tint(.white).frame(width: 65, height: 65).accessibilityLabel("audio_preparing")
-                        } else {
                         Image(
                             systemName:
                                 audioPlayer.isPlaying
@@ -202,7 +199,6 @@ struct NowPlayingView: View {
                             .system(size: 70)
                         )
                         .foregroundStyle(.white)
-                        }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(

@@ -354,6 +354,8 @@ final class FetchDownloadEngine:
                 destinationPlaylistPositions:
                     item.destinationPlaylistPositions,
 
+                destinationAlbums: item.destinationAlbums,
+
                 automaticRetryCount: item.automaticRetryCount,
 
                 suggestedFileName:
@@ -1956,6 +1958,21 @@ final class FetchDownloadEngine:
 
     // MARK: - Storage
 
+    @MainActor
+    func updateAlbumDestinations(for item: FetchItem) {
+        // Also update transfers that already have a persistent background record.
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard let data = UserDefaults.standard.data(forKey: recordsKey),
+              var values = try? JSONDecoder().decode([BackgroundFetchRecord].self, from: data) else { return }
+        for index in values.indices where values[index].spotifyURL == item.spotifyURL.absoluteString && values[index].title == item.title {
+            values[index].mergeAlbumDestinations(item.destinationAlbums)
+        }
+        if let encoded = try? JSONEncoder().encode(values) {
+            UserDefaults.standard.set(encoded, forKey: recordsKey)
+        }
+    }
+
     private func records()
         -> [BackgroundFetchRecord] {
 
@@ -2056,10 +2073,10 @@ final class FetchDownloadEngine:
                 }
             ) {
 
-            values[
-                index
-            ] =
-                record
+            // Completion callbacks may carry an older snapshot of a running transfer.
+            var merged = record
+            merged.mergeAlbumDestinations(values[index].destinationAlbums ?? [])
+            values[index] = merged
 
 
         } else {

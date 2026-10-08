@@ -183,6 +183,14 @@ class MusicLibraryManager {
     
     // MARK: - Song Editing
     
+    @discardableResult
+    func addSongs(_ songIDs: [UUID], toAlbum album: LibraryAlbumDestination) -> Int {
+        var updated = songs
+        let added = LibraryAlbums.add(songIDs, to: album, songs: &updated)
+        if added > 0 { songs = updated }
+        return added
+    }
+
     func updateSong(
         _ song: Song,
         title: String,

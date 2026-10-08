@@ -53,7 +53,9 @@ class AudioPlayerManager:
     var playbackGeneration: UUID { playbackRequest }
     private var transitionTask: Task<Void, Never>?
     private var transitionStarts: [UUID: Song] = [:]
-    private var transitionTarget: (token: UUID, song: Song, index: Int?, automatic: Bool)?
+    private typealias PreparedTransition = (token: UUID, song: Song, index: Int?, automatic: Bool)
+    private var transitionTarget: PreparedTransition?
+    private var transitionCancellationPending = false
     private var lastTransitionMode = AudioSettings.transition
     private var lastFadeSeconds = AudioSettings.crossfadeSeconds
     private var lastPublishedRate = 1.0
@@ -555,6 +557,7 @@ class AudioPlayerManager:
 
         stopTransitionPreview(resume: false)
         transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        transitionCancellationPending = false
         transitionStarts.removeAll()
         playbackRequest = UUID()
         localIntent.set(true)
@@ -585,6 +588,9 @@ class AudioPlayerManager:
             self.queue = [song]
             self.originalQueue = [song]
             currentIndex = 0
+        }
+        if PlaybackRecommendations.consume(song.id, from: &autoNextQueue) {
+            fillAutoNext(from: allSongs)
         }
         if let id = song.podcastEpisodeID, let episode = PodcastStore.shared.state.episodes[id] {
             startPodcastPlayback(episode, song: song)
@@ -714,14 +720,15 @@ class AudioPlayerManager:
         return autoNextQueue.first.map { ($0, nil, true) }
     }
     private func prepareAutomaticTransition() {
-        guard !isPreviewing, !isPodcast, let player, player.isPlaying, let currentSong else { return }
+        guard !isPreviewing, !isPodcast, !transitionCancellationPending,
+              let player, player.isPlaying, let currentSong else { return }
         let mode = AudioSettings.transition, seconds = AudioSettings.crossfadeSeconds
         let next = nextTransitionSong()
         if lastTransitionMode != mode || lastFadeSeconds != seconds ||
            (transitionTarget != nil && (transitionTarget?.song.id != next?.song.id || transitionTarget?.index != next?.index || transitionTarget?.automatic != next?.automatic)) {
-            transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
-            player.cancelPreparedNext()
+            cancelUpcomingTransition()
             lastTransitionMode = mode; lastFadeSeconds = seconds
+            return
         }
         guard mode != .direct, player.canPrepareNext, transitionTask == nil,
               player.duration - player.currentTime > (mode == .gapless ? 0.5 : min(mode == .crossfade ? seconds : 12, player.duration / 2) + 0.5),
@@ -731,7 +738,11 @@ class AudioPlayerManager:
         transitionTarget = (token, next.song, next.index, next.automatic)
         transitionStarts[token] = next.song
         transitionTask = Task { @MainActor [weak self] in
-            defer { if self?.playbackRequest == request { self?.transitionTask = nil } }
+            defer {
+                if self?.playbackRequest == request && self?.transitionTarget?.token == token {
+                    self?.transitionTask = nil
+                }
+            }
             do {
                 let duration = try await AVURLAsset(url: incomingURL).load(.duration).seconds
                 var outro = BeatAnalysis(), intro = BeatAnalysis()
@@ -745,23 +756,52 @@ class AudioPlayerManager:
                 let plan = AudioTransitionPlan.make(mode: mode, seconds: seconds, outgoingDuration: outgoingDuration,
                                                     incomingDuration: duration, outro: outro, intro: intro)
                 player.prepareNext(url: incomingURL, identifier: token, plan: plan)
-            } catch { if self?.transitionTarget?.token == token { self?.transitionTarget = nil } }
+            } catch {
+                if self?.transitionTarget?.token == token { self?.transitionTarget = nil; self?.transitionTask = nil }
+            }
+        }
+    }
+    private func cancelUpcomingTransition() {
+        guard !transitionCancellationPending else { return }
+        let target = transitionTarget, request = playbackRequest
+        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
+        guard let player else { return }
+        transitionCancellationPending = true
+        player.cancelPreparedNext { [weak self] promoted in
+            guard let self, self.playbackRequest == request else { return }
+            self.transitionCancellationPending = false
+            // A promotion can reach the render thread just before this edit.
+            // Preserve that audible song even if its UI callback was pending.
+            if let target, promoted == target.token { self.promoteTransition(target: target) }
+            else if let target { self.transitionStarts.removeValue(forKey: target.token) }
+            self.prepareAutomaticTransition()
         }
     }
     private func promoteTransition(_ token: UUID) {
         guard let target = transitionTarget, target.token == token, !isPreviewing else { return }
+        promoteTransition(target: target)
+        transitionTarget = nil
+    }
+    private func promoteTransition(target: PreparedTransition) {
+        guard !isPreviewing else { return }
         lastPlaybackDirection = .next
         if let old = currentSong, old.id != target.song.id { history.append(old) }
-        if let index = target.index { currentIndex = index }
+        if let index = target.index, queue.indices.contains(index), queue[index].id == target.song.id {
+            currentIndex = index
+        } else if let index = queue.firstIndex(where: { $0.id == target.song.id }) {
+            currentIndex = index
+        }
         else {
             queue.append(target.song); currentIndex = queue.count - 1
-            autoNextQueue.removeAll { $0.id == target.song.id }; fillAutoNext(from: allSongs)
         }
         currentSong = target.song
+        if target.automatic {
+            PlaybackRecommendations.consume(target.song.id, from: &autoNextQueue)
+            fillAutoNext(from: allSongs)
+        }
         currentTime = player?.currentTime ?? 0; duration = player?.duration ?? 0
         currentLyrics = nil; currentSyncedLyrics = nil
         loadLyrics(for: target.song); updateNowPlaying()
-        transitionTarget = nil
     }
 
     @MainActor func startTransitionPreview(first: URL, second: URL) async throws {
@@ -927,18 +967,9 @@ class AudioPlayerManager:
 
         if let nextSong = autoNextQueue.first, let url = getURL(for: nextSong) {
             guard FileManager.default.fileExists(atPath: url.path) else { return }
-            let savedQueue = queue
-            let savedIndex = currentIndex
             queue.append(nextSong)
             currentIndex = queue.count - 1
             play(song: nextSong, url: url, queue: queue, queuePosition: currentIndex)
-            if player?.isPlaying == true {
-                autoNextQueue.removeFirst()
-                fillAutoNext(from: allSongs)
-            } else {
-                queue = savedQueue
-                currentIndex = savedIndex
-            }
             return
         }
         player?.stop()
@@ -1001,6 +1032,7 @@ class AudioPlayerManager:
         let prefix = Array(queue.prefix(currentIndex + 1))
         let upcoming = queue.dropFirst(currentIndex + 1).filter { $0.id != song.id }
         queue = prefix + [song] + upcoming
+        cancelUpcomingTransition()
     }
 
 
@@ -1106,6 +1138,7 @@ class AudioPlayerManager:
             queue.append(
                 song
             )
+            cancelUpcomingTransition()
         }
     }
 
@@ -1138,8 +1171,7 @@ class AudioPlayerManager:
             toOffset:
                 destination
         )
-        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
-        player?.cancelPreparedNext()
+        cancelUpcomingTransition()
 
     }
 
@@ -1152,8 +1184,7 @@ class AudioPlayerManager:
             atOffsets:
                 offsets
         )
-        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
-        player?.cancelPreparedNext()
+        cancelUpcomingTransition()
 
     }
 
@@ -1166,9 +1197,7 @@ class AudioPlayerManager:
         from songs: [Song]
     ) {
 
-        let excluded = Set(queue.map(\.id) + autoNextQueue.map(\.id) + (currentSong.map { [$0.id] } ?? []))
-        let missing = max(0, 10 - autoNextQueue.count)
-        autoNextQueue.append(contentsOf: songs.filter { !excluded.contains($0.id) }.shuffled().prefix(missing))
+        PlaybackRecommendations.refill(&autoNextQueue, from: songs, queue: queue, currentSongID: currentSong?.id)
     }
 
 
@@ -1292,8 +1321,7 @@ class AudioPlayerManager:
                     originalIndex
             }
         }
-        transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
-        player?.cancelPreparedNext()
+        cancelUpcomingTransition()
 
     }
 
@@ -1318,6 +1346,7 @@ class AudioPlayerManager:
             repeatMode =
                 .off
         }
+        cancelUpcomingTransition()
     }
 
 
