@@ -63,6 +63,34 @@ struct OnlineTrackCollection: Sendable {
     var skippedCount: Int = 0
 }
 
+/// A value snapshot: catalog browsing and library edits cannot change Home mid-session.
+struct HomeAlbumSession {
+    private(set) var albums: [OnlineMusicAlbum]
+    private var frozen: Bool
+
+    init(cachedAlbums: [OnlineMusicAlbum], spotifyConnected: Bool,
+         shuffle: ([OnlineMusicAlbum]) -> [OnlineMusicAlbum] = { $0.shuffled() }) {
+        albums = Self.selection(cachedAlbums, spotifyConnected: spotifyConnected, shuffle: shuffle)
+        frozen = !albums.isEmpty
+    }
+
+    mutating func finishStartupDiscovery(cachedAlbums: [OnlineMusicAlbum], spotifyConnected: Bool,
+                                        shuffle: ([OnlineMusicAlbum]) -> [OnlineMusicAlbum] = { $0.shuffled() }) {
+        guard !frozen else { return }
+        albums = Self.selection(cachedAlbums, spotifyConnected: spotifyConnected, shuffle: shuffle)
+        frozen = true
+    }
+
+    private static func selection(_ candidates: [OnlineMusicAlbum], spotifyConnected: Bool,
+                                  shuffle: ([OnlineMusicAlbum]) -> [OnlineMusicAlbum]) -> [OnlineMusicAlbum] {
+        var seen: Set<String> = []
+        let eligible = candidates.filter {
+            ($0.provider != .spotify || spotifyConnected) && seen.insert($0.id).inserted
+        }
+        return Array(shuffle(eligible).prefix(10))
+    }
+}
+
 enum MusicCatalogError: LocalizedError, Equatable {
     case invalidLink, unavailable, empty, malformed, incomplete, spotifyConnection, network
     var errorDescription: String? {

@@ -44,6 +44,9 @@ struct EchoApp: App {
     @State private var audioPlayer =
         AudioPlayerManager.shared
 
+    // Restore the Home selection before the first Home body is rendered.
+    @State private var catalog = OnlineMusicCatalogStore.shared
+
 
     var body: some Scene {
 
@@ -134,6 +137,15 @@ struct EchoApp: App {
                     .restoreBackgroundDownloads()
             }
             .task { await library.enrichMissingTags() }
+            .task(id: hasCompletedEchoOnboarding) {
+                guard hasCompletedEchoOnboarding else { return }
+                while library.isLoadingArtists {
+                    do { try await Task.sleep(for: .milliseconds(20)) }
+                    catch { return }
+                }
+                guard !Task.isCancelled else { return }
+                catalog.prepareHomeIfNeeded(localArtistNames: library.artistGroups.map(\.name))
+            }
             .task { await PodcastNotifications.shared.refresh() }
 
 

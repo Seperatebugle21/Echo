@@ -202,21 +202,17 @@ actor YouTubeMusicMetadata {
             artistName: artists.map(\.name).joined(separator: ", "), artists: artists, artworkURL: YouTubeMusicJSON.artwork(header))
     }
 
+    func searchArtists(query: String) async throws -> [OnlineArtistReference] {
+        let cleaned = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return [] }
+        let root = try await request("search", body: ["query": cleaned, "params": "EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D"])
+        return YouTubeMusicJSON.searchResults(root).artists
+    }
+
     func searchArtist(_ name: String) async throws -> OnlineArtistReference? {
-        let root = try await request("search", body: ["query": name, "params": "EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D"])
-        var matches: [OnlineArtistReference] = []
-        for row in YouTubeMusicJSON.nodes("musicResponsiveListItemRenderer", in: root) {
-            var candidates = YouTubeMusicJSON.artists(row)
-            // Artist search puts navigation on the row, not on the title run.
-            if let endpoint = YouTubeMusicJSON.nodes("browseEndpoint", in: row["navigationEndpoint"] as Any).first,
-               let id = endpoint["browseId"] as? String, id.hasPrefix("UC") {
-                let title = YouTubeMusicJSON.text(YouTubeMusicJSON.nodes("musicResponsiveListItemFlexColumnRenderer", in: row).first?["text"])
-                candidates.append(OnlineArtistReference(provider: .youtubeMusic, sourceID: id, name: title, artworkURL: YouTubeMusicJSON.artwork(row)))
-            }
-            matches += candidates.filter { OnlineCatalogLogic.normalizedName($0.name) == OnlineCatalogLogic.normalizedName(name) }
+        let matches = try await searchArtists(query: name).filter {
+            OnlineCatalogLogic.normalizedName($0.name) == OnlineCatalogLogic.normalizedName(name)
         }
-        var seen: Set<String> = []
-        matches = matches.filter { seen.insert($0.id).inserted }
         return matches.count == 1 ? matches[0] : nil
     }
 }

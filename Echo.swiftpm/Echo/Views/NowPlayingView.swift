@@ -79,12 +79,7 @@ struct NowPlayingView: View {
                                 .foregroundStyle(.white)
                                 .lineLimit(1)
 
-                            Text(song.artist)
-                                .font(.body)
-                                .foregroundStyle(
-                                    .white.opacity(0.68)
-                                )
-                                .lineLimit(1)
+                            NowPlayingArtistButton(song: song)
                         }
 
                         Spacer()
