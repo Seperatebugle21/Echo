@@ -78,7 +78,7 @@ struct HomeQuickAccessCard: View {
                 .accessibilityHidden(true)
             Spacer(minLength: 4)
             Text(title).font(.caption.weight(.bold)).lineLimit(2)
-            Text(verbatim: String(format: String(localized: playlists ? "libraryview_playlists_count" : "libraryview_songs_count"), count))
+            Text(verbatim: String(format: EchoLocalization.string(playlists ? "libraryview_playlists_count" : "libraryview_songs_count"), count))
                 .font(.system(size: 10)).foregroundStyle(.white.opacity(0.85)).lineLimit(2)
         }
         .foregroundStyle(.white)
