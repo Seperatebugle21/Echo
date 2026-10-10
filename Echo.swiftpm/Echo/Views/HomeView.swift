@@ -208,12 +208,14 @@ struct HomeView: View {
     private func prepareArtists() {
         let favoriteIDs = Set(library.favoriteSongIDs)
         let available = Set(localSongs.map(\.id))
+        let playCounts = recommendations.learningData.mapValues(\.playCount)
+        let scores = Dictionary(uniqueKeysWithValues: library.artistGroups.map { artist in
+            (artist.id, artist.songs.reduce(0) {
+                $0 + playCounts[$1.id, default: 0] + (favoriteIDs.contains($1.id) ? 6 : 0)
+            })
+        })
         let ranked = library.artistGroups.filter { $0.songs.contains { available.contains($0.id) } }.sorted { lhs, rhs in
-            func score(_ artist: ArtistGroup) -> Int {
-                artist.songs.reduce(0) { $0 + recommendations.learningData[$1.id, default: .init()].playCount
-                    + (favoriteIDs.contains($1.id) ? 6 : 0) }
-            }
-            let left = score(lhs), right = score(rhs)
+            let left = scores[lhs.id, default: 0], right = scores[rhs.id, default: 0]
             return left == right ? lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending : left > right
         }
         artistIDs = Array(ranked.prefix(12)).map(\.id)
