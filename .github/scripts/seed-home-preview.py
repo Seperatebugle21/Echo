@@ -63,5 +63,9 @@ values['EchoPlaylists'] = json.dumps([
     {'id': str(uuid.uuid4()).upper(), 'name': f'Preview mix {index + 1}', 'songIDs': [song['id'] for song in songs[index::4]]}
     for index in range(4)
 ]).encode()
+# Historical counts exist only in this disposable test fixture, never in the app.
+today = datetime.datetime.now(datetime.timezone.utc)
+previous_month = (today.replace(day=1) - datetime.timedelta(days=1)).strftime('%Y-%m-') + '10'
+values['EchoDailyListeningV1'] = json.dumps({song['id']: {previous_month: index + 1} for index, song in enumerate(songs[:5])}).encode()
 preferences.write_bytes(plistlib.dumps(values))
 print('Seeded 20 test tracks in the disposable simulator.')

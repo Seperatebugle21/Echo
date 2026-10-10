@@ -11,6 +11,12 @@ on:
       - 'project.yml'
       - 'Echo.swiftpm/Echo/Models/HomeMusicSelection.swift'
       - 'Echo.swiftpm/Echo/Managers/HomeSessionManager.swift'
+      - 'Echo.swiftpm/Echo/Managers/HomeSmartSectionsModel.swift'
+      - 'Echo.swiftpm/Echo/Managers/RecommendationManager.swift'
+      - 'Echo.swiftpm/Echo/Managers/AudioPlayerManager.swift'
+      - 'Echo.swiftpm/Echo/Models/SmartMusicSelection.swift'
+      - 'Echo.swiftpm/Echo/Models/ListeningHistory.swift'
+      - 'Echo.swiftpm/Echo/Views/SmartMusicDetailViews.swift'
       - '.github/workflows/HomePreview.yml'
       - '.github/scripts/seed-home-preview.py'
 

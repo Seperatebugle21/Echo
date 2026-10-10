@@ -65,6 +65,7 @@ struct HomeView: View {
                             failed: podcastRecommendations.failed, retry: { podcastRecommendations.retry += 1 }
                         )
                         HomeOnlineAlbumSection(coverWidth: layout.song)
+                        HomeSmartSections(coverWidth: layout.song)
                     }
                     .padding(.top, 8)
                     // ContentView already reserves the live MiniPlayer and tab safe areas.

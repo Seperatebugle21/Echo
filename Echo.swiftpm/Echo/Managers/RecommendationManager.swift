@@ -17,7 +17,45 @@ final class RecommendationManager {
 
     private(set) var learningData: [UUID: SongLearningData] = [:]
     private(set) var revision: Int = 0
-    private var dailyCounts: [UUID: [String: Int]] = [:]
+    private(set) var dailyCounts: [UUID: [String: Int]] = [:]
+    private(set) var listeningEvents: [ListeningEvent] = []
+    private(set) var trackingStartedAt = Date()
+    @ObservationIgnored private var accumulator = ListeningAccumulator()
+    @ObservationIgnored private var pendingEndReason: ListeningEndReason = .selected
+    @ObservationIgnored private var observedAudibleSeconds: Double = 0
+
+    func selectionSnapshot(songs: [Song], favorites: [UUID], seed: UInt64 = 0) -> SmartMusicSelection {
+        SmartMusicSelection(songs: songs, favorites: Set(favorites), learning: learningData.mapValues {
+            .init(plays: $0.playCount, completions: $0.completionCount, skips: $0.skipCount, lastPlayed: $0.lastStartedAt)
+        }, now: Date(), seed: seed)
+    }
+    func historicalPeriods(songIDs: Set<UUID>) -> [HistoricalMusicPeriod] {
+        HistoricalMusicPeriod.available(daily: dailyCounts, songIDs: songIDs)
+    }
+    func playbackWillChange(_ reason: ListeningEndReason, position: Double, playing: Bool) {
+        sampleListening(position: position, playing: playing)
+        observedMaximumTime = accumulator.audibleSeconds
+        pendingEndReason = reason
+        finishObservedSongIfNeeded()
+    }
+    func playbackStateChanged(position: Double, playing: Bool) {
+        sampleListening(position: position, playing: playing)
+        if !playing { checkpointListening() }
+    }
+    func playbackSeeked(position: Double) { accumulator.reanchor(at: Date(), position: position) }
+    private func sampleListening(position: Double, playing: Bool) {
+        accumulator.sample(at: Date(), position: position, playing: playing)
+    }
+    private func checkpointListening() {
+        accumulator.checkpoint()
+        if let event = accumulator.event { storeListening(event) }
+    }
+    private func storeListening(_ event: ListeningEvent) {
+        guard event.seconds > 0 else { return }
+        if let index = listeningEvents.lastIndex(where: { $0.id == event.id }) { listeningEvents[index] = event }
+        else { listeningEvents.append(event) }
+        saveAndPublish()
+    }
     var smartSnapshot: SmartListeningSnapshot {
         _ = revision
         return SmartListeningSnapshot(total: learningData.mapValues(\.playCount), daily: dailyCounts)
@@ -26,6 +64,7 @@ final class RecommendationManager {
         guard song.podcastEpisodeID == nil else { return }
         finishObservedSongIfNeeded()
         beginObserving(song)
+        accumulator.begin(song: song, at: Date())
     }
 
     @ObservationIgnored private let storageQueue = DispatchQueue(label: "com.echomusic.listening-storage", qos: .utility)
@@ -249,11 +288,9 @@ final class RecommendationManager {
             return
         }
 
-        observedMaximumTime =
-            max(
-                observedMaximumTime,
-                player.currentTime
-            )
+        sampleListening(position: player.currentTime, playing: player.isPlaying && (player.localPlaybackState == .playing || player.localPlaybackState == .transitioning))
+        observedAudibleSeconds = accumulator.audibleSeconds
+        observedMaximumTime = observedAudibleSeconds
 
         observedDuration =
             max(
@@ -292,6 +329,7 @@ final class RecommendationManager {
 
         observedMaximumTime =
             0
+        observedAudibleSeconds = 0
 
         observedDuration =
             0
@@ -325,7 +363,8 @@ final class RecommendationManager {
 
         // Alleen een echt snelle skip bestraffen.
         // Half beluisteren of pauzeren is dus niet negatief.
-        if !completionRecordedForObservedSong,
+        if pendingEndReason == .skipped,
+           !completionRecordedForObservedSong,
            observedMaximumTime > 0,
            observedMaximumTime < 15 {
 
@@ -340,6 +379,13 @@ final class RecommendationManager {
 
             saveAndPublish()
         }
+
+        if pendingEndReason == .completed, !completionRecordedForObservedSong,
+           observedDuration > 0, accumulator.audibleSeconds >= observedDuration * 0.70 {
+            recordCompletion(for: songID)
+        }
+        if let event = accumulator.finish(pendingEndReason) { storeListening(event) }
+        pendingEndReason = .selected
 
         observedSongID =
             nil
@@ -535,6 +581,9 @@ final class RecommendationManager {
     // MARK: - Persistence
 
     func flush() {
+        let player = AudioPlayerManager.shared
+        sampleListening(position: player.currentTime, playing: player.isPlaying && (player.localPlaybackState == .playing || player.localPlaybackState == .transitioning))
+        checkpointListening()
         pendingSave?.cancel()
         saveAndPublish(immediately: true)
     }
@@ -542,7 +591,10 @@ final class RecommendationManager {
         revision &+= 1
         pendingSave?.cancel()
         let daily = dailyCounts, learning = learningData, key = storageKey
+        let events = listeningEvents, started = trackingStartedAt
         let work = DispatchWorkItem {
+            if let data = try? JSONEncoder().encode(events) { UserDefaults.standard.set(data, forKey: "EchoListeningEventsV1") }
+            UserDefaults.standard.set(started, forKey: "EchoListeningTrackingStartedV1")
             if let data = try? JSONEncoder().encode(daily) { UserDefaults.standard.set(data, forKey: "EchoDailyListeningV1") }
             if let data = try? JSONEncoder().encode(learning) { UserDefaults.standard.set(data, forKey: key) }
         }
@@ -552,6 +604,9 @@ final class RecommendationManager {
     }
 
     private func load() {
+        trackingStartedAt = UserDefaults.standard.object(forKey: "EchoListeningTrackingStartedV1") as? Date ?? Date()
+        if let data = UserDefaults.standard.data(forKey: "EchoListeningEventsV1"),
+           let events = try? JSONDecoder().decode([ListeningEvent].self, from: data) { listeningEvents = events }
         if let data = UserDefaults.standard.data(forKey: "EchoDailyListeningV1"),
            let counts = try? JSONDecoder().decode([UUID: [String: Int]].self, from: data) { dailyCounts = counts }
 

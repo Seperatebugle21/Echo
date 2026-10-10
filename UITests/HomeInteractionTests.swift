@@ -55,6 +55,67 @@ final class HomeInteractionTests: XCTestCase {
         add(attachment)
     }
 
+    private func scrollTo(_ identifier: String) -> XCUIElement {
+        let element = app.buttons[identifier]
+        for _ in 0..<24 {
+            let viewport = app.frame.insetBy(dx: 0, dy: 185)
+            if element.exists && viewport.contains(CGPoint(x: element.frame.midX, y: element.frame.midY)) { return element }
+            app.swipeUp()
+        }
+        XCTFail("Home control was not reachable: \(identifier)")
+        return element
+    }
+
+    func testSmartVibesSurpriseAndRealQueueOpen() {
+        launch()
+        scrollTo("smart-vibe-energy").tap()
+        XCTAssertTrue(app.buttons.matching(identifier: "mini-player-open").firstMatch.waitForExistence(timeout: 8))
+        capture("home-smart-vibes")
+        scrollTo("smart-surprise-play").tap()
+        capture("home-smart-surprise")
+        scrollTo("smart-queue-open").tap()
+        XCTAssertTrue(app.navigationBars["Queue"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Now Playing"].exists)
+        capture("home-smart-real-queue")
+    }
+
+    func testEchoFlowPauseResumeAndStopPreservePlayback() {
+        launch()
+        var flow = scrollTo("smart-flow-play")
+        flow.tap()
+        let playing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Pause'"), object: flow)
+        XCTAssertEqual(XCTWaiter.wait(for: [playing], timeout: 8), .completed)
+        capture("home-smart-flow-active")
+        flow.tap()
+        let paused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Play'"), object: flow)
+        XCTAssertEqual(XCTWaiter.wait(for: [paused], timeout: 8), .completed)
+        flow.tap()
+        app.buttons["smart-flow-mode"].tap()
+        XCTAssertTrue(app.buttons["smart-flow-stop"].waitForExistence(timeout: 5))
+        app.buttons["smart-flow-stop"].tap()
+        flow = app.buttons["smart-flow-play"]
+        let stopped = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Start Echo Flow'"), object: flow)
+        XCTAssertEqual(XCTWaiter.wait(for: [stopped], timeout: 8), .completed)
+        XCTAssertTrue(app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex.contains { $0.isHittable })
+        capture("home-smart-flow-stopped-queue-kept")
+    }
+
+    func testWeeklyStatisticsAndSmartSectionsAcrossThemes() {
+        for theme in ["light", "dark", "custom"] {
+            launch(theme: theme)
+            startPlayback()
+            scrollTo("smart-week-open").tap()
+            XCTAssertTrue(app.navigationBars["Your Week in Music"].waitForExistence(timeout: 8))
+            XCTAssertTrue(app.staticTexts["Listening time by day"].exists)
+            capture("home-smart-statistics-\(theme)")
+            app.navigationBars.buttons.firstMatch.tap()
+            scrollTo("smart-flow-play")
+            capture("home-smart-sections-\(theme)")
+            scrollTo("smart-queue-open")
+            capture("home-smart-history-and-queue-\(theme)")
+        }
+    }
+
     func testCardCanStartPlaybackAndCloseIntoTheFirstMiniPlayer() {
         launch()
         app.buttons["home-now-playing-card"].tap()

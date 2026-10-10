@@ -19,7 +19,7 @@ struct LibraryAlbumDestination: Codable, Hashable, Sendable {
     }
 }
 
-struct Song: Identifiable, Codable, Hashable {
+struct Song: Identifiable, Codable, Hashable, Sendable {
     
     let id: UUID
     var title: String
