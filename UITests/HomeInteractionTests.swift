@@ -26,7 +26,19 @@ final class HomeInteractionTests: XCTestCase {
     private func startPlayback() {
         if toggle.label != "Pause" { toggle.tap() }
         waitForLabel("Pause")
-        XCTAssertFalse(closePlayer.exists, "Starting playback must keep Home visible")
+        capture("home-after-start-playback")
+        XCTAssertFalse(closePlayer.isHittable, "Starting playback must keep Home visible")
+        XCTAssertTrue(app.buttons["home-settings"].isHittable)
+    }
+
+    private func waitForPlayerOpen() {
+        let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: closePlayer)
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 10), .completed)
+    }
+
+    private func waitForHome() {
+        let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: app.buttons["home-settings"])
+        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 10), .completed)
     }
 
     private func capture(_ name: String) {
@@ -36,19 +48,35 @@ final class HomeInteractionTests: XCTestCase {
         add(attachment)
     }
 
+    func testCardCanStartPlaybackAndCloseIntoTheFirstMiniPlayer() {
+        launch()
+        app.buttons["home-now-playing-card"].tap()
+        waitForPlayerOpen()
+        closePlayer.tap()
+        waitForHome()
+        XCTAssertTrue(app.buttons["home-settings"].isHittable)
+        let miniPlayer = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@ AND identifier != %@", "Morning light, The North", "home-now-playing-card")
+        ).firstMatch
+        XCTAssertTrue(miniPlayer.waitForExistence(timeout: 8))
+        XCTAssertGreaterThan(miniPlayer.frame.minY, app.frame.height * 0.6)
+        miniPlayer.tap()
+        waitForPlayerOpen()
+    }
+
     func testHeaderButtonsOpenTheirOwnSheetsDuringPlayback() {
         launch()
         startPlayback()
         app.buttons["home-settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 8))
-        XCTAssertFalse(closePlayer.exists)
+        XCTAssertFalse(closePlayer.isHittable)
         capture("home-settings-sheet")
 
         launch()
         startPlayback()
         app.buttons["home-search"].tap()
         XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 8))
-        XCTAssertFalse(closePlayer.exists)
+        XCTAssertFalse(closePlayer.isHittable)
         capture("home-search-sheet")
     }
 
@@ -57,18 +85,18 @@ final class HomeInteractionTests: XCTestCase {
         startPlayback()
         toggle.tap()
         waitForLabel("Play")
-        XCTAssertFalse(closePlayer.exists)
+        XCTAssertFalse(closePlayer.isHittable)
         XCTAssertTrue(app.buttons["home-settings"].isHittable)
         toggle.tap()
         waitForLabel("Pause")
-        XCTAssertFalse(closePlayer.exists)
+        XCTAssertFalse(closePlayer.isHittable)
         capture("home-light-playing")
 
         app.buttons["home-now-playing-card"].tap()
-        XCTAssertTrue(closePlayer.waitForExistence(timeout: 8))
+        waitForPlayerOpen()
         capture("home-card-expanded")
         closePlayer.tap()
-        XCTAssertTrue(app.buttons["home-settings"].waitForExistence(timeout: 8))
+        waitForHome()
         XCTAssertTrue(app.buttons["home-settings"].isHittable)
     }
 
@@ -76,9 +104,9 @@ final class HomeInteractionTests: XCTestCase {
         launch()
         startPlayback()
         app.buttons["home-now-playing-card"].tap()
-        XCTAssertTrue(closePlayer.waitForExistence(timeout: 8))
+        waitForPlayerOpen()
         closePlayer.tap()
-        XCTAssertTrue(toggle.waitForExistence(timeout: 8))
+        waitForHome()
 
         let miniPlayer = app.descendants(matching: .any).matching(
             NSPredicate(format: "label == %@ AND identifier != %@", "Morning light, The North", "home-now-playing-card")
@@ -86,16 +114,17 @@ final class HomeInteractionTests: XCTestCase {
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 8))
         XCTAssertGreaterThan(miniPlayer.frame.minY, app.frame.height * 0.6)
         miniPlayer.tap()
-        XCTAssertTrue(closePlayer.waitForExistence(timeout: 8))
+        waitForPlayerOpen()
         closePlayer.tap()
-        XCTAssertTrue(toggle.waitForExistence(timeout: 8))
+        waitForHome()
         XCTAssertTrue(miniPlayer.isHittable)
 
-        miniPlayer.swipeUp(velocity: .slow)
-        XCTAssertTrue(closePlayer.waitForExistence(timeout: 8))
+        miniPlayer.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)))
+        waitForPlayerOpen()
         closePlayer.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85)))
-        XCTAssertTrue(toggle.waitForExistence(timeout: 8))
+        waitForHome()
         capture("home-mini-player-restored")
     }
 

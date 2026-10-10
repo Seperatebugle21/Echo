@@ -51,14 +51,15 @@ jobs:
             xcrun simctl launch "$SIMULATOR_ID" com.echomusic.app \
               -hasCompletedEchoOnboarding YES -selectedLanguage nl -appearanceMode "$THEME" \
               -theme.first 182235 -theme.second 64478C -theme.gradient YES -theme.whiteText YES
-            sleep 2
-            sleep 3
+            sleep 5
             xcrun simctl io "$SIMULATOR_ID" screenshot "build/HomePreviews/home-$THEME.png"
           done
+          HOME_TEST_STATUS=0
           xcodebuild test -project Echo.xcodeproj -scheme EchoHomeInteractionTests \
             -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
             -derivedDataPath build/Preview -resultBundlePath build/HomeInteractions.xcresult \
-            CODE_SIGNING_ALLOWED=NO
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO || HOME_TEST_STATUS=$?
           xcrun xcresulttool export attachments --path build/HomeInteractions.xcresult \
             --output-path build/HomePreviews/Interactions
           xcrun simctl terminate "$SIMULATOR_ID" com.echomusic.app || true
@@ -67,7 +68,9 @@ jobs:
             -hasCompletedEchoOnboarding YES -selectedLanguage nl -appearanceMode light
           sleep 4
           xcrun simctl io "$SIMULATOR_ID" screenshot build/HomePreviews/home-empty.png
+          exit "$HOME_TEST_STATUS"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: Echo-Home-Previews
           path: build/HomePreviews

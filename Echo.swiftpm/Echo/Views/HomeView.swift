@@ -135,7 +135,7 @@ struct HomeView: View {
                         HomeQuickAccessCard(title: "libraryview_playlists", symbol: "music.note.list", count: library.playlists.count,
                                             playlists: true, song: playlistArtworkSong, width: layout.access)
                     }
-                }.buttonStyle(HomePressStyle()).padding(.horizontal, 20).padding(.vertical, 3)
+                }.buttonStyle(HomePressStyle()).padding(.horizontal, 20).padding(.vertical, 8)
             }.scrollIndicators(.hidden)
         }
     }
@@ -169,7 +169,7 @@ struct HomeView: View {
                             }.buttonStyle(HomePressStyle())
                         }
                     }
-                }.padding(.horizontal, 20).padding(.vertical, 3)
+                }.padding(.horizontal, 20).padding(.vertical, 8)
             }.scrollIndicators(.hidden)
         }
     }

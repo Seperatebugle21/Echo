@@ -751,7 +751,16 @@ final class MiniPlayerPresentation {
             if self.homeCardSong != nil {
                 // At full size the source rectangle no longer affects the surface.
                 // Every close keeps the original Now Playing -> MiniPlayer transition.
-                if open && self.dockFrame.width > 0 { self.sourceFrame = self.dockFrame }
+                if open {
+                    let slot = self.dockSlotFrame
+                    if slot.width > 0 {
+                        // A card can start playback before the first dock has reported its frame.
+                        self.sourceFrame = CGRect(x: slot.minX + 16, y: slot.minY + 12,
+                                                  width: max(52, slot.width - 32), height: 52)
+                    } else if self.dockFrame.width > 0 {
+                        self.sourceFrame = self.dockFrame
+                    }
+                }
                 self.homeCardSong = nil
             }
         }
