@@ -1,0 +1,30 @@
+name: Recover Home test diagnostics
+on:
+  pull_request:
+    branches: [Widget]
+    paths: ['.github/workflows/HomeDiagnostics.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnostics:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Echo-Home-Interactions
+          run-id: 38093087078
+          github-token: ${{ github.token }}
+          path: Recovered.xcresult
+      - name: Export screenshots and accessibility diagnostics
+        run: |
+          xcrun xcresulttool export attachments --path Recovered.xcresult --output-path Diagnostics
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Echo-Home-Recovered-Diagnostics
+          path: |
+            Diagnostics/**/*.png
+            Diagnostics/**/*.txt
+            Diagnostics/**/manifest.json
+
