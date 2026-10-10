@@ -136,7 +136,10 @@ final class HomeInteractionTests: XCTestCase {
         for _ in 0..<8 {
             let artists = app.buttons["home-discovery-artists"]
             let songs = app.buttons["home-discovery-songs"]
-            if (artists.exists && artists.isHittable) || (songs.exists && songs.isHittable) { break }
+            let viewport = app.frame.insetBy(dx: 0, dy: 180)
+            let artistsVisible = artists.exists && viewport.contains(CGPoint(x: artists.frame.midX, y: artists.frame.midY))
+            let songsVisible = songs.exists && viewport.contains(CGPoint(x: songs.frame.midX, y: songs.frame.midY))
+            if artistsVisible || songsVisible { break }
             app.swipeUp()
         }
         XCTAssertTrue(app.buttons["home-discovery-artists"].waitForExistence(timeout: 5))
