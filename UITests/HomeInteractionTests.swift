@@ -51,11 +51,20 @@ final class HomeInteractionTests: XCTestCase {
     private func waitForMiniPlayer() -> XCUIElement {
         let minimized = app.buttons["Open miniplayer"]
         if minimized.exists && minimized.isHittable { minimized.tap() }
-        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
-            self.app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex.contains { $0.isHittable }
-        }, object: app)
-        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 12), .completed)
-        return visibleMiniPlayer()
+        let query = app.buttons.matching(identifier: "mini-player-open")
+        XCTAssertTrue(query.firstMatch.waitForExistence(timeout: 12))
+        // Select the rendered gesture surface among the duplicate accessibility
+        // elements, then verify its real touch action by opening the full player.
+        let candidates = query.allElementsBoundByIndex.filter {
+            let frame = $0.frame
+            return frame.width > 20 && frame.height > 20 && frame.midY > app.frame.height * 0.65
+                && app.frame.contains(CGPoint(x: frame.midX, y: frame.midY))
+        }.sorted { $0.frame.width > $1.frame.width }
+        for element in query.allElementsBoundByIndex {
+            print("MiniPlayer candidate frame: \(element.frame)")
+        }
+        XCTAssertFalse(candidates.isEmpty, "The real MiniPlayer must be rendered above the tab bar")
+        return candidates.first ?? query.firstMatch
     }
 
     private func capture(_ name: String) {
@@ -85,8 +94,10 @@ final class HomeInteractionTests: XCTestCase {
     func testSmartVibesSurpriseAndRealQueueOpen() {
         launch()
         scrollTo("smart-vibe-energy").tap()
-        _ = waitForMiniPlayer()
         capture("home-smart-vibes")
+        waitForMiniPlayer().coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        waitForPlayerOpen()
+        closePlayer.tap()
         scrollTo("smart-surprise-play").tap()
         capture("home-smart-surprise")
         scrollTo("smart-queue-open").tap()
@@ -130,7 +141,8 @@ final class HomeInteractionTests: XCTestCase {
         flow = app.buttons["smart-flow-play"]
         let stopped = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Start Echo Flow'"), object: flow)
         XCTAssertEqual(XCTWaiter.wait(for: [stopped], timeout: 8), .completed)
-        waitForMiniPlayer().tap()
+        capture("home-smart-flow-after-stop-before-dock-check")
+        waitForMiniPlayer().coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         waitForPlayerOpen()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == 'Pause'")).allElementsBoundByIndex.contains { $0.isHittable }, "Stopping Flow must keep playback running")
         closePlayer.tap()
