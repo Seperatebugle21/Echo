@@ -19,6 +19,7 @@ on:
       - 'Echo.swiftpm/Echo/Views/SmartMusicDetailViews.swift'
       - '.github/workflows/HomePreview.yml'
       - '.github/scripts/seed-home-preview.py'
+      - '.github/scripts/export-home-diagnostics.py'
 
 permissions:
   contents: read
@@ -30,7 +31,7 @@ concurrency:
 jobs:
   preview:
     runs-on: macos-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - name: Build app for an iPhone simulator
@@ -66,8 +67,6 @@ jobs:
             -derivedDataPath build/Preview -resultBundlePath build/HomeInteractions.xcresult \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO || HOME_TEST_STATUS=$?
-          xcrun xcresulttool export attachments --path build/HomeInteractions.xcresult \
-            --output-path build/HomePreviews/Interactions
           xcrun simctl terminate "$SIMULATOR_ID" com.echomusic.app || true
           rm -f "$CONTAINER/Documents/EchoSongs.json" "$CONTAINER/Documents"/home-preview-*.wav
           xcrun simctl launch "$SIMULATOR_ID" com.echomusic.app \
@@ -75,13 +74,40 @@ jobs:
           sleep 4
           xcrun simctl io "$SIMULATOR_ID" screenshot build/HomePreviews/home-empty.png
           exit "$HOME_TEST_STATUS"
+      - name: Export screenshots and UI failure diagnostics
+        if: always()
+        run: |
+          if [ -f build/HomeInteractions.xcresult/Info.plist ]; then
+            xcrun xcresulttool export attachments --path build/HomeInteractions.xcresult \
+              --output-path build/HomePreviews/Interactions
+            python3 .github/scripts/export-home-diagnostics.py \
+              build/HomePreviews/Interactions build/HomeDiagnostics
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Echo-Home-Previews
-          path: |
-            build/HomePreviews/**/*.png
-            build/HomePreviews/**/manifest.json
+          path: build/HomePreviews/*.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Flow-Previews
+          path: build/HomeDiagnostics/Flow
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Vibe-Previews
+          path: build/HomeDiagnostics/Vibes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Statistics-Previews
+          path: build/HomeDiagnostics/Statistics
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Interaction-Previews
+          path: build/HomeDiagnostics/Home
       - uses: actions/upload-artifact@v4
         if: always()
         with:

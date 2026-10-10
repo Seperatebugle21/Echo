@@ -89,7 +89,7 @@ struct HomeSmartSections: View {
                             Spacer(minLength: 0)
                             Image(systemName: activeVibe == vibe && player.isPlaying ? "speaker.wave.2.fill" : "play.fill").font(.caption)
                         }.smartCard().frame(maxWidth: .infinity)
-                    }.buttonStyle(HomePressStyle()).disabled(model.available.isEmpty)
+                    }.buttonStyle(HomePressStyle()).disabled(model.vibes[vibe]?.isEmpty != false)
                         .accessibilityIdentifier("smart-vibe-" + vibe.rawValue)
                 }
             }

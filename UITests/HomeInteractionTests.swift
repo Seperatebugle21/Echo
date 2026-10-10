@@ -48,6 +48,16 @@ final class HomeInteractionTests: XCTestCase {
         return query.allElementsBoundByIndex.first(where: { $0.isHittable }) ?? query.firstMatch
     }
 
+    private func waitForMiniPlayer() -> XCUIElement {
+        let minimized = app.buttons["Open miniplayer"]
+        if minimized.exists && minimized.isHittable { minimized.tap() }
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            self.app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex.contains { $0.isHittable }
+        }, object: app)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 12), .completed)
+        return visibleMiniPlayer()
+    }
+
     private func capture(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name
@@ -59,8 +69,14 @@ final class HomeInteractionTests: XCTestCase {
         let element = app.buttons[identifier]
         for _ in 0..<24 {
             let viewport = app.frame.insetBy(dx: 0, dy: 185)
-            if element.exists && viewport.contains(CGPoint(x: element.frame.midX, y: element.frame.midY)) { return element }
-            app.swipeUp()
+            let frame = element.exists ? element.frame : .zero
+            if frame.width > 0 && viewport.contains(CGPoint(x: frame.midX, y: frame.midY)) { return element }
+            // Short drags can recover when a restored navigation offset places the
+            // target above us, and keep gestures inside Home rather than the dock.
+            let up = frame.width == 0 || frame.midY > viewport.midY
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: up ? 0.67 : 0.35))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: up ? 0.35 : 0.67))
+            start.press(forDuration: 0.05, thenDragTo: end)
         }
         XCTFail("Home control was not reachable: \(identifier)")
         return element
@@ -69,7 +85,7 @@ final class HomeInteractionTests: XCTestCase {
     func testSmartVibesSurpriseAndRealQueueOpen() {
         launch()
         scrollTo("smart-vibe-energy").tap()
-        XCTAssertTrue(app.buttons.matching(identifier: "mini-player-open").firstMatch.waitForExistence(timeout: 8))
+        _ = waitForMiniPlayer()
         capture("home-smart-vibes")
         scrollTo("smart-surprise-play").tap()
         capture("home-smart-surprise")
@@ -103,11 +119,7 @@ final class HomeInteractionTests: XCTestCase {
         capture("home-smart-flow-refilled-real-queue")
         app.buttons["Close"].tap()
         // Return to the Flow card after verifying the queue below it.
-        for _ in 0..<4 {
-            let viewport = app.frame.insetBy(dx: 0, dy: 185)
-            if flow.exists && viewport.contains(CGPoint(x: flow.frame.midX, y: flow.frame.midY)) { break }
-            app.swipeDown()
-        }
+        flow = scrollTo("smart-flow-play")
         flow.tap()
         let paused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Play'"), object: flow)
         XCTAssertEqual(XCTWaiter.wait(for: [paused], timeout: 8), .completed)
@@ -118,8 +130,10 @@ final class HomeInteractionTests: XCTestCase {
         flow = app.buttons["smart-flow-play"]
         let stopped = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Start Echo Flow'"), object: flow)
         XCTAssertEqual(XCTWaiter.wait(for: [stopped], timeout: 8), .completed)
-        XCTAssertTrue(app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex.contains { $0.isHittable })
+        waitForMiniPlayer().tap()
+        waitForPlayerOpen()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == 'Pause'")).allElementsBoundByIndex.contains { $0.isHittable }, "Stopping Flow must keep playback running")
+        closePlayer.tap()
         capture("home-smart-flow-stopped-queue-kept")
     }
 
@@ -127,12 +141,16 @@ final class HomeInteractionTests: XCTestCase {
         for theme in ["light", "dark", "custom"] {
             launch(theme: theme)
             startPlayback()
-            scrollTo("smart-week-open").tap()
+            let statistics = scrollTo("smart-week-open")
+            XCTAssertTrue(app.staticTexts["Hidden Gems"].exists, "Concurrent library preparation must publish the completed gem and vibe selections")
             XCTAssertFalse(app.buttons["Refresh Hidden Gems"].exists)
+            statistics.tap()
             XCTAssertTrue(app.navigationBars["Your Week in Music"].waitForExistence(timeout: 8))
             XCTAssertTrue(app.staticTexts["Listening time by day"].exists)
             capture("home-smart-statistics-\(theme)")
             app.navigationBars.buttons.firstMatch.tap()
+            let returned = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == false"), object: app.navigationBars["Your Week in Music"])
+            XCTAssertEqual(XCTWaiter.wait(for: [returned], timeout: 8), .completed)
             scrollTo("smart-flow-play")
             capture("home-smart-sections-\(theme)")
             scrollTo("smart-queue-open")

@@ -40,7 +40,6 @@ final class HomeSmartSectionsModel {
             gems = gems.compactMap { indexed[$0.id] }
             vibes = vibes.mapValues { $0.compactMap { indexed[$0.id] } }
         }
-        fingerprint = result.1
         let day = Calendar.current.startOfDay(for: Date())
         let refreshAlbums = changed || albumDay != day
         guard changed || refreshAlbums else { return }
@@ -48,6 +47,9 @@ final class HomeSmartSectionsModel {
             (result.2.ranked(limit: 10, discover: true), Dictionary(uniqueKeysWithValues: MusicVibe.allCases.map { ($0, result.2.vibe($0)) }), result.2.albums())
         }.value
         guard !Task.isCancelled, token == generation else { return }
+        // Commit the cache signature with its completed recommendations. A concurrent
+        // library/favorite preparation must not mistake unfinished work for a ready cache.
+        fingerprint = result.1
         if changed { gems = ranked.0; vibes = ranked.1 }
         if refreshAlbums {
             albums = ranked.2; albumDay = day
