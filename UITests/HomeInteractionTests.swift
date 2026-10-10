@@ -55,9 +55,7 @@ final class HomeInteractionTests: XCTestCase {
         closePlayer.tap()
         waitForHome()
         XCTAssertTrue(app.buttons["home-settings"].isHittable)
-        let miniPlayer = app.descendants(matching: .any).matching(
-            NSPredicate(format: "label == %@ AND identifier != %@", "Morning light, The North", "home-now-playing-card")
-        ).firstMatch
+        let miniPlayer = app.buttons["mini-player-open"]
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 8))
         XCTAssertGreaterThan(miniPlayer.frame.minY, app.frame.height * 0.6)
         miniPlayer.tap()
@@ -108,9 +106,7 @@ final class HomeInteractionTests: XCTestCase {
         closePlayer.tap()
         waitForHome()
 
-        let miniPlayer = app.descendants(matching: .any).matching(
-            NSPredicate(format: "label == %@ AND identifier != %@", "Morning light, The North", "home-now-playing-card")
-        ).firstMatch
+        let miniPlayer = app.buttons["mini-player-open"]
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 8))
         XCTAssertGreaterThan(miniPlayer.frame.minY, app.frame.height * 0.6)
         miniPlayer.tap()

@@ -73,7 +73,9 @@ jobs:
         if: always()
         with:
           name: Echo-Home-Previews
-          path: build/HomePreviews
+          path: |
+            build/HomePreviews/**/*.png
+            build/HomePreviews/**/manifest.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

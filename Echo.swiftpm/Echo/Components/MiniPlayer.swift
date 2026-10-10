@@ -74,6 +74,7 @@ struct MiniPlayer: View {
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { openPlayer() }
                 .accessibilityLabel("\(current.title), \(current.artist)")
+                .accessibilityIdentifier("mini-player-open")
                 .accessibilityHint("Open Now Playing")
                 .accessibilityAction(named: Text("Next song")) { audioPlayer.next() }
                 .accessibilityAction(named: Text("Previous song")) {
