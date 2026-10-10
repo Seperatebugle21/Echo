@@ -2,6 +2,41 @@ import Foundation
 import XCTest
 
 final class EchoCatalogTests: XCTestCase {
+    func testHomeAlbumSessionRestoresImmediatelyAndIgnoresCatalogChangesUntilRestart() {
+        let first = OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "first", title: "Original", artistName: "Artist", artists: [])
+        let second = OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "second", title: "New", artistName: "Artist", artists: [])
+        var session = HomeAlbumSession(cachedAlbums: [first], spotifyConnected: false, shuffle: { $0 })
+        XCTAssertEqual(session.albums, [first])
+        var edited = first; edited.title = "Changed catalog title"
+        session.finishStartupDiscovery(cachedAlbums: [edited, second], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(session.albums, [first])
+        let restarted = HomeAlbumSession(cachedAlbums: [edited, second], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(restarted.albums, [edited, second])
+    }
+
+    func testFirstHomeAlbumDiscoveryPublishesOnceEvenIfEmptyOrRetried() {
+        let album = OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "album", title: "Album", artistName: "Artist", artists: [])
+        var firstLaunch = HomeAlbumSession(cachedAlbums: [], spotifyConnected: false, shuffle: { $0 })
+        XCTAssertTrue(firstLaunch.albums.isEmpty)
+        firstLaunch.finishStartupDiscovery(cachedAlbums: [album], spotifyConnected: false, shuffle: { $0 })
+        firstLaunch.finishStartupDiscovery(cachedAlbums: [], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(firstLaunch.albums, [album])
+        var offline = HomeAlbumSession(cachedAlbums: [], spotifyConnected: false, shuffle: { $0 })
+        offline.finishStartupDiscovery(cachedAlbums: [], spotifyConnected: false, shuffle: { $0 })
+        offline.finishStartupDiscovery(cachedAlbums: [album], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertTrue(offline.albums.isEmpty)
+    }
+
+    func testHomeAlbumSessionBoundsAndDeduplicatesStartupSelection() {
+        let albums = (0..<20).map { OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "\($0)", title: "Album \($0)", artistName: "Artist", artists: []) }
+        let spotify = OnlineMusicAlbum(provider: .spotify, sourceID: "spotify", title: "Spotify Album", artistName: "Artist", artists: [])
+        let session = HomeAlbumSession(cachedAlbums: [spotify] + albums + albums, spotifyConnected: false, shuffle: { $0 })
+        XCTAssertEqual(session.albums, Array(albums.prefix(10)))
+        let connected = HomeAlbumSession(cachedAlbums: [spotify] + albums, spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(connected.albums.first, spotify)
+        XCTAssertEqual(connected.albums.count, 10)
+    }
+
     private let artist = OnlineArtistReference(provider: .youtubeMusic, sourceID: "UCartist", name: "Artist")
     private func track(_ id: String, title: String = "Song", recording: String? = nil) -> OnlineMusicTrack {
         OnlineMusicTrack(provider: .youtubeMusic, sourceID: id, title: title, artists: [artist], artistName: artist.name,
@@ -115,6 +150,30 @@ final class EchoCatalogTests: XCTestCase {
         let ambiguous = service { _ in (200, ["items": [["musicResponsiveListItemRenderer": a], ["musicResponsiveListItemRenderer": b]]]) }
         let ambiguousMatch = try await ambiguous.searchArtist("Oasis")
         XCTAssertNil(ambiguousMatch)
+    }
+
+    func testDedicatedArtistSearchKeepsAmbiguousCandidatesForManualSelection() async throws {
+        func artist(_ id: String) -> [String: Any] {
+            ["musicResponsiveListItemRenderer": [
+                "flexColumns": [["musicResponsiveListItemFlexColumnRenderer": ["text": ["runs": [["text": "Oasis"]]]]]],
+                "navigationEndpoint": ["browseEndpoint": ["browseId": id]]]]
+        }
+        let api = service { request in
+            if request.httpMethod != "POST" { return (200, [:]) }
+            let body = try XCTUnwrap(JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any])
+            XCTAssertEqual(body["query"] as? String, "Oasis")
+            XCTAssertEqual(body["params"] as? String, "EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D")
+            return (200, ["items": [artist("UCfirst"), artist("UCsecond"), artist("UCfirst"), self.row("song")]])
+        }
+        let matches = try await api.searchArtists(query: "  Oasis  ")
+        XCTAssertEqual(matches.map(\.sourceID), ["UCfirst", "UCsecond"])
+        XCTAssertTrue(matches.allSatisfy { $0.provider == .youtubeMusic && $0.name == "Oasis" })
+    }
+
+    func testDedicatedArtistSearchWithBlankNameDoesNotRequestNetwork() async throws {
+        let api = service { _ in XCTFail("An empty artist name should not trigger a request"); return (200, [:]) }
+        let matches = try await api.searchArtists(query: " \n ")
+        XCTAssertTrue(matches.isEmpty)
     }
 
     func testSongLinkDoesNotBecomePlaylistAndShareParametersAreIgnored() throws {

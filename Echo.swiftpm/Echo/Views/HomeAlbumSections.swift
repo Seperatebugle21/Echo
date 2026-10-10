@@ -39,11 +39,7 @@ struct HomeLocalAlbumSection: View {
 }
 
 struct HomeOnlineAlbumSection: View {
-    @Environment(MusicLibraryManager.self) private var library
     private let store = OnlineMusicCatalogStore.shared
-    private var taskID: [String] {
-        library.artistGroups.map(\.id) + [String(SpotifyManager.shared.isConnected)]
-    }
     var body: some View {
         Group {
             if !store.homeAlbums.isEmpty {
@@ -66,6 +62,5 @@ struct HomeOnlineAlbumSection: View {
                 }
             }
         }
-        .task(id: taskID) { await store.discover(localArtistNames: library.artistGroups.map(\.name)) }
     }
 }

@@ -79,6 +79,13 @@ enum ArtistCredits {
         return names(in: song.artist)
     }
 
+    static func navigationGroups(for song: Song, indexedGroups: [String: ArtistGroup]) -> [ArtistGroup] {
+        guard song.podcastEpisodeID == nil else { return [] }
+        return names(for: song).map { name in
+            indexedGroups[key(name)] ?? ArtistGroup(name: name, songs: [song])
+        }
+    }
+
     private static func unique(_ names: [String]) -> [String] {
         var seen = Set<String>()
         return names.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }

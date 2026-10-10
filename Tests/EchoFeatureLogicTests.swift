@@ -2,6 +2,36 @@ import Foundation
 import XCTest
 
 final class EchoFeatureLogicTests: XCTestCase {
+    func testNowPlayingArtistNavigationUsesCurrentLibraryAndStructuredCredits() {
+        let playing = Song(title: "Track", artist: "An Unknown & Band, Guest", fileName: "track.m4a",
+            artistNames: ["An Unknown & Band", "Guest", "GUEST"])
+        let other = Song(title: "Other Track", artist: "Guest", fileName: "other.m4a")
+        let guest = ArtistGroup(name: "Guest", songs: [playing, other])
+        let groups = ArtistCredits.navigationGroups(for: playing, indexedGroups: [guest.id: guest])
+        XCTAssertEqual(groups.map(\.name), ["An Unknown & Band", "Guest"])
+        XCTAssertEqual(groups[0].songs.map(\.id), [playing.id])
+        XCTAssertEqual(groups[1].songs.map(\.id), [playing.id, other.id])
+        XCTAssertEqual(groups.map(\.id), groups.map { ArtistCredits.key($0.name) })
+    }
+
+    func testNowPlayingArtistNavigationResolvesSoloAndAllCollaborators() {
+        let solo = Song(title: "Solo", artist: "AC/DC", fileName: "solo.m4a")
+        XCTAssertEqual(ArtistCredits.navigationGroups(for: solo, indexedGroups: [:]).map(\.name), ["AC/DC"])
+        let collaboration = Song(title: "Together", artist: "Alpha feat. Beta & Gamma", fileName: "together.m4a")
+        let beta = ArtistGroup(name: "BETA", songs: [collaboration])
+        let groups = ArtistCredits.navigationGroups(for: collaboration, indexedGroups: [beta.id: beta])
+        XCTAssertEqual(groups.map(\.name), ["Alpha", "BETA", "Gamma"])
+        XCTAssertEqual(Set(groups.map(\.id)).count, 3)
+    }
+
+    func testNowPlayingArtistNavigationIgnoresPodcastsAndEmptyCredits() {
+        var episode = Song(title: "Episode", artist: "Publisher", fileName: "episode.m4a")
+        episode.podcastEpisodeID = "episode"
+        XCTAssertTrue(ArtistCredits.navigationGroups(for: episode, indexedGroups: [:]).isEmpty)
+        let unknown = Song(title: "Track", artist: " , & ; ", fileName: "unknown.m4a")
+        XCTAssertTrue(ArtistCredits.navigationGroups(for: unknown, indexedGroups: [:]).isEmpty)
+    }
+
     func testAlbumCompletionReusesSongsAndPreservesOriginalMetadata() throws {
         var original = Song(title: "Track", artist: "Singer & Guest", fileName: "track.m4a", album: "Single",
             coverData: Data([1, 2]), lyrics: "Lyrics", artistNames: ["Singer", "Guest"])

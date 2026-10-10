@@ -9,15 +9,16 @@ final class OnlineMusicCatalogStore {
     private(set) var cachedAlbums: [OnlineMusicAlbum] = []
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var albumTracks: [String: OnlineTrackCollection] = [:]
-    @ObservationIgnored private var discoveryStarted = false
+    @ObservationIgnored private var startupDiscovery: Task<Void, Never>?
     @ObservationIgnored private var attemptedNames: Set<String> = []
-    private var homeIDs: [String] = []
+    private var homeSession: HomeAlbumSession
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         let saved = OnlineCatalogPersistence.load(from: defaults)
         knownArtists = saved.artists
         cachedAlbums = saved.albums
+        homeSession = HomeAlbumSession(cachedAlbums: saved.albums, spotifyConnected: SpotifyManager.shared.isConnected)
     }
     func remember(_ artist: OnlineArtistReference) {
         knownArtists.removeAll { $0.id == artist.id }
@@ -31,7 +32,6 @@ final class OnlineMusicCatalogStore {
         // Bound persistent discovery metadata, never store media or credentials here.
         if cachedAlbums.count > 1000 { cachedAlbums = Array(cachedAlbums.suffix(1000)) }
         save()
-        if !discoveryStarted { refreshSelection() }
     }
     private func save() {
         OnlineCatalogPersistence.save(artists: knownArtists, albums: cachedAlbums, to: defaults)
@@ -82,23 +82,19 @@ final class OnlineMusicCatalogStore {
         albumTracks[album.id] = result
         return result
     }
-    var homeAlbums: [OnlineMusicAlbum] {
-        let allowed = cachedAlbums.filter { $0.provider != .spotify || SpotifyManager.shared.isConnected }
-        let byID = Dictionary(allowed.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        return homeIDs.compactMap { byID[$0] }
+    var homeAlbums: [OnlineMusicAlbum] { homeSession.albums }
+
+    func prepareHomeIfNeeded(localArtistNames: [String]) {
+        guard startupDiscovery == nil else { return }
+        // Owned by the process, so leaving Home or changing language cannot restart it.
+        startupDiscovery = Task { await discoverAtStartup(localArtistNames: localArtistNames) }
     }
-    func refreshSelection() {
-        let allowed = cachedAlbums.filter { $0.provider != .spotify || SpotifyManager.shared.isConnected }
-        homeIDs = OnlineCatalogLogic.refillSelection(homeIDs, available: allowed.map(\.id))
-    }
-    func discover(localArtistNames: [String]) async {
-        while discoveryStarted {
-            do { try await Task.sleep(for: .milliseconds(40)) }
-            catch { return }
+
+    private func discoverAtStartup(localArtistNames: [String]) async {
+        defer {
+            homeSession.finishStartupDiscovery(cachedAlbums: cachedAlbums,
+                spotifyConnected: SpotifyManager.shared.isConnected)
         }
-        refreshSelection()
-        discoveryStarted = true
-        defer { discoveryStarted = false; refreshSelection() }
         // Discovery samples known artists; opening an artist still loads its entire catalog.
         let explicit = Array(knownArtists.shuffled().prefix(6))
         for artist in explicit {
