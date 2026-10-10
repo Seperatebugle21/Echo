@@ -41,6 +41,13 @@ final class HomeInteractionTests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 10), .completed)
     }
 
+    private func visibleMiniPlayer() -> XCUIElement {
+        // SwiftUI can expose the gesture label and its children with the same ID.
+        // Select a rendered element; the following tap/drag assertions verify the actual action.
+        let query = app.buttons.matching(identifier: "mini-player-open")
+        return query.allElementsBoundByIndex.first(where: { $0.isHittable }) ?? query.firstMatch
+    }
+
     private func capture(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name
@@ -55,7 +62,7 @@ final class HomeInteractionTests: XCTestCase {
         closePlayer.tap()
         waitForHome()
         XCTAssertTrue(app.buttons["home-settings"].isHittable)
-        let miniPlayer = app.buttons["mini-player-open"]
+        let miniPlayer = visibleMiniPlayer()
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 8))
         XCTAssertGreaterThan(miniPlayer.frame.minY, app.frame.height * 0.6)
         miniPlayer.tap()
@@ -106,14 +113,14 @@ final class HomeInteractionTests: XCTestCase {
         closePlayer.tap()
         waitForHome()
 
-        let miniPlayer = app.buttons["mini-player-open"]
+        var miniPlayer = visibleMiniPlayer()
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 8))
         XCTAssertGreaterThan(miniPlayer.frame.minY, app.frame.height * 0.6)
         miniPlayer.tap()
         waitForPlayerOpen()
         closePlayer.tap()
         waitForHome()
-        XCTAssertTrue(miniPlayer.isHittable)
+        miniPlayer = visibleMiniPlayer()
 
         miniPlayer.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)))
@@ -127,7 +134,9 @@ final class HomeInteractionTests: XCTestCase {
     func testDiscoveryKeepsAllEligibleMusicCardsAndThemePreviews() {
         launch()
         for _ in 0..<8 {
-            if app.buttons["home-discovery-artists"].exists || app.buttons["home-discovery-songs"].exists { break }
+            let artists = app.buttons["home-discovery-artists"]
+            let songs = app.buttons["home-discovery-songs"]
+            if (artists.exists && artists.isHittable) || (songs.exists && songs.isHittable) { break }
             app.swipeUp()
         }
         XCTAssertTrue(app.buttons["home-discovery-artists"].waitForExistence(timeout: 5))
