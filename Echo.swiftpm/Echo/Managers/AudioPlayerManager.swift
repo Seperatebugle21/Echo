@@ -568,6 +568,7 @@ class AudioPlayerManager:
         queue: [Song] = [], queuePosition: Int? = nil, repeatingCurrent: Bool = false
     ) {
         recordListeningChange(repeatingCurrent ? .completed : .selected)
+        if song.podcastEpisodeID != nil { stopEchoFlow() }
         stopTransitionPreview(resume: false)
         transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
         transitionCancellationPending = false
@@ -729,11 +730,14 @@ class AudioPlayerManager:
             if !repeatingCurrent { updateRepeatForSelection() }
 
         } catch {
-
-            print(
-                "Kan nummer niet afspelen:",
-                error.localizedDescription
-            )
+            playbackErrorKey = "audio_playback_failed"
+            localPlaybackState = .failed; isPlaying = false
+            currentSong = song
+            Task { @MainActor [weak self] in
+                RecommendationManager.shared.playbackWillChange(.failed, position: 0, playing: false)
+                self?.continueFlowAfterFailure()
+            }
+            updateNowPlaying()
         }
     }
 
@@ -1598,7 +1602,8 @@ extension AudioPlayerManager {
         autoNextQueue.removeAll()
         allSongs = available
         if let seedSong, let song = available.first(where: { $0.id == seedSong.id }), let url = getURL(for: song) {
-            play(song: song, url: url, queue: [song])
+            let retained = queue.dropFirst(max(0, currentIndex + 1)).filter { $0.id != song.id && !flowSongIDs.contains($0.id) }
+            play(song: song, url: url, queue: [song] + retained)
         } else if currentSong == nil || isPodcast || !available.contains(where: { $0.id == currentSong?.id }) {
             let snapshot = RecommendationManager.shared.selectionSnapshot(songs: available, favorites: library.favoriteSongIDs, seed: flowSeed)
             guard let first = snapshot.ranked(limit: 1, discover: flowMode == .discover).first, let url = getURL(for: first) else { stopEchoFlow(); return }
@@ -1617,7 +1622,7 @@ extension AudioPlayerManager {
     @MainActor private func continueFlowAfterFailure() {
         guard flowActive, let currentSong, flowFailedIDs.insert(currentSong.id).inserted else { return }
         if queue.indices.contains(currentIndex + 1) { next(manuallyInitiated: false) }
-        else { stopEchoFlow() }
+        else { requestFlowRefill() }
     }
     @MainActor private func scheduleFlowRefill() {
         guard flowActive, flowRefillTask == nil, !isPodcast else { return }
@@ -1633,22 +1638,26 @@ extension AudioPlayerManager {
             let favorites = library.favoriteSongIDs
             let seed = self.flowSeed; self.flowSeed &+= 1
             let current = self.currentSong, mode = self.flowMode
-            var excluded = EchoFlowQueuePolicy.exclusions(current: current?.id, upcoming: upcoming.map(\.id), recent: self.flowRecent, libraryCount: songs.count)
-            if songs.count == 1 && upcoming.isEmpty, let current { excluded.remove(current.id) }
-            excluded.formUnion(self.flowFailedIDs)
+            let upcomingIDs = upcoming.map(\.id), recent = self.flowRecent, failed = self.flowFailedIDs
             let snapshot = RecommendationManager.shared.selectionSnapshot(songs: songs, favorites: favorites, seed: seed)
             let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             let recommendations = await Task.detached(priority: .utility) {
                 let local = snapshot.songs.filter { $0.podcastEpisodeID == nil && FileManager.default.fileExists(atPath: documents.appendingPathComponent($0.fileName).path) }
+                var excluded = EchoFlowQueuePolicy.exclusions(current: current?.id, upcoming: upcomingIDs, recent: recent, libraryCount: local.count)
+                if local.count == 1 && upcomingIDs.isEmpty, let current { excluded.remove(current.id) }
+                excluded.formUnion(failed)
                 let selection = SmartMusicSelection(songs: local, favorites: snapshot.favorites, learning: snapshot.learning, now: snapshot.now, seed: snapshot.seed)
-                return selection.ranked(limit: 8, discover: mode == .discover, excluding: excluded, anchor: current)
+                return (selection.ranked(limit: 8, discover: mode == .discover, excluding: excluded, anchor: current), local.count)
             }.value
             guard !Task.isCancelled, self.flowActive, self.flowGeneration == generation, self.repeatMode == .off else { return }
             let pending = self.queue.dropFirst(max(0, self.currentIndex + 1))
             let pendingIDs = Set(pending.map(\.id)), missing = max(0, 8 - pending.count)
-            let extra = recommendations.filter { !pendingIDs.contains($0.id) && ($0.id != self.currentSong?.id || songs.count == 1) && library.song(withID: $0.id) != nil }
+            let extra = recommendations.0.filter { !pendingIDs.contains($0.id) && ($0.id != self.currentSong?.id || recommendations.1 == 1) && library.song(withID: $0.id) != nil }
             let chosen = Array(extra.prefix(missing))
-            guard !chosen.isEmpty else { return }
+            guard !chosen.isEmpty else {
+                if self.localPlaybackState == .failed { self.stopEchoFlow() }
+                return
+            }
             self.flowSongIDs.formUnion(chosen.map(\.id))
             self.queue.append(contentsOf: chosen)
             self.originalQueue.append(contentsOf: chosen)
@@ -1659,7 +1668,9 @@ extension AudioPlayerManager {
                 let kept = old.filter { !self.flowSongIDs.contains($0.id) }
                 self.queue = kept + self.queue.dropFirst(old.count)
                 self.currentIndex -= removed.count
+                self.originalQueue = self.queue
             }
+            if self.localPlaybackState == .failed, let first = chosen.first { self.playFromQueue(first) }
         }
     }
 }

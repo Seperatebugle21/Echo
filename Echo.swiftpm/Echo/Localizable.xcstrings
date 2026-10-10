@@ -2,6 +2,35 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "smart_queue_open": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open queue"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open wachtrij"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ouvrir la file d’attente"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Warteschlange öffnen"
+        }
+      }
+    }
+  },
   "smart_hidden_gems": {
     "extractionState": "manual",
     "localizations": {

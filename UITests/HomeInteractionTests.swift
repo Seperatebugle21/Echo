@@ -86,6 +86,28 @@ final class HomeInteractionTests: XCTestCase {
         let playing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Pause'"), object: flow)
         XCTAssertEqual(XCTWaiter.wait(for: [playing], timeout: 8), .completed)
         capture("home-smart-flow-active")
+        visibleMiniPlayer().tap()
+        waitForPlayerOpen()
+        for _ in 0..<6 {
+            let next = app.buttons.matching(identifier: "next_track_action").allElementsBoundByIndex.first { $0.isHittable }
+            XCTAssertNotNil(next)
+            next?.tap()
+        }
+        closePlayer.tap()
+        flow = app.buttons["smart-flow-play"]
+        let homeFlow = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: flow)
+        XCTAssertEqual(XCTWaiter.wait(for: [homeFlow], timeout: 8), .completed)
+        scrollTo("smart-queue-open").tap()
+        XCTAssertTrue(app.navigationBars["Queue"].waitForExistence(timeout: 8))
+        XCTAssertGreaterThanOrEqual(app.cells.count, 7, "Flow should refill the real queue after six skips")
+        capture("home-smart-flow-refilled-real-queue")
+        app.buttons["Close"].tap()
+        // Return to the Flow card after verifying the queue below it.
+        for _ in 0..<4 {
+            let viewport = app.frame.insetBy(dx: 0, dy: 185)
+            if flow.exists && viewport.contains(CGPoint(x: flow.frame.midX, y: flow.frame.midY)) { break }
+            app.swipeDown()
+        }
         flow.tap()
         let paused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Play'"), object: flow)
         XCTAssertEqual(XCTWaiter.wait(for: [paused], timeout: 8), .completed)
@@ -97,6 +119,7 @@ final class HomeInteractionTests: XCTestCase {
         let stopped = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == 'Start Echo Flow'"), object: flow)
         XCTAssertEqual(XCTWaiter.wait(for: [stopped], timeout: 8), .completed)
         XCTAssertTrue(app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex.contains { $0.isHittable })
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == 'Pause'")).allElementsBoundByIndex.contains { $0.isHittable }, "Stopping Flow must keep playback running")
         capture("home-smart-flow-stopped-queue-kept")
     }
 

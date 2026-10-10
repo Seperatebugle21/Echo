@@ -52,7 +52,11 @@ final class RecommendationManager {
     }
     private func storeListening(_ event: ListeningEvent) {
         guard event.seconds > 0 else { return }
-        if let index = listeningEvents.lastIndex(where: { $0.id == event.id }) { listeningEvents[index] = event }
+        if let index = listeningEvents.lastIndex(where: { $0.id == event.id }) {
+            let stored = listeningEvents[index]
+            guard stored.seconds != event.seconds || stored.reason != event.reason else { return }
+            listeningEvents[index] = event
+        }
         else { listeningEvents.append(event) }
         saveAndPublish()
     }

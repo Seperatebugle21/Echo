@@ -16,6 +16,7 @@ final class HomeSmartSectionsModel {
     @ObservationIgnored private var fingerprint: [String] = []
     @ObservationIgnored private var albumDay: Date?
     @ObservationIgnored private var generation = 0
+    @ObservationIgnored private var listeningGeneration = 0
     @ObservationIgnored private var seed = UInt64.random(in: 0...UInt64.max)
     @ObservationIgnored private var snapshot: SmartMusicSelection?
     @ObservationIgnored private var lastSurprise: UUID?
@@ -35,6 +36,11 @@ final class HomeSmartSectionsModel {
         guard !Task.isCancelled, token == generation else { return }
         available = result.0; snapshot = result.2
         let changed = fingerprint != result.1
+        if !changed {
+            let indexed = Dictionary(uniqueKeysWithValues: result.0.map { ($0.id, $0) })
+            gems = gems.compactMap { indexed[$0.id] }
+            vibes = vibes.mapValues { $0.compactMap { indexed[$0.id] } }
+        }
         fingerprint = result.1
         let day = Calendar.current.startOfDay(for: Date())
         let refreshAlbums = changed || albumDay != day
@@ -59,6 +65,7 @@ final class HomeSmartSectionsModel {
         }
     }
     func updateListening() async {
+        listeningGeneration += 1; let token = listeningGeneration
         let engine = RecommendationManager.shared, events = engine.listeningEvents
         let now = Date(), previous = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: now) ?? now
         let daily = engine.dailyCounts, ids = Set(available.map(\.id))
@@ -66,16 +73,17 @@ final class HomeSmartSectionsModel {
             (ListeningWeek.calculate(events: events, containing: now), ListeningWeek.calculate(events: events, containing: previous),
              HistoricalMusicPeriod.available(daily: daily, songIDs: ids, now: now))
         }.value
-        guard !Task.isCancelled else { return }
+        guard !Task.isCancelled, token == listeningGeneration else { return }
         week = result.0; previousWeek = result.1; self.periods = result.2
         if !periods.contains(where: { $0.id == selectedPeriod }) { selectedPeriod = periods.first?.id ?? 1 }
     }
     func refreshGems() async {
         guard let snapshot else { return }
+        let token = generation
         seed &+= 1
         let refreshed = SmartMusicSelection(songs: snapshot.songs, favorites: snapshot.favorites, learning: snapshot.learning, now: Date(), seed: seed)
         let result = await Task.detached(priority: .utility) { refreshed.ranked(limit: 10, discover: true) }.value
-        guard !Task.isCancelled else { return }; gems = result
+        guard !Task.isCancelled, token == generation else { return }; gems = result
     }
     func play(_ song: Song, queue: [Song]) -> Bool {
         let library = MusicLibraryManager.shared
@@ -88,7 +96,7 @@ final class HomeSmartSectionsModel {
         let player = AudioPlayerManager.shared
         player.lastPlaybackDirection = .fade; player.play(song: current, url: url, queue: valid.isEmpty ? [current] : valid)
         player.allSongs = available
-        errorKey = nil; return true
+        errorKey = player.playbackErrorKey; return errorKey == nil
     }
     func surprise(smart: Bool) async -> Song? {
         let player = AudioPlayerManager.shared, library = MusicLibraryManager.shared
@@ -104,4 +112,5 @@ final class HomeSmartSectionsModel {
         lastSurprise = song.id; return song
     }
     func dismissError() { errorKey = nil }
+    func reportPlaybackError(_ key: String) { errorKey = key }
 }

@@ -14,6 +14,7 @@ struct HomeSmartSections: View {
     @State private var surpriseBusy = false
     @State private var smartSurprise = true
     @State private var confirmation: Song?
+    @State private var confirmationToken = UUID()
     @State private var activeVibe: MusicVibe?
     private let engine = RecommendationManager.shared
 
@@ -32,6 +33,7 @@ struct HomeSmartSections: View {
         .task(id: library.favoriteRevision) { await model.prepare(library: library) }
         .task(id: engine.revision) { await model.updateListening() }
         .onChange(of: scenePhase) { if scenePhase == .active { Task { await model.prepare(library: library); await model.updateListening() } } }
+        .onChange(of: player.playbackErrorKey) { if let key = player.playbackErrorKey { model.reportPlaybackError(key) } }
         .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
         .sheet(isPresented: $showQueue) { QueueView() }
         .alert("smart_playback_error", isPresented: Binding(get: { model.errorKey != nil }, set: { if !$0 { model.dismissError() } })) {
@@ -130,7 +132,13 @@ struct HomeSmartSections: View {
     }
     private func surprise() {
         guard !surpriseBusy else { return }; surpriseBusy = true
-        Task { confirmation = await model.surprise(smart: smartSurprise); surpriseBusy = false; if confirmation != nil { feedback += 1 } }
+        let token = UUID(); confirmationToken = token
+        Task {
+            confirmation = await model.surprise(smart: smartSurprise); surpriseBusy = false
+            if confirmation != nil { feedback += 1 }
+            try? await Task.sleep(for: .seconds(2))
+            if confirmationToken == token { confirmation = nil }
+        }
     }
     private var echoFlow: some View {
         section("smart_flow") {
@@ -224,7 +232,7 @@ struct HomeSmartSections: View {
             HStack {
                 HomeSectionTitle(title: "smart_up_next"); Spacer()
                 Button { showQueue = true } label: { Image(systemName: "list.bullet").frame(width: 44, height: 44) }
-                    .buttonStyle(HomePressStyle()).accessibilityLabel("queue_action").accessibilityIdentifier("smart-queue-open")
+                    .buttonStyle(HomePressStyle()).accessibilityLabel("smart_queue_open").accessibilityIdentifier("smart-queue-open")
             }
             if player.homeUpcomingSongs.isEmpty {
                 HStack {
@@ -235,7 +243,8 @@ struct HomeSmartSections: View {
             } else {
                 ForEach(Array(player.homeUpcomingSongs.enumerated()), id: \.offset) { _, song in
                     Button {
-                        if player.queue.contains(where: { $0.id == song.id }) { player.playFromQueue(song) }
+                        if player.repeatMode == .one && song.id == player.currentSong?.id { player.retryPlayback() }
+                        else if player.queue.contains(where: { $0.id == song.id }) { player.playFromQueue(song) }
                         else { play(song, [song]) }
                         feedback += 1
                     } label: {
@@ -255,6 +264,7 @@ struct HomeSmartSections: View {
                 }
             }
         }.padding(.horizontal, 20)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: player.homeUpcomingSongs.map(\.id))
     }
     private func play(_ song: Song, _ songs: [Song]) { if model.play(song, queue: songs) { feedback += 1 } }
     private func roundIcon(_ symbol: String) -> some View {
