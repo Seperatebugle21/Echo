@@ -79,12 +79,7 @@ struct NowPlayingView: View {
                                 .foregroundStyle(.white)
                                 .lineLimit(1)
 
-                            Text(song.artist)
-                                .font(.body)
-                                .foregroundStyle(
-                                    .white.opacity(0.68)
-                                )
-                                .lineLimit(1)
+                            NowPlayingArtistButton(song: song)
                         }
 
                         Spacer()
@@ -189,9 +184,6 @@ struct NowPlayingView: View {
                         audioPlayer.togglePlayPause()
                     } label: {
 
-                        if audioPlayer.isPreparingAudio {
-                            ProgressView().tint(.white).frame(width: 65, height: 65).accessibilityLabel("audio_preparing")
-                        } else {
                         Image(
                             systemName:
                                 audioPlayer.isPlaying
@@ -202,7 +194,6 @@ struct NowPlayingView: View {
                             .system(size: 70)
                         )
                         .foregroundStyle(.white)
-                        }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(

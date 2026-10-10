@@ -147,6 +147,8 @@ targets:
       - path: Echo.swiftpm/Echo/Models/LibrarySongMatchIndex.swift
       - path: Echo.swiftpm/Echo/Models/AlbumSongSelection.swift
       - path: Tests/EchoCatalogTests.swift
+      - path: Tests/EchoAlbumFavoriteTests.swift
+      - path: Echo.swiftpm/Echo/Models/FavoriteAlbum.swift
       - path: Tests/Fixtures
         buildPhase: resources
       - path: Echo.swiftpm/Echo/Models/OnlineMusicCatalog.swift
@@ -156,8 +158,10 @@ targets:
       - path: Echo.swiftpm/Echo/YoutubeMusic/YouTubeMusicMetadata.swift
       - path: Tests/HomeMusicSelectionTests.swift
       - path: Echo.swiftpm/Echo/Models/HomeMusicSelection.swift
-      - path: Echo.swiftpm/Echo/Models/ArtistCredits.swift
       - path: Tests/EchoFeatureLogicTests.swift
+      - path: Tests/EchoArtworkTests.swift
+      - path: Echo.swiftpm/Echo/Components/ArtworkThumbnailStore.swift
+      - path: Echo.swiftpm/Echo/Models/ArtistCredits.swift
       - path: Tests/EchoReleaseDetectionTests.swift
       - path: Tests/EchoAudioEngineTests.swift
       - path: Tests/EchoThemeTests.swift

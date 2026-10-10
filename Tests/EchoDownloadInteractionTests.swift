@@ -44,6 +44,7 @@ final class EchoDownloadInteractionTests: XCTestCase {
             "title": "Song", "artist": "Artist", "permissionConfirmed": true, "completed": false]
         var record = try JSONDecoder().decode(BackgroundFetchRecord.self, from: JSONSerialization.data(withJSONObject: legacy))
         XCTAssertNil(record.automaticRetryCount)
+        XCTAssertNil(record.destinationAlbums)
         var budget = FetchRetryBudget(used: record.automaticRetryCount ?? 0)
         XCTAssertTrue(budget.consume())
         record.automaticRetryCount = budget.used
@@ -51,6 +52,23 @@ final class EchoDownloadInteractionTests: XCTestCase {
         XCTAssertEqual(restored.id, id)
         var restoredBudget = FetchRetryBudget(used: restored.automaticRetryCount ?? 0)
         XCTAssertFalse(restoredBudget.consume())
+    }
+    func testAlbumDestinationsSurviveBackgroundRestoreAndStaleCompletionSnapshots() throws {
+        let target = LibraryAlbumDestination(name: "Album", artist: "Artist")
+        let other = LibraryAlbumDestination(name: "Other Album", artist: "Artist")
+        let legacy: [String: Any] = ["id": UUID().uuidString, "spotifyURL": "https://music.youtube.com/watch?v=test",
+            "title": "Song", "artist": "Artist", "permissionConfirmed": true, "completed": false]
+        var record = try JSONDecoder().decode(BackgroundFetchRecord.self, from: JSONSerialization.data(withJSONObject: legacy))
+        record.mergeAlbumDestinations([target, other, target])
+        var stale = try JSONDecoder().decode(BackgroundFetchRecord.self, from: JSONSerialization.data(withJSONObject: legacy))
+        stale.completed = true
+        stale.mergeAlbumDestinations(record.destinationAlbums ?? [])
+        let restored = try JSONDecoder().decode(BackgroundFetchRecord.self, from: JSONEncoder().encode(stale))
+        XCTAssertTrue(restored.completed)
+        XCTAssertEqual(restored.destinationAlbums, [target, other])
+        let download = FetchItem(spotifyURL: item().spotifyURL, title: "Song", artist: "Artist",
+            destinationAlbums: (restored.destinationAlbums ?? []) + [target])
+        XCTAssertEqual(download.destinationAlbums, [target, other])
     }
     func testCancellationDoesNotSpendOrTriggerRetry() {
         let download = item()

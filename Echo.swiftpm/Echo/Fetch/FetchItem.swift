@@ -91,6 +91,8 @@ final class FetchItem: Identifiable {
     var destinationPlaylistPositions:
         [UUID: Int]
 
+    var destinationAlbums: [LibraryAlbumDestination]
+
     private(set) var queueState: FetchQueueState = .pending
     @ObservationIgnored private var retryBudget = FetchRetryBudget()
     var automaticRetryCount: Int { retryBudget.used }
@@ -114,6 +116,7 @@ final class FetchItem: Identifiable {
         youtubeURL: URL? = nil,
         permissionConfirmed: Bool = false,
         destinationPlaylistPositions: [UUID: Int] = [:],
+        destinationAlbums: [LibraryAlbumDestination] = [],
         automaticRetryCount: Int = 0
     ) {
 
@@ -142,5 +145,6 @@ final class FetchItem: Identifiable {
 
         self.destinationPlaylistPositions =
             destinationPlaylistPositions
+        self.destinationAlbums = LibraryAlbumDestination.unique(destinationAlbums)
     }
 }

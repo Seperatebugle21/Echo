@@ -26,6 +26,7 @@ struct HomeLocalAlbumSection: View {
                                     Text(album.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                 }.frame(width: coverWidth, alignment: .leading)
                             }.buttonStyle(HomePressStyle())
+                                .albumFavoriteActions(FavoriteAlbum(album: album))
                         }
                     }.padding(.horizontal, 20).padding(.vertical, 6)
                 }
@@ -40,11 +41,7 @@ struct HomeLocalAlbumSection: View {
 
 struct HomeOnlineAlbumSection: View {
     let coverWidth: CGFloat
-    @Environment(MusicLibraryManager.self) private var library
     private let store = OnlineMusicCatalogStore.shared
-    private var taskID: [String] {
-        library.artistGroups.map(\.id) + [String(SpotifyManager.shared.isConnected)]
-    }
     var body: some View {
         Group {
             if !store.homeAlbums.isEmpty {
@@ -60,12 +57,12 @@ struct HomeOnlineAlbumSection: View {
                                         Text(album.artistName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                     }.frame(width: coverWidth, alignment: .leading)
                                 }.buttonStyle(HomePressStyle())
+                                    .albumFavoriteActions(FavoriteAlbum(album: album))
                             }
                         }.padding(.horizontal, 20).padding(.vertical, 6)
                     }
                 }
             }
         }
-        .task(id: taskID) { await store.discover(localArtistNames: library.artistGroups.map(\.name)) }
     }
 }

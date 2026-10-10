@@ -9,15 +9,16 @@ final class OnlineMusicCatalogStore {
     private(set) var cachedAlbums: [OnlineMusicAlbum] = []
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var albumTracks: [String: OnlineTrackCollection] = [:]
-    @ObservationIgnored private var discoveryStarted = false
+    @ObservationIgnored private var startupDiscovery: Task<Void, Never>?
     @ObservationIgnored private var attemptedNames: Set<String> = []
-    private var homeIDs: [String] = []
+    private var homeSession: HomeAlbumSession
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         let saved = OnlineCatalogPersistence.load(from: defaults)
         knownArtists = saved.artists
         cachedAlbums = saved.albums
+        homeSession = HomeAlbumSession(cachedAlbums: saved.albums, spotifyConnected: SpotifyManager.shared.isConnected)
     }
     func remember(_ artist: OnlineArtistReference) {
         knownArtists.removeAll { $0.id == artist.id }
@@ -31,12 +32,12 @@ final class OnlineMusicCatalogStore {
         // Bound persistent discovery metadata, never store media or credentials here.
         if cachedAlbums.count > 1000 { cachedAlbums = Array(cachedAlbums.suffix(1000)) }
         save()
-        if !discoveryStarted { refreshSelection() }
     }
     private func save() {
         OnlineCatalogPersistence.save(artists: knownArtists, albums: cachedAlbums, to: defaults)
     }
-    func albums(for reference: OnlineArtistReference, includeSongs: Bool = true) async throws -> (OnlineArtistReference, [OnlineMusicAlbum], [OnlineMusicTrack]) {
+    func albums(for reference: OnlineArtistReference, includeSongs: Bool = true) async throws -> (OnlineArtistReference, [OnlineMusicAlbum], [OnlineMusicTrack], Int) {
+        var unavailable = 0
         let artist: OnlineArtistReference, albums: [OnlineMusicAlbum], songs: [OnlineMusicTrack]
         switch reference.provider {
         case .spotify:
@@ -46,7 +47,9 @@ final class OnlineMusicCatalogStore {
         case .youtubeMusic:
             let (header, root) = try await YouTubeMusicMetadata.shared.artistHeader(reference.sourceID)
             artist = header
-            albums = try await YouTubeMusicMetadata.shared.artistAlbums(root, artist: artist)
+            let releases = try await YouTubeMusicMetadata.shared.artistAlbums(root, artist: artist)
+            albums = releases.albums
+            unavailable += releases.unavailable
             // The songs shelf includes appearances that might not be in album shelves.
             var artistSongs: [OnlineMusicTrack] = []
             for shelf in includeSongs ? YouTubeMusicJSON.nodes("musicShelfRenderer", in: root) : [] {
@@ -56,15 +59,18 @@ final class OnlineMusicCatalogStore {
                 artistSongs += tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
                 if let endpoint = YouTubeMusicJSON.nodes("browseEndpoint", in: shelf["bottomEndpoint"] as Any).first,
                    let id = endpoint["browseId"] as? String, id.hasPrefix("VL") {
-                    let collection = try await YouTubeMusicMetadata.shared.playlist(id)
-                    artistSongs += collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
+                    do {
+                        let collection = try await YouTubeMusicMetadata.shared.playlist(id)
+                        artistSongs += collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
+                    } catch is CancellationError { throw CancellationError() }
+                    catch { unavailable += 1 }
                 }
             }
             songs = artistSongs
         }
         remember(artist)
         cache(albums)
-        return (artist, albums, OnlineCatalogLogic.uniqueTracks(songs))
+        return (artist, albums, OnlineCatalogLogic.uniqueTracks(songs), unavailable)
     }
     func tracks(for album: OnlineMusicAlbum) async throws -> OnlineTrackCollection {
         if let cached = albumTracks[album.id] { return cached }
@@ -76,23 +82,19 @@ final class OnlineMusicCatalogStore {
         albumTracks[album.id] = result
         return result
     }
-    var homeAlbums: [OnlineMusicAlbum] {
-        let allowed = cachedAlbums.filter { $0.provider != .spotify || SpotifyManager.shared.isConnected }
-        let byID = Dictionary(allowed.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        return homeIDs.compactMap { byID[$0] }
+    var homeAlbums: [OnlineMusicAlbum] { homeSession.albums }
+
+    func prepareHomeIfNeeded(localArtistNames: [String]) {
+        guard startupDiscovery == nil else { return }
+        // Owned by the process, so leaving Home or changing language cannot restart it.
+        startupDiscovery = Task { await discoverAtStartup(localArtistNames: localArtistNames) }
     }
-    func refreshSelection() {
-        let allowed = cachedAlbums.filter { $0.provider != .spotify || SpotifyManager.shared.isConnected }
-        homeIDs = OnlineCatalogLogic.refillSelection(homeIDs, available: allowed.map(\.id))
-    }
-    func discover(localArtistNames: [String]) async {
-        while discoveryStarted {
-            do { try await Task.sleep(for: .milliseconds(40)) }
-            catch { return }
+
+    private func discoverAtStartup(localArtistNames: [String]) async {
+        defer {
+            homeSession.finishStartupDiscovery(cachedAlbums: cachedAlbums,
+                spotifyConnected: SpotifyManager.shared.isConnected)
         }
-        refreshSelection()
-        discoveryStarted = true
-        defer { discoveryStarted = false; refreshSelection() }
         // Discovery samples known artists; opening an artist still loads its entire catalog.
         let explicit = Array(knownArtists.shuffled().prefix(6))
         for artist in explicit {
@@ -151,19 +153,23 @@ final class OnlineArtistCatalogModel {
             artist = result.0
             albums = result.1
             tracks = result.2
-            var includedAlbums: [OnlineMusicAlbum] = []
+            var unavailableAlbums = result.3
             for album in albums {
                 try Task.checkCancellation()
-                let collection = try await OnlineMusicCatalogStore.shared.tracks(for: album)
-                let memberTracks = collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
-                if !memberTracks.isEmpty { includedAlbums.append(album) }
-                tracks = OnlineCatalogLogic.uniqueTracks(tracks + memberTracks)
-                skippedCount += collection.skippedCount
+                do {
+                    let collection = try await OnlineMusicCatalogStore.shared.tracks(for: album)
+                    let memberTracks = collection.tracks.filter { OnlineCatalogLogic.belongs($0, to: artist) }
+                    tracks = OnlineCatalogLogic.uniqueTracks(tracks + memberTracks)
+                    skippedCount += collection.skippedCount
+                } catch is CancellationError { throw CancellationError() }
+                catch { unavailableAlbums += 1 }
                 loadedAlbums += 1
             }
-            albums = includedAlbums
             tracks.sort { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
-            complete = true
+            complete = unavailableAlbums == 0
+            if unavailableAlbums > 0 {
+                error = String(format: String(localized: "catalog_artist_partial"), unavailableAlbums)
+            }
         } catch is CancellationError { }
         catch { self.error = error.localizedDescription }
     }

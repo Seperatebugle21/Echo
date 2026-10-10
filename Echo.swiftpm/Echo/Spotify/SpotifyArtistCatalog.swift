@@ -1,6 +1,13 @@
 import Foundation
 
 extension SpotifyAPI {
+    func searchCatalog(query: String) async throws -> MusicCatalogSearchResults {
+        var url = URLComponents(string: "https://api.spotify.com/v1/search")!
+        url.queryItems = [URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "type", value: "track,artist,album"), URLQueryItem(name: "limit", value: "10")]
+        let json = try await catalogJSON(url.url!.absoluteString)
+        return SpotifyCatalogJSON.searchResults(json)
+    }
     func catalogJSON(_ path: String) async throws -> [String: Any] {
         guard SpotifyManager.shared.isConnected else { throw MusicCatalogError.spotifyConnection }
         guard let url = URL(string: path.hasPrefix("https:") ? path : "https://api.spotify.com/v1/" + path),
@@ -73,4 +80,3 @@ extension SpotifyAPI {
         return album
     }
 }
-

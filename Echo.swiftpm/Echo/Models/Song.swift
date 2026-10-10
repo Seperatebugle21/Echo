@@ -1,5 +1,24 @@
 import Foundation
 
+/// An additional library album, independent of a recording's original tags.
+struct LibraryAlbumDestination: Codable, Hashable, Sendable {
+    let name: String
+    let artist: String
+
+    var identity: String { Self.normalize(artist) + "\u{1F}" + Self.normalize(name) }
+
+    private static func normalize(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression).lowercased()
+    }
+
+    static func unique(_ albums: [Self]) -> [Self] {
+        var seen: Set<String> = []
+        return albums.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && seen.insert($0.identity).inserted }
+    }
+}
+
 struct Song: Identifiable, Codable, Hashable {
     
     let id: UUID
@@ -9,6 +28,7 @@ struct Song: Identifiable, Codable, Hashable {
     var fileName: String
     
     var album: String?
+    var additionalAlbums: [LibraryAlbumDestination]?
     var genre: String?
     var releaseYear: Int?
     var tagsInspected: Bool?

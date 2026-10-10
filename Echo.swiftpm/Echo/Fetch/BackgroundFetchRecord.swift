@@ -22,6 +22,8 @@ struct BackgroundFetchRecord:
 
     let destinationPlaylistPositions: [UUID: Int]?
 
+    var destinationAlbums: [LibraryAlbumDestination]? = nil
+
     var automaticRetryCount: Int? = nil
 
     let suggestedFileName: String?
@@ -31,6 +33,10 @@ struct BackgroundFetchRecord:
     var completed: Bool
 
     var errorMessage: String?
+
+    mutating func mergeAlbumDestinations(_ albums: [LibraryAlbumDestination]) {
+        destinationAlbums = LibraryAlbumDestination.unique((destinationAlbums ?? []) + albums)
+    }
 }
 
 

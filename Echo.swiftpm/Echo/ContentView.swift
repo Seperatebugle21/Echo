@@ -50,23 +50,25 @@ struct ContentView: View {
                         let dockReady = audioPlayer.currentSong != nil && slot.width > 0
                         let coverEntrance = !reduceMotion && presentation.entranceSong?.id == audioPlayer.currentSong?.id
                             && presentation.entranceSong != nil
-                        ResizableMiniPlayerDock(
-                            isMinimized: $miniPlayerHidden, isActive: true
-                        )
-                        .opacity(dockReady && !coverEntrance ? 1 : 0)
-                        .offset(y: dockReady || reduceMotion ? 0 : 20)
-                        .animation(
-                            coverEntrance ? nil : reduceMotion ? .easeOut(duration: 0.15)
-                                : .spring(response: 0.48, dampingFraction: 0.88),
-                            value: dockReady
-                        )
-                        .frame(width: max(68, slot.width - 16), height: 64)
-                        .offset(
-                            x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
-                            y: slot.minY - fullGeometry.frame(in: .global).minY
-                        )
-                        .allowsHitTesting(dockReady && !coverEntrance)
-                        .accessibilityHidden(presentation.isVisible)
+                        if !coverEntrance {
+                            ResizableMiniPlayerDock(
+                                isMinimized: $miniPlayerHidden, isActive: true
+                            )
+                            .opacity(dockReady && !coverEntrance ? 1 : 0)
+                            .offset(y: dockReady || reduceMotion ? 0 : 20)
+                            .animation(
+                                coverEntrance ? nil : reduceMotion ? .easeOut(duration: 0.15)
+                                    : .spring(response: 0.48, dampingFraction: 0.88),
+                                value: dockReady
+                            )
+                            .frame(width: max(68, slot.width - 16), height: 64)
+                            .offset(
+                                x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
+                                y: slot.minY - fullGeometry.frame(in: .global).minY
+                            )
+                            .allowsHitTesting(dockReady && !coverEntrance)
+                            .accessibilityHidden(presentation.isVisible)
+                        }
 
                         if dockReady && coverEntrance, let song = presentation.entranceSong {
                             CoverToMiniPlayerEntrance(
@@ -77,6 +79,7 @@ struct ContentView: View {
                                                     width: max(52, slot.width - 32), height: 52),
                                 container: fullGeometry.frame(in: .global),
                                 completion: {
+                                    guard presentation.entranceSong?.id == song.id else { return }
                                     presentation.entranceSong = nil
                                     presentation.entranceImage = nil
                                 }
@@ -86,7 +89,7 @@ struct ContentView: View {
                             .accessibilityHidden(true)
                         }
 
-                        if audioPlayer.currentSong != nil {
+                        if audioPlayer.currentSong != nil && !coverEntrance {
                             ExpandedPlayerSurface(
                                 presentation: presentation,
                                 bounds: fullGeometry.frame(in: .global),
@@ -508,18 +511,25 @@ struct PlayerCoverLaunchSource: ViewModifier {
     // Geometry is only needed when tapping. Updating it must not redraw cards
     // (and decode their artwork) on every scrolling frame.
     @State private var geometry = CoverLaunchGeometry()
+    @State private var launchImage: UIImage?
 
     func body(content: Content) -> some View {
         content
             .onGeometryChange(for: CGRect.self) { proxy in
                 proxy.frame(in: .global)
             } action: { geometry.frame = $0 }
+            .task(id: song.coverData ?? song.imageData) {
+                launchImage = nil
+                let image = await ArtworkThumbnailStore.shared.thumbnail(song.coverData ?? song.imageData)
+                guard !Task.isCancelled else { return }
+                launchImage = image
+            }
             .onTapGesture {
                 let frame = geometry.frame
                 if audioPlayer.currentSong == nil && !reduceMotion && frame.width > 0 {
                     presentation.entranceFrame = CGRect(origin: frame.origin,
                         size: CGSize(width: coverSize, height: coverSize))
-                    presentation.entranceImage = (song.coverData ?? song.imageData).flatMap { UIImage(data: $0) }
+                    presentation.entranceImage = launchImage
                     presentation.entranceSong = song
                 }
                 action()
@@ -542,62 +552,72 @@ private struct CoverToMiniPlayerEntrance: View {
     let destination: CGRect
     let container: CGRect
     let completion: () -> Void
-    @State private var progress: CGFloat = 0
+    @State private var traveling = false
 
     var body: some View {
-        CoverToMiniPlayerFrame(image: image, source: source, destination: destination,
-                               container: container, progress: progress)
-            .task {
-                // Give the cover-sized surface a rendered frame before it travels.
-                try? await Task.sleep(for: .milliseconds(20))
-                guard !Task.isCancelled else { return }
-                withAnimation(.smooth(duration: 0.36), completionCriteria: .removed) {
-                    progress = 1
-                } completion: {
-                    completion()
-                }
+        let x = (traveling ? destination.minX : source.minX) - container.minX
+        let y = (traveling ? destination.minY : source.minY) - container.minY
+        ZStack(alignment: .topLeading) {
+            // Fixed layout; only layer transforms animate. No player gestures, marquee,
+            // UIKit route picker, image decoding or per-frame view-builder interpolation.
+            Capsule().fill(.clear)
+                .frame(width: destination.width, height: 52)
+                .glassEffect(.regular, in: .capsule)
+                .scaleEffect(x: traveling ? 1 : source.width / max(1, destination.width),
+                             y: traveling ? 1 : source.height / 52, anchor: .topLeading)
+                .offset(x: x, y: y)
+
+            MiniPlayerEntranceRow(song: song, image: image)
+                .frame(width: destination.width, height: 52)
+                .opacity(traveling ? 1 : 0)
+                .animation(.easeOut(duration: 0.14).delay(0.22), value: traveling)
+                .offset(x: destination.minX - container.minX, y: destination.minY - container.minY)
+
+            Group {
+                if let image { Image(uiImage: image).resizable().scaledToFill() }
+                else { Rectangle().fill(.thinMaterial).overlay { Image(systemName: "music.note").font(.largeTitle) } }
             }
+            .opacity(traveling ? 0 : 1)
+            .animation(.easeIn(duration: 0.18).delay(0.18), value: traveling)
+            .frame(width: source.width, height: source.height)
+            .clipShape(.rect(cornerRadius: 16))
+            .scaleEffect(x: traveling ? 32 / max(1, source.width) : 1,
+                         y: traveling ? 32 / max(1, source.height) : 1, anchor: .topLeading)
+            .offset(x: x + (traveling ? 14 : 0), y: y + (traveling ? 10 : 0))
+        }
+        .task {
+            // Give the cover-sized surface a rendered frame before it travels.
+            try? await Task.sleep(for: .milliseconds(20))
+            guard !Task.isCancelled else { return }
+            withAnimation(.smooth(duration: 0.36), completionCriteria: .removed) {
+                traveling = true
+            } completion: {
+                completion()
+            }
+        }
     }
 }
 
-private struct CoverToMiniPlayerFrame: View, Animatable {
+private struct MiniPlayerEntranceRow: View {
+    let song: Song
     let image: UIImage?
-    let source: CGRect
-    let destination: CGRect
-    let container: CGRect
-    var progress: CGFloat
-    var animatableData: CGFloat {
-        get { progress }
-        set { progress = newValue }
-    }
-
     var body: some View {
-        let p = min(1, max(0, progress))
-        let width = source.width + (destination.width - source.width) * p
-        let height = source.height + (destination.height - source.height) * p
-        let shape = RoundedRectangle(cornerRadius: 16 + 10 * p, style: .continuous)
-        ZStack {
-            // The actual compact content emerges inside the same morphing glass surface.
-            MiniPlayer(onMinimize: {})
-                .frame(width: destination.width, height: 52)
-                .opacity(min(1, max(0, (p - 0.60) / 0.32)))
-            Group {
-                if let image {
-                    Image(uiImage: image).resizable().scaledToFill()
-                } else {
-                    Rectangle().fill(.thinMaterial)
-                        .overlay { Image(systemName: "music.note").font(.largeTitle) }
+        HStack(spacing: 4) {
+            HStack(spacing: 8) {
+                Group {
+                    if let image { Image(uiImage: image).resizable().scaledToFill() }
+                    else { Image(systemName: "music.note").frame(maxWidth: .infinity, maxHeight: .infinity).background(.thinMaterial) }
                 }
-            }
-            .frame(width: width, height: height)
-            .clipped()
-            .opacity(1 - min(1, max(0, (p - 0.25) / 0.55)))
+                .frame(width: 32, height: 32).clipShape(.rect(cornerRadius: 6))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(song.title).font(.system(size: 14, weight: .medium)).lineLimit(1).frame(height: 17)
+                    Text(song.artist).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary).lineLimit(1)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }.padding(.trailing, 8)
+            Image(systemName: "airplay.audio").frame(width: 30, height: 44)
+            Image(systemName: "pause.fill").font(.system(size: 19, weight: .semibold)).frame(width: 44, height: 44)
         }
-        .frame(width: width, height: height)
-        .clipShape(shape)
-        .glassEffect(.regular, in: shape)
-        .offset(x: source.minX + (destination.minX - source.minX) * p - container.minX,
-                y: source.minY + (destination.minY - source.minY) * p - container.minY)
+        .padding(.leading, 14).padding(.trailing, 4)
     }
 }
 

@@ -114,6 +114,7 @@ private struct HomeSongTile: View {
     @Environment(MiniPlayerPresentation.self) private var presentation
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var source = HomeCoverGeometry()
+    @State private var launchImage: UIImage?
 
     var body: some View {
         Button(action: launch) {
@@ -126,6 +127,11 @@ private struct HomeSongTile: View {
         }
         .buttonStyle(HomePressStyle())
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { source.frame = $0 }
+        .task(id: song.coverData ?? song.imageData) {
+            let image = await ArtworkThumbnailStore.shared.thumbnail(song.coverData ?? song.imageData)
+            guard !Task.isCancelled else { return }
+            launchImage = image
+        }
         .highPriorityGesture(LongPressGesture(minimumDuration: 0.45).onEnded { _ in options() })
         .accessibilityLabel(Text("\(song.title), \(song.artist)"))
         .accessibilityHint("home_song_options_hint")
@@ -135,7 +141,7 @@ private struct HomeSongTile: View {
     private func launch() {
         if player.currentSong == nil && !reduceMotion && source.frame.width > 0 {
             presentation.entranceFrame = CGRect(origin: source.frame.origin, size: CGSize(width: width, height: width))
-            presentation.entranceImage = (song.coverData ?? song.imageData).flatMap { UIImage(data: $0) }
+            presentation.entranceImage = launchImage
             presentation.entranceSong = song
         }
         play()

@@ -1,6 +1,21 @@
 import Foundation
 
 enum SpotifyCatalogJSON {
+    static func searchResults(_ json: [String: Any]) -> MusicCatalogSearchResults {
+        func items(_ key: String) -> [[String: Any]] {
+            (json[key] as? [String: Any])?["items"] as? [[String: Any]] ?? []
+        }
+        let tracks = items("tracks").compactMap { row -> OnlineMusicTrack? in
+            guard let value = row["album"] as? [String: Any], let album = album(value) else { return nil }
+            return track(row, album: album)
+        }
+        let artists = items("artists").compactMap { row -> OnlineArtistReference? in
+            guard let id = row["id"] as? String, let name = row["name"] as? String else { return nil }
+            return OnlineArtistReference(provider: .spotify, sourceID: id, name: name, artworkURL: artwork(row))
+        }
+        return MusicCatalogSearchResults(tracks: OnlineCatalogLogic.uniqueTracks(tracks),
+            artists: artists, albums: items("albums").compactMap(album))
+    }
     static func artwork(_ json: [String: Any]) -> URL? {
         guard let raw = (json["images"] as? [[String: Any]])?.first?["url"] as? String else { return nil }
         return URL(string: raw)

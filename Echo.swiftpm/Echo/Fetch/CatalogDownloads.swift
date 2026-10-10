@@ -5,8 +5,12 @@ struct CatalogDownloadResult {
     var queued = 0
     var existing = 0
     var failed = 0
+    var addedToAlbum = 0
     var message: String {
         String(format: String(localized: "catalog_download_result"), queued, existing, failed)
+    }
+    var albumMessage: String {
+        String(format: String(localized: "album_completion_result"), queued, addedToAlbum, failed)
     }
 }
 
@@ -23,7 +27,11 @@ final class CatalogDownloads {
         library.songMatching(title: track.title, artist: track.artistName)
     }
     func queueItem(_ track: OnlineMusicTrack) -> FetchItem? {
-        manager.items.first { OnlineCatalogLogic.identifies(track, urls: [$0.spotifyURL, $0.youtubeURL].compactMap { $0 }) }
+        let matches = manager.items.filter {
+            OnlineCatalogLogic.identifies(track, urls: [$0.spotifyURL, $0.youtubeURL].compactMap { $0 }) ||
+            LibrarySongMatchIndex.matches(title: track.title, artist: track.artistName, otherTitle: $0.title, otherArtist: $0.artist)
+        }
+        return matches.first { $0.queueState == .pending } ?? matches.first
     }
     func statusKey(_ track: OnlineMusicTrack) -> String? {
         if localSong(track) != nil { return "catalog_downloaded" }
@@ -41,10 +49,39 @@ final class CatalogDownloads {
             return status != "catalog_downloaded" && status != "catalog_queued"
         }
     }
-    func enqueue(_ tracks: [OnlineMusicTrack], playlistID: UUID? = nil) async -> CatalogDownloadResult {
+    func existingCount(_ tracks: [OnlineMusicTrack], toAddTo album: LibraryAlbumDestination) -> Int {
+        var snapshot = library.songs
+        return LibraryAlbums.add(existingSongIDs(tracks), to: album, songs: &snapshot)
+    }
+
+    @discardableResult
+    func addExisting(_ tracks: [OnlineMusicTrack], to album: LibraryAlbumDestination) -> Int {
+        library.addSongs(existingSongIDs(tracks), toAlbum: album)
+    }
+
+    private func existingSongIDs(_ tracks: [OnlineMusicTrack]) -> [UUID] {
+        OnlineCatalogLogic.uniqueTracks(tracks).compactMap { localSong($0)?.id }
+    }
+
+    func needsAlbumAssignment(_ tracks: [OnlineMusicTrack], to album: LibraryAlbumDestination) -> Bool {
+        existingCount(tracks, toAddTo: album) > 0 || tracks.contains { track in
+            guard localSong(track) == nil, let item = queueItem(track), item.queueState == .pending else { return false }
+            return !item.destinationAlbums.contains { $0.identity == album.identity }
+        }
+    }
+
+    private func attach(_ album: LibraryAlbumDestination, to item: FetchItem) {
+        item.destinationAlbums = LibraryAlbumDestination.unique(item.destinationAlbums + [album])
+        FetchDownloadEngine.shared.updateAlbumDestinations(for: item)
+    }
+
+    func enqueue(_ tracks: [OnlineMusicTrack], playlistID: UUID? = nil,
+                 destinationAlbum: LibraryAlbumDestination? = nil) async -> CatalogDownloadResult {
+        guard !busy else { return CatalogDownloadResult() }
         busy = true
         defer { busy = false }
         var result = CatalogDownloadResult()
+        if let destinationAlbum { result.addedToAlbum = addExisting(tracks, to: destinationAlbum) }
         let unique = OnlineCatalogLogic.uniqueTracks(tracks)
         for (position, track) in unique.enumerated() {
             if position > 0 && position.isMultiple(of: 10) { await Task.yield() }
@@ -59,6 +96,7 @@ final class CatalogDownloads {
                 case .failed, .completed: manager.remove(item)
                 default:
                     if let playlistID { item.destinationPlaylistPositions[playlistID] = position }
+                    if let destinationAlbum { attach(destinationAlbum, to: item) }
                     result.existing += 1
                     continue
                 }
@@ -84,6 +122,7 @@ final class CatalogDownloads {
                         album: track.album, artworkURL: track.artworkURL, youtubeURL: track.sourceURL, permissionConfirmed: true)
                 }
                 if let playlistID { item.destinationPlaylistPositions[playlistID] = position }
+                if let destinationAlbum { item.destinationAlbums = [destinationAlbum] }
                 manager.addPreparedItem(item)
                 result.queued += 1
             } catch { result.failed += 1 }

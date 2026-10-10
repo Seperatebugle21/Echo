@@ -88,14 +88,10 @@ struct MiniPlayer: View {
                 Button {
                     audioPlayer.togglePlayPause()
                 } label: {
-                    if audioPlayer.isPreparingAudio {
-                        ProgressView().frame(width: 44, height: 44).accessibilityLabel("audio_preparing")
-                    } else {
                     Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 19, weight: .semibold))
                         .contentTransition(.symbolEffect(.replace))
                         .frame(width: 44, height: 44)
-                    }
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(audioPlayer.playbackErrorKey != nil ? LocalizedStringKey("audio_retry") : LocalizedStringKey(audioPlayer.isPlaying ? "Pause" : "Play"))

@@ -1013,10 +1013,14 @@ final class FetchManager {
 
                     reuseExistingDuplicate:
                         !item.destinationPlaylistPositions
-                            .isEmpty
+                            .isEmpty || !item.destinationAlbums.isEmpty
                 )
 
             if let addedSong {
+
+                for album in item.destinationAlbums {
+                    MusicLibraryManager.shared.addSongs([addedSong.id], toAlbum: album)
+                }
 
                 for (playlistID, position) in
                     item.destinationPlaylistPositions {
@@ -1566,10 +1570,14 @@ final class FetchManager {
 
                     reuseExistingDuplicate:
                         !item.destinationPlaylistPositions
-                            .isEmpty
+                            .isEmpty || !item.destinationAlbums.isEmpty
                 )
 
             if let addedSong {
+
+                for album in item.destinationAlbums {
+                    MusicLibraryManager.shared.addSongs([addedSong.id], toAlbum: album)
+                }
 
                 for (playlistID, position) in
                     item.destinationPlaylistPositions {
@@ -1719,6 +1727,7 @@ final class FetchManager {
 
             destinationPlaylistPositions:
                 record.destinationPlaylistPositions ?? [:],
+            destinationAlbums: record.destinationAlbums ?? [],
             automaticRetryCount: record.automaticRetryCount ?? 0
         )
     }
