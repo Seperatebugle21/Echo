@@ -1120,7 +1120,7 @@ struct ArtistDetailView: View {
     let artist: ArtistGroup
 
     private var songs: [Song] {
-        library.artistGroupsByID[artist.id]?.songs ?? []
+        library.artistGroupsByID[artist.id]?.songs ?? artist.songs.compactMap { library.song(withID: $0.id) }
     }
 
     var body: some View {
@@ -1200,6 +1200,15 @@ struct ArtistDetailView: View {
 
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    ArtistCompletionView(name: artist.name)
+                } label: {
+                    Label("artist_find_online", systemImage: "magnifyingglass")
+                }.labelStyle(.iconOnly)
+            }
+        }
         .safeAreaInset(edge: .top) {
             if library.isLoadingArtists {
                 ProgressView("libraryview_loading_artists")

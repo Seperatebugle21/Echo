@@ -117,6 +117,30 @@ final class EchoCatalogTests: XCTestCase {
         XCTAssertNil(ambiguousMatch)
     }
 
+    func testDedicatedArtistSearchKeepsAmbiguousCandidatesForManualSelection() async throws {
+        func artist(_ id: String) -> [String: Any] {
+            ["musicResponsiveListItemRenderer": [
+                "flexColumns": [["musicResponsiveListItemFlexColumnRenderer": ["text": ["runs": [["text": "Oasis"]]]]]],
+                "navigationEndpoint": ["browseEndpoint": ["browseId": id]]]]
+        }
+        let api = service { request in
+            if request.httpMethod != "POST" { return (200, [:]) }
+            let body = try XCTUnwrap(JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any])
+            XCTAssertEqual(body["query"] as? String, "Oasis")
+            XCTAssertEqual(body["params"] as? String, "EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D")
+            return (200, ["items": [artist("UCfirst"), artist("UCsecond"), artist("UCfirst"), self.row("song")]])
+        }
+        let matches = try await api.searchArtists(query: "  Oasis  ")
+        XCTAssertEqual(matches.map(\.sourceID), ["UCfirst", "UCsecond"])
+        XCTAssertTrue(matches.allSatisfy { $0.provider == .youtubeMusic && $0.name == "Oasis" })
+    }
+
+    func testDedicatedArtistSearchWithBlankNameDoesNotRequestNetwork() async throws {
+        let api = service { _ in XCTFail("An empty artist name should not trigger a request"); return (200, [:]) }
+        let matches = try await api.searchArtists(query: " \n ")
+        XCTAssertTrue(matches.isEmpty)
+    }
+
     func testSongLinkDoesNotBecomePlaylistAndShareParametersAreIgnored() throws {
         XCTAssertEqual(try YouTubeMusicReference.parse(URL(string: "https://music.youtube.com/watch?v=video123&list=PLother&si=abc")!), .song("video123"))
         XCTAssertEqual(try YouTubeMusicReference.parse(URL(string: "https://music.youtube.com/playlist?list=PLother&si=abc")!), .playlist("PLother"))
