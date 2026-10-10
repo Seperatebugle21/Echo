@@ -8,7 +8,6 @@ struct HomeDiscoverySection: View {
     @Environment(AudioPlayerManager.self) private var player
     let width: CGFloat
     @State private var order = DiscoveryKind.allCases.shuffled()
-    @State private var cardLimit = Int.random(in: 1...3)
     @State private var artistIDs: [String] = []
     @State private var songIDs: [UUID] = []
     @State private var spotlight: PodcastShow?
@@ -38,14 +37,14 @@ struct HomeDiscoverySection: View {
     }
 
     private var visibleKinds: [DiscoveryKind] {
-        Array(order.filter { kind in
+        order.filter { kind in
             switch kind {
             case .podcast: spotlight != nil && !spotlightDescription.isEmpty
             case .artists: !artists.isEmpty
             case .episode: newEpisode != nil
             case .songs: !songs.isEmpty
             }
-        }.prefix(cardLimit))
+        }
     }
 
     // Only meaningful eligibility changes restart the task, never playback ticks.
@@ -65,7 +64,8 @@ struct HomeDiscoverySection: View {
                 HomeSectionTitle(title: "home_discovery_title").padding(.horizontal, 20)
                 ScrollView(.horizontal) {
                     LazyHStack(alignment: .top, spacing: 12) {
-                        ForEach(visibleKinds) { kind in discoveryCard(kind).frame(width: width) }
+                        ForEach(visibleKinds) { kind in discoveryCard(kind).frame(width: width)
+                            .accessibilityIdentifier("home-discovery-" + kind.rawValue) }
                     }.padding(.horizontal, 20).padding(.vertical, 3)
                 }.scrollIndicators(.hidden)
             }
@@ -84,8 +84,8 @@ struct HomeDiscoverySection: View {
                 } label: {
                     HomeDiscoveryCard(title: "home_discovery_podcast", symbol: "dot.radiowaves.left.and.right", tint: .purple) {
                         HStack(spacing: 10) {
-                            PodcastArtwork(url: show.artworkURL, size: 48)
-                            Text(show.title).font(.headline).lineLimit(2)
+                            PodcastArtwork(url: show.artworkURL, size: 48).homeCoverShadow()
+                            Text(show.title).font(.headline).lineLimit(3).fixedSize(horizontal: false, vertical: true)
                         }
                         Text(spotlightDescription).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                     }
@@ -98,8 +98,8 @@ struct HomeDiscoverySection: View {
                 } label: {
                     HomeDiscoveryCard(title: "home_discovery_artists", symbol: "person.2.fill", tint: .orange) {
                         HStack(spacing: 10) {
-                            ArtistArtworkView(songs: artist.songs).frame(width: 48, height: 48).clipShape(.circle)
-                            Text(artist.name).font(.headline).lineLimit(2)
+                            ArtistArtworkView(songs: artist.songs).frame(width: 48, height: 48).clipShape(.circle).homeCoverShadow()
+                            Text(artist.name).font(.headline).lineLimit(3).fixedSize(horizontal: false, vertical: true)
                         }
                         Text("home_discovery_artists_detail").font(.caption).foregroundStyle(.secondary).lineLimit(2)
                     }
@@ -110,8 +110,8 @@ struct HomeDiscoverySection: View {
                 Button { player.playPodcast(episode) } label: {
                     HomeDiscoveryCard(title: "home_discovery_new_episode", symbol: "play.circle.fill", tint: .blue) {
                         HStack(spacing: 10) {
-                            PodcastArtwork(url: episode.artworkURL ?? episode.show.artworkURL, size: 48)
-                            Text(episode.title).font(.headline).lineLimit(2)
+                            PodcastArtwork(url: episode.artworkURL ?? episode.show.artworkURL, size: 48).homeCoverShadow()
+                            Text(episode.title).font(.headline).lineLimit(3).fixedSize(horizontal: false, vertical: true)
                         }
                         Text(episode.show.title).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                     }
@@ -122,8 +122,8 @@ struct HomeDiscoverySection: View {
                 Button { playSong(song, songs) } label: {
                     HomeDiscoveryCard(title: "home_discovery_unheard", symbol: "music.note", tint: .pink) {
                         HStack(spacing: 10) {
-                            SongArtworkView(song: song, cornerRadius: 10).frame(width: 48, height: 48)
-                            Text(song.title).font(.headline).lineLimit(2)
+                            SongArtworkView(song: song, cornerRadius: 10).frame(width: 48, height: 48).homeCoverShadow()
+                            Text(song.title).font(.headline).lineLimit(3).fixedSize(horizontal: false, vertical: true)
                         }
                         Text(song.artist).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                     }
@@ -201,15 +201,16 @@ private struct HomeDiscoveryCard<Content: View>: View {
     let tint: Color
     @ViewBuilder let content: Content
 
-    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 156
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 190
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(tint).lineLimit(1)
+            Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(tint).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             content
             Spacer(minLength: 0)
         }
         .foregroundStyle(.primary).padding(16)
-        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: height, alignment: .topLeading)
+        .contentShape(.rect(cornerRadius: 18))
         .background(.thinMaterial, in: .rect(cornerRadius: 18))
         .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(.primary.opacity(0.07)) }
     }

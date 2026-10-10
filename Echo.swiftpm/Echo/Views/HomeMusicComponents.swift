@@ -5,6 +5,7 @@ struct HomeCardLayout {
     let width: CGFloat
     var song: CGFloat { min(180, max(96, (width - 64) / 3.15)) }
     var access: CGFloat { min(140, max(78, (width - 70) / 4)) }
+    var discovery: CGFloat { min(340, max(240, (width - 40) * 0.82)) }
     var mix: CGFloat { min(240, max(156, (width - 52) / 2.12)) }
 }
 
@@ -56,7 +57,7 @@ struct HomeArtworkSurface: View {
                                startPoint: .top, endPoint: .bottom)
                 if accent { Color.accentColor.opacity(0.18) }
             }.clipped()
-        }.accessibilityHidden(true)
+        }.allowsHitTesting(false).accessibilityHidden(true)
     }
 }
 
@@ -85,6 +86,8 @@ struct HomeQuickAccessCard: View {
         .padding(9).frame(width: width, height: height, alignment: .leading)
         .background { HomeArtworkSurface(song: song, accent: accent) }
         .clipShape(.rect(cornerRadius: 15))
+        .contentShape(.rect(cornerRadius: 15))
+        .homeCoverShadow()
         .accessibilityElement(children: .combine)
     }
 }
@@ -100,7 +103,7 @@ struct HomeSongRail: View {
                 ForEach(songs) { song in
                     HomeSongTile(song: song, width: width, play: { play(song) }, options: { options(song) })
                 }
-            }.padding(.horizontal, 20).padding(.vertical, 3)
+            }.padding(.horizontal, 20).padding(.vertical, 8)
         }.scrollIndicators(.hidden)
     }
 }
@@ -120,6 +123,7 @@ private struct HomeSongTile: View {
         Button(action: launch) {
             VStack(alignment: .leading, spacing: 5) {
                 SongArtworkView(song: song, cornerRadius: 13).frame(width: width, height: width)
+                    .homeCoverShadow()
                     .accessibilityHidden(true)
                 Text(song.title).font(.subheadline.weight(.semibold)).lineLimit(1)
                 Text(song.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -192,6 +196,8 @@ struct HomeForYouSection: View {
                                 .frame(width: width, height: height, alignment: .bottomLeading)
                                 .background { HomeArtworkSurface(song: mix.songs.first) }
                                 .clipShape(.rect(cornerRadius: 18))
+                                .contentShape(.rect(cornerRadius: 18))
+                                .homeCoverShadow()
                             }.buttonStyle(HomePressStyle())
                             Button {
                                 if let first = mix.songs.first { play(first, mix.songs); playbackFeedback += 1 }
@@ -202,7 +208,7 @@ struct HomeForYouSection: View {
                                 .accessibilityLabel(Text("home_play_mix \(Text(mix.kind.title))"))
                         }
                     }
-                }.padding(.horizontal, 20).padding(.vertical, 3)
+                }.padding(.horizontal, 20).padding(.vertical, 8)
             }.scrollIndicators(.hidden)
         }.sensoryFeedback(.selection, trigger: playbackFeedback)
     }
@@ -251,4 +257,16 @@ private struct HomeMixCollectionView: View {
         player.allSongs = library.songs
         player.fillAutoNext(from: library.songs)
     }
+}
+
+/// Home-only artwork depth; shared artwork components elsewhere remain unchanged.
+private struct HomeCoverShadow: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+    func body(content: Content) -> some View {
+        content.shadow(color: .black.opacity(colorScheme == .dark ? 0.32 : 0.17), radius: 7, x: 0, y: 4)
+    }
+}
+
+extension View {
+    func homeCoverShadow() -> some View { modifier(HomeCoverShadow()) }
 }

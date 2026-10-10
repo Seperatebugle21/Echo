@@ -11,54 +11,34 @@ struct HomeNowPlayingSpotlight: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo: .body) private var cardHeight: CGFloat = 176
     @State private var playbackFeedback = 0
+    @State private var source = HomeSpotlightGeometry()
     private var song: Song? { player.currentSong ?? fallback }
 
     var body: some View {
         Group {
             if let song {
                 GeometryReader { geometry in
-                    let coverSide = min(116, geometry.size.width * 0.34)
                     ZStack(alignment: .trailing) {
                         Button { open(song) } label: {
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(LocalizedStringKey(player.currentSong == nil ? "home_ready_to_play" : "home_now_playing"))
-                                        .font(.system(size: 9, weight: .semibold)).tracking(2)
-                                    Text(song.title).font(.title3.bold()).lineLimit(2)
-                                    Text(song.artist).font(.subheadline).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
-                                    HomePlaybackWave(isPlaying: player.currentSong != nil && player.isPlaying)
-                                        .frame(height: 28).padding(.top, 2)
-                                    HomePlaybackProgress(isActive: player.currentSong != nil)
-                                }.frame(maxWidth: .infinity, alignment: .leading)
-                                ZStack(alignment: .bottomTrailing) {
-                                    HomeVinyl().frame(width: coverSide, height: coverSide).offset(x: 16)
-                                    SongArtworkView(song: song, cornerRadius: 12)
-                                        .frame(width: coverSide, height: coverSide).offset(x: -6)
-                                }.frame(width: coverSide + 14, height: coverSide)
-                                    .accessibilityHidden(true)
-                            }.foregroundStyle(.white).padding(16)
-                                .frame(width: geometry.size.width, height: geometry.size.height)
-                                .background { HomeArtworkSurface(song: song) }
-                                .clipShape(.rect(cornerRadius: 22))
+                            HomeNowPlayingCardFace(song: song, size: geometry.size)
+                                .contentShape(.rect(cornerRadius: 22))
                         }.buttonStyle(HomePressStyle())
                             .accessibilityLabel(Text("\(song.title), \(song.artist)"))
+                            .accessibilityIdentifier("home-now-playing-card")
                             .accessibilityHint(LocalizedStringKey(player.currentSong == nil ? "home_start_playback_hint" : "home_open_player_hint"))
                         // Sibling control avoids a button nested inside the card's button.
                         Button { toggle(song) } label: {
-                            if player.isPreparingAudio {
-                                ProgressView().tint(.black).frame(width: 44, height: 44)
-                            } else {
-                                Image(systemName: player.currentSong != nil && player.isPlaying ? "pause.fill" : "play.fill")
-                                    .font(.system(size: 19, weight: .semibold)).foregroundStyle(.black)
-                                    .frame(width: 44, height: 44)
-                            }
+                            HomeSpotlightPlaybackSymbol().contentShape(.circle)
                         }
                         .background(.white, in: .circle).buttonStyle(HomePressStyle())
-                        .padding(.trailing, 12).offset(y: min(44, cardHeight / 4))
+                        .padding(.trailing, 12).offset(y: min(44, geometry.size.height / 4))
+                        .accessibilityIdentifier("home-now-playing-toggle")
                         .accessibilityLabel(LocalizedStringKey(player.playbackErrorKey != nil ? "audio_retry" :
                             player.currentSong != nil && player.isPlaying ? "home_pause" : "home_play"))
                     }
-                }.frame(height: typeSize.isAccessibilitySize ? max(cardHeight, 280) : cardHeight)
+                }
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { source.frame = $0 }
+                .frame(height: typeSize.isAccessibilitySize ? max(cardHeight, 280) : cardHeight)
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     Label("homeview_empty_title", systemImage: "music.note").font(.headline)
@@ -71,7 +51,9 @@ struct HomeNowPlayingSpotlight: View {
 
     private func open(_ song: Song) {
         if player.currentSong == nil { start(song) }
-        if player.currentSong != nil { presentation.open(reduceMotion: reduceMotion) }
+        if let current = player.currentSong {
+            presentation.openFromHomeCard(song: current, frame: source.frame, reduceMotion: reduceMotion)
+        }
     }
     private func toggle(_ song: Song) {
         if player.currentSong == nil { start(song) } else { player.togglePlayPause() }
@@ -83,6 +65,60 @@ struct HomeNowPlayingSpotlight: View {
         player.play(song: song, url: url, queue: queue)
         player.allSongs = library.songs
         player.fillAutoNext(from: library.songs)
+    }
+}
+
+private final class HomeSpotlightGeometry { var frame: CGRect = .zero }
+
+/// The same noninteractive face is used while Home's card grows into Now Playing.
+struct HomeNowPlayingCardFace: View {
+    let song: Song
+    let size: CGSize
+    var showsPlaybackSymbol = false
+    @Environment(AudioPlayerManager.self) private var player
+
+    var body: some View {
+        let coverSide = min(116, size.width * 0.34)
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(LocalizedStringKey(player.currentSong == nil ? "home_ready_to_play" : "home_now_playing"))
+                    .font(.system(size: 9, weight: .semibold)).tracking(2)
+                Text(song.title).font(.title3.bold()).lineLimit(2)
+                Text(song.artist).font(.subheadline).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
+                HomePlaybackWave(isPlaying: player.currentSong != nil && player.isPlaying)
+                    .frame(height: 28).padding(.top, 2)
+                HomePlaybackProgress(isActive: player.currentSong != nil)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            ZStack(alignment: .bottomTrailing) {
+                HomeVinyl().frame(width: coverSide, height: coverSide).offset(x: 16)
+                SongArtworkView(song: song, cornerRadius: 12)
+                    .frame(width: coverSide, height: coverSide).homeCoverShadow().offset(x: -6)
+            }.frame(width: coverSide + 14, height: coverSide).accessibilityHidden(true)
+        }
+        .foregroundStyle(.white).padding(16)
+        .frame(width: size.width, height: size.height)
+        .background { HomeArtworkSurface(song: song) }
+        .clipShape(.rect(cornerRadius: 22))
+        .overlay(alignment: .trailing) {
+            if showsPlaybackSymbol {
+                HomeSpotlightPlaybackSymbol().background(.white, in: .circle)
+                    .padding(.trailing, 12).offset(y: min(44, size.height / 4))
+            }
+        }
+    }
+}
+
+private struct HomeSpotlightPlaybackSymbol: View {
+    @Environment(AudioPlayerManager.self) private var player
+    var body: some View {
+        Group {
+            if player.isPreparingAudio {
+                ProgressView().tint(.black)
+            } else {
+                Image(systemName: player.currentSong != nil && player.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 19, weight: .semibold)).foregroundStyle(.black)
+            }
+        }.frame(width: 44, height: 44)
     }
 }
 

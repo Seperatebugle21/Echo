@@ -20,7 +20,7 @@ struct HomeLocalAlbumSection: View {
                             NavigationLink { AlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar) } label: {
                                 VStack(alignment: .leading, spacing: 7) {
                                     if let song = album.songs.first {
-                                        SongArtworkView(song: song, cornerRadius: 14).frame(width: coverWidth, height: coverWidth)
+                                        SongArtworkView(song: song, cornerRadius: 14).frame(width: coverWidth, height: coverWidth).homeCoverShadow()
                                     }
                                     Text(album.name).font(.headline).lineLimit(2)
                                     Text(album.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -28,7 +28,7 @@ struct HomeLocalAlbumSection: View {
                             }.buttonStyle(HomePressStyle())
                                 .albumFavoriteActions(FavoriteAlbum(album: album))
                         }
-                    }.padding(.horizontal, 20).padding(.vertical, 6)
+                    }.padding(.horizontal, 20).padding(.vertical, 8)
                 }
             }
             .task(id: albums.map(\.id)) { selection = session.albumSelection(from: albums.map(\.id)) }
@@ -52,14 +52,14 @@ struct HomeOnlineAlbumSection: View {
                             ForEach(store.homeAlbums) { album in
                                 NavigationLink { OnlineAlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar) } label: {
                                     VStack(alignment: .leading, spacing: 7) {
-                                        CatalogArtwork(url: album.artworkURL, size: coverWidth)
+                                        CatalogArtwork(url: album.artworkURL, size: coverWidth).homeCoverShadow()
                                         Text(album.title).font(.headline).lineLimit(2)
                                         Text(album.artistName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                     }.frame(width: coverWidth, alignment: .leading)
                                 }.buttonStyle(HomePressStyle())
                                     .albumFavoriteActions(FavoriteAlbum(album: album))
                             }
-                        }.padding(.horizontal, 20).padding(.vertical, 6)
+                        }.padding(.horizontal, 20).padding(.vertical, 8)
                     }
                 }
             }

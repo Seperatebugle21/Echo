@@ -6,6 +6,9 @@ on:
     branches: [Widget]
     paths:
       - 'Echo.swiftpm/Echo/Views/Home*.swift'
+      - 'Echo.swiftpm/Echo/ContentView.swift'
+      - 'UITests/HomeInteractionTests.swift'
+      - 'project.yml'
       - 'Echo.swiftpm/Echo/Models/HomeMusicSelection.swift'
       - 'Echo.swiftpm/Echo/Managers/HomeSessionManager.swift'
       - '.github/workflows/HomePreview.yml'
@@ -41,7 +44,6 @@ jobs:
           xcrun simctl install "$SIMULATOR_ID" "$APP"
           CONTAINER=$(xcrun simctl get_app_container "$SIMULATOR_ID" com.echomusic.app data)
           python3 .github/scripts/seed-home-preview.py "$CONTAINER"
-          PREVIEW_SONG_ID=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[0]["id"])' "$CONTAINER/Documents/EchoSongs.json")
           mkdir -p build/HomePreviews
           xcrun simctl status_bar "$SIMULATOR_ID" override --time '9:41' --batteryState charged --batteryLevel 100
           for THEME in light dark custom; do
@@ -50,10 +52,15 @@ jobs:
               -hasCompletedEchoOnboarding YES -selectedLanguage nl -appearanceMode "$THEME" \
               -theme.first 182235 -theme.second 64478C -theme.gradient YES -theme.whiteText YES
             sleep 2
-            xcrun simctl openurl "$SIMULATOR_ID" "echo://play?id=$PREVIEW_SONG_ID"
             sleep 3
             xcrun simctl io "$SIMULATOR_ID" screenshot "build/HomePreviews/home-$THEME.png"
           done
+          xcodebuild test -project Echo.xcodeproj -scheme EchoHomeInteractionTests \
+            -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath build/Preview -resultBundlePath build/HomeInteractions.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+          xcrun xcresulttool export attachments --path build/HomeInteractions.xcresult \
+            --output-path build/HomePreviews/Interactions
           xcrun simctl terminate "$SIMULATOR_ID" com.echomusic.app || true
           rm -f "$CONTAINER/Documents/EchoSongs.json" "$CONTAINER/Documents"/home-preview-*.wav
           xcrun simctl launch "$SIMULATOR_ID" com.echomusic.app \
@@ -63,4 +70,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Echo-Home-Previews
-          path: build/HomePreviews/*.png
+          path: build/HomePreviews
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Interactions
+          path: build/HomeInteractions.xcresult

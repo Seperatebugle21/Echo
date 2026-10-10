@@ -4,7 +4,6 @@ struct HomeView: View {
     @Environment(MusicLibraryManager.self) private var library
     @Environment(AudioPlayerManager.self) private var player
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var picks: [Song] = []
     @State private var recent: [Song] = []
     @State private var added: [Song] = []
@@ -15,7 +14,6 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var showSearch = false
     @State private var selectedSong: Song?
-    @State private var refreshFeedback = 0
     @State private var optionsFeedback = 0
     @State private var podcastRecommendations = PodcastRecommendationsModel()
     private let session = HomeSessionManager.shared
@@ -33,16 +31,7 @@ struct HomeView: View {
                         quickAccess(layout: layout)
                         if !picks.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
-                                HStack {
-                                    HomeSectionTitle(title: "home_quick_picks")
-                                    Spacer()
-                                    Button(action: refreshPicks) {
-                                        Image(systemName: "arrow.clockwise").font(.subheadline.weight(.semibold))
-                                            .frame(width: 44, height: 44)
-                                    }
-                                    .buttonStyle(HomePressStyle())
-                                    .accessibilityLabel("home_refresh_picks")
-                                }.padding(.horizontal, 20)
+                                HomeSectionTitle(title: "home_quick_picks").padding(.horizontal, 20)
                                 songRail(picks, width: layout.song)
                             }
                         }
@@ -62,7 +51,7 @@ struct HomeView: View {
                                 songRail(Array(added.prefix(12)), width: layout.song)
                             }
                         }
-                        HomeDiscoverySection(recommendations: podcastRecommendations.shows, playSong: play, width: layout.mix)
+                        HomeDiscoverySection(recommendations: podcastRecommendations.shows, playSong: play, width: layout.discovery)
                         // Keep Echo's existing album, favorite and podcast entry points.
                         HomeLocalAlbumSection(coverWidth: layout.song)
                         if !favorites.isEmpty {
@@ -98,7 +87,6 @@ struct HomeView: View {
             .onChange(of: library.favoriteRevision) { prepare() }
             .onChange(of: library.artistGroups.map(\.id)) { prepareArtists() }
             .onChange(of: scenePhase) { if scenePhase == .active { prepare() } }
-            .sensoryFeedback(.selection, trigger: refreshFeedback)
             .sensoryFeedback(.selection, trigger: optionsFeedback)
         }
     }
@@ -121,7 +109,9 @@ struct HomeView: View {
             Image(systemName: symbol).font(.title3.weight(.medium)).frame(width: 44, height: 44)
                 .background(.thinMaterial, in: .circle)
                 .overlay { Circle().strokeBorder(.primary.opacity(0.06)) }
+                .contentShape(.circle)
         }.buttonStyle(HomePressStyle()).accessibilityLabel(label)
+            .accessibilityIdentifier(symbol == "gearshape" ? "home-settings" : "home-search")
     }
 
     private func quickAccess(layout: HomeCardLayout) -> some View {
@@ -172,7 +162,7 @@ struct HomeView: View {
                             NavigationLink { ArtistDetailView(artist: artist).toolbarVisibility(.visible, for: .navigationBar) } label: {
                                 VStack(spacing: 7) {
                                     ArtistArtworkView(songs: artist.songs).frame(width: width, height: width)
-                                        .clipShape(.circle).accessibilityHidden(true)
+                                        .clipShape(.circle).homeCoverShadow().accessibilityHidden(true)
                                     Text(artist.name).font(.subheadline.weight(.medium)).lineLimit(2)
                                         .multilineTextAlignment(.center)
                                 }.frame(width: width)
@@ -219,13 +209,6 @@ struct HomeView: View {
             return left == right ? lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending : left > right
         }
         artistIDs = Array(ranked.prefix(12)).map(\.id)
-    }
-
-    private func refreshPicks() {
-        session.refreshRecommendations(songs: localSongs, favoriteSongIDs: library.favoriteSongIDs,
-                                       recommendationManager: recommendations)
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { picks = session.recommendedSongs ?? [] }
-        refreshFeedback += 1
     }
 
     private func play(_ song: Song, _ queue: [Song]) {
