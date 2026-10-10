@@ -21,12 +21,13 @@ final class HomeSessionManager {
 
     func refreshRecommendations(songs: [Song], favoriteSongIDs: [UUID], recommendationManager: RecommendationManager) {
         let ranked = recommendationManager.recommendations(from: songs, favoriteSongIDs: favoriteSongIDs, limit: songs.count)
-        let previous = Set((recommendedSongs ?? []).map(\.id))
+        let previousIDs = (recommendedSongs ?? []).map(\.id)
+        let previous = Set(previousIDs)
         // Rotate in other eligible songs when the library has more than twelve.
         recommendedSongs = HomeMusicSelection.diverse(
             ranked.filter { !previous.contains($0.id) } + ranked.filter { previous.contains($0.id) }, limit: 12
         )
-        if recommendedSongs?.map(\.id) == ranked.filter({ previous.contains($0.id) }).map(\.id),
+        if recommendedSongs?.map(\.id) == previousIDs,
            let first = recommendedSongs?.first, (recommendedSongs?.count ?? 0) > 1 {
             recommendedSongs = Array((recommendedSongs ?? []).dropFirst()) + [first]
         }
@@ -43,7 +44,7 @@ final class HomeSessionManager {
                 UserDefaults.standard.set(data, forKey: "EchoHomeDailyMixV1")
             }
         }
-        if similarIDs == nil {
+        if similarIDs == nil || HomeMusicSelection.resolve(similarIDs ?? [], in: songs).isEmpty {
             similarIDs = HomeMusicSelection.similar(songs, favorites: Set(favoriteSongIDs),
                 plays: recommendationManager.learningData.mapValues(\.playCount)).map(\.id)
         }
@@ -109,9 +110,9 @@ final class HomeSessionManager {
         if recommendedSongs == nil {
 
             recommendedSongs =
-                HomeMusicSelection.diverse(recommendationManager.recommendations(
+                HomeMusicSelection.quickPicks(recommendationManager.recommendations(
                     from: songs, favoriteSongIDs: favoriteSongIDs, limit: songs.count
-                ), limit: 12)
+                ), songs: songs)
         }
 
 

@@ -35,7 +35,7 @@ struct HomeSectionLink<Destination: View>: View {
                 HomeSectionTitle(title: title)
                 Spacer()
                 Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
-            }.frame(minHeight: 36).contentShape(.rect)
+            }.frame(minHeight: 44).contentShape(.rect)
         }.buttonStyle(HomePressStyle()).padding(.horizontal, 20)
     }
 }
@@ -197,7 +197,7 @@ struct HomeForYouSection: View {
                                 if let first = mix.songs.first { play(first, mix.songs); playbackFeedback += 1 }
                             } label: {
                                 Image(systemName: "play.fill").font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(.black).frame(width: 36, height: 36).background(.white, in: .circle)
+                                    .foregroundStyle(.black).frame(width: 44, height: 44).background(.white, in: .circle)
                             }.buttonStyle(HomePressStyle()).padding(14)
                                 .accessibilityLabel(Text("home_play_mix \(Text(mix.kind.title))"))
                         }

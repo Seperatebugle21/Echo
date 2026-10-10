@@ -24,7 +24,23 @@ final class HomeMusicSelectionTests: XCTestCase {
         let old = song("Old", played: now.addingTimeInterval(-60 * 24 * 3600))
         let unheard = song("Unheard")
         XCTAssertEqual(Set(HomeMusicSelection.rediscover([recent, old, unheard], now: now).map(\.id)), [old.id, unheard.id])
+        XCTAssertEqual(HomeMusicSelection.rediscover([unheard, old], now: now).first?.id, old.id)
         XCTAssertTrue(HomeMusicSelection.rediscover([recent], now: now).isEmpty)
+    }
+
+    func testQuickPicksIncludeLearnedRecentAndForgottenTracks() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let learned = (1...8).map { song("Learned \($0)") }
+        let recent = song("Recent", played: now.addingTimeInterval(-3600))
+        let forgotten = song("Forgotten", played: now.addingTimeInterval(-60 * 24 * 3600))
+        let extras = (1...8).map { song("Extra \($0)") }
+        let available = learned + [recent, forgotten] + extras
+        let result = HomeMusicSelection.quickPicks(learned + extras + [recent, forgotten], songs: available, now: now)
+        XCTAssertEqual(result.count, 12)
+        XCTAssertTrue(result.contains { $0.id == recent.id })
+        XCTAssertTrue(result.contains { $0.id == forgotten.id })
+        XCTAssertTrue(result.contains { $0.id == learned[0].id })
+        XCTAssertEqual(Set(result.map(\.id)).count, result.count)
     }
 
     func testRelatedSelectionUsesStructuredArtistCreditsAndGenre() {

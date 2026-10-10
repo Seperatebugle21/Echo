@@ -25,8 +25,19 @@ enum HomeMusicSelection {
     static func rediscover(_ songs: [Song], now: Date = Date(), limit: Int = 24) -> [Song] {
         let cutoff = now.addingTimeInterval(-14 * 24 * 60 * 60)
         let eligible = songs.filter { ($0.lastPlayed ?? .distantPast) < cutoff }
-            .sorted { ($0.lastPlayed ?? .distantPast) < ($1.lastPlayed ?? .distantPast) }
+            .sorted {
+                if ($0.lastPlayed != nil) != ($1.lastPlayed != nil) { return $0.lastPlayed != nil }
+                return ($0.lastPlayed ?? .distantPast) < ($1.lastPlayed ?? .distantPast)
+            }
         return diverse(eligible, limit: limit)
+    }
+
+    static func quickPicks(_ ranked: [Song], songs: [Song], now: Date = Date(), limit: Int = 12) -> [Song] {
+        let recent = songs.filter { $0.lastPlayed != nil }
+            .sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
+        let forgotten = rediscover(songs, now: now, limit: 2)
+        let candidates = Array(ranked.prefix(max(0, limit - 4))) + Array(recent.prefix(2)) + forgotten + ranked
+        return diverse(candidates, limit: limit)
     }
 
     static func similar(_ songs: [Song], favorites: Set<UUID>, plays: [UUID: Int], limit: Int = 24) -> [Song] {
