@@ -19,7 +19,22 @@ jobs:
           path: Recovered.xcresult
       - name: Export screenshots and accessibility diagnostics
         run: |
-          xcrun xcresulttool export attachments --path Recovered.xcresult --output-path Diagnostics
+          RESULT_PATH=$(python3 -c 'from pathlib import Path; print(next(Path("Recovered.xcresult").rglob("Info.plist")).parent)')
+          xcrun xcresulttool export attachments --path "$RESULT_PATH" --output-path AllDiagnostics
+          python3 - <<'PY'
+          import json, shutil
+          from pathlib import Path
+          source = Path('AllDiagnostics')
+          target = Path('Diagnostics'); target.mkdir()
+          entries = json.loads((source / 'manifest.json').read_text())
+          entries = [entry for entry in entries if any(name in entry['testIdentifier'] for name in ['testEchoFlow', 'testSmartVibes', 'testWeekly'])]
+          (target / 'manifest.json').write_text(json.dumps(entries))
+          for entry in entries:
+              for attachment in entry['attachments']:
+                  name = attachment['exportedFileName']
+                  if name.endswith(('.png', '.txt')):
+                      shutil.copy2(source / name, target / name)
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: Echo-Home-Recovered-Diagnostics
