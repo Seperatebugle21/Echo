@@ -1589,34 +1589,7 @@ struct RawSongArtwork: View {
 
     var body: some View {
 
-        Group {
-
-            if
-                let data =
-                    song.coverData,
-                let image =
-                    UIImage(data: data)
-            {
-
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-
-            } else {
-
-                ZStack {
-
-                    Rectangle()
-                        .fill(.thinMaterial)
-
-                    Image(
-                        systemName:
-                            "music.note"
-                    )
-                    .font(.title2)
-                }
-            }
-        }
+        CachedSongArtwork(data: song.coverData ?? song.imageData)
     }
 }
 

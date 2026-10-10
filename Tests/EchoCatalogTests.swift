@@ -2,6 +2,41 @@ import Foundation
 import XCTest
 
 final class EchoCatalogTests: XCTestCase {
+    func testHomeAlbumSessionRestoresImmediatelyAndIgnoresCatalogChangesUntilRestart() {
+        let first = OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "first", title: "Original", artistName: "Artist", artists: [])
+        let second = OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "second", title: "New", artistName: "Artist", artists: [])
+        var session = HomeAlbumSession(cachedAlbums: [first], spotifyConnected: false, shuffle: { $0 })
+        XCTAssertEqual(session.albums, [first])
+        var edited = first; edited.title = "Changed catalog title"
+        session.finishStartupDiscovery(cachedAlbums: [edited, second], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(session.albums, [first])
+        let restarted = HomeAlbumSession(cachedAlbums: [edited, second], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(restarted.albums, [edited, second])
+    }
+
+    func testFirstHomeAlbumDiscoveryPublishesOnceEvenIfEmptyOrRetried() {
+        let album = OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "album", title: "Album", artistName: "Artist", artists: [])
+        var firstLaunch = HomeAlbumSession(cachedAlbums: [], spotifyConnected: false, shuffle: { $0 })
+        XCTAssertTrue(firstLaunch.albums.isEmpty)
+        firstLaunch.finishStartupDiscovery(cachedAlbums: [album], spotifyConnected: false, shuffle: { $0 })
+        firstLaunch.finishStartupDiscovery(cachedAlbums: [], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(firstLaunch.albums, [album])
+        var offline = HomeAlbumSession(cachedAlbums: [], spotifyConnected: false, shuffle: { $0 })
+        offline.finishStartupDiscovery(cachedAlbums: [], spotifyConnected: false, shuffle: { $0 })
+        offline.finishStartupDiscovery(cachedAlbums: [album], spotifyConnected: true, shuffle: { $0 })
+        XCTAssertTrue(offline.albums.isEmpty)
+    }
+
+    func testHomeAlbumSessionBoundsAndDeduplicatesStartupSelection() {
+        let albums = (0..<20).map { OnlineMusicAlbum(provider: .youtubeMusic, sourceID: "\($0)", title: "Album \($0)", artistName: "Artist", artists: []) }
+        let spotify = OnlineMusicAlbum(provider: .spotify, sourceID: "spotify", title: "Spotify Album", artistName: "Artist", artists: [])
+        let session = HomeAlbumSession(cachedAlbums: [spotify] + albums + albums, spotifyConnected: false, shuffle: { $0 })
+        XCTAssertEqual(session.albums, Array(albums.prefix(10)))
+        let connected = HomeAlbumSession(cachedAlbums: [spotify] + albums, spotifyConnected: true, shuffle: { $0 })
+        XCTAssertEqual(connected.albums.first, spotify)
+        XCTAssertEqual(connected.albums.count, 10)
+    }
+
     private let artist = OnlineArtistReference(provider: .youtubeMusic, sourceID: "UCartist", name: "Artist")
     private func track(_ id: String, title: String = "Song", recording: String? = nil) -> OnlineMusicTrack {
         OnlineMusicTrack(provider: .youtubeMusic, sourceID: id, title: title, artists: [artist], artistName: artist.name,

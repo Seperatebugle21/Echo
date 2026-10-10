@@ -16,7 +16,7 @@ struct NowPlayingArtistButton: View {
                     if candidates.count == 1 { selectedArtist = candidates.first }
                     else if !candidates.isEmpty { chooseArtist = true }
                 } label: {
-                    Text(song.artist).frame(minHeight: 44, alignment: .leading).contentShape(.rect)
+                    Text(song.artist).contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("nowplaying_open_artist \(song.artist)"))
