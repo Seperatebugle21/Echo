@@ -60,35 +60,6 @@
       }
     }
   },
-  "smart_refresh_gems": {
-    "extractionState": "manual",
-    "localizations": {
-      "en": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "Refresh Hidden Gems"
-        }
-      },
-      "nl": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "Vernieuw verborgen parels"
-        }
-      },
-      "fr": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "Renouveler les pépites"
-        }
-      },
-      "de": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "Verborgene Schätze erneuern"
-        }
-      }
-    }
-  },
   "smart_week": {
     "extractionState": "manual",
     "localizations": {

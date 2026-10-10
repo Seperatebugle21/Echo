@@ -17,8 +17,7 @@ final class HomeSmartSectionsModel {
     @ObservationIgnored private var albumDay: Date?
     @ObservationIgnored private var generation = 0
     @ObservationIgnored private var listeningGeneration = 0
-    @ObservationIgnored private var seed = UInt64.random(in: 0...UInt64.max)
-    @ObservationIgnored private var snapshot: SmartMusicSelection?
+    private let seed = UInt64.random(in: 0...UInt64.max)
     @ObservationIgnored private var lastSurprise: UUID?
     private init() {}
 
@@ -34,7 +33,7 @@ final class HomeSmartSectionsModel {
             return (local, signature, filtered)
         }.value
         guard !Task.isCancelled, token == generation else { return }
-        available = result.0; snapshot = result.2
+        available = result.0
         let changed = fingerprint != result.1
         if !changed {
             let indexed = Dictionary(uniqueKeysWithValues: result.0.map { ($0.id, $0) })
@@ -76,14 +75,6 @@ final class HomeSmartSectionsModel {
         guard !Task.isCancelled, token == listeningGeneration else { return }
         week = result.0; previousWeek = result.1; self.periods = result.2
         if !periods.contains(where: { $0.id == selectedPeriod }) { selectedPeriod = periods.first?.id ?? 1 }
-    }
-    func refreshGems() async {
-        guard let snapshot else { return }
-        let token = generation
-        seed &+= 1
-        let refreshed = SmartMusicSelection(songs: snapshot.songs, favorites: snapshot.favorites, learning: snapshot.learning, now: Date(), seed: seed)
-        let result = await Task.detached(priority: .utility) { refreshed.ranked(limit: 10, discover: true) }.value
-        guard !Task.isCancelled, token == generation else { return }; gems = result
     }
     func play(_ song: Song, queue: [Song]) -> Bool {
         let library = MusicLibraryManager.shared

@@ -10,7 +10,6 @@ struct HomeSmartSections: View {
     @State private var selectedSong: Song?
     @State private var showQueue = false
     @State private var feedback = 0
-    @State private var refreshing = false
     @State private var surpriseBusy = false
     @State private var smartSurprise = true
     @State private var confirmation: Song?
@@ -44,17 +43,7 @@ struct HomeSmartSections: View {
 
     private var hiddenGems: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                HomeSectionTitle(title: "smart_hidden_gems")
-                Spacer()
-                Button {
-                    refreshing = true
-                    Task { await model.refreshGems(); refreshing = false; feedback += 1 }
-                } label: {
-                    Image(systemName: "arrow.clockwise").rotationEffect(.degrees(refreshing && !reduceMotion ? 180 : 0))
-                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: refreshing).frame(width: 44, height: 44)
-                }.buttonStyle(HomePressStyle()).disabled(refreshing).accessibilityLabel("smart_refresh_gems")
-            }.padding(.horizontal, 20)
+            HomeSectionTitle(title: "smart_hidden_gems").padding(.horizontal, 20)
             HomeSongRail(songs: model.gems, width: coverWidth, play: { play($0, model.gems) }, options: { selectedSong = $0 })
         }
     }

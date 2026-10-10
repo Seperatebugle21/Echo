@@ -128,6 +128,7 @@ final class HomeInteractionTests: XCTestCase {
             launch(theme: theme)
             startPlayback()
             scrollTo("smart-week-open").tap()
+            XCTAssertFalse(app.buttons["Refresh Hidden Gems"].exists)
             XCTAssertTrue(app.navigationBars["Your Week in Music"].waitForExistence(timeout: 8))
             XCTAssertTrue(app.staticTexts["Listening time by day"].exists)
             capture("home-smart-statistics-\(theme)")
@@ -135,6 +136,8 @@ final class HomeInteractionTests: XCTestCase {
             scrollTo("smart-flow-play")
             capture("home-smart-sections-\(theme)")
             scrollTo("smart-queue-open")
+            XCTAssertTrue(app.staticTexts["Time Machine"].exists, "The seeded historical counts should expose a real historical collection")
+            XCTAssertTrue(app.staticTexts["Albums Worth Revisiting"].exists)
             capture("home-smart-history-and-queue-\(theme)")
         }
     }
