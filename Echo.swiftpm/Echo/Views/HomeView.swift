@@ -1,524 +1,236 @@
 import SwiftUI
 
 struct HomeView: View {
-
-    @Environment(MusicLibraryManager.self)
-    private var library
-
-    @Environment(AudioPlayerManager.self)
-    private var audioPlayer
-
-    private let recommendationManager =
-        RecommendationManager.shared
-
-    private let homeSession =
-        HomeSessionManager.shared
-
-    @State private var recommendedSnapshot: [Song] = []
-    @State private var recentlyPlayedSnapshot: [Song] = []
-    @State private var favoritesSnapshot: [Song] = []
-
-    @State private var podcastRecommendations = PodcastRecommendationsModel()
-
-    @State private var showSettings = false
-    @State private var selectedSong: Song?
-
-
-    // MARK: - Recently Added
-
-    private var recentlyAdded: [Song] {
-
-        Array(
-            library.songs
-                .sorted {
-                    $0.dateAdded > $1.dateAdded
-                }
-                .prefix(10)
-        )
-    }
-
-
-    // MARK: - Artists
-
+    @Environment(MusicLibraryManager.self) private var library
+    @Environment(AudioPlayerManager.self) private var player
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var picks: [Song] = []
+    @State private var recent: [Song] = []
+    @State private var added: [Song] = []
+    @State private var favorites: [Song] = []
+    @State private var localSongs: [Song] = []
+    @State private var mixes: [HomePersonalMix] = []
     @State private var artistIDs: [String] = []
-
-    private var artists: [ArtistGroup] {
-        artistIDs.compactMap { library.artistGroupsByID[$0] }
-    }
-
-
-    // MARK: - Body
+    @State private var showSettings = false
+    @State private var showSearch = false
+    @State private var selectedSong: Song?
+    @State private var refreshFeedback = 0
+    @State private var optionsFeedback = 0
+    @State private var podcastRecommendations = PodcastRecommendationsModel()
+    private let session = HomeSessionManager.shared
+    private let recommendations = RecommendationManager.shared
 
     var body: some View {
-
         NavigationStack {
-
-            ScrollView {
-
-                // Keep the small, bounded set of sections alive while scrolling.
-                // In particular, discovery tasks must not restart on reappearance.
-                VStack(
-                    alignment: .leading,
-                    spacing: 32
-                ) {
-
-                    // MARK: Header
-
-                    HStack(
-                        alignment: .center
-                    ) {
-
-                        Text("homeview_title")
-                            .font(
-                                .largeTitle.bold()
-                            )
-
-                        Spacer()
-
-                        Button {
-                            showSettings = true
-                        } label: {
-
-                            Image(
-                                systemName:
-                                    "gearshape"
-                            )
-                            .font(
-                                .title3
-                                    .weight(.medium)
-                            )
-                            .foregroundStyle(.primary)
-                            .frame(
-                                width: 42,
-                                height: 42
-                            )
-                            .glassEffect(.regular.interactive(), in: .circle)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 6)
-
-
-                    // MARK: - Recommended
-
-                    if !recommendedSnapshot.isEmpty {
-
-                        songSection(
-                            title:
-                                "homeview_recommended_for_you",
-                            songs:
-                                recommendedSnapshot
-                        )
-                    }
-
-
-                    // MARK: - Recently Played
-
-                    if !recentlyPlayedSnapshot.isEmpty {
-
-                        songSection(
-                            title:
-                                "homeview_recent_played",
-                            songs:
-                                recentlyPlayedSnapshot
-                        )
-                    }
-
-
-                    // MARK: - Recently Added
-
-                    if !recentlyAdded.isEmpty {
-
-                        songSection(
-                            title:
-                                "homeview_recent_added",
-                            songs:
-                                recentlyAdded
-                        )
-                    }
-
-
-                    PodcastRecommendationsSection(
-                        shows: podcastRecommendations.shows,
-                        loading: podcastRecommendations.loading,
-                        failed: podcastRecommendations.failed,
-                        retry: { podcastRecommendations.retry += 1 }
-                    )
-
-                    HomeLocalAlbumSection()
-
-                    // MARK: - Favorites
-
-                    if !favoritesSnapshot.isEmpty {
-
-                        songSection(
-                            title:
-                                "homeview_favorites",
-                            songs:
-                                favoritesSnapshot,
-                            queue:
-                                favoritesSnapshot
-                        )
-                    }
-
-
-                    // MARK: - Artists
-
-                    if !artists.isEmpty {
-                        artistSection
-                    }
-
-
-                    // MARK: - Empty Library
-
-                    if library.songs.isEmpty {
-
-                        ContentUnavailableView(
-                            "homeview_empty_title",
-                            systemImage:
-                                "music.note",
-                            description:
-                                Text(
-                                    "homeview_empty_description"
-                                )
-                        )
-                        .frame(
-                            maxWidth: .infinity
-                        )
-                        .padding(.top, 80)
-                    }
-                    HomeOnlineAlbumSection()
-                    HomeDiscoverySection(
-                        recommendations: podcastRecommendations.shows,
-                        playSong: { song, queue in play(song, queue: queue) }
-                    )
-                }
-                .padding(.bottom, 120)
-            }
-
-
-            .echoBackground()
-
-            // MARK: - Settings
-
-            .sheet(
-                isPresented:
-                    $showSettings
-            ) {
-                SettingsView()
-            }
-
-            .sheet(
-                item: $selectedSong
-            ) { song in
-                SongOptionsView(
-                    song: song
-                )
-            }
-
-            .sheet(
-                item:
-                    Bindable(library)
-                        .songToAddToPlaylist
-            ) { song in
-                PlaylistPickerView(
-                    songs: [song]
-                )
-            }
-
-            .sheet(
-                isPresented:
-                    Bindable(library)
-                        .showEditSheet
-            ) {
-                if let song =
-                    library.editingSong
-                {
-                    EditSongView(
-                        song: song
-                    )
-                }
-            }
-
-
-            .task(id: podcastRecommendations.taskID) {
-                await podcastRecommendations.load()
-            }
-
-            // MARK: - Session Snapshot
-
-            .onAppear {
-
-                prepareSessionSnapshots()
-                artistIDs = homeSession.artistSelection(from: library.artistGroups)
-            }
-            .onChange(of: library.artistGroups.map(\.id)) {
-                artistIDs = homeSession.artistSelection(from: library.artistGroups)
-            }
-
-
-            // Alleen nodig om een lege/new library tijdens
-            // dezelfde sessie bruikbaar te houden.
-            //
-            // Bestaande recommendations worden NIET opnieuw
-            // berekend wanneer de learning engine verandert.
-            .onChange(
-                of:
-                    library.songs
-                        .map(\.id)
-            ) {
-                _, _ in
-
-                prepareSessionSnapshots()
-            }
-        }
-    }
-
-
-    // MARK: - Prepare Session Snapshots
-
-    private func prepareSessionSnapshots() {
-
-        homeSession.prepareIfNeeded(
-            songs:
-                library.songs,
-            favorites:
-                library.favoriteSongs,
-            favoriteSongIDs:
-                library.favoriteSongIDs,
-            recommendationManager:
-                recommendationManager
-        )
-
-        recommendedSnapshot =
-            homeSession.recommendedSongs
-            ?? []
-
-        recentlyPlayedSnapshot =
-            homeSession.recentlyPlayedSongs
-            ?? []
-
-        favoritesSnapshot =
-            homeSession.favoriteSongs
-            ?? []
-    }
-
-
-    // MARK: - Song Section
-
-    @ViewBuilder
-    private func songSection(
-        title: LocalizedStringKey,
-        songs: [Song],
-        queue: [Song]? = nil
-    ) -> some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 13
-        ) {
-
-            Text(title)
-                .font(.title2.bold())
-                .padding(.horizontal)
-
-            ScrollView(
-                .horizontal,
-                showsIndicators: false
-            ) {
-
-                LazyHStack(spacing: 15) {
-
-                    ForEach(songs) { song in
-
-                        VStack(
-                            alignment: .leading,
-                            spacing: 7
-                        ) {
-
-                            SongArtworkView(
-                                song: song,
-                                cornerRadius: 16
-                            )
-                            .frame(
-                                width: 150,
-                                height: 150
-                            )
-                            .shadow(color: .black.opacity(0.16), radius: 5, x: 0, y: 3)
-
-                            Text(song.title)
-                                .font(.headline)
-                                .foregroundStyle(
-                                    .primary
-                                )
-                                .lineLimit(1)
-
-                            Text(song.artist)
-                                .font(.caption)
-                                .foregroundStyle(
-                                    .secondary
-                                )
-                                .lineLimit(1)
-                        }
-                        .frame(
-                            width: 150,
-                            alignment: .leading
-                        )
-                        .contentShape(Rectangle())
-                        .modifier(PlayerCoverLaunchSource(song: song, coverSize: 150) {
-                            play(
-                                song,
-                                queue:
-                                    queue
-                                    ?? [song]
-                            )
-                        })
-                        .onLongPressGesture {
-                            selectedSong = song
-                        }
-                        .accessibilityAddTraits(
-                            .isButton
-                        )
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 6)
-            }
-        }
-    }
-
-
-    // MARK: - Artist Section
-
-    private var artistSection: some View {
-
-        VStack(
-            alignment: .leading,
-            spacing: 13
-        ) {
-
-            HStack {
-
-                Text(
-                    "homeview_your_artists"
-                )
-                .font(.title2.bold())
-
-                Spacer()
-
-                NavigationLink {
-
-                    ArtistsView()
-
-                } label: {
-
-                    Text(
-                        "homeview_show_all"
-                    )
-                    .font(
-                        .subheadline
-                            .weight(.medium)
-                    )
-                }
-            }
-            .padding(.horizontal)
-
-            ScrollView(
-                .horizontal,
-                showsIndicators: false
-            ) {
-
-                LazyHStack(spacing: 18) {
-
-                    ForEach(
-                        Array(
-                            artists.prefix(12)
-                        )
-                    ) { artist in
-
-                        NavigationLink {
-
-                            ArtistDetailView(
-                                artist: artist
-                            )
-
-                        } label: {
-
-                            VStack(spacing: 8) {
-
-                                ArtistArtworkView(
-                                    songs:
-                                        artist.songs
-                                )
-                                .frame(
-                                    width: 112,
-                                    height: 112
-                                )
-                                .clipShape(
-                                    Circle()
-                                )
-                                .shadow(color: .black.opacity(0.16), radius: 5, x: 0, y: 3)
-
-                                Text(
-                                    artist.name
-                                )
-                                .font(
-                                    .subheadline
-                                        .weight(
-                                            .medium
-                                        )
-                                )
-                                .foregroundStyle(
-                                    .primary
-                                )
-                                .lineLimit(1)
-                                .frame(
-                                    width: 112
-                                )
+            GeometryReader { geometry in
+                let layout = HomeCardLayout(width: geometry.size.width)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        header
+                        HomeNowPlayingSpotlight(fallback: recent.first ?? added.first, queue: localSongs)
+                            .padding(.horizontal, 20)
+                        quickAccess(layout: layout)
+                        if !picks.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    HomeSectionTitle(title: "home_quick_picks")
+                                    Spacer()
+                                    Button(action: refreshPicks) {
+                                        Image(systemName: "arrow.clockwise").font(.subheadline.weight(.semibold))
+                                            .frame(width: 44, height: 44)
+                                    }
+                                    .buttonStyle(HomePressStyle())
+                                    .accessibilityLabel("home_refresh_picks")
+                                }.padding(.horizontal, 20)
+                                songRail(picks, width: layout.song)
                             }
                         }
-                        .buttonStyle(.plain)
+                        if !mixes.isEmpty {
+                            HomeForYouSection(mixes: mixes, width: layout.mix, play: play)
+                        }
+                        if !recent.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HomeSectionLink(title: "homeview_recent_played") { RecentPlayedView() }
+                                songRail(Array(recent.prefix(12)), width: layout.song)
+                            }
+                        }
+                        if !artistIDs.isEmpty { artistSection(width: layout.song) }
+                        if !added.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HomeSectionLink(title: "homeview_recent_added") { RecentAddedView() }
+                                songRail(Array(added.prefix(12)), width: layout.song)
+                            }
+                        }
+                        HomeDiscoverySection(recommendations: podcastRecommendations.shows, playSong: play, width: layout.mix)
+                        // Keep Echo's existing album, favorite and podcast entry points.
+                        HomeLocalAlbumSection(coverWidth: layout.song)
+                        if !favorites.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HomeSectionLink(title: "homeview_favorites") { FavoritesView() }
+                                songRail(Array(favorites.prefix(12)), width: layout.song)
+                            }
+                        }
+                        PodcastRecommendationsSection(
+                            shows: podcastRecommendations.shows, loading: podcastRecommendations.loading,
+                            failed: podcastRecommendations.failed, retry: { podcastRecommendations.retry += 1 }
+                        )
+                        HomeOnlineAlbumSection(coverWidth: layout.song)
                     }
+                    .padding(.top, 8)
+                    // ContentView already reserves the live MiniPlayer and tab safe areas.
+                    .padding(.bottom, 24)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 6)
+                .scrollIndicators(.hidden)
+                .echoBackground()
             }
+            .toolbarVisibility(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showSettings) { SettingsView() }
+            .sheet(isPresented: $showSearch) { SearchView() }
+            .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
+            .sheet(item: Bindable(library).songToAddToPlaylist) { PlaylistPickerView(songs: [$0]) }
+            .sheet(isPresented: Bindable(library).showEditSheet) {
+                if let song = library.editingSong { EditSongView(song: song) }
+            }
+            .task(id: podcastRecommendations.taskID) { await podcastRecommendations.load() }
+            .onAppear(perform: prepare)
+            .onChange(of: library.songRevision) { prepare() }
+            .onChange(of: library.favoriteRevision) { prepare() }
+            .onChange(of: library.artistGroups.map(\.id)) { prepareArtists() }
+            .onChange(of: scenePhase) { if scenePhase == .active { prepare() } }
+            .sensoryFeedback(.selection, trigger: refreshFeedback)
+            .sensoryFeedback(.selection, trigger: optionsFeedback)
         }
     }
 
+    private var header: some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("homeview_title").font(.largeTitle.weight(.heavy))
+                Text("home_tagline").font(.system(size: 9, weight: .medium)).tracking(3)
+                    .foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            Spacer(minLength: 4)
+            headerButton("magnifyingglass", label: "tab_search") { showSearch = true }
+            headerButton("gearshape", label: "tab_settings") { showSettings = true }
+        }.padding(.horizontal, 20)
+    }
 
-    // MARK: - Play
+    private func headerButton(_ symbol: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.title3.weight(.medium)).frame(width: 44, height: 44)
+                .background(.thinMaterial, in: .circle)
+                .overlay { Circle().strokeBorder(.primary.opacity(0.06)) }
+        }.buttonStyle(HomePressStyle()).accessibilityLabel(label)
+    }
 
-    private func play(
-        _ song: Song,
-        queue: [Song]
-    ) {
-
-        guard
-            let url =
-                library.getURL(
-                    for: song
-                )
-        else {
-            return
+    private func quickAccess(layout: HomeCardLayout) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HomeSectionTitle(title: "home_quick_access").padding(.horizontal, 20)
+            ScrollView(.horizontal) {
+                HStack(spacing: 10) {
+                    NavigationLink { FavoritesView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                        HomeQuickAccessCard(title: "libraryview_favorites", symbol: "heart.fill", count: favorites.count,
+                                            playlists: false, song: favorites.first, width: layout.access, accent: true)
+                    }
+                    NavigationLink { RecentPlayedView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                        HomeQuickAccessCard(title: "home_recent", symbol: "clock", count: recent.count,
+                                            playlists: false, song: recent.first, width: layout.access)
+                    }
+                    NavigationLink { SongsView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                        HomeQuickAccessCard(title: "home_downloads", symbol: "arrow.down.to.line", count: localSongs.count,
+                                            playlists: false, song: added.first, width: layout.access)
+                    }
+                    NavigationLink { PlaylistsView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                        HomeQuickAccessCard(title: "libraryview_playlists", symbol: "music.note.list", count: library.playlists.count,
+                                            playlists: true, song: playlistArtworkSong, width: layout.access)
+                    }
+                }.buttonStyle(HomePressStyle()).padding(.horizontal, 20).padding(.vertical, 3)
+            }.scrollIndicators(.hidden)
         }
+    }
 
-        audioPlayer.lastPlaybackDirection =
-            .fade
+    private var playlistArtworkSong: Song? {
+        guard let playlist = library.playlists.first else { return nil }
+        return library.songs(in: playlist).first
+    }
 
-        audioPlayer.play(
-            song: song,
-            url: url,
-            queue: queue
-        )
+    private func songRail(_ songs: [Song], width: CGFloat) -> some View {
+        HomeSongRail(songs: songs, width: width, play: { play($0, songs) }, options: {
+            optionsFeedback += 1
+            selectedSong = $0
+        })
+    }
 
-        audioPlayer.allSongs =
-            library.songs
+    private func artistSection(width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HomeSectionLink(title: "home_favorite_artists") { ArtistsView() }
+            ScrollView(.horizontal) {
+                LazyHStack(alignment: .top, spacing: 12) {
+                    ForEach(artistIDs, id: \.self) { id in
+                        if let artist = library.artistGroupsByID[id] {
+                            NavigationLink { ArtistDetailView(artist: artist).toolbarVisibility(.visible, for: .navigationBar) } label: {
+                                VStack(spacing: 7) {
+                                    ArtistArtworkView(songs: artist.songs).frame(width: width, height: width)
+                                        .clipShape(.circle).accessibilityHidden(true)
+                                    Text(artist.name).font(.subheadline.weight(.medium)).lineLimit(2)
+                                        .multilineTextAlignment(.center)
+                                }.frame(width: width)
+                            }.buttonStyle(HomePressStyle())
+                        }
+                    }
+                }.padding(.horizontal, 20).padding(.vertical, 3)
+            }.scrollIndicators(.hidden)
+        }
+    }
 
-        audioPlayer.fillAutoNext(
-            from:
-                library.songs
-        )
+    private func prepare() {
+        // getURL builds a path; check the file to exclude missing/download-in-progress tracks.
+        localSongs = library.songs.filter {
+            $0.podcastEpisodeID == nil && library.getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true
+        }
+        let localIDs = Set(localSongs.map(\.id))
+        favorites = library.favoriteSongs.filter { localIDs.contains($0.id) }
+        recent = localSongs.filter { $0.lastPlayed != nil }
+            .sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
+        added = localSongs.sorted { $0.dateAdded > $1.dateAdded }
+        session.prepareIfNeeded(songs: localSongs, favorites: favorites, favoriteSongIDs: library.favoriteSongIDs,
+                                recommendationManager: recommendations)
+        picks = session.recommendedSongs ?? []
+        let selections = session.mixes(songs: localSongs, favoriteSongIDs: library.favoriteSongIDs,
+                                       recommendationManager: recommendations)
+        mixes = zip(HomePersonalMix.Kind.allCases, selections).compactMap { kind, songs in
+            songs.isEmpty ? nil : HomePersonalMix(kind: kind, songs: songs)
+        }
+        prepareArtists()
+    }
+
+    private func prepareArtists() {
+        let favoriteIDs = Set(library.favoriteSongIDs)
+        let available = Set(localSongs.map(\.id))
+        let ranked = library.artistGroups.filter { $0.songs.contains { available.contains($0.id) } }.sorted { lhs, rhs in
+            func score(_ artist: ArtistGroup) -> Int {
+                artist.songs.reduce(0) { $0 + recommendations.learningData[$1.id, default: .init()].playCount
+                    + (favoriteIDs.contains($1.id) ? 6 : 0) }
+            }
+            let left = score(lhs), right = score(rhs)
+            return left == right ? lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending : left > right
+        }
+        artistIDs = Array(ranked.prefix(12)).map(\.id)
+    }
+
+    private func refreshPicks() {
+        session.refreshRecommendations(songs: localSongs, favoriteSongIDs: library.favoriteSongIDs,
+                                       recommendationManager: recommendations)
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { picks = session.recommendedSongs ?? [] }
+        refreshFeedback += 1
+    }
+
+    private func play(_ song: Song, _ queue: [Song]) {
+        guard let current = library.song(withID: song.id), let url = library.getURL(for: current) else { return }
+        player.lastPlaybackDirection = .fade
+        player.play(song: current, url: url, queue: queue)
+        player.allSongs = library.songs
+        player.fillAutoNext(from: library.songs)
     }
 }

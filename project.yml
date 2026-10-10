@@ -154,6 +154,9 @@ targets:
       - path: Echo.swiftpm/Echo/Models/LibraryAlbums.swift
       - path: Echo.swiftpm/Echo/Spotify/SpotifyURLParser.swift
       - path: Echo.swiftpm/Echo/YoutubeMusic/YouTubeMusicMetadata.swift
+      - path: Tests/HomeMusicSelectionTests.swift
+      - path: Echo.swiftpm/Echo/Models/HomeMusicSelection.swift
+      - path: Echo.swiftpm/Echo/Models/ArtistCredits.swift
       - path: Tests/EchoFeatureLogicTests.swift
       - path: Tests/EchoReleaseDetectionTests.swift
       - path: Tests/EchoAudioEngineTests.swift
