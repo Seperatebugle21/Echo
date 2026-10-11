@@ -77,16 +77,22 @@ final class HomeInteractionTests: XCTestCase {
     private func scrollTo(_ identifier: String) -> XCUIElement {
         let element = app.buttons[identifier]
         for _ in 0..<24 {
-            let viewport = app.frame.insetBy(dx: 0, dy: 185)
+            let dockTop = app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex
+                .map(\.frame).filter { $0.width > 20 && $0.midY > app.frame.height * 0.65 }
+                .map(\.minY).min() ?? app.frame.height - 145
+            let viewport = CGRect(x: app.frame.minX, y: app.frame.minY + 140,
+                                  width: app.frame.width, height: max(0, dockTop - app.frame.minY - 148))
             let frame = element.exists ? element.frame : .zero
-            if frame.width > 0 && viewport.contains(CGPoint(x: frame.midX, y: frame.midY)) { return element }
+            if frame.width > 0 && viewport.contains(CGPoint(x: frame.midX, y: frame.midY)) && element.isHittable { return element }
             // Short drags can recover when a restored navigation offset places the
             // target above us, and keep gestures inside Home rather than the dock.
             let up = frame.width == 0 || frame.midY > viewport.midY
-            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: up ? 0.67 : 0.35))
-            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.12, dy: up ? 0.35 : 0.67))
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.025, dy: up ? 0.67 : 0.35))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.025, dy: up ? 0.35 : 0.67))
             start.press(forDuration: 0.05, thenDragTo: end)
         }
+        capture("home-unreachable-" + identifier)
+        print("Unreachable Home control frame: \(element.exists ? element.frame : .zero)")
         XCTFail("Home control was not reachable: \(identifier)")
         return element
     }
@@ -144,7 +150,7 @@ final class HomeInteractionTests: XCTestCase {
         capture("home-smart-flow-after-stop-before-dock-check")
         waitForMiniPlayer().coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         waitForPlayerOpen()
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == 'Pause'")).allElementsBoundByIndex.contains { $0.isHittable }, "Stopping Flow must keep playback running")
+        XCTAssertTrue(app.buttons["pause_action"].isHittable, "Stopping Flow must keep playback running")
         closePlayer.tap()
         capture("home-smart-flow-stopped-queue-kept")
     }
