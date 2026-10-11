@@ -80,6 +80,7 @@ Integration changes: `AppRouter.swift`, `ContentView.swift`, `HomeView.swift`, `
 9. Start a DJ mix excluding an artist/genre, skip beyond the initial queue and inspect refills. Refine the mix while a song is playing; the current position must continue. Start normal Echo Flow and verify the previous DJ filter is cleared.
 10. Enable voice input, grant permissions, dictate, then pause and verify one automatic send without tapping Send. Test denied permission, unsupported offline language, phone interruptions and Bluetooth routes. For spoken replies test mix/duck/pause and verify restoration after completion, cancellation and dismissal.
 11. Run `EchoIntelligenceTests`, `EchoFeatureTests`, `EchoPodcastTests` and the existing Home UI suite in Simulator. Qwen and Apple on-device models cannot be validated by these simulator tests; use physical hardware for model availability, offline recognition, thermal/GPU/60 FPS and memory checks.
+12. Inspect Quick Access and For You in light, dark and custom themes: card shadows should fade below the horizontal rails. Open Now Playing from the MiniPlayer and quickly tap pause, queue, seek or close during the opening spring. Controls must respond; Home, tabs and the hidden MiniPlayer must stay inactive until the player closes. Repeat with a partial opening drag and Reduce Motion. The UI suite checks that underlying controls are unavailable while Now Playing is open; rapid taps during the spring still need device verification.
 
 ## Explicit limits
 

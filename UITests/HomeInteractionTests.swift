@@ -34,6 +34,10 @@ final class HomeInteractionTests: XCTestCase {
     private func waitForPlayerOpen() {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: closePlayer)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 10), .completed)
+        XCTAssertFalse(app.buttons["home-settings"].isHittable, "Now Playing must block underlying Home controls")
+        XCTAssertFalse(app.buttons["home-search"].isHittable)
+        XCTAssertFalse(app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex.contains { $0.isHittable },
+                       "The hidden MiniPlayer must not receive taps through Now Playing")
     }
 
     private func waitForHome() {

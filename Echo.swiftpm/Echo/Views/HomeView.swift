@@ -139,6 +139,7 @@ struct HomeView: View {
                     }
                 }.buttonStyle(HomePressStyle()).padding(.horizontal, 20).padding(.vertical, 8)
             }.scrollIndicators(.hidden)
+                .scrollClipDisabled()
         }
     }
 

@@ -45,6 +45,8 @@ struct ContentView: View {
                     ZStack(alignment: .topLeading) {
                         Color.clear
                             .contentShape(Rectangle())
+                            // Consume taps outside the moving surface during the transition.
+                            .onTapGesture { }
                             .allowsHitTesting(presentation.isVisible)
                         // One persistent player; tabs only report its reserved space.
                         let slot = presentation.dockSlotFrame
@@ -66,7 +68,7 @@ struct ContentView: View {
                             x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
                             y: slot.minY - fullGeometry.frame(in: .global).minY
                         )
-                        .allowsHitTesting(dockReady && !coverEntrance)
+                        .allowsHitTesting(dockReady && !coverEntrance && !presentation.isVisible)
                         .accessibilityHidden(presentation.isVisible)
 
                         if dockReady && coverEntrance, let song = presentation.entranceSong {
@@ -751,13 +753,15 @@ final class MiniPlayerPresentation {
     private func settle(open: Bool, reduceMotion: Bool) {
         let currentToken = UUID()
         token = currentToken
+        // This is the interaction destination, not an animation-completion flag.
+        // Buttons and closing gestures must work while a tap-open is still moving.
+        isExpanded = open
         let animation: Animation = reduceMotion
             ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 0.92)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
             guard self.token == currentToken else { return }
-            self.isExpanded = open
             self.isVisible = open
             if self.homeCardSong != nil {
                 // At full size the source rectangle no longer affects the surface.
