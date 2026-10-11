@@ -147,5 +147,17 @@ final class EchoIntelligenceTests: XCTestCase {
         XCTAssertTrue(description.contains("songIDs?:array"))
         XCTAssertLessThan(description.count, 5500)
     }
+    func testFavoritePinsTheCurrentSongBeforeConfirmationWithoutTransport() throws {
+        let call = AIToolCall(id: "favorite-request", name: "favorite", arguments: "{\"enabled\":true}")
+        let pinned = try AIFavoriteTarget.resolve(call, currentSongID: "first-song")
+        let confirmed = try AIFavoriteTarget.resolve(pinned, currentSongID: "next-song")
+        let args = try EchoToolRegistry.definition("favorite").validate(confirmed.arguments)
+        XCTAssertEqual(args["songID"] as? String, "first-song")
+        XCTAssertEqual(confirmed.id, call.id); XCTAssertEqual(confirmed.name, "favorite")
+        XCTAssertEqual(args["enabled"] as? Bool, true)
+        XCTAssertThrowsError(try AIFavoriteTarget.resolve(call, currentSongID: nil))
+        let status = AIToolCall(id: "status", name: "playback_status", arguments: "{}")
+        XCTAssertEqual(try AIFavoriteTarget.resolve(status, currentSongID: nil), status)
+    }
 
 }

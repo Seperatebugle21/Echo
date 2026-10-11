@@ -19,6 +19,11 @@ import Foundation
     var djContext: String {
         (try? json(["query": dj.query, "excluded": dj.exclusions, "selectedIDs": dj.selectedIDs.map(\.uuidString)])) ?? "{}"
     }
+    func prepare(_ call: AIToolCall) throws -> AIToolCall {
+        // Pin 'this song' before showing confirmation, even if the track ends
+        // while the user is reviewing the action.
+        try AIFavoriteTarget.resolve(call, currentSongID: player.currentSong?.id.uuidString)
+    }
     func execute(_ call: AIToolCall) async throws -> String {
         let definition = try EchoToolRegistry.definition(call.name)
         let args = try definition.validate(call.arguments)
@@ -87,6 +92,8 @@ import Foundation
             let song = try song(args["songID"])
             guard let enabled = args["enabled"] as? Bool else { throw AIError.invalidArguments }
             if library.isFavorite(song) != enabled { library.toggleFavorite(song) }
+            guard library.isFavorite(song) == enabled else { throw AIError.storage }
+            return try json(["status": "completed", "action": "favorite", "song": metadata(song), "enabled": enabled])
         case "playlists":
             return try json(library.playlists.prefix(60).map { ["id": $0.id.uuidString, "name": String($0.displayName().prefix(150)), "count": library.songs(in: $0).count] as [String: Any] })
         case "playlist_create":

@@ -64,6 +64,19 @@ enum AINativeToolCatalog {
     }
 }
 
+enum AIFavoriteTarget {
+    static func resolve(_ call: AIToolCall, currentSongID: String?) throws -> AIToolCall {
+        guard call.name == "favorite" else { return call }
+        var arguments = try EchoToolRegistry.definition("favorite").validate(call.arguments)
+        if arguments["songID"] == nil {
+            guard let currentSongID else { throw AIError.missing }
+            arguments["songID"] = currentSongID
+        }
+        let data = try JSONSerialization.data(withJSONObject: arguments, options: .sortedKeys)
+        return AIToolCall(id: call.id, name: call.name, arguments: String(decoding: data, as: UTF8.self))
+    }
+}
+
 struct AIHTTPFailure: LocalizedError {
     enum Kind: String { case authentication, forbidden, quota, rate, model, parameter, endpoint, server, other }
     let status: Int

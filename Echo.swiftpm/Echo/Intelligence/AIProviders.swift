@@ -146,7 +146,7 @@ private struct AppleEchoTool: Tool {
     let description: String
     let executor: @MainActor (AIToolCall) async throws -> String
     @Generable struct Arguments {
-        @Guide(description: "Exact registered action name", .anyOf(["library_search", "playback_status", "play_songs", "transport", "seek", "playback_options", "queue_edit", "favorite", "playlists", "playlist_create", "playlist_edit", "playlist_play", "playlist_delete", "echo_flow", "dj_mix", "podcast_search", "podcast_action", "settings_change", "navigate"])) var action: String
+        @Guide(description: "Exact registered action name for advanced actions. Use the separate native tools for library search, playback status, playing, transport and favorites.", .anyOf(["seek", "playback_options", "queue_edit", "playlists", "playlist_create", "playlist_edit", "playlist_play", "playlist_delete", "echo_flow", "dj_mix", "podcast_search", "podcast_action", "settings_change", "navigate"])) var action: String
         @Guide(description: "A valid JSON object string matching the selected action's schema. Use {} for no arguments. Do not use markdown or invent song or playlist IDs.") var argumentsJSON: String
     }
     func call(arguments: Arguments) async throws -> String {
@@ -169,8 +169,19 @@ private struct AppleEchoTool: Tool {
         guard SystemLanguageModel.default.availability == .available,
               SystemLanguageModel.default.supportsLocale(Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en")) else { throw AIError.unavailable }
         // Keep the native on-device context compact; the executor still validates the full schemas.
-        let schema = AINativeToolCatalog.description(tools)
-        let registered: [any Tool] = tools.isEmpty ? [] : [AppleEchoTool(description: "Echo actions and schemas: " + schema, executor: execute)]
+        let specialized: Set<String> = ["library_search", "playback_status", "play_songs", "transport", "favorite"]
+        let names = Set(tools.compactMap { ($0["function"] as? [String: Any])?["name"] as? String })
+        let advanced = tools.filter { !specialized.contains(($0["function"] as? [String: Any])?["name"] as? String ?? "") }
+        let bridge = AppleActionBridge(executor: execute)
+        var registered: [any Tool] = []
+        if names.contains("library_search") { registered.append(AppleLibrarySearchTool(bridge: bridge)) }
+        if names.contains("playback_status") { registered.append(ApplePlaybackStatusTool(bridge: bridge)) }
+        if names.contains("play_songs") { registered.append(ApplePlaySongsTool(bridge: bridge)) }
+        if names.contains("transport") { registered.append(AppleTransportTool(bridge: bridge)) }
+        if names.contains("favorite") { registered.append(AppleFavoriteTool(bridge: bridge)) }
+        if !advanced.isEmpty {
+            registered.append(AppleEchoTool(description: "Advanced Echo actions and argument schemas. Use separate native tools for search, playback and favorites.\n" + AINativeToolCatalog.description(advanced), executor: execute))
+        }
         let session = LanguageModelSession(tools: registered, instructions: instructions)
         // JSON encodes role boundaries and untrusted data; only this session's Tool can mutate Echo.
         let context = String(data: try JSONEncoder().encode(messages), encoding: .utf8) ?? ""

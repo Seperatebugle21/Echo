@@ -16,7 +16,7 @@ Echo Intelligence extends the current `Widget` app; Home, navigation, playback, 
 | Provider | Implementation | Requirements / limits |
 | --- | --- | --- |
 | Automatic | Prefers Apple, then installed Qwen; OpenAI only if online requests are explicitly allowed and a key exists | No fallback after a request fails; never silently changes from offline to cloud |
-| Apple Foundation Models | `SystemLanguageModel`, `LanguageModelSession.streamResponse`, native `Tool` with generated typed arguments feeding the same registry | iOS 26+, supported hardware, enabled/downloaded Apple Intelligence, supported language; Apple's context/safety/availability limits still apply |
+| Apple Foundation Models | `SystemLanguageModel`, `LanguageModelSession.streamResponse`, separate typed native tools for current playback, search, play, transport and favorites; advanced actions feed the same registry | iOS 26+, supported hardware, enabled/downloaded Apple Intelligence, supported language; Apple's context/safety/availability limits still apply |
 | Qwen Local | MLX Qwen3 0.6B 4-bit, token streaming, bounded KV cache, directory-only model/tokenizer loading | Physical Metal device, at least 4 GB RAM, ~500 MB download and 1.5 GB available storage. **Chat-only**, no app actions. Structured chat roles and `enable_thinking: false`; hardware inference needs device validation |
 | OpenAI | HTTPS Chat Completions SSE and function tools | User key and a compatible model; default `gpt-4.1-mini` |
 | Gemini | Google's documented OpenAI-compatible `/v1beta/openai/chat/completions` endpoint | User Gemini API key; default `gemini-2.5-flash`; model must support streaming/function calls |
@@ -52,13 +52,13 @@ Conversation history is local, protected and excluded from backup, with a maximu
 
 ## Files
 
-Foundation Models returns structured tool validation/permission errors to the model instead of opaque `echo_action` invocation failures. Registered action names are constrained during generation. Reasoning blocks and incomplete `<think>` tags are withheld from streaming, stored assistant answers and speech, including existing-history display.
+Foundation Models returns structured tool validation/permission errors to the model instead of opaque `echo_action` invocation failures. Common Apple intents have distinct typed tools instead of requiring a JSON string. Favoriting the current song pins its ID before confirmation and never calls transport. Registered advanced action names are constrained during generation. Reasoning blocks and incomplete `<think>` tags are withheld from streaming, stored assistant answers and speech, including existing-history display.
 
 New implementation is in `Echo.swiftpm/Echo/Intelligence/`:
 
 - `AIModels.swift`, `EchoToolRegistry.swift`: portable types, privacy/permission policies, SSE framing and strict schemas.
 - `AISettingsStore.swift`: preferences, Keychain credentials, protected local history.
-- `AIProviders.swift`, `QwenAIProvider.swift`: provider protocol, dispatch, streaming and model lifecycle.
+- `AIProviders.swift`, `AppleAITools.swift`, `QwenAIProvider.swift`: provider protocol, dispatch, streaming and model lifecycle.
 - `AIConversationController.swift`, `EchoActionEngine.swift`: conversation orchestration, approvals, deduplication and real Echo integration.
 - `AIResponseSafety.swift`: reasoning-block filtering before display/storage/speech, provider request/error compatibility and voice endpoint policy.
 - `AISpeechController.swift`: recognition, PCM synthesis, levels and audio-session restoration.
