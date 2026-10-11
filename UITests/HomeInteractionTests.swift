@@ -97,6 +97,26 @@ final class HomeInteractionTests: XCTestCase {
         return element
     }
 
+    func testIntelligenceUniversePreservesMusicAndReturnsHome() {
+        launch()
+        startPlayback()
+        app.buttons["home-intelligence"].tap()
+        let close = app.buttons["intelligence-close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Echo Intelligence"].exists)
+        XCTAssertFalse(app.staticTexts["The 3D renderer could not start. Conversations remain available."].exists)
+        let universe = app.otherElements["Interactive golden universe"]
+        if universe.exists {
+            universe.swipeLeft()
+            universe.doubleTap()
+        }
+        capture("echo-intelligence-universe")
+        XCTAssertTrue(app.buttons["Pause music"].exists)
+        close.tap()
+        waitForHome()
+        waitForLabel("Pause")
+    }
+
     func testSmartVibesSurpriseAndRealQueueOpen() {
         launch()
         scrollTo("smart-vibe-energy").tap()

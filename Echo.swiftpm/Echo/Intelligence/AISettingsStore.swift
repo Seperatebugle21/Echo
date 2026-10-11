@@ -45,10 +45,12 @@ enum AICredentials {
     private(set) var conversations: [AIConversation] = []
     private(set) var actions: [AIActionRecord] = []
     var error: String?
+    @ObservationIgnored private var deletedConversationIDs: Set<UUID> = []
     private let directory: URL
     private struct Archive: Codable { var conversations: [AIConversation]; var actions: [AIActionRecord] }
-    init() {
-        directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Intelligence")
+    init(directory: URL? = nil) {
+        self.directory = directory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Intelligence")
+        let directory = self.directory
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             var url = directory
@@ -62,14 +64,18 @@ enum AICredentials {
         } catch { self.error = AIError.storage.localizedDescription }
     }
     func save(_ conversation: AIConversation) {
-        guard AISettingsStore.shared.value.saveHistory, !conversation.messages.isEmpty else { return }
+        guard AISettingsStore.shared.value.saveHistory, !conversation.messages.isEmpty, !deletedConversationIDs.contains(conversation.id) else { return }
+        var conversation = conversation
+        for index in conversation.messages.indices where conversation.messages[index].role == .assistant {
+            conversation.messages[index].text = AIResponseText.visible(conversation.messages[index].text)
+        }
         conversations.removeAll { $0.id == conversation.id }
         conversations.insert(conversation, at: 0)
         conversations = Array(conversations.prefix(50)); persist()
     }
     func record(_ record: AIActionRecord) { actions.insert(record, at: 0); actions = Array(actions.prefix(200)); persist() }
-    func delete(_ id: UUID) { conversations.removeAll { $0.id == id }; persist() }
-    func clear() { conversations.removeAll(); actions.removeAll(); persist() }
+    func delete(_ id: UUID) { deletedConversationIDs.insert(id); conversations.removeAll { $0.id == id }; persist() }
+    func clear() { deletedConversationIDs.formUnion(conversations.map(\.id)); conversations.removeAll(); actions.removeAll(); persist() }
     private func persist() {
         do {
             let data = try JSONEncoder().encode(Archive(conversations: conversations, actions: actions))

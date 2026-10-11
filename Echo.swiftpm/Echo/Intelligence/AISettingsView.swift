@@ -88,10 +88,12 @@ struct AISettingsView: View {
             }
             Button("ai_check") {
                 checking = true; notice = nil
+                let settings = store.value
+                let enteredKey = credential.trimmingCharacters(in: .whitespacesAndNewlines)
                 checkTask = Task {
                     defer { checking = false }
                     do {
-                        let provider = try AIProviderManager.resolve(store.value)
+                        let provider = NetworkAIProvider(id: settings.provider, settings: settings, credentialOverride: enteredKey)
                         _ = try await provider.respond(messages: [AIMessage(role: .user, text: "Reply OK.")], instructions: "Connection test. No tools.", tools: [], update: { _ in }, execute: { _ in throw AIError.permission })
                         try Task.checkCancellation(); notice = EchoLocalization.string("ai_connected")
                     } catch is CancellationError {} catch { notice = error.localizedDescription }
@@ -126,7 +128,9 @@ private struct AIHistorySettingsView: View {
                 ForEach(history.conversations) { conversation in
                     NavigationLink(conversation.title) {
                         ScrollView { VStack(alignment: .leading, spacing: 20) {
-                            ForEach(conversation.messages.filter { $0.role != .tool && !$0.text.isEmpty }) { Text($0.text).textSelection(.enabled) }
+                            ForEach(conversation.messages.filter { $0.role != .tool && !$0.text.isEmpty }) { message in
+                                Text(message.role == .assistant ? AIResponseText.visible(message.text) : message.text).textSelection(.enabled)
+                            }
                         }.padding() }.navigationTitle("ai_conversation")
                     }.swipeActions { Button("ai_delete", role: .destructive) { history.delete(conversation.id) } }
                 }

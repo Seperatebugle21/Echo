@@ -33,7 +33,7 @@ import Foundation
                 if let term = args[field] as? String, !term.isEmpty {
                     songs = songs.filter { song in
                         let value: String
-                        switch field { case "genre": value = song.genre ?? ""; case "artist": value = song.artist; case "album": value = song.album ?? ""; default: value = [song.title, song.artist, song.album ?? "", song.genre ?? ""].joined(separator: " ") }
+                        switch field { case "genre": value = song.genre ?? ""; case "artist": value = ([song.artist] + (song.artistNames ?? [])).joined(separator: " "); case "album": value = ([song.album ?? ""] + (song.additionalAlbums ?? []).map(\.name)).joined(separator: " "); default: value = [song.title, song.artist, song.album ?? "", song.genre ?? ""].joined(separator: " ") }
                         return value.localizedStandardContains(term)
                     }
                 }
@@ -214,15 +214,13 @@ import Foundation
         if let query = args["query"] as? String { next.query = query; next.selectedIDs = [] }
         if let excluded = args["exclude"] as? [String] { next.exclusions = excluded }
         if args["songIDs"] != nil { next.selectedIDs = try resolve(args).map(\.id) }
-        var candidates = library.songs.filter { song in
-            guard song.podcastEpisodeID == nil, !excludedMatch(song, next.exclusions), let url = player.getURL(for: song), FileManager.default.fileExists(atPath: url.path) else { return false }
-            if !next.selectedIDs.isEmpty { return next.selectedIDs.contains(song.id) }
-            return next.query.isEmpty || [song.title, song.artist, song.album ?? "", song.genre ?? ""].joined(separator: " ").localizedStandardContains(next.query)
+        let selection = Set(next.selectedIDs)
+        let candidates = library.songs.filter { song in
+            guard let url = player.getURL(for: song), FileManager.default.fileExists(atPath: url.path) else { return false }
+            return AIDJSelection.admits(song, query: next.query, excluded: next.exclusions, selectedIDs: selection)
         }
-        candidates.removeAll { $0.id == player.currentSong?.id }
         let ranked = learning.recommendations(from: candidates, favoriteSongIDs: library.favoriteSongIDs, limit: candidates.count)
-        let recent = Set(next.recent)
-        let chosen = Array((ranked.filter { !recent.contains($0.id) } + ranked.filter { recent.contains($0.id) }).prefix(args["limit"] as? Int ?? 30))
+        let chosen = AIDJSelection.preferUnplayed(ranked, recent: Set(next.recent), current: player.currentSong?.id, limit: args["limit"] as? Int ?? 30)
         guard !chosen.isEmpty else { throw AIError.missing }
         player.stopEchoFlow()
         if args["startNow"] as? Bool == true || player.currentSong == nil { _ = try await play(chosen, shuffle: false) }

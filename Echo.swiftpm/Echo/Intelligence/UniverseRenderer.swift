@@ -31,7 +31,7 @@ struct IntelligenceUniverse: UIViewRepresentable {
         view.isPaused = !active
     }
     static func dismantleUIView(_ view: MTKView, coordinator: UniverseRenderer) {
-        view.isPaused = true; view.delegate = nil; coordinator.release()
+        view.isPaused = true; view.delegate = nil; coordinator.releaseResources()
     }
 }
 final class UniverseRenderer: NSObject, MTKViewDelegate, UIGestureRecognizerDelegate {
@@ -102,7 +102,7 @@ final class UniverseRenderer: NSObject, MTKViewDelegate, UIGestureRecognizerDele
         for gesture in [rotate, pan, pinch, roll, reset] { gesture.delegate = self; view.addGestureRecognizer(gesture) }
         view.delegate = self; view.preferredFramesPerSecond = 60
     }
-    func release() { geometry = nil; pipeline = nil; queue = nil }
+    func releaseResources() { geometry = nil; pipeline = nil; queue = nil }
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool { true }
     @objc private func rotate(_ gesture: UIPanGestureRecognizer) {
         guard let view else { return }

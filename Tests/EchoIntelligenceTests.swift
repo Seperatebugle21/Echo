@@ -67,4 +67,85 @@ final class EchoIntelligenceTests: XCTestCase {
         XCTAssertEqual(restored.messages, conversation.messages)
         XCTAssertEqual(restored.title, "Seek")
     }
+    func testDJExclusionsOverrideExplicitSelectionAndExcludePodcasts() {
+        var song = Song(title: "Calm", artist: "Queen", fileName: "song.m4a")
+        song.genre = "Rock"
+        XCTAssertTrue(AIDJSelection.admits(song, query: "rock", excluded: [], selectedIDs: []))
+        XCTAssertFalse(AIDJSelection.admits(song, query: "", excluded: ["queen"], selectedIDs: [song.id]))
+        XCTAssertFalse(AIDJSelection.admits(song, query: "", excluded: [song.id.uuidString.lowercased()], selectedIDs: []))
+        XCTAssertFalse(AIDJSelection.admits(song, query: "jazz", excluded: [], selectedIDs: []))
+        song.podcastEpisodeID = "episode"
+        XCTAssertFalse(AIDJSelection.admits(song, query: "", excluded: [], selectedIDs: [song.id]))
+    }
+    func testDJDoesNotRepeatCurrentOrDuplicateSongsAndKeepsRankedFallback() {
+        let current = Song(title: "Current", fileName: "1")
+        let heard = Song(title: "Heard", fileName: "2")
+        let fresh = Song(title: "Fresh", fileName: "3")
+        let result = AIDJSelection.preferUnplayed([current, heard, fresh, fresh], recent: [heard.id], current: current.id, limit: 20)
+        XCTAssertEqual(result.map(\.id), [fresh.id, heard.id])
+        XCTAssertTrue(AIDJSelection.preferUnplayed([current], recent: [], current: current.id, limit: 20).isEmpty)
+    }
+
+    func testReasoningNeverAppearsDuringTaggedStreamingOrInFinalAnswer() {
+        let raw = "<think>Private analysis and tools.</think>Het antwoord."
+        for end in raw.indices {
+            let visible = AIResponseText.visible(String(raw[..<end]))
+            XCTAssertFalse(visible.contains("Private")); XCTAssertFalse(visible.contains("<"))
+        }
+        XCTAssertEqual(AIResponseText.visible(raw), "Het antwoord.")
+        XCTAssertEqual(AIResponseText.visible("Hello <thi"), "Hello")
+        XCTAssertEqual(AIResponseText.visible("<THINK>hidden<ThInK>also hidden"), "")
+        XCTAssertEqual(AIResponseText.visible("internal text</think>Answer"), "Answer")
+        XCTAssertEqual(AIResponseText.visible("<think>a<think>b</think>c</think>OK"), "OK")
+        XCTAssertEqual(AIResponseText.visible("Use <b>bold</b>."), "Use <b>bold</b>.")
+    }
+    func testOpenAIUsesCompatibleTokenParameterAndTrimsModel() {
+        let body = AINetworkPayload.body(provider: .openAI, model: " gpt-5 \n", messages: [], tools: [])
+        XCTAssertEqual(body["model"] as? String, "gpt-5")
+        XCTAssertNil(body["max_tokens"]); XCTAssertEqual(body["max_completion_tokens"] as? Int, 2048)
+        XCTAssertNil(body["tools"])
+        let other = AINetworkPayload.body(provider: .gemini, model: "gemini", messages: [], tools: [])
+        XCTAssertNotNil(other["max_tokens"])
+    }
+    func testProviderFailuresDistinguishBillingCredentialsModelAndParametersWithoutKeys() throws {
+        func failure(_ status: Int, code: String, message: String = "", param: String = "") throws -> AIHTTPFailure {
+            AIHTTPFailure(status: status, data: try JSONSerialization.data(withJSONObject: ["error": ["code": code, "message": message, "param": param]]))
+        }
+        let auth = try failure(401, code: "invalid_api_key", message: "Incorrect API key sk-secret")
+        XCTAssertEqual(auth.kind, .authentication); XCTAssertFalse(auth.localizedDescription.contains("sk-secret"))
+        XCTAssertEqual(try failure(429, code: "insufficient_quota").kind, .quota)
+        XCTAssertEqual(try failure(429, code: "rate_limit_exceeded").kind, .rate)
+        XCTAssertEqual(try failure(404, code: "model_not_found").kind, .model)
+        let parameter = try failure(400, code: "unsupported_parameter", param: "max_tokens")
+        XCTAssertEqual(parameter.kind, .parameter); XCTAssertEqual(parameter.parameter, "max_tokens")
+        XCTAssertNil(try failure(400, code: "", param: "sk-secret/credential").parameter)
+    }
+    func testVoiceEndpointWaitsForSpeechAndStablePhraseAndFinishesOnce() {
+        var endpoint = AISpeechEndpoint()
+        XCTAssertFalse(endpoint.shouldFinish(at: 100))
+        endpoint.receive("Speel", at: 100)
+        XCTAssertFalse(endpoint.shouldFinish(at: 101))
+        endpoint.receive("Speel mijn muziek", at: 101)
+        XCTAssertFalse(endpoint.shouldFinish(at: 102))
+        endpoint.receive("Speel mijn muziek", at: 102) // Repeated partials do not extend silence.
+        XCTAssertTrue(endpoint.shouldFinish(at: 103))
+        XCTAssertFalse(endpoint.shouldFinish(at: 105))
+        endpoint = AISpeechEndpoint() // Cancellation/new recording discards the old phrase.
+        XCTAssertFalse(endpoint.shouldFinish(at: 110))
+    }
+    func testNativeToolValidationFailureIsStructuredInsteadOfThrownToTheModel() throws {
+        let result = try AIToolFailure.result(AIError.invalidArguments, action: "seek")
+        let json = try JSONSerialization.jsonObject(with: Data(result.utf8)) as? [String: String]
+        XCTAssertEqual(json?["status"], "failed"); XCTAssertEqual(json?["action"], "seek")
+        XCTAssertNotNil(json?["reason"])
+        XCTAssertTrue(json?["instruction"]?.contains("Never claim success") == true)
+    }
+    func testNativeToolCatalogRetainsRequiredFieldsAndEnumsWithoutFullJSON() {
+        let description = AINativeToolCatalog.description(EchoToolRegistry.all.map(\.wire))
+        XCTAssertTrue(description.contains("seek(seconds:number)"))
+        XCTAssertTrue(description.contains("command:pause|resume|next|previous"))
+        XCTAssertTrue(description.contains("songIDs?:array"))
+        XCTAssertLessThan(description.count, 5500)
+    }
+
 }

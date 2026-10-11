@@ -3,6 +3,7 @@ import Observation
 import Metal
 #if canImport(MLXLLM) && canImport(MLXLMCommon)
 import MLXLLM
+import MLX
 import MLXLMCommon
 #endif
 
@@ -24,7 +25,9 @@ import MLXLMCommon
     let directory: URL
     init() {
         directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Intelligence/Qwen3-0.6B-4bit")
-        installed = FileManager.default.fileExists(atPath: directory.appendingPathComponent("complete.json").path)
+        installed = ["complete.json", "config.json", "tokenizer.json", "tokenizer_config.json", "model.safetensors"].allSatisfy {
+            FileManager.default.fileExists(atPath: directory.appendingPathComponent($0).path)
+        }
     }
     var storageBytes: Int64 {
         (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.fileSizeKey]))?.reduce(Int64(0)) { sum, url in
@@ -97,17 +100,33 @@ private final class QwenDownloadProgress: NSObject, URLSessionDownloadDelegate, 
         guard QwenModelStore.compatible, QwenModelStore.shared.installed else { throw AIError.localModel }
         #if canImport(MLXLLM) && canImport(MLXLMCommon)
         let directory = QwenModelStore.shared.directory
-        let transcript = String(data: try JSONEncoder().encode(messages), encoding: .utf8) ?? ""
-        // This small model is deliberately chat-only; no unvalidated text-to-action parser.
-        let prompt = instructions + "\nYou have no app tools in this local model. Do not claim to perform actions.\nConversation data:\n" + transcript + "\n/no_think"
+        // Preserve actual system/user/assistant roles. A JSON transcript inside a
+        // single user prompt made the small model answer the setup, not the user.
+        let chat: [Chat.Message] = [.system("""
+            You are Echo, a helpful assistant for music and everyday questions.
+            Answer the latest user message directly in the user's language. Be concise and specific.
+            Do not start with a generic greeting or a disclaimer about tools or data.
+            You can discuss music and answer general questions. Only if asked to perform an app action,
+            explain briefly that this local model cannot control Echo, and suggest the relevant Echo screen.
+            Never claim to have changed playback or accessed data you were not given.
+            Return only the answer, without reasoning, analysis, or think tags. /no_think
+            """)] + messages.compactMap { message in
+                switch message.role {
+                case .user: return .user(message.text)
+                case .assistant: return message.text.isEmpty ? nil : .assistant(AIResponseText.visible(message.text))
+                case .tool: return nil
+                }
+            }
         let stream = AsyncThrowingStream<String, Error> { continuation in
             let worker = Task {
                 do {
+                    GPU.set(cacheLimit: 32 * 1024 * 1024)
+                    defer { GPU.clearCache() }
                     // Directory loading never resolves a Hub model ID or downloads missing assets.
                     let container = try await LLMModelFactory.shared.loadContainer(configuration: ModelConfiguration(directory: directory))
                     try Task.checkCancellation()
                     let output = try await container.perform { context in
-                        let input = try await context.processor.prepare(input: UserInput(prompt: prompt))
+                        let input = try await context.processor.prepare(input: UserInput(chat: chat, additionalContext: ["enable_thinking": false]))
                         return try MLXLMCommon.generate(input: input, parameters: GenerateParameters(maxTokens: 1024, maxKVSize: 4096), context: context) { (tokens: [Int]) in
                             if Task.isCancelled { return .stop }
                             if tokens.count % 4 == 0 { continuation.yield(context.tokenizer.decode(tokens: tokens)) }

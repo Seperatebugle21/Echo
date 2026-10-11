@@ -15,15 +15,14 @@ struct EchoIntelligenceView: View {
     @FocusState private var inputFocused: Bool
     private let settings = AISettingsStore.shared
     private let gold = Color(red: 0.91, green: 0.71, blue: 0.44)
-    private var phase: UniversePhase { speech.listening ? .listening : speech.speaking ? .speaking : conversation.phase }
     var body: some View {
         GeometryReader { geometry in
             VStack(spacing: 10) {
                 header
                 ZStack(alignment: .bottom) {
-                    IntelligenceUniverse(phase: phase, level: speech.level, settings: settings.value,
-                                         active: scenePhase == .active && !showHistory && !showSettings && !showTranscript,
-                                         reducedMotion: reduceMotion, displayScale: displayScale) { rendererError = $0 }
+                    IntelligenceUniverseSurface(conversation: conversation, speech: speech, settings: settings.value,
+                                                active: scenePhase == .active && !showHistory && !showSettings && !showTranscript,
+                                                reducedMotion: reduceMotion, displayScale: displayScale) { rendererError = $0 }
                     if let rendererError { Text(rendererError).font(.caption).padding() }
                 }
                 .frame(minHeight: 130, maxHeight: .infinity)
@@ -54,6 +53,9 @@ struct EchoIntelligenceView: View {
         .sheet(isPresented: $showTranscript) { transcript }
         .sheet(isPresented: $showSettings) { NavigationStack { AISettingsView() } }
         .onChange(of: settings.value) { conversation.cancel(); speech.stop() }
+        .onChange(of: showHistory || showTranscript || showSettings) {
+            if showHistory || showTranscript || showSettings { voiceTask?.cancel(); speech.stop() }
+        }
         .onChange(of: scenePhase) { if scenePhase != .active { conversation.cancel(); voiceTask?.cancel(); speech.stop() } }
         .onChange(of: conversation.navigation) {
             if let destination = conversation.navigation {
@@ -66,7 +68,7 @@ struct EchoIntelligenceView: View {
     private var header: some View {
         HStack {
             Button { dismiss() } label: { Image(systemName: "chevron.down").frame(width: 44, height: 44).background(.white.opacity(0.07), in: .circle) }
-                .accessibilityLabel("ai_close")
+                .accessibilityLabel("ai_close").accessibilityIdentifier("intelligence-close")
             Spacer()
             VStack(spacing: 4) {
                 Text("ai_title").font(.system(size: 19, weight: .light)).tracking(2)
@@ -99,13 +101,13 @@ struct EchoIntelligenceView: View {
                 .accessibilityIdentifier("intelligence-input")
             if settings.value.voiceInput {
                 Button {
-                    if speech.listening { speech.stopListening() }
+                    if speech.listening { speech.finishListening() }
                     else {
                         conversation.cancel(); inputFocused = false
-                        voiceTask = Task { await speech.startListening(update: { conversation.draft = $0 }, finished: {}) }
+                        voiceTask = Task { await speech.startListening(update: { conversation.draft = $0 }, finished: send) }
                     }
                 } label: { Image(systemName: speech.listening ? "mic.fill" : "mic").frame(width: 38, height: 44) }
-                    .accessibilityLabel(speech.listening ? "ai_stop_listening" : "ai_voice_input")
+                    .accessibilityLabel(LocalizedStringKey(speech.listening ? "ai_stop_listening" : "ai_voice_input"))
             }
             if conversation.busy || speech.speaking {
                 Button { conversation.cancel(); speech.stopSpeaking() } label: { Image(systemName: "stop.fill").frame(width: 44, height: 44) }.accessibilityLabel("ai_stop")
@@ -143,7 +145,7 @@ struct EchoIntelligenceView: View {
                     ForEach(conversation.conversation.messages.filter { $0.role != .tool && !$0.text.isEmpty }) { message in
                         VStack(alignment: .leading, spacing: 6) {
                             Text(message.role == .user ? "ai_you" : "ai_title").font(.caption).foregroundStyle(gold)
-                            Text(message.text).textSelection(.enabled).foregroundStyle(.primary)
+                            Text(message.role == .assistant ? AIResponseText.visible(message.text) : message.text).textSelection(.enabled).foregroundStyle(.primary)
                         }.frame(maxWidth: .infinity, alignment: .leading)
                     }
                     if !conversation.streaming.isEmpty { Text(conversation.streaming).textSelection(.enabled) }
@@ -185,7 +187,23 @@ private struct IntelligenceNowPlaying: View {
                     Spacer()
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill").frame(width: 34, height: 44)
                 }.padding(.horizontal, 12).frame(maxWidth: 320).background(.white.opacity(0.035), in: .rect(cornerRadius: 15))
-            }.buttonStyle(.plain).accessibilityLabel(player.isPlaying ? "ai_pause" : "ai_resume")
+            }.buttonStyle(.plain).accessibilityLabel(LocalizedStringKey(player.isPlaying ? "ai_pause" : "ai_resume"))
         }
+    }
+}
+
+/// Only this small subtree observes audio levels, keeping microphone render ticks out of the form and transcript.
+private struct IntelligenceUniverseSurface: View {
+    let conversation: AIConversationController
+    let speech: AISpeechController
+    let settings: AISettings
+    let active: Bool
+    let reducedMotion: Bool
+    let displayScale: CGFloat
+    let reportError: (String) -> Void
+    var body: some View {
+        IntelligenceUniverse(phase: speech.listening ? .listening : speech.speaking ? .speaking : conversation.phase,
+                             level: speech.level, settings: settings, active: active,
+                             reducedMotion: reducedMotion, displayScale: displayScale, reportError: reportError)
     }
 }

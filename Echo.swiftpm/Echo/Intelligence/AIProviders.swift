@@ -13,7 +13,9 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
 @MainActor enum AIProviderManager {
     static var appleAvailable: Bool {
         #if canImport(FoundationModels)
-        if #available(iOS 26.0, *), SystemLanguageModel.default.availability == .available { return true }
+        if #available(iOS 26.0, *), SystemLanguageModel.default.availability == .available {
+            return SystemLanguageModel.default.supportsLocale(Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en"))
+        }
         #endif
         return false
     }
@@ -43,7 +45,10 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
 @MainActor final class NetworkAIProvider: AIProvider {
     let id: AIProviderID
     let settings: AISettings
-    init(id: AIProviderID, settings: AISettings) { self.id = id; self.settings = settings }
+    let credentialOverride: String?
+    init(id: AIProviderID, settings: AISettings, credentialOverride: String? = nil) {
+        self.id = id; self.settings = settings; self.credentialOverride = credentialOverride
+    }
     func respond(messages: [AIMessage], instructions: String, tools: [[String: Any]],
                  update: @escaping @MainActor (String) -> Void,
                  execute: @escaping @MainActor (AIToolCall) async throws -> String) async throws -> AIReply {
@@ -55,7 +60,7 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
         default: base = try AIPolicy.endpoint(settings.customURL); model = settings.customModel
         }
         guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw AIError.invalidArguments }
-        let key = AICredentials.read(id) ?? ""
+        let key = (credentialOverride ?? AICredentials.read(id) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard id == .custom || !key.isEmpty else { throw AIError.credentials }
         var request = URLRequest(url: base.appendingPathComponent("chat/completions"))
         request.httpMethod = "POST"; request.timeoutInterval = 90
@@ -70,8 +75,7 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
             }
             wire.append(item)
         }
-        var body: [String: Any] = ["model": model, "messages": wire, "stream": true, "max_tokens": 2048]
-        if !tools.isEmpty { body["tools"] = tools }
+        let body = AINetworkPayload.body(provider: id, model: model, messages: wire, tools: tools)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForResource = 180
@@ -80,15 +84,25 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
         defer { session.invalidateAndCancel() }
         let (bytes, response) = try await session.bytes(for: request)
         guard let response = response as? HTTPURLResponse else { throw AIError.response }
-        guard (200..<300).contains(response.statusCode) else { throw AIError.http(response.statusCode) }
+        guard (200..<300).contains(response.statusCode) else {
+            var errorData = Data()
+            for try await byte in bytes {
+                try Task.checkCancellation()
+                errorData.append(byte)
+                if errorData.count >= 16_384 { break }
+            }
+            throw AIHTTPFailure(status: response.statusCode, data: errorData)
+        }
         var parser = AISSEDecoder(), text = "", calls: [Int: AIToolCall] = [:], finished = false
         var size = 0
         func event(_ payload: String) throws {
             if payload == "[DONE]" { finished = true; return }
-            guard let data = payload.data(using: .utf8), let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let choices = json["choices"] as? [[String: Any]] else { throw AIError.response }
+            guard let data = payload.data(using: .utf8), let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { throw AIError.response }
+            if json["error"] != nil { throw AIHTTPFailure(status: response.statusCode, data: data) }
+            guard let choices = json["choices"] as? [[String: Any]] else { throw AIError.response }
             guard let choice = choices.first else { return }
             if let reason = choice["finish_reason"] as? String {
+                if reason == "length" { throw AIError.limit }
                 guard reason == "stop" || reason == "tool_calls" else { throw AIError.response }
                 finished = true
             }
@@ -132,11 +146,18 @@ private struct AppleEchoTool: Tool {
     let description: String
     let executor: @MainActor (AIToolCall) async throws -> String
     @Generable struct Arguments {
-        @Guide(description: "Exact registered action name") var action: String
-        @Guide(description: "JSON object matching that action's argument schema") var argumentsJSON: String
+        @Guide(description: "Exact registered action name", .anyOf(["library_search", "playback_status", "play_songs", "transport", "seek", "playback_options", "queue_edit", "favorite", "playlists", "playlist_create", "playlist_edit", "playlist_play", "playlist_delete", "echo_flow", "dj_mix", "podcast_search", "podcast_action", "settings_change", "navigate"])) var action: String
+        @Guide(description: "A valid JSON object string matching the selected action's schema. Use {} for no arguments. Do not use markdown or invent song or playlist IDs.") var argumentsJSON: String
     }
     func call(arguments: Arguments) async throws -> String {
-        try await executor(AIToolCall(id: UUID().uuidString, name: arguments.action, arguments: arguments.argumentsJSON))
+        do {
+            return try await executor(AIToolCall(id: UUID().uuidString, name: arguments.action, arguments: arguments.argumentsJSON))
+        } catch is CancellationError { throw CancellationError() }
+        catch {
+            // Tool validation and permission failures are useful results for the
+            // model, not opaque LanguageModelSession.ToolCallError exceptions.
+            return try AIToolFailure.result(error, action: arguments.action)
+        }
     }
 }
 @available(iOS 26.0, *)
@@ -147,7 +168,8 @@ private struct AppleEchoTool: Tool {
                  execute: @escaping @MainActor (AIToolCall) async throws -> String) async throws -> AIReply {
         guard SystemLanguageModel.default.availability == .available,
               SystemLanguageModel.default.supportsLocale(Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en")) else { throw AIError.unavailable }
-        let schema = String(data: try JSONSerialization.data(withJSONObject: tools), encoding: .utf8) ?? ""
+        // Keep the native on-device context compact; the executor still validates the full schemas.
+        let schema = AINativeToolCatalog.description(tools)
         let registered: [any Tool] = tools.isEmpty ? [] : [AppleEchoTool(description: "Echo actions and schemas: " + schema, executor: execute)]
         let session = LanguageModelSession(tools: registered, instructions: instructions)
         // JSON encodes role boundaries and untrusted data; only this session's Tool can mutate Echo.

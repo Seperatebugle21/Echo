@@ -2,6 +2,159 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "ai_http_authentication": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The API key was rejected. Enter an API key from this provider, then save it. A ChatGPT subscription does not include API credit."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De API-sleutel is geweigerd. Voer een API-sleutel van deze provider in en sla hem op. Een ChatGPT-abonnement bevat geen API-tegoed."
+        }
+      }
+    }
+  },
+  "ai_http_forbidden": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This account is not allowed to use this model. Check model access and project permissions."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit account mag dit model niet gebruiken. Controleer de modeltoegang en projectrechten."
+        }
+      }
+    }
+  },
+  "ai_http_quota": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The API account has no available quota or credit. Check API billing and project spending limits."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het API-account heeft geen beschikbaar tegoed of quotum. Controleer API-facturatie en de bestedingslimiet van het project."
+        }
+      }
+    }
+  },
+  "ai_http_rate": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Too many API requests. Wait briefly and try again."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Te veel API-verzoeken. Wacht even en probeer opnieuw."
+        }
+      }
+    }
+  },
+  "ai_http_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The model is unavailable for this API key. Check the exact model name and your account access."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit model is niet beschikbaar voor deze API-sleutel. Controleer de exacte modelnaam en de toegang van je account."
+        }
+      }
+    }
+  },
+  "ai_http_parameter": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The model rejected a request parameter. Choose a model supporting Chat Completions streaming and function tools for app control."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het model weigert een verzoekparameter. Kies een model dat Chat Completions-streaming en functies voor appbediening ondersteunt."
+        }
+      }
+    }
+  },
+  "ai_http_endpoint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The API endpoint was not found. Check the server base URL and Chat Completions support."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het API-adres is niet gevonden. Controleer het basisadres van de server en ondersteuning voor Chat Completions."
+        }
+      }
+    }
+  },
+  "ai_http_server": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider is temporarily unavailable. Try again later."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider is tijdelijk niet beschikbaar. Probeer later opnieuw."
+        }
+      }
+    }
+  },
+  "ai_http_other": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider rejected this request. Check that the selected model supports this API and app tools."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider heeft dit verzoek geweigerd. Controleer of het gekozen model deze API en appfuncties ondersteunt."
+        }
+      }
+    }
+  },
   "ai_title": {
     "extractionState": "manual",
     "localizations": {
@@ -807,13 +960,13 @@
       "en": {
         "stringUnit": {
           "state": "translated",
-          "value": "With Offline Only disabled, Apple speech recognition may send microphone audio to Apple. Transcripts are placed in the input field; tap Send when ready."
+          "value": "With Offline Only disabled, Apple speech recognition may send microphone audio to Apple. Your spoken question is sent automatically after a brief pause."
         }
       },
       "nl": {
         "stringUnit": {
           "state": "translated",
-          "value": "Als Alleen offline uitstaat, kan Apple spraakherkenning microfoonaudio naar Apple sturen. De herkende tekst verschijnt in het invoerveld; tik op Versturen als je klaar bent."
+          "value": "Als Alleen offline uitstaat, kan Apple spraakherkenning microfoonaudio naar Apple sturen. Je gesproken vraag wordt automatisch verstuurd na een korte pauze."
         }
       }
     }
@@ -1215,13 +1368,13 @@
       "en": {
         "stringUnit": {
           "state": "translated",
-          "value": "Uses the saved key and sends a short test prompt. Your provider may charge for this request. Models must support Chat Completions streaming and function tools for app control."
+          "value": "Tests the key shown above with a short prompt. Tap Save Key to use it in conversations. Your provider may charge for this request. Models must support Chat Completions streaming and function tools for app control."
         }
       },
       "nl": {
         "stringUnit": {
           "state": "translated",
-          "value": "Gebruikt de opgeslagen sleutel en verstuurt een korte testvraag. Je provider kan dit verzoek aanrekenen. Modellen moeten Chat Completions-streaming en functies ondersteunen voor appbediening."
+          "value": "Test de sleutel hierboven met een korte vraag. Tik op Sleutel opslaan om hem in gesprekken te gebruiken. Je provider kan dit verzoek aanrekenen. Modellen moeten Chat Completions-streaming en functies ondersteunen voor appbediening."
         }
       }
     }

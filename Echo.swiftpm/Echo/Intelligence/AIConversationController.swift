@@ -18,7 +18,7 @@ import Observation
     @ObservationIgnored private var completedIDs: [String: String] = [:]
     @ObservationIgnored private var actionCount = 0
     @ObservationIgnored private var generation = UUID()
-    var latestText: String { streaming.isEmpty ? conversation.messages.last(where: { $0.role == .assistant && !$0.text.isEmpty })?.text ?? "" : streaming }
+    var latestText: String { streaming.isEmpty ? AIResponseText.visible(conversation.messages.last(where: { $0.role == .assistant && !$0.text.isEmpty })?.text ?? "") : streaming }
     func send(onResponse: @escaping (String) -> Void = { _ in }) {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !busy, !text.isEmpty else { return }
@@ -39,20 +39,22 @@ import Observation
                 let tools = provider.id == .qwen ? [] : allowed.map(\.wire)
                 for _ in 0..<8 {
                     try Task.checkCancellation()
-                    let reply = try await provider.respond(messages: context(), instructions: instructions, tools: tools, update: { [weak self] text in
-                        guard let self, self.generation == token else { return }; self.streaming = text
+                    let reply = try await provider.respond(messages: context(maxCharacters: provider.id == .apple ? 4000 : provider.id == .qwen ? 8000 : 18000), instructions: instructions, tools: tools, update: { [weak self] text in
+                        guard let self, self.generation == token else { return }; self.streaming = AIResponseText.visible(text)
                     }, execute: { [weak self] call in
                         guard let self, self.generation == token else { throw CancellationError() }
                         return try await self.execute(call)
                     })
                     try Task.checkCancellation()
                     guard generation == token else { return }
-                    conversation.messages.append(AIMessage(role: .assistant, text: reply.text, toolCalls: reply.calls))
+                    let answer = AIResponseText.visible(reply.text)
+                    guard !answer.isEmpty || !reply.calls.isEmpty else { throw AIError.response }
+                    conversation.messages.append(AIMessage(role: .assistant, text: answer, toolCalls: reply.calls))
                     streaming = ""
                     if reply.calls.isEmpty {
                         phase = .idle; AIHistoryStore.shared.save(conversation)
                         if let destination = actionEngine.navigation { navigation = destination }
-                        else { onResponse(reply.text) }
+                        else { onResponse(answer) }
                         return
                     }
                     for call in reply.calls {
@@ -130,11 +132,11 @@ import Observation
         let missing = conversation.messages.flatMap(\.toolCalls).filter { !resultIDs.contains($0.id) }
         for call in missing { conversation.messages.append(AIMessage(role: .tool, text: "{\"status\":\"cancelled_or_unconfirmed\",\"do_not_retry_automatically\":true}", toolCallID: call.id)) }
     }
-    private func context() -> [AIMessage] {
+    private func context(maxCharacters: Int) -> [AIMessage] {
         // Keep whole user turns so no orphan tool-result messages reach a provider.
         let starts = conversation.messages.indices.filter { conversation.messages[$0].role == .user }
         var start = starts.suffix(5).first ?? 0
-        while conversation.messages[start...].reduce(0, { $0 + $1.text.count + $1.toolCalls.reduce(0) { $0 + $1.arguments.count } }) > 18000,
+        while conversation.messages[start...].reduce(0, { $0 + $1.text.count + $1.toolCalls.reduce(0) { $0 + $1.arguments.count } }) > maxCharacters,
               let next = starts.first(where: { $0 > start }) { start = next }
         return Array(conversation.messages[start...])
     }
@@ -147,7 +149,7 @@ import Observation
         Search first for real IDs. Request focused results, never the entire library. Ask clarifying questions for ambiguity.
         For multi-step requests query, select, mutate, then report actual results and any partial failure. Never retry a denied action.
         DJ mood is inferred from real metadata/preferences, not measured audio energy. No beatmatching claims. Use dj_mix to update upcoming tracks without interrupting current music, echo_flow for continuous adaptive playback.
-        A small Qwen local provider is chat-only. Do not claim tools exist when none are supplied.
+        Return only the useful answer, without internal reasoning or think tags.
         Current DJ session data: \(actionEngine.djContext)
         """
     }

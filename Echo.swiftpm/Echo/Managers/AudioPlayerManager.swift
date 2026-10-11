@@ -51,6 +51,7 @@ class AudioPlayerManager:
     private var playbackRequest = UUID()
     private var localIntent = PlaybackIntent()
     var playbackGeneration: UUID { playbackRequest }
+    private(set) var intelligenceTransportRevision: UInt64 = 0
     private var transitionTask: Task<Void, Never>?
     private var transitionStarts: [UUID: Song] = [:]
     private typealias PreparedTransition = (token: UUID, song: Song, index: Int?, automatic: Bool)
@@ -1239,7 +1240,7 @@ class AudioPlayerManager:
         let prefix: [Song]
         if let currentSong, queue.indices.contains(currentIndex), queue[currentIndex].id == currentSong.id {
             prefix = Array(queue.prefix(currentIndex + 1))
-        } else { prefix = currentSong.map { [$0] } ?? []; currentIndex = 0 }
+        } else { prefix = currentSong.map { [$0] } ?? []; currentIndex = currentSong == nil ? -1 : 0 }
         queue = prefix + songs
         originalQueue = queue
         autoNextQueue.removeAll()
@@ -1276,6 +1277,7 @@ class AudioPlayerManager:
     }
 
     func setPlaybackDesired(_ playing: Bool) {
+        intelligenceTransportRevision &+= 1
         if isPreviewing {
             stopTransitionPreview(resume: false)
         }

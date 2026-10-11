@@ -23,7 +23,13 @@ import Observation
     @ObservationIgnored private var listeningToken = UUID()
     @ObservationIgnored private var shouldResume = false
     @ObservationIgnored private var interruptedPlayback: UUID?
+    @ObservationIgnored private var interruptedRevision: UInt64?
     @ObservationIgnored private var timeout: Task<Void, Never>?
+    @ObservationIgnored private var endpointTask: Task<Void, Never>?
+    @ObservationIgnored private var finalResultTask: Task<Void, Never>?
+    @ObservationIgnored private var endpoint = AISpeechEndpoint()
+    @ObservationIgnored private var finishingListening = false
+    @ObservationIgnored private var onListeningFinished: (() -> Void)?
     func startListening(update: @escaping (String) -> Void, finished: @escaping () -> Void) async {
         stopSpeaking(); stopListening(); error = nil
         let token = UUID(); listeningToken = token
@@ -50,22 +56,59 @@ import Observation
                 Task { @MainActor in if self?.listeningToken == token { self?.level = amplitude } }
             }
             inputTap = true; recognitionEngine.prepare(); try recognitionEngine.start(); listening = true
+            endpoint = AISpeechEndpoint(); finishingListening = false; onListeningFinished = finished
             recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
                 Task { @MainActor in
                     guard let self, self.listeningToken == token else { return }
-                    if let result { update(result.bestTranscription.formattedString) }
-                    if result?.isFinal == true { self.stopListening(); finished() }
-                    else if error != nil { self.stopListening(); self.error = AIError.voice.localizedDescription }
+                    if let result {
+                        let text = result.bestTranscription.formattedString
+                        self.endpoint.receive(text, at: ProcessInfo.processInfo.systemUptime); update(text)
+                    }
+                    if result?.isFinal == true { self.completeListening() }
+                    else if error != nil {
+                        if self.finishingListening { self.completeListening() }
+                        else { self.stopListening(); self.error = AIError.voice.localizedDescription }
+                    }
+                }
+            }
+            endpointTask = Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(200))
+                    guard !Task.isCancelled, let self, self.listeningToken == token else { return }
+                    if self.endpoint.shouldFinish(at: ProcessInfo.processInfo.systemUptime) { self.finishListening(); return }
                 }
             }
             timeout = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(60))
-                guard !Task.isCancelled, self?.listeningToken == token else { return }; self?.stopListening()
+                guard !Task.isCancelled, self?.listeningToken == token else { return }; self?.finishListening()
             }
         } catch { stopListening(); self.error = error.localizedDescription }
     }
+    /// End audio and allow the recognizer to deliver its final punctuation/text.
+    /// The fallback also handles recognizers which never send an isFinal result.
+    func finishListening() {
+        guard listening, !finishingListening else { return }
+        finishingListening = true; endpointTask?.cancel(); timeout?.cancel()
+        recognitionEngine.stop()
+        if inputTap { recognitionEngine.inputNode.removeTap(onBus: 0); inputTap = false }
+        level = 0; recognitionRequest?.endAudio()
+        let token = listeningToken
+        finalResultTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled, self?.listeningToken == token else { return }
+            self?.completeListening()
+        }
+    }
+    private func completeListening() {
+        let completed = onListeningFinished
+        let hasText = !endpoint.text.isEmpty
+        stopListening()
+        if hasText { completed?() }
+    }
     func stopListening() {
         listeningToken = UUID(); timeout?.cancel(); timeout = nil
+        endpointTask?.cancel(); endpointTask = nil; finalResultTask?.cancel(); finalResultTask = nil
+        onListeningFinished = nil; finishingListening = false; endpoint = AISpeechEndpoint()
         recognitionEngine.stop()
         if inputTap { recognitionEngine.inputNode.removeTap(onBus: 0); inputTap = false }
         recognitionRequest?.endAudio(); recognitionTask?.cancel(); recognitionTask = nil; recognitionRequest = nil
@@ -78,12 +121,13 @@ import Observation
     }
     func speak(_ text: String) {
         stopListening(); stopSpeaking()
+        let text = AIResponseText.visible(text)
         let settings = AISettingsStore.shared.value
         guard settings.spokenResponses, !text.isEmpty else { return }
         let player = AudioPlayerManager.shared
         if settings.speechBehavior == "interrupt" {
             shouldResume = player.isPlaying; interruptedPlayback = player.playbackGeneration
-            if shouldResume { player.setPlaybackDesired(false) }
+            if shouldResume { player.setPlaybackDesired(false); interruptedRevision = player.intelligenceTransportRevision }
         } else if settings.speechBehavior == "duck" { player.setIntelligenceDucking(true) }
         speaking = true; pendingBuffers = 0; synthesisComplete = false
         let token = UUID(); speechToken = token
@@ -100,7 +144,7 @@ import Observation
                     if self.speechEngine == nil {
                         let engine = AVAudioEngine(), node = AVAudioPlayerNode()
                         engine.attach(node); engine.connect(node, to: engine.mainMixerNode, format: buffer.format)
-                        engine.mainMixerNode.installTap(onBus: 0, bufferSize: 512, format: nil) { [weak self] buffer, _ in
+                        engine.mainMixerNode.installTap(onBus: 0, bufferSize: 2048, format: nil) { [weak self] buffer, _ in
                             let amplitude = Self.amplitude(buffer)
                             Task { @MainActor in if self?.speechToken == token { self?.level = amplitude } }
                         }
@@ -125,8 +169,8 @@ import Observation
         speechNode = nil; speechEngine = nil; speaking = false; level = 0
         let player = AudioPlayerManager.shared
         player.setIntelligenceDucking(false)
-        if shouldResume, interruptedPlayback == player.playbackGeneration, !player.isPlaying { player.setPlaybackDesired(true) }
-        shouldResume = false; interruptedPlayback = nil
+        if shouldResume, interruptedPlayback == player.playbackGeneration, interruptedRevision == player.intelligenceTransportRevision, !player.isPlaying { player.setPlaybackDesired(true) }
+        shouldResume = false; interruptedPlayback = nil; interruptedRevision = nil
     }
     func stop() { stopListening(); stopSpeaking() }
     nonisolated private static func amplitude(_ buffer: AVAudioPCMBuffer) -> Float {
