@@ -67,7 +67,7 @@ struct EchoIntelligenceView: View {
     }
     private var header: some View {
         HStack {
-            Button { dismiss() } label: { Image(systemName: "chevron.down").frame(width: 44, height: 44).background(.white.opacity(0.07), in: .circle) }
+            Button { voiceTask?.cancel(); speech.stop(); conversation.cancel(); dismiss() } label: { Image(systemName: "chevron.down").frame(width: 44, height: 44).background(.white.opacity(0.07), in: .circle) }
                 .accessibilityLabel("ai_close").accessibilityIdentifier("intelligence-close")
             Spacer()
             VStack(spacing: 4) {
