@@ -20,11 +20,11 @@ struct HomeSmartSections: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             if !model.gems.isEmpty { hiddenGems }
+            if !model.albums.isEmpty { revisitingAlbums }
             weeklyMusic
             pickVibe
             surpriseMe
             echoFlow
-            if !model.albums.isEmpty { revisitingAlbums }
             if !model.periods.isEmpty { timeMachine }
             upNext
         }
