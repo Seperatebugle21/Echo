@@ -50,25 +50,23 @@ struct ContentView: View {
                         let dockReady = audioPlayer.currentSong != nil && slot.width > 0
                         let coverEntrance = !reduceMotion && presentation.entranceSong?.id == audioPlayer.currentSong?.id
                             && presentation.entranceSong != nil
-                        if !coverEntrance {
-                            ResizableMiniPlayerDock(
-                                isMinimized: $miniPlayerHidden, isActive: true
-                            )
-                            .opacity(dockReady && !coverEntrance ? 1 : 0)
-                            .offset(y: dockReady || reduceMotion ? 0 : 20)
-                            .animation(
-                                coverEntrance ? nil : reduceMotion ? .easeOut(duration: 0.15)
-                                    : .spring(response: 0.48, dampingFraction: 0.88),
-                                value: dockReady
-                            )
-                            .frame(width: max(68, slot.width - 16), height: 64)
-                            .offset(
-                                x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
-                                y: slot.minY - fullGeometry.frame(in: .global).minY
-                            )
-                            .allowsHitTesting(dockReady && !coverEntrance)
-                            .accessibilityHidden(presentation.isVisible)
-                        }
+                        ResizableMiniPlayerDock(
+                            isMinimized: $miniPlayerHidden, isActive: true
+                        )
+                        .opacity(dockReady && !coverEntrance ? 1 : 0)
+                        .offset(y: dockReady || reduceMotion ? 0 : 20)
+                        .animation(
+                            coverEntrance ? nil : reduceMotion ? .easeOut(duration: 0.15)
+                                : .spring(response: 0.48, dampingFraction: 0.88),
+                            value: dockReady
+                        )
+                        .frame(width: max(68, slot.width - 16), height: 64)
+                        .offset(
+                            x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
+                            y: slot.minY - fullGeometry.frame(in: .global).minY
+                        )
+                        .allowsHitTesting(dockReady && !coverEntrance)
+                        .accessibilityHidden(presentation.isVisible)
 
                         if dockReady && coverEntrance, let song = presentation.entranceSong {
                             CoverToMiniPlayerEntrance(
@@ -89,7 +87,7 @@ struct ContentView: View {
                             .accessibilityHidden(true)
                         }
 
-                        if audioPlayer.currentSong != nil && !coverEntrance {
+                        if audioPlayer.currentSong != nil {
                             ExpandedPlayerSurface(
                                 presentation: presentation,
                                 bounds: fullGeometry.frame(in: .global),
@@ -630,6 +628,7 @@ final class MiniPlayerPresentation {
     var dockSlotFrame: CGRect = .zero
     var dockFrame: CGRect = .zero
     var containerFrame: CGRect = .zero
+    private(set) var homeCardSong: Song?
     private(set) var sourceFrame: CGRect = .zero
     private(set) var progress: CGFloat = 0
     private(set) var isVisible = false
@@ -644,6 +643,7 @@ final class MiniPlayerPresentation {
 
     private func prepare() -> Bool {
         guard dockFrame.width > 0, containerFrame.height > 0 else { return false }
+        homeCardSong = nil
         sourceFrame = dockFrame
         token = UUID()
         isVisible = true
@@ -682,6 +682,24 @@ final class MiniPlayerPresentation {
         let openingToken = token
         Task { @MainActor in
             // Mount the collapsed surface before animating a tap-open.
+            await Task.yield()
+            guard token == openingToken, isVisible else { return }
+            settle(open: true, reduceMotion: reduceMotion)
+        }
+    }
+
+    func openFromHomeCard(song: Song, frame: CGRect, reduceMotion: Bool) {
+        guard !isVisible else { return }
+        guard frame.width > 0, frame.height > 0, containerFrame.height > 0 else {
+            open(reduceMotion: reduceMotion)
+            return
+        }
+        sourceFrame = frame
+        homeCardSong = song
+        token = UUID()
+        isVisible = true
+        let openingToken = token
+        Task { @MainActor in
             await Task.yield()
             guard token == openingToken, isVisible else { return }
             settle(open: true, reduceMotion: reduceMotion)
@@ -730,6 +748,21 @@ final class MiniPlayerPresentation {
             guard self.token == currentToken else { return }
             self.isExpanded = open
             self.isVisible = open
+            if self.homeCardSong != nil {
+                // At full size the source rectangle no longer affects the surface.
+                // Every close keeps the original Now Playing -> MiniPlayer transition.
+                if open {
+                    let slot = self.dockSlotFrame
+                    if slot.width > 0 {
+                        // A card can start playback before the first dock has reported its frame.
+                        self.sourceFrame = CGRect(x: slot.minX + 16, y: slot.minY + 12,
+                                                  width: max(52, slot.width - 32), height: 52)
+                    } else if self.dockFrame.width > 0 {
+                        self.sourceFrame = self.dockFrame
+                    }
+                }
+                self.homeCardSong = nil
+            }
         }
     }
 
@@ -743,6 +776,7 @@ final class MiniPlayerPresentation {
     }
 
     func reset() {
+        homeCardSong = nil
         token = UUID()
         progress = 0
         isVisible = false
@@ -781,7 +815,7 @@ private struct ExpandedPlayerSurface: View {
         let compactOpacity = min(1, max(0, (1 - p) / 0.30))
         let backgroundProgress = min(1, max(0, p / 0.15))
         let shape = RoundedRectangle(
-            cornerRadius: 26 * (1 - p), style: .continuous
+            cornerRadius: (presentation.homeCardSong == nil ? 26 : 22) * (1 - p), style: .continuous
         )
 
         ZStack(alignment: .topLeading) {
@@ -817,11 +851,18 @@ private struct ExpandedPlayerSurface: View {
 
             // Includes artwork, title, artist, AirPlay and playback controls.
             // Appears progressively during closing, not only at the endpoint.
-            MiniPlayerTransitionRow(backgroundProgress: backgroundProgress)
-                .frame(width: max(52, presentation.sourceFrame.width), height: 52)
-                .opacity(compactOpacity)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
+            if let song = presentation.homeCardSong {
+                HomeNowPlayingCardFace(song: song, size: presentation.sourceFrame.size, showsPlaybackSymbol: true)
+                    .opacity(compactOpacity)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            } else {
+                MiniPlayerTransitionRow(backgroundProgress: backgroundProgress)
+                    .frame(width: max(52, presentation.sourceFrame.width), height: 52)
+                    .opacity(compactOpacity)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
         }
         .frame(
             width: max(1, rect.width), height: max(1, rect.height),

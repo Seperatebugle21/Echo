@@ -1,6 +1,6 @@
 import Foundation
 
-struct AlbumGroup: Identifiable {
+struct AlbumGroup: Identifiable, Sendable {
     var id: String { LibraryAlbumDestination(name: name, artist: artist).identity }
     let name: String
     let artist: String

@@ -143,7 +143,20 @@ class AudioPlayerManager:
 
 
     var queue:
-        [Song] = []
+        [Song] = [] {
+        didSet { requestFlowRefill() }
+    }
+
+    private(set) var flowActive = false
+    var flowMode: EchoFlowMode = EchoFlowMode(rawValue: UserDefaults.standard.string(forKey: "EchoFlowModeV1") ?? "familiar") ?? .familiar {
+        didSet { UserDefaults.standard.set(flowMode.rawValue, forKey: "EchoFlowModeV1"); requestFlowRefill() }
+    }
+    private(set) var flowSongIDs: Set<UUID> = []
+    @ObservationIgnored private var flowRecent: [UUID] = []
+    @ObservationIgnored private var flowRefillTask: Task<Void, Never>?
+    @ObservationIgnored private var flowGeneration = UUID()
+    @ObservationIgnored private var flowSeed: UInt64 = 0
+    @ObservationIgnored private var flowFailedIDs: Set<UUID> = []
 
 
     private var originalQueue:
@@ -152,7 +165,7 @@ class AudioPlayerManager:
 
     var currentIndex:
         Int =
-        0
+        0 { didSet { requestFlowRefill() } }
 
 
     var history:
@@ -178,7 +191,7 @@ class AudioPlayerManager:
 
     var repeatMode:
         RepeatMode =
-        .off
+        .off { didSet { requestFlowRefill() } }
 
 
     // ========================================================
@@ -554,7 +567,8 @@ class AudioPlayerManager:
         url: URL,
         queue: [Song] = [], queuePosition: Int? = nil, repeatingCurrent: Bool = false
     ) {
-
+        recordListeningChange(repeatingCurrent ? .completed : .selected)
+        if song.podcastEpisodeID != nil { stopEchoFlow() }
         stopTransitionPreview(resume: false)
         transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
         transitionCancellationPending = false
@@ -610,17 +624,29 @@ class AudioPlayerManager:
                     self.playbackRequest == request, !self.isPreviewing,
                     update.intentRevision == self.localIntent.revision else { return }
                 self.localIntent.reconcile(update.wantsPlayback, revision: update.intentRevision)
+                RecommendationManager.shared.playbackStateChanged(position: update.position,
+                    playing: self.isPlaying && (self.localPlaybackState == .playing || self.localPlaybackState == .transitioning))
                 self.localPlaybackState = update.state
                 self.currentTime = update.position
                 self.duration = update.duration
                 self.isPlaying = update.wantsPlayback && update.state != .failed && update.state != .idle
+                if update.state == .failed {
+                    RecommendationManager.shared.playbackWillChange(.failed, position: update.position, playing: false)
+                    self.continueFlowAfterFailure()
+                }
                 self.updateNowPlaying()
             }
             player?.onStarted = { [weak self] identifier in
                     guard let self, self.playbackRequest == request, !self.isPreviewing else { return }
                     let started = identifier.flatMap { self.transitionStarts.removeValue(forKey: $0) } ?? (identifier == nil ? self.currentSong : nil)
                     if let started {
+                        if identifier != nil {
+                            RecommendationManager.shared.playbackWillChange(.completed, position: self.currentTime, playing: self.isPlaying)
+                        }
                         RecommendationManager.shared.playbackStarted(started)
+                        self.flowRecent.append(started.id)
+                        if self.flowRecent.count > 40 { self.flowRecent.removeFirst(self.flowRecent.count - 40) }
+                        self.requestFlowRefill()
                         MusicLibraryManager.shared.markAsPlayed(started)
                         self.donatePlaybackToSiri(song: started)
                         if identifier == nil { self.loadLyrics(for: started); self.fillQueue(from: queue) }
@@ -704,11 +730,14 @@ class AudioPlayerManager:
             if !repeatingCurrent { updateRepeatForSelection() }
 
         } catch {
-
-            print(
-                "Kan nummer niet afspelen:",
-                error.localizedDescription
-            )
+            playbackErrorKey = "audio_playback_failed"
+            localPlaybackState = .failed; isPlaying = false
+            currentSong = song
+            Task { @MainActor [weak self] in
+                RecommendationManager.shared.playbackWillChange(.failed, position: 0, playing: false)
+                self?.continueFlowAfterFailure()
+            }
+            updateNowPlaying()
         }
     }
 
@@ -717,6 +746,7 @@ class AudioPlayerManager:
         if repeatMode == .one, let song = currentSong { return (song, currentIndex, false) }
         if queue.indices.contains(currentIndex + 1) { return (queue[currentIndex + 1], currentIndex + 1, false) }
         if repeatMode == .all, let first = queue.first { return (first, 0, false) }
+        if flowActive { return nil }
         return autoNextQueue.first.map { ($0, nil, true) }
     }
     private func prepareAutomaticTransition() {
@@ -920,6 +950,7 @@ class AudioPlayerManager:
     // ========================================================
 
     func next(manuallyInitiated: Bool = true) {
+        recordListeningChange(manuallyInitiated ? .skipped : .completed)
         stopTransitionPreview(resume: false)
         if isPodcast && currentIndex + 1 >= queue.count {
             podcastPlayer?.pause()
@@ -1006,6 +1037,7 @@ class AudioPlayerManager:
     }
 
     private func updateRepeatForSelection() {
+        guard !flowActive else { return }
         guard repeatMode != .off else { return }
         // Count the complete queue: repeat-all also includes entries before the current song.
         repeatMode = queue.count > 1 ? .all : .off
@@ -1023,6 +1055,7 @@ class AudioPlayerManager:
     // ========================================================
 
     func playNext(_ song: Song) {
+        flowSongIDs.remove(song.id)
         guard let currentSong else { return }
         if !queue.indices.contains(currentIndex) || queue[currentIndex].id != currentSong.id {
             queue = [currentSong]
@@ -1053,6 +1086,7 @@ class AudioPlayerManager:
     func fillQueue(
         from songs: [Song]
     ) {
+        guard !flowActive else { requestFlowRefill(); return }
 
         guard let currentSong else {
             return
@@ -1127,6 +1161,7 @@ class AudioPlayerManager:
     func addToQueue(
         _ song: Song
     ) {
+        flowSongIDs.remove(song.id)
 
         if !queue.contains(
             where: {
@@ -1196,6 +1231,7 @@ class AudioPlayerManager:
     func fillAutoNext(
         from songs: [Song]
     ) {
+        guard !flowActive else { return }
 
         PlaybackRecommendations.refill(&autoNextQueue, from: songs, queue: queue, currentSongID: currentSong?.id)
     }
@@ -1231,6 +1267,13 @@ class AudioPlayerManager:
             return
         }
         guard let player else { return }
+        let listeningPosition = player.currentTime
+        let wasPlaying = isPlaying
+        Task { @MainActor in
+            RecommendationManager.shared.playbackStateChanged(position: listeningPosition, playing: wasPlaying)
+            if !playing { RecommendationManager.shared.flush() }
+            RecommendationManager.shared.playbackSeeked(position: listeningPosition)
+        }
         if playing, player.stateValue == .failed { retryPlayback(); return }
         let revision = localIntent.set(playing)
         let request = playbackRequest
@@ -1260,6 +1303,20 @@ class AudioPlayerManager:
     // ========================================================
 
     func toggleShuffle() {
+
+        if flowActive && shuffleEnabled {
+            shuffleEnabled = false
+            let order = Dictionary(originalQueue.enumerated().map { ($0.element.id, $0.offset) }, uniquingKeysWith: { first, _ in first })
+            let played = Array(queue.prefix(currentIndex + 1))
+            let upcoming = queue.dropFirst(currentIndex + 1).enumerated().sorted {
+                let left = order[$0.element.id] ?? (originalQueue.count + $0.offset)
+                let right = order[$1.element.id] ?? (originalQueue.count + $1.offset)
+                return left < right
+            }.map(\.element)
+            queue = played + upcoming
+            cancelUpcomingTransition()
+            return
+        }
 
         shuffleEnabled
             .toggle()
@@ -1419,6 +1476,11 @@ class AudioPlayerManager:
 
         guard time.isFinite, let player, duration > 0 else { return }
         let target = min(duration, max(0, time))
+        let listeningPosition = player.currentTime, wasPlaying = isPlaying
+        Task { @MainActor in
+            RecommendationManager.shared.playbackStateChanged(position: listeningPosition, playing: wasPlaying)
+            RecommendationManager.shared.playbackSeeked(position: target)
+        }
         transitionTask?.cancel(); transitionTask = nil; transitionTarget = nil
         player.currentTime = target
         currentTime = target
@@ -1472,6 +1534,7 @@ class AudioPlayerManager:
             return
         }
         guard self.player === player else { return }
+        RecommendationManager.shared.playbackWillChange(flag ? .completed : .failed, position: player.currentTime, playing: isPlaying)
         guard flag else {
             playbackErrorKey = "audio_playback_failed"
             localPlaybackState = .failed
@@ -1509,6 +1572,105 @@ class AudioPlayerManager:
         } else {
 
             next(manuallyInitiated: false)
+        }
+    }
+}
+
+extension AudioPlayerManager {
+    var homeUpcomingSongs: [Song] {
+        guard let currentSong else { return [] }
+        if repeatMode == .one { return [currentSong] }
+        var upcoming = Array(queue.dropFirst(max(0, currentIndex + 1)).prefix(3))
+        if repeatMode == .all { upcoming.append(contentsOf: queue.prefix(max(0, 3 - upcoming.count))) }
+        else if !flowActive { upcoming.append(contentsOf: autoNextQueue.prefix(max(0, 3 - upcoming.count))) }
+        return Array(upcoming.prefix(3))
+    }
+    private func recordListeningChange(_ reason: ListeningEndReason) {
+        guard !isPreviewing else { return }
+        let position = player?.currentTime ?? currentTime, playing = isPlaying
+        Task { @MainActor in RecommendationManager.shared.playbackWillChange(reason, position: position, playing: playing) }
+    }
+
+    /// Starting Flow explicitly selects endless playback. Later repeat choices suspend refill;
+    /// shuffle continues to reorder the one real queue. Activity is intentionally not restored.
+    @MainActor func startEchoFlow(from seedSong: Song? = nil) {
+        let library = MusicLibraryManager.shared
+        let available = library.songs.filter { $0.podcastEpisodeID == nil && getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true }
+        guard !available.isEmpty else { return }
+        flowGeneration = UUID(); flowActive = true; flowSeed &+= 1; flowFailedIDs.removeAll()
+        repeatMode = .off
+        autoNextQueue.removeAll()
+        allSongs = available
+        if let seedSong, let song = available.first(where: { $0.id == seedSong.id }), let url = getURL(for: song) {
+            let retained = queue.dropFirst(max(0, currentIndex + 1)).filter { $0.id != song.id && !flowSongIDs.contains($0.id) }
+            play(song: song, url: url, queue: [song] + retained)
+        } else if currentSong == nil || isPodcast || !available.contains(where: { $0.id == currentSong?.id }) {
+            let snapshot = RecommendationManager.shared.selectionSnapshot(songs: available, favorites: library.favoriteSongIDs, seed: flowSeed)
+            guard let first = snapshot.ranked(limit: 1, discover: flowMode == .discover).first, let url = getURL(for: first) else { stopEchoFlow(); return }
+            play(song: first, url: url, queue: [first])
+        } else if !isPlaying { setPlaybackDesired(true) }
+        requestFlowRefill()
+    }
+    func stopEchoFlow() {
+        flowActive = false; flowGeneration = UUID(); flowRefillTask?.cancel(); flowRefillTask = nil
+        // Current playback and every queued item (including manual edits) remain intact.
+    }
+    private func requestFlowRefill() {
+        guard flowActive else { return }
+        Task { @MainActor [weak self] in self?.scheduleFlowRefill() }
+    }
+    @MainActor private func continueFlowAfterFailure() {
+        guard flowActive, let currentSong, flowFailedIDs.insert(currentSong.id).inserted else { return }
+        if queue.indices.contains(currentIndex + 1) { next(manuallyInitiated: false) }
+        else { requestFlowRefill() }
+    }
+    @MainActor private func scheduleFlowRefill() {
+        guard flowActive, flowRefillTask == nil, !isPodcast else { return }
+        let upcoming = Array(queue.dropFirst(max(0, currentIndex + 1)))
+        guard EchoFlowQueuePolicy.shouldRefill(active: flowActive, repeating: repeatMode != .off,
+            upcoming: upcoming.count, automatic: upcoming.filter { flowSongIDs.contains($0.id) }.count) else { return }
+        let generation = flowGeneration
+        flowRefillTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer { self.flowRefillTask = nil }
+            let library = MusicLibraryManager.shared
+            let songs = library.songs
+            let favorites = library.favoriteSongIDs
+            let seed = self.flowSeed; self.flowSeed &+= 1
+            let current = self.currentSong, mode = self.flowMode
+            let upcomingIDs = upcoming.map(\.id), recent = self.flowRecent, failed = self.flowFailedIDs
+            let snapshot = RecommendationManager.shared.selectionSnapshot(songs: songs, favorites: favorites, seed: seed)
+            let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let recommendations = await Task.detached(priority: .utility) {
+                let local = snapshot.songs.filter { $0.podcastEpisodeID == nil && FileManager.default.fileExists(atPath: documents.appendingPathComponent($0.fileName).path) }
+                var excluded = EchoFlowQueuePolicy.exclusions(current: current?.id, upcoming: upcomingIDs, recent: recent, libraryCount: local.count)
+                if local.count == 1 && upcomingIDs.isEmpty, let current { excluded.remove(current.id) }
+                excluded.formUnion(failed)
+                let selection = SmartMusicSelection(songs: local, favorites: snapshot.favorites, learning: snapshot.learning, now: snapshot.now, seed: snapshot.seed)
+                return (selection.ranked(limit: 8, discover: mode == .discover, excluding: excluded, anchor: current), local.count)
+            }.value
+            guard !Task.isCancelled, self.flowActive, self.flowGeneration == generation, self.repeatMode == .off else { return }
+            let pending = self.queue.dropFirst(max(0, self.currentIndex + 1))
+            let pendingIDs = Set(pending.map(\.id)), missing = max(0, 8 - pending.count)
+            let extra = recommendations.0.filter { !pendingIDs.contains($0.id) && ($0.id != self.currentSong?.id || recommendations.1 == 1) && library.song(withID: $0.id) != nil }
+            let chosen = Array(extra.prefix(missing))
+            guard !chosen.isEmpty else {
+                if self.localPlaybackState == .failed { self.stopEchoFlow() }
+                return
+            }
+            self.flowSongIDs.formUnion(chosen.map(\.id))
+            self.queue.append(contentsOf: chosen)
+            self.originalQueue.append(contentsOf: chosen)
+            // Keep past auto-selected entries bounded without discarding any manual entries.
+            if self.currentIndex > 40 {
+                let old = Array(self.queue.prefix(self.currentIndex - 20))
+                let removed = old.filter { self.flowSongIDs.contains($0.id) }
+                let kept = old.filter { !self.flowSongIDs.contains($0.id) }
+                self.queue = kept + self.queue.dropFirst(old.count)
+                self.currentIndex -= removed.count
+                self.originalQueue = self.queue
+            }
+            if self.localPlaybackState == .failed, let first = chosen.first { self.playFromQueue(first) }
         }
     }
 }

@@ -113,6 +113,14 @@ struct SongOptionsView: View {
                     }
                     
                     
+                    Button {
+                        audioPlayer.startEchoFlow(from: song)
+                        dismiss()
+                    } label: {
+                        Label("smart_flow_start", systemImage: "waveform")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
                     // Speel als volgende
                     Button {
                         

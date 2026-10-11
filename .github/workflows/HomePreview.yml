@@ -1,0 +1,115 @@
+name: Home appearance previews
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [Widget]
+    paths:
+      - 'Echo.swiftpm/Echo/Views/Home*.swift'
+      - 'Echo.swiftpm/Echo/ContentView.swift'
+      - 'UITests/HomeInteractionTests.swift'
+      - 'project.yml'
+      - 'Echo.swiftpm/Echo/Models/HomeMusicSelection.swift'
+      - 'Echo.swiftpm/Echo/Managers/HomeSessionManager.swift'
+      - 'Echo.swiftpm/Echo/Managers/HomeSmartSectionsModel.swift'
+      - 'Echo.swiftpm/Echo/Managers/RecommendationManager.swift'
+      - 'Echo.swiftpm/Echo/Managers/AudioPlayerManager.swift'
+      - 'Echo.swiftpm/Echo/Models/SmartMusicSelection.swift'
+      - 'Echo.swiftpm/Echo/Models/ListeningHistory.swift'
+      - 'Echo.swiftpm/Echo/Views/SmartMusicDetailViews.swift'
+      - '.github/workflows/HomePreview.yml'
+      - '.github/scripts/seed-home-preview.py'
+      - '.github/scripts/export-home-diagnostics.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: home-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app for an iPhone simulator
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+          SIMULATOR_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); ids=[x["udid"] for r,entries in d["devices"].items() if "iOS-" in r and int(r.split("iOS-")[-1].split("-")[0]) >= 26 for x in entries if x.get("isAvailable") and "iPhone" in x["name"]]; assert ids; print(ids[0])')
+          echo "SIMULATOR_ID=$SIMULATOR_ID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$SIMULATOR_ID" || true
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcodebuild build -project Echo.xcodeproj -scheme Echo -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath build/Preview CODE_SIGNING_ALLOWED=NO
+      - name: Capture light, dark, custom and empty Home
+        run: |
+          APP=build/Preview/Build/Products/Debug-iphonesimulator/Echo.app
+          xcrun simctl install "$SIMULATOR_ID" "$APP"
+          CONTAINER=$(xcrun simctl get_app_container "$SIMULATOR_ID" com.echomusic.app data)
+          python3 .github/scripts/seed-home-preview.py "$CONTAINER"
+          mkdir -p build/HomePreviews
+          xcrun simctl status_bar "$SIMULATOR_ID" override --time '9:41' --batteryState charged --batteryLevel 100
+          for THEME in light dark custom; do
+            xcrun simctl terminate "$SIMULATOR_ID" com.echomusic.app || true
+            xcrun simctl launch "$SIMULATOR_ID" com.echomusic.app \
+              -hasCompletedEchoOnboarding YES -selectedLanguage nl -appearanceMode "$THEME" \
+              -theme.first 182235 -theme.second 64478C -theme.gradient YES -theme.whiteText YES
+            sleep 5
+            xcrun simctl io "$SIMULATOR_ID" screenshot "build/HomePreviews/home-$THEME.png"
+          done
+          HOME_TEST_STATUS=0
+          xcodebuild test -project Echo.xcodeproj -scheme EchoHomeInteractionTests \
+            -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            -derivedDataPath build/Preview -resultBundlePath build/HomeInteractions.xcresult \
+            -parallel-testing-enabled NO \
+            CODE_SIGNING_ALLOWED=NO || HOME_TEST_STATUS=$?
+          xcrun simctl terminate "$SIMULATOR_ID" com.echomusic.app || true
+          rm -f "$CONTAINER/Documents/EchoSongs.json" "$CONTAINER/Documents"/home-preview-*.wav
+          xcrun simctl launch "$SIMULATOR_ID" com.echomusic.app \
+            -hasCompletedEchoOnboarding YES -selectedLanguage nl -appearanceMode light
+          sleep 4
+          xcrun simctl io "$SIMULATOR_ID" screenshot build/HomePreviews/home-empty.png
+          exit "$HOME_TEST_STATUS"
+      - name: Export screenshots and UI failure diagnostics
+        if: always()
+        run: |
+          if [ -f build/HomeInteractions.xcresult/Info.plist ]; then
+            xcrun xcresulttool export attachments --path build/HomeInteractions.xcresult \
+              --output-path build/HomePreviews/Interactions
+            python3 .github/scripts/export-home-diagnostics.py \
+              build/HomePreviews/Interactions build/HomeDiagnostics
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Previews
+          path: build/HomePreviews/*.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Flow-Previews
+          path: build/HomeDiagnostics/Flow
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Vibe-Previews
+          path: build/HomeDiagnostics/Vibes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Statistics-Previews
+          path: build/HomeDiagnostics/Statistics
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Interaction-Previews
+          path: build/HomeDiagnostics/Home
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Echo-Home-Interactions
+          path: build/HomeInteractions.xcresult

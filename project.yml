@@ -80,6 +80,19 @@ targets:
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
 
+  EchoHomeInteractionTests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests/HomeInteractionTests.swift
+    dependencies:
+      - target: Echo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.home-ui-tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Echo
+
   EchoArtistTests:
     type: bundle.unit-test
     platform: iOS
@@ -156,6 +169,11 @@ targets:
       - path: Echo.swiftpm/Echo/Models/LibraryAlbums.swift
       - path: Echo.swiftpm/Echo/Spotify/SpotifyURLParser.swift
       - path: Echo.swiftpm/Echo/YoutubeMusic/YouTubeMusicMetadata.swift
+      - path: Tests/HomeMusicSelectionTests.swift
+      - path: Tests/SmartMusicTests.swift
+      - path: Echo.swiftpm/Echo/Models/SmartMusicSelection.swift
+      - path: Echo.swiftpm/Echo/Models/ListeningHistory.swift
+      - path: Echo.swiftpm/Echo/Models/HomeMusicSelection.swift
       - path: Tests/EchoFeatureLogicTests.swift
       - path: Tests/EchoArtworkTests.swift
       - path: Echo.swiftpm/Echo/Components/ArtworkThumbnailStore.swift
@@ -186,6 +204,14 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
+  EchoHomeInteractionTests:
+    build:
+      targets:
+        Echo: all
+        EchoHomeInteractionTests: all
+    test:
+      targets:
+        - EchoHomeInteractionTests
   EchoFeatureTests:
     build:
       targets:
