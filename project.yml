@@ -109,6 +109,8 @@ targets:
       - path: Echo.swiftpm/Echo/Intelligence/AIResponseSafety.swift
       - path: Echo.swiftpm/Echo/Models/Song.swift
       - path: Tests/EchoIntelligencePersistenceTests.swift
+      - path: Tests/EchoAppleToolTests.swift
+      - path: Echo.swiftpm/Echo/Intelligence/AppleAITools.swift
       - path: Echo.swiftpm/Echo/Intelligence/AISettingsStore.swift
       - path: Echo.swiftpm/Echo/Intelligence/AIModels.swift
       - path: Echo.swiftpm/Echo/Intelligence/EchoToolRegistry.swift
