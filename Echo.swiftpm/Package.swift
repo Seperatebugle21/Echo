@@ -76,7 +76,7 @@ let package = Package(
 
 
     dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift-lm", exact: "2.25.6"),
+        .package(url: "https://github.com/ml-explore/mlx-swift-examples", exact: "2.25.6"),
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.6.0"),
 
         .package(
@@ -114,8 +114,8 @@ let package = Package(
                 "AppModule",
 
             dependencies: [
-                .product(name: "MLXLLM", package: "mlx-swift-lm"),
-                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
+                .product(name: "MLXLLM", package: "mlx-swift-examples"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
 
                 .product(
                     name:

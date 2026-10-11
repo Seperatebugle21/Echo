@@ -13,7 +13,7 @@ settings:
 
 packages:
   MLXLanguageModels:
-    url: https://github.com/ml-explore/mlx-swift-lm
+    url: https://github.com/ml-explore/mlx-swift-examples
     exactVersion: 2.25.6
   SwiftSoup:
     url: https://github.com/scinfu/SwiftSoup.git

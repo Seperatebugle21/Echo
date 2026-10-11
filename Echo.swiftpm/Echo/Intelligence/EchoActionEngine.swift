@@ -200,7 +200,7 @@ import Foundation
             try Task.checkCancellation()
             guard generation == player.playbackGeneration else { throw CancellationError() }
             if player.playbackErrorKey != nil || player.localPlaybackState == .failed { throw AIError.playback }
-            if player.isPlaying && !player.isPreparingAudio { return }
+            if player.intelligencePlaybackConfirmed { return }
             try await Task.sleep(for: .milliseconds(100))
         }
         throw AIError.playback
@@ -227,6 +227,7 @@ import Foundation
         player.stopEchoFlow()
         if args["startNow"] as? Bool == true || player.currentSong == nil { _ = try await play(chosen, shuffle: false) }
         else { player.replaceIntelligenceUpcoming(chosen) }
+        player.startEchoFlow(allowedSongIDs: Set(candidates.map(\.id)), preserveCurrent: true)
         next.recent = Array((next.recent + chosen.map(\.id)).suffix(100)); dj = next
         UserDefaults.standard.set(try JSONEncoder().encode(next), forKey: "echo.intelligence.dj.v1")
         return try json(["status": "dj_queue_updated", "count": chosen.count, "query": next.query, "excluded": next.exclusions])

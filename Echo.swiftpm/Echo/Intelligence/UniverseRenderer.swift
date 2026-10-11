@@ -149,7 +149,7 @@ final class UniverseRenderer: NSObject, MTKViewDelegate, UIGestureRecognizerDele
         }
         if !reducedMotion {
             if !touching {
-                targetOrientation = simd_normalize(simd_quatf(angle: velocity.y + (autoRotate ? dt * 0.025 : 0), axis: [0, 1, 0]) * simd_quatf(angle: velocity.x, axis: [1, 0, 0]) * targetOrientation)
+                targetOrientation = simd_normalize(simd_quatf(angle: velocity.y + (autoRotate ? dt * 0.05 * intensity : 0), axis: [0, 1, 0]) * simd_quatf(angle: velocity.x, axis: [1, 0, 0]) * targetOrientation)
                 velocity *= pow(0.03, dt)
             }
             orientation = simd_slerp(orientation, targetOrientation, min(1, dt * 12))
@@ -157,8 +157,8 @@ final class UniverseRenderer: NSObject, MTKViewDelegate, UIGestureRecognizerDele
         }
         smoothedLevel += (min(1, max(0, level)) - smoothedLevel) * min(1, dt * 12)
         var camera = matrix_identity_float4x4
-        camera.columns.3 = SIMD4(pan.x, pan.y, -zoom, 1)
         let aspect = Float(view.drawableSize.width / view.drawableSize.height)
+        camera.columns.3 = SIMD4(pan.x, pan.y, -zoom / min(1, aspect), 1)
         let f: Float = 1 / tan(0.65 / 2)
         let projection = simd_float4x4(columns: (SIMD4(f / aspect, 0, 0, 0), SIMD4(0, f, 0, 0), SIMD4(0, 0, -1.005, -1), SIMD4(0, 0, -0.1005, 0)))
         var uniforms = Uniforms(transform: projection * camera * simd_float4x4(orientation), viewport: SIMD2(Float(view.drawableSize.width), Float(view.drawableSize.height)), time: time, level: smoothedLevel, phase: phase.rawValue, intensity: intensity, motion: reducedMotion ? 0 : 1)

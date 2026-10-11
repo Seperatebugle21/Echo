@@ -21,11 +21,11 @@ vertex Raster echoUniverseVertex(uint vertexID [[vertex_id]], uint instanceID [[
     float2 corner = corners[vertexID];
     float4 p = mix(pa, pb, corner.x);
     p.xy += normal * corner.y * 2.8 / u.viewport * p.w;
-    float shimmer = 0.88 + 0.12 * sin(u.time * 0.65 + segment.b.w * 4) * u.motion;
+    float shimmer = 0.88 + 0.12 * sin(u.time * 0.65 + segment.b.w * 4) * u.motion * u.intensity;
     float wave = u.phase == 4 ? pow(max(0.0, sin(radius * 8 - u.time * 4)), 12.0) * 0.25 * u.motion : 0;
     float success = u.phase == 5 ? 0.18 : 0;
     Raster out; out.position = p; out.side = corner.y;
-    out.brightness = segment.a.w * shimmer * (1 + wave + success + u.level * 0.15) * clamp(4.5 / p.w, 0.5, 1.3);
+    out.brightness = segment.a.w * (u.phase == 6 ? 0.7 : 1.0) * shimmer * (1 + wave + success + u.level * 0.15) * clamp(4.5 / p.w, 0.5, 1.3);
     return out;
 }
 fragment float4 echoUniverseFragment(Raster in [[stage_in]]) {

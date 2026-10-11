@@ -85,6 +85,13 @@ class AudioPlayerManager:
     private var podcastResumeAfterInterruption = false
     var podcastSpeed: Float = 1
     var isPodcast: Bool { currentSong?.podcastEpisodeID != nil }
+    /// Actual engine state, not the user's pending play intention.
+    var intelligencePlaybackConfirmed: Bool {
+        if let podcastPlayer { return podcastPlayer.timeControlStatus == .playing }
+        return localPlaybackState == .playing || localPlaybackState == .transitioning
+    }
+    private var intelligenceFlowCandidates: Set<UUID>?
+
 
 
     private var timer:
@@ -1612,10 +1619,12 @@ extension AudioPlayerManager {
 
     /// Starting Flow explicitly selects endless playback. Later repeat choices suspend refill;
     /// shuffle continues to reorder the one real queue. Activity is intentionally not restored.
-    @MainActor func startEchoFlow(from seedSong: Song? = nil) {
+    @MainActor func startEchoFlow(from seedSong: Song? = nil, allowedSongIDs: Set<UUID>? = nil, preserveCurrent: Bool = false) {
         let library = MusicLibraryManager.shared
-        let available = library.songs.filter { $0.podcastEpisodeID == nil && getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true }
+        let available = library.songs.filter { (allowedSongIDs?.contains($0.id) ?? true) && $0.podcastEpisodeID == nil && getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true }
         guard !available.isEmpty else { return }
+        intelligenceFlowCandidates = allowedSongIDs
+        flowRefillTask?.cancel(); flowRefillTask = nil
         flowGeneration = UUID(); flowActive = true; flowSeed &+= 1; flowFailedIDs.removeAll()
         repeatMode = .off
         autoNextQueue.removeAll()
@@ -1623,14 +1632,15 @@ extension AudioPlayerManager {
         if let seedSong, let song = available.first(where: { $0.id == seedSong.id }), let url = getURL(for: song) {
             let retained = queue.dropFirst(max(0, currentIndex + 1)).filter { $0.id != song.id && !flowSongIDs.contains($0.id) }
             play(song: song, url: url, queue: [song] + retained)
-        } else if currentSong == nil || isPodcast || !available.contains(where: { $0.id == currentSong?.id }) {
+        } else if currentSong == nil || isPodcast || (!preserveCurrent && !available.contains(where: { $0.id == currentSong?.id })) {
             let snapshot = RecommendationManager.shared.selectionSnapshot(songs: available, favorites: library.favoriteSongIDs, seed: flowSeed)
             guard let first = snapshot.ranked(limit: 1, discover: flowMode == .discover).first, let url = getURL(for: first) else { stopEchoFlow(); return }
             play(song: first, url: url, queue: [first])
-        } else if !isPlaying { setPlaybackDesired(true) }
+        } else if !isPlaying && !preserveCurrent { setPlaybackDesired(true) }
         requestFlowRefill()
     }
     func stopEchoFlow() {
+        intelligenceFlowCandidates = nil
         flowActive = false; flowGeneration = UUID(); flowRefillTask?.cancel(); flowRefillTask = nil
         // Current playback and every queued item (including manual edits) remain intact.
     }
@@ -1651,9 +1661,9 @@ extension AudioPlayerManager {
         let generation = flowGeneration
         flowRefillTask = Task { @MainActor [weak self] in
             guard let self else { return }
-            defer { self.flowRefillTask = nil }
+            defer { if self.flowGeneration == generation { self.flowRefillTask = nil } }
             let library = MusicLibraryManager.shared
-            let songs = library.songs
+            let songs = library.songs.filter { self.intelligenceFlowCandidates?.contains($0.id) ?? true }
             let favorites = library.favoriteSongIDs
             let seed = self.flowSeed; self.flowSeed &+= 1
             let current = self.currentSong, mode = self.flowMode
