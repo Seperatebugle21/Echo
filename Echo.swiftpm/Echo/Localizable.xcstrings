@@ -2,6 +2,1927 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "ai_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Intelligence"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Intelligence"
+        }
+      }
+    }
+  },
+  "ai_subtitle": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your music universe"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw muziekuniversum"
+        }
+      }
+    }
+  },
+  "ai_close": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Close Intelligence"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Intelligence sluiten"
+        }
+      }
+    }
+  },
+  "ai_options": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Options"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opties"
+        }
+      }
+    }
+  },
+  "ai_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Conversations"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprekken"
+        }
+      }
+    }
+  },
+  "ai_action_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Action history"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Actiegeschiedenis"
+        }
+      }
+    }
+  },
+  "ai_new": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "New conversation"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nieuw gesprek"
+        }
+      }
+    }
+  },
+  "ai_settings": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Intelligence settings"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Intelligence-instellingen"
+        }
+      }
+    }
+  },
+  "ai_listening": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "I’m listening…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ik luister…"
+        }
+      }
+    }
+  },
+  "ai_speaking": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speaking…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aan het spreken…"
+        }
+      }
+    }
+  },
+  "ai_thinking": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Thinking…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Even nadenken…"
+        }
+      }
+    }
+  },
+  "ai_ready": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "What’s on your mind?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Waar denk je aan?"
+        }
+      }
+    }
+  },
+  "ai_expand": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Expand the conversation"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprek uitvouwen"
+        }
+      }
+    }
+  },
+  "ai_prompt": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ask a question or give a command…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stel een vraag of geef een opdracht…"
+        }
+      }
+    }
+  },
+  "ai_stop_listening": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stop listening"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stoppen met luisteren"
+        }
+      }
+    }
+  },
+  "ai_voice_input": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voice input"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spraakinvoer"
+        }
+      }
+    }
+  },
+  "ai_stop": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stop"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stoppen"
+        }
+      }
+    }
+  },
+  "ai_send": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Send"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Versturen"
+        }
+      }
+    }
+  },
+  "ai_confirm_action": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Allow this action?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze actie toestaan?"
+        }
+      }
+    }
+  },
+  "ai_deny": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Don’t allow"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Niet toestaan"
+        }
+      }
+    }
+  },
+  "ai_allow": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Allow"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Toestaan"
+        }
+      }
+    }
+  },
+  "ai_you": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "You"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jij"
+        }
+      }
+    }
+  },
+  "ai_done": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Done"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Klaar"
+        }
+      }
+    }
+  },
+  "ai_delete": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Delete"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verwijderen"
+        }
+      }
+    }
+  },
+  "ai_conversation": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Conversation"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprek"
+        }
+      }
+    }
+  },
+  "ai_pause": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pause music"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek pauzeren"
+        }
+      }
+    }
+  },
+  "ai_resume": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Resume music"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek hervatten"
+        }
+      }
+    }
+  },
+  "ai_provider": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI provider"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-provider"
+        }
+      }
+    }
+  },
+  "ai_provider_automatic": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatic · prefer on-device"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatisch · bij voorkeur lokaal"
+        }
+      }
+    }
+  },
+  "ai_provider_apple": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Foundation Models"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Foundation Models"
+        }
+      }
+    }
+  },
+  "ai_provider_qwen": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen Local"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen lokaal"
+        }
+      }
+    }
+  },
+  "ai_provider_openAI": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "OpenAI"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "OpenAI"
+        }
+      }
+    }
+  },
+  "ai_provider_gemini": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Google Gemini"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Google Gemini"
+        }
+      }
+    }
+  },
+  "ai_provider_custom": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Custom server"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Eigen server"
+        }
+      }
+    }
+  },
+  "ai_offline": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Offline Only"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alleen offline"
+        }
+      }
+    }
+  },
+  "ai_offline_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI prompts stay on this device. Voice input also requires on-device recognition. Explicit model downloads require internet; music and podcast networking is unchanged."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-vragen blijven op dit apparaat. Spraakinvoer vereist ook lokale herkenning. Een model downloaden vereist internet; muziek- en podcastverbindingen blijven ongewijzigd."
+        }
+      }
+    }
+  },
+  "ai_apple_available": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple’s on-device model is available. Language support is checked when sending."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het lokale Apple-model is beschikbaar. Taalondersteuning wordt bij het versturen gecontroleerd."
+        }
+      }
+    }
+  },
+  "ai_apple_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Intelligence is not available. Enable it on a supported device or choose another provider."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Intelligence is niet beschikbaar. Schakel het in op een ondersteund apparaat of kies een andere provider."
+        }
+      }
+    }
+  },
+  "ai_cloud_consent": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Allow AI requests to leave this device"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-verzoeken buiten dit apparaat toestaan"
+        }
+      }
+    }
+  },
+  "ai_cloud_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The selected provider receives your conversation context and focused tool results, such as requested song metadata. No audio files or full library are uploaded. Automatic can use OpenAI only when configured and allowed."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De geselecteerde provider ontvangt gesprekscontext en gerichte actieresultaten, zoals opgevraagde metadata. Audiobestanden en de volledige bibliotheek worden niet geüpload. Automatisch kan OpenAI alleen gebruiken als dit ingesteld en toegestaan is."
+        }
+      }
+    }
+  },
+  "ai_permissions": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI permissions"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-machtigingen"
+        }
+      }
+    }
+  },
+  "ai_permission_chatOnly": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Chat Only"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alleen chatten"
+        }
+      }
+    }
+  },
+  "ai_permission_ask": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ask Before Actions"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vragen vóór acties"
+        }
+      }
+    }
+  },
+  "ai_permission_full": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Full App Control"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Volledige appbediening"
+        }
+      }
+    }
+  },
+  "ai_permissions_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Full App Control only authorizes registered Echo actions. Playlist deletion always asks. The assistant cannot change these permissions, credentials or security settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Volledige appbediening geldt alleen voor geregistreerde Echo-acties. Afspeellijsten verwijderen vereist altijd bevestiging. De assistent kan deze machtigingen, sleutels of beveiligingsinstellingen niet wijzigen."
+        }
+      }
+    }
+  },
+  "ai_voice": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voice"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stem"
+        }
+      }
+    }
+  },
+  "ai_spoken": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spoken responses"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesproken antwoorden"
+        }
+      }
+    }
+  },
+  "ai_voice_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "With Offline Only disabled, Apple speech recognition may send microphone audio to Apple. Transcripts are placed in the input field; tap Send when ready."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Als Alleen offline uitstaat, kan Apple spraakherkenning microfoonaudio naar Apple sturen. De herkende tekst verschijnt in het invoerveld; tik op Versturen als je klaar bent."
+        }
+      }
+    }
+  },
+  "ai_default": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatic"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatisch"
+        }
+      }
+    }
+  },
+  "ai_music_during_speech": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Music during speech"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek tijdens spraak"
+        }
+      }
+    }
+  },
+  "ai_mix": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Keep music playing"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek laten spelen"
+        }
+      }
+    }
+  },
+  "ai_duck": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lower music temporarily"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek tijdelijk zachter"
+        }
+      }
+    }
+  },
+  "ai_interrupt": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pause and resume"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pauzeren en hervatten"
+        }
+      }
+    }
+  },
+  "ai_universe": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Universe"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Universum"
+        }
+      }
+    }
+  },
+  "ai_auto_rotate": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rotate slowly"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Langzaam draaien"
+        }
+      }
+    }
+  },
+  "ai_intensity": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Animation intensity"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Animatie-intensiteit"
+        }
+      }
+    }
+  },
+  "ai_quality": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rendering quality"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Renderkwaliteit"
+        }
+      }
+    }
+  },
+  "ai_low": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Energy saving"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Energiebesparing"
+        }
+      }
+    }
+  },
+  "ai_high": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "High"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Hoog"
+        }
+      }
+    }
+  },
+  "ai_motion_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Respects Reduce Motion. Frame rate and resolution decrease in Low Power Mode or when the device is hot."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Respecteert Verminder beweging. Beeldsnelheid en resolutie dalen bij energiebesparing of een warm apparaat."
+        }
+      }
+    }
+  },
+  "ai_save_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Save conversations on this device"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprekken op dit apparaat bewaren"
+        }
+      }
+    }
+  },
+  "ai_history_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saved locally with file protection and excluded from backups. Keeps up to 50 conversations and 200 action records. Disabling saving does not delete existing history."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lokaal opgeslagen met bestandsbeveiliging en uitgesloten van back-ups. Bewaart maximaal 50 gesprekken en 200 actieregistraties. Opslaan uitschakelen verwijdert bestaande geschiedenis niet."
+        }
+      }
+    }
+  },
+  "ai_clear_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Clear conversations and action history?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprekken en actiegeschiedenis wissen?"
+        }
+      }
+    }
+  },
+  "ai_delete_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Delete downloaded model?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gedownload model verwijderen?"
+        }
+      }
+    }
+  },
+  "ai_connection": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Connection"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verbinding"
+        }
+      }
+    }
+  },
+  "ai_server_url": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "HTTPS base URL (including /v1)"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "HTTPS-basis-URL (inclusief /v1)"
+        }
+      }
+    }
+  },
+  "ai_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Model name"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Modelnaam"
+        }
+      }
+    }
+  },
+  "ai_key": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "API key (optional for custom server)"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "API-sleutel (optioneel bij eigen server)"
+        }
+      }
+    }
+  },
+  "ai_save_key": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Save key securely"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sleutel veilig bewaren"
+        }
+      }
+    }
+  },
+  "ai_saved": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saved in Keychain. An empty key removes the stored credential."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opgeslagen in Sleutelhanger. Een lege sleutel verwijdert de opgeslagen sleutel."
+        }
+      }
+    }
+  },
+  "ai_check": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Test connection"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verbinding testen"
+        }
+      }
+    }
+  },
+  "ai_check_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Uses the saved key and sends a short test prompt. Your provider may charge for this request. Models must support Chat Completions streaming and function tools for app control."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gebruikt de opgeslagen sleutel en verstuurt een korte testvraag. Je provider kan dit verzoek aanrekenen. Modellen moeten Chat Completions-streaming en functies ondersteunen voor appbediening."
+        }
+      }
+    }
+  },
+  "ai_connected": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The model responded successfully."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het model heeft succesvol geantwoord."
+        }
+      }
+    }
+  },
+  "ai_qwen_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Optional download from Hugging Face (~500 MB; allow 1.5 GB free space). Runs with MLX on a physical iPhone with at least 4 GB RAM. This small model supports chat, not app actions. Weights are loaded for each request and released afterward."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Optionele download van Hugging Face (~500 MB; houd 1,5 GB vrij). Werkt via MLX op een fysieke iPhone met minstens 4 GB RAM. Dit kleine model ondersteunt chat, geen app-acties. Het model wordt per verzoek geladen en daarna vrijgegeven."
+        }
+      }
+    }
+  },
+  "ai_qwen_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen requires a physical Metal-capable device and an MLX-enabled build. It is unavailable in Simulator."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen vereist een fysiek apparaat met Metal en een build met MLX. Niet beschikbaar in Simulator."
+        }
+      }
+    }
+  },
+  "ai_cancel_download": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cancel download"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download annuleren"
+        }
+      }
+    }
+  },
+  "ai_download_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download Qwen model"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen-model downloaden"
+        }
+      }
+    }
+  },
+  "ai_universe_label": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Interactive golden universe"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Interactief gouden universum"
+        }
+      }
+    }
+  },
+  "ai_universe_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Drag to rotate, pinch to zoom, use two fingers to pan and rotate, double tap to reset."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sleep om te draaien, knijp om te zoomen, gebruik twee vingers om te verschuiven en roteren, dubbeltik om te herstellen."
+        }
+      }
+    }
+  },
+  "ai_error_metal": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The 3D renderer could not start. Conversations remain available."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De 3D-renderer kon niet starten. Gesprekken blijven beschikbaar."
+        }
+      }
+    }
+  },
+  "ai_error_http": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider rejected the request. Check the model, key and account limits. HTTP status"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider weigert het verzoek. Controleer model, sleutel en accountlimieten. HTTP-status"
+        }
+      }
+    }
+  },
+  "ai_error_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No supported model is available. Open Intelligence settings to choose and configure a provider."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geen ondersteund model beschikbaar. Kies en configureer een provider in de Intelligence-instellingen."
+        }
+      }
+    }
+  },
+  "ai_error_offline": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Online AI requests are disabled. Use a local provider or explicitly allow cloud access in settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Online AI-verzoeken zijn uitgeschakeld. Gebruik een lokale provider of sta cloudtoegang expliciet toe in de instellingen."
+        }
+      }
+    }
+  },
+  "ai_error_credentials": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Save an API key for this provider in Intelligence settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bewaar een API-sleutel voor deze provider in de Intelligence-instellingen."
+        }
+      }
+    }
+  },
+  "ai_error_arguments": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The requested action has invalid or unsupported arguments. Nothing further was executed."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De gevraagde actie heeft ongeldige of niet-ondersteunde argumenten. Er is niets verder uitgevoerd."
+        }
+      }
+    }
+  },
+  "ai_error_endpoint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enter an HTTPS base URL without credentials, query parameters or a fragment."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voer een HTTPS-basis-URL in zonder aanmeldgegevens, queryparameters of fragment."
+        }
+      }
+    }
+  },
+  "ai_error_response": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider returned an incomplete or unsupported response. Actions were not inferred from this text."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider gaf een onvolledig of niet-ondersteund antwoord. Uit deze tekst zijn geen acties afgeleid."
+        }
+      }
+    }
+  },
+  "ai_error_limit": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This request exceeds the conversation or action limit. Start a new conversation or split the request."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit verzoek overschrijdt de gespreks- of actielimiet. Begin een nieuw gesprek of splits de opdracht."
+        }
+      }
+    }
+  },
+  "ai_error_permission": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This action is not allowed by your current permissions."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze actie is niet toegestaan met je huidige machtigingen."
+        }
+      }
+    }
+  },
+  "ai_error_missing": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The requested music, playlist or episode is not available in Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De gevraagde muziek, afspeellijst of aflevering is niet beschikbaar in Echo."
+        }
+      }
+    }
+  },
+  "ai_error_playback": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playback could not be confirmed. Check the player before trying again."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspelen kon niet worden bevestigd. Controleer de speler voordat je opnieuw probeert."
+        }
+      }
+    }
+  },
+  "ai_error_storage": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Could not save or read local data. Check available storage."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lokale gegevens konden niet worden opgeslagen of gelezen. Controleer de vrije opslagruimte."
+        }
+      }
+    }
+  },
+  "ai_error_voice": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speech recognition is unavailable or permission was denied. Offline Only requires on-device support for this language."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spraakherkenning is niet beschikbaar of toestemming is geweigerd. Alleen offline vereist lokale ondersteuning voor deze taal."
+        }
+      }
+    }
+  },
+  "ai_error_local": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download the Qwen model on a supported physical device first. No online fallback was used."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download het Qwen-model eerst op een ondersteund fysiek apparaat. Er is geen online alternatief gebruikt."
+        }
+      }
+    }
+  },
+  "ai_tool_library_search": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search library"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bibliotheek doorzoeken"
+        }
+      }
+    }
+  },
+  "ai_tool_playback_status": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Read playback status"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeelstatus lezen"
+        }
+      }
+    }
+  },
+  "ai_tool_play_songs": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Play selected songs"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geselecteerde nummers afspelen"
+        }
+      }
+    }
+  },
+  "ai_tool_transport": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Control playback"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspelen bedienen"
+        }
+      }
+    }
+  },
+  "ai_tool_seek": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Seek in track"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Positie in nummer wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_playback_options": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Change playback options"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeelopties wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_queue_edit": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update upcoming queue"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Komende wachtrij wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_favorite": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update favorite"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favoriet wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_playlists": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Read playlists"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijsten lezen"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_create": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Create playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst maken"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_edit": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Edit playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst bewerken"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_play": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Play playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst afspelen"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_delete": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Delete playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst verwijderen"
+        }
+      }
+    }
+  },
+  "ai_tool_echo_flow": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Control Echo Flow"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Flow bedienen"
+        }
+      }
+    }
+  },
+  "ai_tool_dj_mix": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update DJ mix"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "DJ-mix bijwerken"
+        }
+      }
+    }
+  },
+  "ai_tool_podcast_search": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search podcasts"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Podcasts doorzoeken"
+        }
+      }
+    }
+  },
+  "ai_tool_podcast_action": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update podcast"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Podcast bijwerken"
+        }
+      }
+    }
+  },
+  "ai_tool_settings_change": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Change app setting"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Appinstelling wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_navigate": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open screen"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Scherm openen"
+        }
+      }
+    }
+  },
   "smart_queue_open": {
     "extractionState": "manual",
     "localizations": {

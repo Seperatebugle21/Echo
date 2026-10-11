@@ -27,6 +27,11 @@ struct SettingsView: View {
                     .padding(.vertical, 12)
                     .listRowBackground(Color.clear)
                 }
+                Section("ai_title") {
+                    NavigationLink { AISettingsView() } label: {
+                        SettingsRow(title: "ai_title", symbol: "sparkles", color: .orange)
+                    }
+                }
                 personalization
                 connections
                 Section("settings_section_library") {

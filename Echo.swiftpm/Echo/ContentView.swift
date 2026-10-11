@@ -7,8 +7,9 @@ struct ContentView: View {
     private let router = AppRouter.shared
     @State private var routedSheet: RoutedSheet?
     @State private var routedPodcast: PodcastShow?
+    @State private var routedTab: AppTab = .home
     private enum RoutedSheet: String, Identifiable {
-        case fetch, podcast
+        case fetch, podcast, tab
         var id: String { rawValue }
     }
     @State private var selectedTab = TabBarConfiguration.load().startTab
@@ -132,10 +133,17 @@ struct ContentView: View {
         .sheet(item: $routedSheet) { item in
             switch item {
             case .fetch: FetchView()
+            case .tab: tabContent(routedTab)
             case .podcast:
                 if let routedPodcast { NavigationStack { PodcastDetailView(show: routedPodcast) } }
             }
         }
+        .fullScreenCover(isPresented: Bindable(router).showIntelligence, onDismiss: {
+            if let destination = router.intelligenceDestination {
+                router.intelligenceDestination = nil
+                router.open(.tab(destination))
+            }
+        }) { EchoIntelligenceView() }
         .onChange(of: router.revision) { consumeRoute() }
         .onAppear { consumeRoute() }
         .alert("podcasts_error_title", isPresented: Binding(
@@ -169,6 +177,9 @@ private extension ContentView {
         router.pending = nil
         showTabSettings = false
         switch route {
+        case .tab(let tab):
+            if tabConfiguration.tabs.contains(tab) { selectedTab = tab }
+            else { routedTab = tab; routedSheet = .tab }
         case .fetch:
             if tabConfiguration.tabs.contains(.fetch) { selectedTab = .fetch }
             else { routedSheet = .fetch }

@@ -12,6 +12,9 @@ settings:
     TARGETED_DEVICE_FAMILY: "1,2"
 
 packages:
+  MLXLanguageModels:
+    url: https://github.com/ml-explore/mlx-swift-lm
+    exactVersion: 2.25.6
   SwiftSoup:
     url: https://github.com/scinfu/SwiftSoup.git
     from: 2.6.0
@@ -50,6 +53,10 @@ targets:
         Release:
           OTHER_LDFLAGS: "$(inherited) -Xlinker -export_dynamic -Xlinker -force_load -Xlinker $(ECHO_PYTHON_BIN)"
     dependencies:
+      - package: MLXLanguageModels
+        product: MLXLLM
+      - package: MLXLanguageModels
+        product: MLXLMCommon
       - package: SwiftSoup
       - package: YoutubeDL
       - package: PythonKit
@@ -92,6 +99,19 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.home-ui-tests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: Echo
+
+  EchoIntelligenceTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/EchoIntelligenceTests.swift
+      - path: Echo.swiftpm/Echo/Intelligence/AIModels.swift
+      - path: Echo.swiftpm/Echo/Intelligence/EchoToolRegistry.swift
+      - path: Echo.swiftpm/Echo/Models/EchoLocalization.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.intelligence-tests
+        GENERATE_INFOPLIST_FILE: YES
 
   EchoArtistTests:
     type: bundle.unit-test
@@ -204,6 +224,12 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
+  EchoIntelligenceTests:
+    build:
+      targets:
+        EchoIntelligenceTests: all
+    test:
+      targets: [EchoIntelligenceTests]
   EchoHomeInteractionTests:
     build:
       targets:

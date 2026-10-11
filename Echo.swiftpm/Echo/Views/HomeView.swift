@@ -100,6 +100,7 @@ struct HomeView: View {
                     .foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
             }
             Spacer(minLength: 4)
+            headerButton("sparkles", label: "ai_title") { AppRouter.shared.showIntelligence = true }
             headerButton("magnifyingglass", label: "tab_search") { showSearch = true }
             headerButton("gearshape", label: "tab_settings") { showSettings = true }
         }.padding(.horizontal, 20)
@@ -112,7 +113,7 @@ struct HomeView: View {
                 .overlay { Circle().strokeBorder(.primary.opacity(0.06)) }
                 .contentShape(.circle)
         }.buttonStyle(HomePressStyle()).accessibilityLabel(label)
-            .accessibilityIdentifier(symbol == "gearshape" ? "home-settings" : "home-search")
+            .accessibilityIdentifier(symbol == "sparkles" ? "home-intelligence" : symbol == "gearshape" ? "home-settings" : "home-search")
     }
 
     private func quickAccess(layout: HomeCardLayout) -> some View {

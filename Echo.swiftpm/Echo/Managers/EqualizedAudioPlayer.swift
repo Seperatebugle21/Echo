@@ -70,6 +70,11 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     }
     #endif
 
+    /// Applied on the existing audio graph's control queue, independently of EQ and crossfade gain.
+    func setIntelligenceGain(_ gain: Float) {
+        control.async { [weak self] in self?.graph?.engine.mainMixerNode.outputVolume = min(1, max(0, gain)) }
+    }
+
     private final class Graph {
         let engine = AVAudioEngine(), eq = AVAudioUnitEQ(numberOfBands: 6), sum = AVAudioMixerNode()
         let nodes = [AVAudioPlayerNode(), AVAudioPlayerNode()]

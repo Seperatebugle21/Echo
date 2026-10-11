@@ -2,7 +2,9 @@ import SwiftUI
 
 @MainActor @Observable final class AppRouter {
     static let shared = AppRouter()
-    enum Route { case fetch, podcast(PodcastShow) }
+    enum Route { case fetch, podcast(PodcastShow), tab(AppTab) }
+    var showIntelligence = false
+    var intelligenceDestination: AppTab?
     var pending: Route?
     var revision = 0
     func open(_ route: Route) { pending = route; revision &+= 1 }

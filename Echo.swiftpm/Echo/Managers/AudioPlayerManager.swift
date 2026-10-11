@@ -1225,6 +1225,25 @@ class AudioPlayerManager:
 
 
     // ========================================================
+    /// Atomically replace upcoming songs and cancel any preloaded transition.
+    /// Keep the playing occurrence, history and shuffle's original queue consistent.
+    func replaceIntelligenceUpcoming(_ songs: [Song]) {
+        cancelUpcomingTransition()
+        let prefix: [Song]
+        if let currentSong, queue.indices.contains(currentIndex), queue[currentIndex].id == currentSong.id {
+            prefix = Array(queue.prefix(currentIndex + 1))
+        } else { prefix = currentSong.map { [$0] } ?? []; currentIndex = 0 }
+        queue = prefix + songs
+        originalQueue = queue
+        autoNextQueue.removeAll()
+        flowSongIDs.removeAll()
+    }
+
+    func setIntelligenceDucking(_ enabled: Bool) {
+        player?.setIntelligenceGain(enabled ? 0.25 : 1)
+        podcastPlayer?.volume = enabled ? 0.25 : 1
+    }
+
     // MARK: - Auto Next
     // ========================================================
 
