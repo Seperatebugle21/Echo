@@ -43,11 +43,6 @@ struct ContentView: View {
             GeometryReader { safeGeometry in
                 GeometryReader { fullGeometry in
                     ZStack(alignment: .topLeading) {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            // Consume taps outside the moving surface during the transition.
-                            .onTapGesture { }
-                            .allowsHitTesting(presentation.isVisible)
                         // One persistent player; tabs only report its reserved space.
                         let slot = presentation.dockSlotFrame
                         let dockReady = audioPlayer.currentSong != nil && slot.width > 0
@@ -68,7 +63,9 @@ struct ContentView: View {
                             x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
                             y: slot.minY - fullGeometry.frame(in: .global).minY
                         )
-                        .allowsHitTesting(dockReady && !coverEntrance && !presentation.isVisible)
+                        // Keep the finger that started an opening drag attached until release.
+                        .allowsHitTesting(dockReady && !coverEntrance
+                            && (!presentation.isVisible || presentation.isTrackingOpening))
                         .accessibilityHidden(presentation.isVisible)
 
                         if dockReady && coverEntrance, let song = presentation.entranceSong {
@@ -89,6 +86,13 @@ struct ContentView: View {
                             .allowsHitTesting(false)
                             .accessibilityHidden(true)
                         }
+
+                        // Above the dock: new touches cannot reach its hidden controls,
+                        // while an already-started opening drag can finish normally.
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { }
+                            .allowsHitTesting(presentation.isVisible)
 
                         if audioPlayer.currentSong != nil {
                             ExpandedPlayerSurface(
