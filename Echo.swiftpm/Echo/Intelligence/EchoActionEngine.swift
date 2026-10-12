@@ -78,9 +78,16 @@ import Foundation
             case "pause": player.setPlaybackDesired(false)
             case "resume": player.setPlaybackDesired(true); try await verifyPlayback()
             case "next": player.next(); try await verifyPlayback()
-            case "previous": player.previous(); try await verifyPlayback()
+            case "previous":
+                let generation = player.playbackGeneration, wasPlaying = player.isPlaying
+                player.previous()
+                // The normal previous button can restart a paused track without
+                // resuming it. That is a valid action, not a playback failure.
+                if wasPlaying || generation != player.playbackGeneration { try await verifyPlayback() }
             default: throw AIError.invalidArguments
             }
+            return try json(["status": "completed", "action": "transport", "isPlaying": player.isPlaying,
+                             "song": player.currentSong.map(metadata) ?? [:]])
         case "seek":
             guard let seconds = args["seconds"] as? Double, player.duration > 0, seconds <= player.duration else { throw AIError.invalidArguments }
             player.seek(to: seconds)

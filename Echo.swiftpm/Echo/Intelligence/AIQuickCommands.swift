@@ -97,11 +97,16 @@ struct AIQuickCommand {
             guard let title = (object["song"] as? [String: Any])?["title"] as? String else { throw AIError.response }
             return (dutch ? "Speelt: " : "Playing: ") + title
         case .transport(let command):
+            if ["next", "previous"].contains(command),
+               let title = (object["song"] as? [String: Any])?["title"] as? String {
+                let paused = object["isPlaying"] as? Bool == true ? "" : (dutch ? " (gepauzeerd)" : " (paused)")
+                return (dutch ? "Nu geselecteerd: " : "Selected: ") + title + paused
+            }
             switch command {
             case "pause": return dutch ? "Muziek gepauzeerd." : "Music paused."
             case "resume": return dutch ? "Muziek hervat." : "Music resumed."
-            case "next": return dutch ? "Het volgende nummer speelt." : "The next song is playing."
-            default: return dutch ? "Het vorige nummer speelt." : "The previous song is playing."
+            case "next": return dutch ? "De opdracht ‘volgende’ is uitgevoerd." : "The next command was performed."
+            default: return dutch ? "De opdracht ‘vorige’ is uitgevoerd." : "The previous command was performed."
             }
         }
     }
