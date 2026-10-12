@@ -102,7 +102,7 @@ final class EchoIntelligenceTests: XCTestCase {
     func testOpenAIUsesCompatibleTokenParameterAndTrimsModel() {
         let body = AINetworkPayload.body(provider: .openAI, model: " gpt-5 \n", messages: [], tools: [])
         XCTAssertEqual(body["model"] as? String, "gpt-5")
-        XCTAssertNil(body["max_tokens"]); XCTAssertEqual(body["max_completion_tokens"] as? Int, 2048)
+        XCTAssertNil(body["max_tokens"]); XCTAssertEqual(body["max_completion_tokens"] as? Int, 1024)
         XCTAssertNil(body["tools"])
         let other = AINetworkPayload.body(provider: .gemini, model: "gemini", messages: [], tools: [])
         XCTAssertNotNil(other["max_tokens"])

@@ -29,6 +29,9 @@ import Observation
     @ObservationIgnored private var finalResultTask: Task<Void, Never>?
     @ObservationIgnored private var endpoint = AISpeechEndpoint()
     @ObservationIgnored private var finishingListening = false
+    @ObservationIgnored private var recognitionHasFinalResult = false
+    @ObservationIgnored private var segmentToken = UUID()
+    @ObservationIgnored private var completedTranscript = ""
     @ObservationIgnored private var onListeningFinished: (() -> Void)?
     func startListening(update: @escaping (String) -> Void, finished: @escaping () -> Void) async {
         stopSpeaking(); stopListening(); error = nil
@@ -45,32 +48,9 @@ import Observation
             previousCategory = session.category; previousMode = session.mode; previousOptions = session.categoryOptions
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
             try session.setActive(true)
-            let request = SFSpeechAudioBufferRecognitionRequest()
-            request.shouldReportPartialResults = true; request.requiresOnDeviceRecognition = offline
-            recognitionRequest = request
-            let input = recognitionEngine.inputNode, format = recognitionEngine.inputNode.outputFormat(forBus: 0)
-            guard format.sampleRate > 0, format.channelCount > 0 else { throw AIError.voice }
-            input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-                request.append(buffer)
-                let amplitude = Self.amplitude(buffer)
-                Task { @MainActor in if self?.listeningToken == token { self?.level = amplitude } }
-            }
-            inputTap = true; recognitionEngine.prepare(); try recognitionEngine.start(); listening = true
-            endpoint = AISpeechEndpoint(); finishingListening = false; onListeningFinished = finished
-            recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
-                Task { @MainActor in
-                    guard let self, self.listeningToken == token else { return }
-                    if let result {
-                        let text = result.bestTranscription.formattedString
-                        self.endpoint.receive(text, at: ProcessInfo.processInfo.systemUptime); update(text)
-                    }
-                    if result?.isFinal == true { self.completeListening() }
-                    else if error != nil {
-                        if self.finishingListening { self.completeListening() }
-                        else { self.stopListening(); self.error = AIError.voice.localizedDescription }
-                    }
-                }
-            }
+            endpoint = AISpeechEndpoint(); finishingListening = false; completedTranscript = ""; onListeningFinished = finished
+            try beginRecognitionSegment(recognizer, offline: offline, token: token, update: update)
+            recognitionEngine.prepare(); try recognitionEngine.start(); listening = true
             endpointTask = Task { [weak self] in
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(200))
@@ -84,6 +64,52 @@ import Observation
             }
         } catch { stopListening(); self.error = error.localizedDescription }
     }
+    private func beginRecognitionSegment(_ recognizer: SFSpeechRecognizer, offline: Bool,
+                                         token: UUID, update: @escaping (String) -> Void) throws {
+        let segment = UUID(); segmentToken = segment
+        recognitionRequest?.endAudio(); recognitionTask?.cancel()
+        let input = recognitionEngine.inputNode, format = input.outputFormat(forBus: 0)
+        guard format.sampleRate > 0, format.channelCount > 0 else { throw AIError.voice }
+        if inputTap { input.removeTap(onBus: 0); inputTap = false }
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true; request.requiresOnDeviceRecognition = offline
+        request.contextualStrings = ["Echo", "favoriet", "favorieten", "pauzeer", "hervat", "favorite", "pause", "resume"]
+            + MusicLibraryManager.shared.songs.prefix(30).map(\.title)
+        recognitionRequest = request; recognitionHasFinalResult = false
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+            request.append(buffer)
+            let amplitude = Self.amplitude(buffer), capturedAt = ProcessInfo.processInfo.systemUptime
+            Task { @MainActor in
+                guard let self, self.listeningToken == token else { return }
+                self.level = amplitude; self.endpoint.receiveAudio(amplitude, at: capturedAt)
+            }
+        }
+        inputTap = true
+        let prefix = completedTranscript
+        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
+            Task { @MainActor in
+                guard let self, self.listeningToken == token, self.segmentToken == segment else { return }
+                if let result {
+                    let text = [prefix, result.bestTranscription.formattedString].filter { !$0.isEmpty }.joined(separator: " ")
+                    self.endpoint.receive(text, at: ProcessInfo.processInfo.systemUptime); update(text)
+                }
+                if result?.isFinal == true {
+                    self.recognitionHasFinalResult = true
+                    if self.finishingListening { self.completeListening() }
+                    else if let result, !result.bestTranscription.formattedString.isEmpty {
+                        // Apple may finalize before our pause expires. Start a new
+                        // segment so words spoken during the grace period are kept.
+                        self.completedTranscript = self.endpoint.text
+                        do { try self.beginRecognitionSegment(recognizer, offline: offline, token: token, update: update) }
+                        catch { self.stopListening(); self.error = error.localizedDescription }
+                    }
+                } else if error != nil {
+                    if self.finishingListening { self.completeListening() }
+                    else { self.stopListening(); self.error = AIError.voice.localizedDescription }
+                }
+            }
+        }
+    }
     /// End audio and allow the recognizer to deliver its final punctuation/text.
     /// The fallback also handles recognizers which never send an isFinal result.
     func finishListening() {
@@ -92,23 +118,25 @@ import Observation
         recognitionEngine.stop()
         if inputTap { recognitionEngine.inputNode.removeTap(onBus: 0); inputTap = false }
         level = 0; recognitionRequest?.endAudio()
+        if recognitionHasFinalResult { completeListening(); return }
         let token = listeningToken
         finalResultTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled, self?.listeningToken == token else { return }
             self?.completeListening()
         }
     }
     private func completeListening() {
+        guard listening else { return }
         let completed = onListeningFinished
         let hasText = !endpoint.text.isEmpty
         stopListening()
         if hasText { completed?() }
     }
     func stopListening() {
-        listeningToken = UUID(); timeout?.cancel(); timeout = nil
+        listeningToken = UUID(); segmentToken = UUID(); completedTranscript = ""; timeout?.cancel(); timeout = nil
         endpointTask?.cancel(); endpointTask = nil; finalResultTask?.cancel(); finalResultTask = nil
-        onListeningFinished = nil; finishingListening = false; endpoint = AISpeechEndpoint()
+        onListeningFinished = nil; finishingListening = false; recognitionHasFinalResult = false; endpoint = AISpeechEndpoint()
         recognitionEngine.stop()
         if inputTap { recognitionEngine.inputNode.removeTap(onBus: 0); inputTap = false }
         recognitionRequest?.endAudio(); recognitionTask?.cancel(); recognitionTask = nil; recognitionRequest = nil

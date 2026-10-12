@@ -29,7 +29,7 @@ enum AINetworkPayload {
     static func body(provider: AIProviderID, model: String, messages: [[String: Any]], tools: [[String: Any]]) -> [String: Any] {
         var body: [String: Any] = ["model": model.trimmingCharacters(in: .whitespacesAndNewlines), "messages": messages, "stream": true]
         // OpenAI's reasoning models reject the legacy max_tokens parameter.
-        body[provider == .openAI ? "max_completion_tokens" : "max_tokens"] = 2048
+        body[provider == .openAI ? "max_completion_tokens" : "max_tokens"] = 1024
         if !tools.isEmpty { body["tools"] = tools }
         return body
     }
@@ -112,14 +112,21 @@ struct AIHTTPFailure: LocalizedError {
 struct AISpeechEndpoint {
     private(set) var text = ""
     private var changedAt: TimeInterval = 0
+    private var voiceAt: TimeInterval = 0
     private var ended = false
+    mutating func receiveAudio(_ level: Float, at time: TimeInterval) {
+        guard !ended, level >= 0.06 else { return }
+        voiceAt = max(voiceAt, time)
+    }
     mutating func receive(_ text: String, at time: TimeInterval) {
         let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !ended, value != self.text else { return }
-        self.text = value; changedAt = time
+        let words: (String) -> String = { $0.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ") }
+        if words(value) != words(self.text) { changedAt = time }
+        self.text = value
     }
     mutating func shouldFinish(at time: TimeInterval) -> Bool {
-        guard !ended, !text.isEmpty, time - changedAt >= 1.6 else { return false }
+        guard !ended, !text.isEmpty, time - max(changedAt, voiceAt) >= 2.0 else { return false }
         ended = true; return true
     }
 }

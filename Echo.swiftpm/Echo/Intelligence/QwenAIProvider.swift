@@ -80,6 +80,7 @@ import MLXLMCommon
     func cancel() { task?.cancel() }
     func delete() throws {
         guard !downloading else { throw AIError.permission }
+        QwenAIProvider.shared.unload()
         if FileManager.default.fileExists(atPath: directory.path) { try FileManager.default.removeItem(at: directory) }
         installed = false; progress = 0
     }
@@ -93,7 +94,49 @@ private final class QwenDownloadProgress: NSObject, URLSessionDownloadDelegate, 
     }
 }
 @MainActor final class QwenAIProvider: AIProvider {
+    static let shared = QwenAIProvider()
     let id = AIProviderID.qwen
+    #if canImport(MLXLLM) && canImport(MLXLMCommon)
+    private var loadedContainer: ModelContainer?
+    private var loadingTask: Task<ModelContainer, Error>?
+    private var loadToken = UUID()
+    #endif
+    func prewarm() {
+        #if canImport(MLXLLM) && canImport(MLXLMCommon)
+        guard loadedContainer == nil, loadingTask == nil, QwenModelStore.compatible,
+              QwenModelStore.shared.installed else { return }
+        let directory = QwenModelStore.shared.directory
+        loadingTask = Task { try await LLMModelFactory.shared.loadContainer(configuration: ModelConfiguration(directory: directory)) }
+        #endif
+    }
+    #if canImport(MLXLLM) && canImport(MLXLMCommon)
+    private func container(at directory: URL) async throws -> ModelContainer {
+        if let loadedContainer { return loadedContainer }
+        let token = loadToken
+        let worker: Task<ModelContainer, Error>
+        if let loadingTask { worker = loadingTask }
+        else {
+            worker = Task { try await LLMModelFactory.shared.loadContainer(configuration: ModelConfiguration(directory: directory)) }
+            loadingTask = worker
+        }
+        do {
+            let container = try await worker.value
+            guard token == loadToken else { throw CancellationError() }
+            loadedContainer = container; loadingTask = nil
+            try Task.checkCancellation()
+            return container
+        } catch {
+            if token == loadToken { loadingTask = nil }
+            throw error
+        }
+    }
+    #endif
+    func unload() {
+        #if canImport(MLXLLM) && canImport(MLXLMCommon)
+        loadToken = UUID(); loadingTask?.cancel(); loadingTask = nil
+        loadedContainer = nil; GPU.clearCache()
+        #endif
+    }
     func respond(messages: [AIMessage], instructions: String, tools: [[String: Any]],
                  update: @escaping @MainActor (String) -> Void,
                  execute: @escaping @MainActor (AIToolCall) async throws -> String) async throws -> AIReply {
@@ -123,20 +166,20 @@ private final class QwenDownloadProgress: NSObject, URLSessionDownloadDelegate, 
                     GPU.set(cacheLimit: 32 * 1024 * 1024)
                     defer { GPU.clearCache() }
                     // Directory loading never resolves a Hub model ID or downloads missing assets.
-                    let container = try await LLMModelFactory.shared.loadContainer(configuration: ModelConfiguration(directory: directory))
+                    let container = try await self.container(at: directory)
                     try Task.checkCancellation()
                     let output = try await container.perform { context in
                         let input = try await context.processor.prepare(input: UserInput(chat: chat, additionalContext: ["enable_thinking": false]))
-                        return try MLXLMCommon.generate(input: input, parameters: GenerateParameters(maxTokens: 1024, maxKVSize: 4096), context: context) { (tokens: [Int]) in
+                        return try MLXLMCommon.generate(input: input, parameters: GenerateParameters(maxTokens: 512, maxKVSize: 4096), context: context) { (tokens: [Int]) in
                             if Task.isCancelled { return .stop }
-                            if tokens.count % 4 == 0 { continuation.yield(context.tokenizer.decode(tokens: tokens)) }
-                            return tokens.count >= 1024 ? .stop : .more
+                            if tokens.count == 1 || tokens.count % 4 == 0 { continuation.yield(context.tokenizer.decode(tokens: tokens)) }
+                            return tokens.count >= 512 ? .stop : .more
                         }.output
                     }
                     continuation.yield(output)
                     try Task.checkCancellation()
                     continuation.finish()
-                    // Container is request-owned and released here; closing Intelligence cancels the worker.
+                    // Keep model weights ready for the next turn; cancel/dismiss/background unload them.
                 } catch { continuation.finish(throwing: error) }
             }
             continuation.onTermination = { _ in worker.cancel() }

@@ -17,12 +17,24 @@ import Foundation
         dj = UserDefaults.standard.data(forKey: "echo.intelligence.dj.v1").flatMap { try? JSONDecoder().decode(DJSession.self, from: $0) } ?? DJSession()
     }
     var djContext: String {
-        (try? json(["query": dj.query, "excluded": dj.exclusions, "selectedIDs": dj.selectedIDs.map(\.uuidString)])) ?? "{}"
+        (try? json(["query": String(dj.query.prefix(120)), "excluded": dj.exclusions.prefix(8).map { String($0.prefix(80)) },
+                   "selectedIDs": dj.selectedIDs.prefix(12).map(\.uuidString), "selectedCount": dj.selectedIDs.count])) ?? "{}"
     }
     func prepare(_ call: AIToolCall) throws -> AIToolCall {
         // Pin 'this song' before showing confirmation, even if the track ends
         // while the user is reviewing the action.
         try AIFavoriteTarget.resolve(call, currentSongID: player.currentSong?.id.uuidString)
+    }
+    func quickCall(_ command: AIQuickCommand) throws -> AIToolCall {
+        if case .playAny = command.action {
+            let candidates = library.songs.filter { $0.podcastEpisodeID == nil }.shuffled()
+            guard let song = candidates.first(where: {
+                guard let url = player.getURL(for: $0) else { return false }
+                return FileManager.default.fileExists(atPath: url.path)
+            }) else { throw AIError.missing }
+            return try command.call(songID: song.id)
+        }
+        return try command.call()
     }
     func execute(_ call: AIToolCall) async throws -> String {
         let definition = try EchoToolRegistry.definition(call.name)

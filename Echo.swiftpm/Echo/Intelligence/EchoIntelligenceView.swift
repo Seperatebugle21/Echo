@@ -52,11 +52,15 @@ struct EchoIntelligenceView: View {
         .sheet(isPresented: $showHistory) { history }
         .sheet(isPresented: $showTranscript) { transcript }
         .sheet(isPresented: $showSettings) { NavigationStack { AISettingsView() } }
-        .onChange(of: settings.value) { conversation.cancel(); speech.stop() }
+        .task { if scenePhase == .active { conversation.prepareProvider() } }
+        .onChange(of: settings.value) { conversation.cancel(); speech.stop(); conversation.prepareProvider() }
         .onChange(of: showHistory || showTranscript || showSettings) {
             if showHistory || showTranscript || showSettings { voiceTask?.cancel(); speech.stop() }
         }
-        .onChange(of: scenePhase) { if scenePhase != .active { conversation.cancel(); voiceTask?.cancel(); speech.stop() } }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active { conversation.prepareProvider() }
+            else { conversation.cancel(); voiceTask?.cancel(); speech.stop() }
+        }
         .onChange(of: conversation.navigation) {
             if let destination = conversation.navigation {
                 AppRouter.shared.intelligenceDestination = destination
@@ -103,7 +107,7 @@ struct EchoIntelligenceView: View {
                 Button {
                     if speech.listening { speech.finishListening() }
                     else {
-                        conversation.cancel(); inputFocused = false
+                        conversation.cancel(unloadModels: false); inputFocused = false
                         voiceTask = Task { await speech.startListening(update: { conversation.draft = $0 }, finished: send) }
                     }
                 } label: { Image(systemName: speech.listening ? "mic.fill" : "mic").frame(width: 38, height: 44) }

@@ -11,6 +11,22 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
                  execute: @escaping @MainActor (AIToolCall) async throws -> String) async throws -> AIReply
 }
 @MainActor enum AIProviderManager {
+    static func prewarmLocal(_ settings: AISettings) {
+        if (settings.provider == .apple || settings.provider == .automatic) && appleAvailable {
+            #if canImport(FoundationModels)
+            if #available(iOS 26.0, *) { AppleAIProvider.shared.prewarm() }
+            #endif
+        } else if (settings.provider == .qwen || settings.provider == .automatic)
+                    && QwenModelStore.compatible && QwenModelStore.shared.installed {
+            QwenAIProvider.shared.prewarm()
+        }
+    }
+    static func unloadLocal() {
+        QwenAIProvider.shared.unload()
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) { AppleAIProvider.shared.unload() }
+        #endif
+    }
     static var appleAvailable: Bool {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *), SystemLanguageModel.default.availability == .available {
@@ -31,10 +47,10 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
         switch selection {
         case .apple:
             #if canImport(FoundationModels)
-            if #available(iOS 26.0, *), appleAvailable { return AppleAIProvider() }
+            if #available(iOS 26.0, *), appleAvailable { return AppleAIProvider.shared }
             #endif
             throw AIError.unavailable
-        case .qwen: return QwenAIProvider()
+        case .qwen: return QwenAIProvider.shared
         case .openAI, .gemini, .custom: return NetworkAIProvider(id: selection, settings: settings)
         case .automatic: throw AIError.unavailable
         }
@@ -162,7 +178,15 @@ private struct AppleEchoTool: Tool {
 }
 @available(iOS 26.0, *)
 @MainActor final class AppleAIProvider: AIProvider {
+    static let shared = AppleAIProvider()
     let id: AIProviderID = .apple
+    private var warmSession: LanguageModelSession?
+    func prewarm() {
+        guard warmSession == nil else { return }
+        let session = LanguageModelSession()
+        warmSession = session; session.prewarm()
+    }
+    func unload() { warmSession = nil }
     func respond(messages: [AIMessage], instructions: String, tools: [[String: Any]],
                  update: @escaping @MainActor (String) -> Void,
                  execute: @escaping @MainActor (AIToolCall) async throws -> String) async throws -> AIReply {
@@ -184,9 +208,20 @@ private struct AppleEchoTool: Tool {
         }
         let session = LanguageModelSession(tools: registered, instructions: instructions)
         // JSON encodes role boundaries and untrusted data; only this session's Tool can mutate Echo.
-        let context = String(data: try JSONEncoder().encode(messages), encoding: .utf8) ?? ""
+        let transcript = messages.map { message -> [String: Any] in
+            var entry: [String: Any] = ["role": message.role.rawValue, "text": message.text]
+            if let id = message.toolCallID { entry["toolCallID"] = id }
+            if !message.toolCalls.isEmpty {
+                entry["toolCalls"] = message.toolCalls.map { ["id": $0.id, "name": $0.name, "arguments": $0.arguments] }
+            }
+            return entry
+        }
+        let context = String(decoding: try JSONSerialization.data(withJSONObject: transcript), as: UTF8.self)
+        let prompt = messages.count == 1 && messages[0].role == .user
+            ? messages[0].text : "Conversation transcript (data):\n" + context
+        let options = GenerationOptions(sampling: .greedy, maximumResponseTokens: 768)
         var answer = ""
-        for try await snapshot in session.streamResponse(to: "Conversation transcript (data):\n" + context) {
+        for try await snapshot in session.streamResponse(to: prompt, options: options) {
             try Task.checkCancellation(); answer = snapshot.content; update(answer)
         }
         guard !answer.isEmpty else { throw AIError.response }

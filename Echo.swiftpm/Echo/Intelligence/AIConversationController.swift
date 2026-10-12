@@ -18,6 +18,7 @@ import Observation
     @ObservationIgnored private var completedIDs: [String: String] = [:]
     @ObservationIgnored private var actionCount = 0
     @ObservationIgnored private var generation = UUID()
+    @ObservationIgnored private var permittedToolNames = Set<String>()
     var latestText: String { streaming.isEmpty ? AIResponseText.visible(conversation.messages.last(where: { $0.role == .assistant && !$0.text.isEmpty })?.text ?? "") : streaming }
     func send(onResponse: @escaping (String) -> Void = { _ in }) {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -33,13 +34,31 @@ import Observation
             defer { if generation == token { busy = false; task = nil; streaming = "" } }
             do {
                 let settings = AISettingsStore.shared.value
+                if let command = AIQuickCommand.parse(text) {
+                    // Common commands do not need model startup or a second model round.
+                    let call = try actionEngine.quickCall(command)
+                    permittedToolNames = [call.name]
+                    conversation.messages.append(AIMessage(role: .assistant, text: "", toolCalls: [call]))
+                    let result = try await execute(call)
+                    try Task.checkCancellation()
+                    guard generation == token else { return }
+                    conversation.messages.append(AIMessage(role: .tool, text: result, toolCallID: call.id))
+                    let answer = AIResponseText.visible(try command.reply(to: result))
+                    conversation.messages.append(AIMessage(role: .assistant, text: answer))
+                    phase = .idle; AIHistoryStore.shared.save(conversation); onResponse(answer)
+                    return
+                }
                 let provider = try AIProviderManager.resolve(settings)
                 providerID = provider.id
-                let allowed = settings.permission == .chatOnly ? EchoToolRegistry.all.filter { !$0.mutating } : EchoToolRegistry.all
+                let focus = AIQuickCommand.focusedTools(for: text)
+                let allowed = EchoToolRegistry.all.filter {
+                    (settings.permission != .chatOnly || !$0.mutating) && (focus == nil || focus!.contains($0.name))
+                }
+                permittedToolNames = Set(allowed.map(\.name))
                 let tools = provider.id == .qwen ? [] : allowed.map(\.wire)
                 for _ in 0..<8 {
                     try Task.checkCancellation()
-                    let reply = try await provider.respond(messages: context(maxCharacters: provider.id == .apple ? 4000 : provider.id == .qwen ? 8000 : 18000), instructions: instructions, tools: tools, update: { [weak self] text in
+                    let reply = try await provider.respond(messages: context(maxCharacters: provider.id == .apple ? 3000 : provider.id == .qwen ? 4000 : 10000), instructions: instructions, tools: tools, update: { [weak self] text in
                         guard let self, self.generation == token else { return }; self.streaming = AIResponseText.visible(text)
                     }, execute: { [weak self] call in
                         guard let self, self.generation == token else { throw CancellationError() }
@@ -76,6 +95,7 @@ import Observation
     }
     private func execute(_ call: AIToolCall) async throws -> String {
         try Task.checkCancellation()
+        guard permittedToolNames.contains(call.name) else { throw AIError.invalidArguments }
         if let cached = completedIDs[call.id] { return cached }
         let call = try actionEngine.prepare(call)
         actionCount += 1; guard actionCount <= 16 else { throw AIError.limit }
@@ -121,12 +141,14 @@ import Observation
         let continuation = approval; approval = nil; pending = nil
         continuation?.resume(returning: allowed)
     }
-    func cancel() {
+    func prepareProvider() { AIProviderManager.prewarmLocal(AISettingsStore.shared.value) }
+    func cancel(unloadModels: Bool = true) {
         task?.cancel(); confirm(false); task = nil; generation = UUID()
+        if unloadModels { AIProviderManager.unloadLocal() }
         busy = false; streaming = ""; phase = .idle
         repairIncompleteToolTurn(); AIHistoryStore.shared.save(conversation)
     }
-    func open(_ conversation: AIConversation) { cancel(); self.conversation = conversation; error = nil; actionEngine = EchoActionEngine() }
+    func open(_ conversation: AIConversation) { cancel(unloadModels: false); self.conversation = conversation; error = nil; actionEngine = EchoActionEngine() }
     func newConversation() { open(AIConversation()) }
     private func repairIncompleteToolTurn() {
         let resultIDs = Set(conversation.messages.compactMap(\.toolCallID))
@@ -136,7 +158,7 @@ import Observation
     private func context(maxCharacters: Int) -> [AIMessage] {
         // Keep whole user turns so no orphan tool-result messages reach a provider.
         let starts = conversation.messages.indices.filter { conversation.messages[$0].role == .user }
-        var start = starts.suffix(5).first ?? 0
+        var start = starts.suffix(3).first ?? 0
         while conversation.messages[start...].reduce(0, { $0 + $1.text.count + $1.toolCalls.reduce(0) { $0 + $1.arguments.count } }) > maxCharacters,
               let next = starts.first(where: { $0 > start }) { start = next }
         return Array(conversation.messages[start...])
@@ -145,6 +167,8 @@ import Observation
         """
         You are Echo Intelligence, a helpful general conversational assistant and personal music DJ inside Echo.
         Answer in the user's language. No live web access. Be honest about current information and limitations.
+        Keep ordinary answers brief, usually one to three sentences. Execute the requested action before explaining it.
+        For an ambiguous song, playlist or intent, ask one short clarification instead of guessing or substituting another action.
         Only registered tools can change Echo. Never claim completion without a successful tool result.
         Questions about current playback require playback_status and must not change playback.
         'Make this a favorite' means favorite(enabled:true) for the current song, never next/previous/play_songs.
