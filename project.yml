@@ -196,6 +196,10 @@ targets:
       - path: Echo.swiftpm/Echo/Models/LibraryAlbums.swift
       - path: Echo.swiftpm/Echo/Spotify/SpotifyURLParser.swift
       - path: Echo.swiftpm/Echo/YoutubeMusic/YouTubeMusicMetadata.swift
+      - path: Tests/HomeConfigurationTests.swift
+      - path: Echo.swiftpm/Echo/Models/HomeConfiguration.swift
+      - path: Tests/AudioVisualizationTests.swift
+      - path: Echo.swiftpm/Echo/Managers/AudioVisualization.swift
       - path: Tests/HomeMusicSelectionTests.swift
       - path: Tests/SmartMusicTests.swift
       - path: Echo.swiftpm/Echo/Models/SmartMusicSelection.swift

@@ -1,6 +1,6 @@
 # Echo Intelligence
 
-Echo Intelligence extends the current `Widget` app; Home, navigation, playback, library and podcasts remain owned by their existing managers. Open it with the sparkle button in Home. Configuration lives under Settings → Echo Intelligence. Music continues while the full-screen assistant is open or dismissed.
+Echo Intelligence extends the current `Widget` app; Home, navigation, playback, library and podcasts remain owned by their existing managers. Enable it under Settings → Experimental → Echo Intelligence, then open it with the sparkle button in Home. It is disabled by default. Turning it off hides the Home button and preserves the existing provider, voice, history and visual settings. Configuration remains available in the Experimental section. Music continues while the full-screen assistant is open or dismissed.
 
 ## Included
 
@@ -74,7 +74,7 @@ Integration changes: `AppRouter.swift`, `ContentView.swift`, `HomeView.swift`, `
 2. Run `xcodegen generate --spec project.yml`, open `Echo.xcodeproj`, select your signing team for Echo and EchoWidget, and use the existing matching App Group entitlements/provisioning. Existing Python/LAME dependencies and their repository build instructions still apply. No new paid AI entitlement is introduced.
 3. Confirm `EchoUniverse.metal` is in the Echo compile sources. XcodeGen discovers it under the app source tree. Swift Playgrounds processes the Resources directory. Microphone/speech usage descriptions are present in both plist paths.
 4. Build/run the Echo scheme on an iPhone with iOS 26+. Import several real local songs with different artists/genres, create a test playlist and subscribe to a podcast.
-5. Start a song, open the Home sparkle button, rotate/pinch/two-finger pan/roll/reset the universe, type a question, expand history, then close. Confirm music never restarts merely because the assistant opens/closes. Repeat with Reduce Motion and Low Power Mode.
+5. Enable Echo Intelligence in Settings → Experimental. Start a song, open the Home sparkle button, rotate/pinch/two-finger pan/roll/reset the universe, type a question, expand history, then close. Confirm music never restarts merely because the assistant opens/closes. Repeat with Reduce Motion and Low Power Mode. Turn Echo Intelligence off in Settings, confirm its Home button disappears, then relaunch and verify the disabled state persists.
 6. On supported hardware, select Apple and ask a general question offline. On unsupported hardware verify the availability error. Download Qwen with internet, enable airplane mode and ask a question; cancel generation and watch memory after dismissal. Remove the model and verify offline failure rather than a network fallback.
 7. For OpenAI/Gemini/custom, disable Offline Only, explicitly allow cloud requests, enter/save your key and model, then Test Connection. Ask follow-up questions and cancel mid-stream. Re-enable Offline Only and verify that cloud providers are blocked.
 8. Exercise pause, seek, playlist creation and a multi-step request in all permission modes. Deny an action; it must not execute. In Full App Control try playlist deletion; it must still ask. Check action history and verify results in the original Echo screens.

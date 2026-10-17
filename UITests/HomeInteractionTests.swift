@@ -8,12 +8,15 @@ final class HomeInteractionTests: XCTestCase {
 
     override func setUpWithError() throws { continueAfterFailure = false }
 
-    private func launch(theme: String = "light") {
+    private func launch(theme: String = "light", intelligenceEnabled: Bool? = false) {
         app.terminate()
         app.launchArguments = ["-hasCompletedEchoOnboarding", "YES", "-selectedLanguage", "en",
                                "-AppleLanguages", "(en)", "-appearanceMode", theme,
                                "-theme.first", "182235", "-theme.second", "64478C",
                                "-theme.gradient", "YES", "-theme.whiteText", "YES"]
+        if let intelligenceEnabled {
+            app.launchArguments += ["-echo.intelligence.enabled.v1", intelligenceEnabled ? "YES" : "NO"]
+        }
         app.launch()
         XCTAssertTrue(toggle.waitForExistence(timeout: 15))
     }
@@ -101,8 +104,28 @@ final class HomeInteractionTests: XCTestCase {
         return element
     }
 
+    func testExperimentalIntelligenceToggleControlsHomeEntry() {
+        launch(intelligenceEnabled: nil)
+        app.buttons["home-settings"].tap()
+        let setting = app.switches["settings-intelligence-enabled"]
+        XCTAssertTrue(setting.waitForExistence(timeout: 8))
+        if setting.value as? String == "1" { setting.tap() }
+        launch(intelligenceEnabled: nil)
+        XCTAssertFalse(app.buttons["home-intelligence"].exists)
+        app.buttons["home-settings"].tap()
+        XCTAssertTrue(setting.waitForExistence(timeout: 8))
+        setting.tap()
+        launch(intelligenceEnabled: nil)
+        XCTAssertTrue(app.buttons["home-intelligence"].exists)
+        app.buttons["home-settings"].tap()
+        XCTAssertTrue(setting.waitForExistence(timeout: 8))
+        setting.tap()
+        launch(intelligenceEnabled: nil)
+        XCTAssertFalse(app.buttons["home-intelligence"].exists)
+    }
+
     func testIntelligenceUniversePreservesMusicAndReturnsHome() {
-        launch()
+        launch(intelligenceEnabled: true)
         startPlayback()
         app.buttons["home-intelligence"].tap()
         let close = app.buttons["intelligence-close"]

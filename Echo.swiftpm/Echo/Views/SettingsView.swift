@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(MusicLibraryManager.self) private var library
+    @AppStorage(AISettingsStore.enabledKey) private var intelligenceEnabled = false
     @AppStorage("selectedLanguage") private var selectedLanguage = "en"
 
     @State private var showFirstDeleteAlert = false
@@ -27,12 +28,17 @@ struct SettingsView: View {
                     .padding(.vertical, 12)
                     .listRowBackground(Color.clear)
                 }
-                Section("ai_title") {
-                    NavigationLink { AISettingsView() } label: {
+                personalization
+                Section {
+                    Toggle(isOn: $intelligenceEnabled) {
                         SettingsRow(title: "ai_title", symbol: "sparkles", color: .orange)
                     }
-                }
-                personalization
+                    .accessibilityIdentifier("settings-intelligence-enabled")
+                    NavigationLink { AISettingsView() } label: {
+                        SettingsRow(title: "ai_settings", symbol: "slider.horizontal.3", color: .orange)
+                    }
+                } header: { Text("settings_experimental") }
+                  footer: { Text("settings_intelligence_detail") }
                 connections
                 Section("settings_section_library") {
                     HStack {
@@ -150,13 +156,8 @@ struct SettingsView: View {
             NavigationLink { EqualizerView() } label: {
                 SettingsRow(title: "settingsview_equalizer", subtitle: "settingsview_equalizer_detail", symbol: "slider.vertical.3", color: .pink)
             }
-            NavigationLink { TabBarSettingsView() } label: {
-                SettingsRow(title: "settingsview_tab_bar", subtitle: "settingsview_tab_bar_detail", symbol: "rectangle.bottomthird.inset.filled", color: .purple)
-            }
-            NavigationLink {
-                ThemeSettingsView()
-            } label: {
-                SettingsRow(title: "settings_appearance_title", symbol: "circle.lefthalf.filled", color: .indigo)
+            NavigationLink { AppCustomizationSettingsView() } label: {
+                SettingsRow(title: "settings_app_customization", subtitle: "home_customization_title", symbol: "paintbrush.pointed.fill", color: .purple)
             }
             Picker(selection: $selectedLanguage) {
                 Text("English").tag("en")

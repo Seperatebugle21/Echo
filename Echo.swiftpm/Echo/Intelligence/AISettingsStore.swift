@@ -3,6 +3,7 @@ import Observation
 import Security
 
 @MainActor @Observable final class AISettingsStore {
+    static let enabledKey = "echo.intelligence.enabled.v1"
     static let shared = AISettingsStore()
     var value: AISettings { didSet { if let data = try? JSONEncoder().encode(value) { UserDefaults.standard.set(data, forKey: "echo.intelligence.settings.v1") } } }
     init() {

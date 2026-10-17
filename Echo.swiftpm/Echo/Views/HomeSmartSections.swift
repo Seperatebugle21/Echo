@@ -2,9 +2,8 @@ import SwiftUI
 
 struct HomeSmartSections: View {
     let coverWidth: CGFloat
-    @Environment(MusicLibraryManager.self) private var library
+    let selectedSection: HomeSection
     @Environment(AudioPlayerManager.self) private var player
-    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model = HomeSmartSectionsModel.shared
     @State private var selectedSong: Song?
@@ -15,29 +14,23 @@ struct HomeSmartSections: View {
     @State private var confirmation: Song?
     @State private var confirmationToken = UUID()
     @State private var activeVibe: MusicVibe?
-    private let engine = RecommendationManager.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            if !model.gems.isEmpty { hiddenGems }
-            if !model.albums.isEmpty { revisitingAlbums }
-            weeklyMusic
-            pickVibe
-            surpriseMe
-            echoFlow
-            if !model.periods.isEmpty { timeMachine }
-            upNext
+            switch selectedSection {
+            case .hiddenGems: if !model.gems.isEmpty { hiddenGems }
+            case .revisitAlbums: if !model.albums.isEmpty { revisitingAlbums }
+            case .listeningWeek: weeklyMusic
+            case .vibe: pickVibe
+            case .surprise: surpriseMe
+            case .flow: echoFlow
+            case .timeMachine: if !model.periods.isEmpty { timeMachine }
+            case .upNext: upNext
+            default: EmptyView()
+            }
         }
-        .task(id: library.songRevision) { await model.prepare(library: library); await model.updateListening() }
-        .task(id: library.favoriteRevision) { await model.prepare(library: library) }
-        .task(id: engine.revision) { await model.updateListening() }
-        .onChange(of: scenePhase) { if scenePhase == .active { Task { await model.prepare(library: library); await model.updateListening() } } }
-        .onChange(of: player.playbackErrorKey) { if let key = player.playbackErrorKey { model.reportPlaybackError(key) } }
         .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
         .sheet(isPresented: $showQueue) { QueueView() }
-        .alert("smart_playback_error", isPresented: Binding(get: { model.errorKey != nil }, set: { if !$0 { model.dismissError() } })) {
-            Button("action_close") { model.dismissError() }
-        } message: { Text(LocalizedStringKey(model.errorKey ?? "smart_file_unavailable")) }
         .sensoryFeedback(.selection, trigger: feedback)
     }
 

@@ -3,6 +3,7 @@ import Observation
 import UIKit
 
 struct ContentView: View {
+    @AppStorage(AISettingsStore.enabledKey) private var intelligenceEnabled = false
     @State private var miniPlayerHidden = false
     private let router = AppRouter.shared
     @State private var routedSheet: RoutedSheet?
@@ -144,12 +145,16 @@ struct ContentView: View {
                 if let routedPodcast { NavigationStack { PodcastDetailView(show: routedPodcast) } }
             }
         }
-        .fullScreenCover(isPresented: Bindable(router).showIntelligence, onDismiss: {
+        .fullScreenCover(isPresented: Binding(
+            get: { intelligenceEnabled && router.showIntelligence },
+            set: { router.showIntelligence = $0 }
+        ), onDismiss: {
             if let destination = router.intelligenceDestination {
                 router.intelligenceDestination = nil
                 router.open(.tab(destination))
             }
         }) { EchoIntelligenceView() }
+        .onChange(of: intelligenceEnabled) { if !intelligenceEnabled { router.showIntelligence = false } }
         .onChange(of: router.revision) { consumeRoute() }
         .onAppear { consumeRoute() }
         .alert("podcasts_error_title", isPresented: Binding(

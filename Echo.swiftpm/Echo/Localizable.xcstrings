@@ -2,6 +2,267 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "settings_experimental": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Experimental"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Experimenteel"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Expérimental"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Experimentell"
+        }
+      }
+    }
+  },
+  "settings_intelligence_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enable Echo Intelligence to show its button on Home. Your configuration is saved when you turn it off."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Schakel Echo Intelligence in om de knop op Home te tonen. Je configuratie blijft bewaard als je het uitschakelt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Activez Echo Intelligence pour afficher son bouton sur l’accueil. Votre configuration est conservée après désactivation."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aktiviere Echo Intelligence, um die Taste auf der Startseite anzuzeigen. Deine Konfiguration bleibt beim Ausschalten gespeichert."
+        }
+      }
+    }
+  },
+  "settings_app_customization": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "App customization"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "App aanpassen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Personnaliser l’app"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "App anpassen"
+        }
+      }
+    }
+  },
+  "home_customization_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Home layout"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Home-indeling"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Disposition de l’accueil"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Startseitenlayout"
+        }
+      }
+    }
+  },
+  "home_customization_sections": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your sections"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw secties"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vos sections"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Bereiche"
+        }
+      }
+    }
+  },
+  "home_customization_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Drag to reorder. Keep at least two sections; add as many available sections as you like. Changes save automatically. Empty sections appear when they have content."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Versleep om de volgorde te wijzigen. Behoud minimaal twee secties; voeg zoveel beschikbare secties toe als je wilt. Wijzigingen worden automatisch bewaard. Lege secties verschijnen zodra ze inhoud hebben."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Faites glisser pour réorganiser. Gardez au moins deux sections et ajoutez autant de sections disponibles que vous le souhaitez. Les modifications sont enregistrées automatiquement. Les sections vides apparaissent dès qu’elles ont du contenu."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ziehe die Bereiche in die gewünschte Reihenfolge. Behalte mindestens zwei Bereiche und füge beliebig viele verfügbare Bereiche hinzu. Änderungen werden automatisch gespeichert. Leere Bereiche erscheinen, sobald sie Inhalte haben."
+        }
+      }
+    }
+  },
+  "home_customization_available": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add sections"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Secties toevoegen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter des sections"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bereiche hinzufügen"
+        }
+      }
+    }
+  },
+  "home_customization_remove %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Remove %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ verwijderen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Supprimer %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ entfernen"
+        }
+      }
+    }
+  },
+  "home_customization_add %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ toevoegen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ hinzufügen"
+        }
+      }
+    }
+  },
   "ai_http_authentication": {
     "extractionState": "manual",
     "localizations": {

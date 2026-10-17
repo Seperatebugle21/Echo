@@ -48,6 +48,18 @@ class AudioPlayerManager:
 
     private var player:
         EqualizedAudioPlayer?
+    @ObservationIgnored private var visualizationUsers = 0
+    func beginHomeVisualization() {
+        visualizationUsers += 1
+        if visualizationUsers == 1 { player?.setVisualizationEnabled(true) }
+    }
+    func endHomeVisualization() {
+        visualizationUsers = max(0, visualizationUsers - 1)
+        if visualizationUsers == 0 { player?.setVisualizationEnabled(false) }
+    }
+    func homeVisualizationFrame() -> AudioVisualization.Frame {
+        player?.visualization.snapshot() ?? AudioVisualization.Frame()
+    }
     private var playbackRequest = UUID()
     private var localIntent = PlaybackIntent()
     var playbackGeneration: UUID { playbackRequest }
@@ -626,6 +638,7 @@ class AudioPlayerManager:
 
             if let player { try player.replace(with: url) }
             else { player = try EqualizedAudioPlayer(contentsOf: url) }
+            player?.setVisualizationEnabled(visualizationUsers > 0)
             let request = playbackRequest
             player?.onStateChanged = { [weak self, weak player = self.player] update in
                 guard let self, let player, self.player === player,
