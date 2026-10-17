@@ -171,6 +171,7 @@ targets:
       - path: Echo.swiftpm/Echo/Podcasts/PodcastTranscript.swift
       - path: Echo.swiftpm/Echo/Views/TabBarSettingsView.swift
       - path: Echo.swiftpm/Echo/Views/EchoAppearance.swift
+      - path: Echo.swiftpm/Echo/Models/EchoAccentColor.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.podcast-tests
@@ -212,6 +213,7 @@ targets:
       - path: Tests/EchoReleaseDetectionTests.swift
       - path: Tests/EchoAudioEngineTests.swift
       - path: Tests/EchoThemeTests.swift
+      - path: Tests/EchoAccentColorTests.swift
       - path: Tests/EchoPlaybackInteractionTests.swift
       - path: Tests/EchoSmartPlaylistOverrideTests.swift
       - path: Echo.swiftpm/Echo/Models/Song.swift
@@ -229,6 +231,7 @@ targets:
       - path: Echo.swiftpm/Echo/Podcasts/PodcastModels.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastReleaseDetection.swift
       - path: Echo.swiftpm/Echo/Views/EchoAppearance.swift
+      - path: Echo.swiftpm/Echo/Models/EchoAccentColor.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.feature-tests

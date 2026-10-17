@@ -16,6 +16,8 @@ struct EchoThemePalette: Codable, Equatable {
 
 @MainActor @Observable final class EchoTheme {
     static let shared = EchoTheme()
+    var accent: EchoAccentColor { didSet { defaults.set(accent.hex, forKey: EchoAccentColor.storageKey) } }
+    var accentColor: Color { Color(echoHex: accent.hex) }
     var mode: String { didSet { defaults.set(mode, forKey: "appearanceMode") } }
     var darkStyle: String { didSet { defaults.set(darkStyle, forKey: "darkBackgroundStyle") } }
     var sharedPalette: EchoThemePalette { didSet { save() } }
@@ -40,6 +42,7 @@ struct EchoThemePalette: Codable, Equatable {
     @ObservationIgnored private let defaults: UserDefaults
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        accent = EchoAccentColor(hex: defaults.string(forKey: EchoAccentColor.storageKey) ?? EchoAccentColor.defaultHex)
         mode = defaults.string(forKey: "appearanceMode") ?? "system"
         darkStyle = defaults.string(forKey: "darkBackgroundStyle") ?? "charcoal"
         let legacy = EchoThemePalette(gradient: defaults.bool(forKey: "theme.gradient"),
@@ -95,6 +98,9 @@ private struct EchoThemeRootModifier: ViewModifier {
             .environment(\.echoSystemColorScheme, systemScheme)
             .environment(\.colorScheme, theme.mode == "custom" ? theme.palette(for: systemScheme).textScheme : systemScheme)
             .preferredColorScheme(theme.colorScheme)
+            .tint(theme.accentColor)
+            // Existing artwork uses Color.accentColor; keep it aligned with native controls.
+            .accentColor(theme.accentColor)
     }
 }
 
@@ -106,7 +112,8 @@ extension Color {
     @MainActor var echoHex: String {
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
         UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
-        return String(format: "%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+        func channel(_ value: CGFloat) -> Int { Int((min(1, max(0, value)) * 255).rounded()) }
+        return String(format: "%02X%02X%02X", channel(r), channel(g), channel(b))
     }
 }
 

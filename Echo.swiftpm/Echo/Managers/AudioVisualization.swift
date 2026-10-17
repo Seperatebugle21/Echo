@@ -19,27 +19,53 @@ final class AudioVisualization: @unchecked Sendable {
     }
     private let lock = NSLock()
     private var frame = Frame()
+    private let window: [Float]
+    private let coefficients: SIMD32<Float>
+
+    init(sampleRate: Double = 48_000) {
+        window = (0..<1024).map { Float(0.5 - 0.5 * cos(2 * .pi * Double($0) / 1023)) }
+        var values = SIMD32<Float>(repeating: 0)
+        for band in 0..<32 {
+            let frequency = 70 * pow(min(14_000, sampleRate * 0.45) / 70, Double(band) / 31)
+            values[band] = Float(2 * cos(2 * .pi * frequency / sampleRate))
+        }
+        coefficients = values
+    }
 
     func ingest(_ samples: UnsafePointer<Float>, otherChannel: UnsafePointer<Float>? = nil, count: Int, time: Double) {
         guard count >= 32 else { return }
+        // Log-spaced Goertzel bands respond to bass, vocals and treble separately.
+        // SIMD evaluates all bands together, without FFT setup or render-thread allocations.
+        let length = min(count, 1024), start = count - length
+        var left1 = SIMD32<Float>(repeating: 0), left2 = left1
+        var right1 = left1, right2 = left1
+        for index in 0..<length {
+            let weight = window[index * 1024 / length]
+            let input = samples[start + index] * weight
+            let next = coefficients * left1 - left2 + SIMD32<Float>(repeating: input)
+            left2 = left1; left1 = next
+            if let otherChannel {
+                let other = otherChannel[start + index] * weight
+                let nextRight = coefficients * right1 - right2 + SIMD32<Float>(repeating: other)
+                right2 = right1; right1 = nextRight
+            }
+        }
+        let leftPower = left1 * left1 + left2 * left2 - coefficients * left1 * left2
+        let rightPower = right1 * right1 + right2 * right2 - coefficients * right1 * right2
         var levels = SIMD32<Float>(repeating: 0)
         for band in 0..<32 {
-            let start = band * count / 32, end = (band + 1) * count / 32
-            var energy: Float = 0
-            for index in start..<end {
-                let sample = samples[index]
-                let other = otherChannel?[index] ?? sample
-                energy += max(sample * sample, other * other)
-            }
-            let rms = sqrt(energy / Float(end - start))
-            let decibels = 20 * log10(max(0.0001, rms))
-            levels[band] = min(1, max(0, (decibels + 60) / 60))
+            let magnitude = 2 * sqrt(max(0, max(leftPower[band], rightPower[band]))) / Float(length)
+            let decibels = 20 * log10(max(0.00001, magnitude))
+            let normalized = min(1, max(0, (decibels + 58) / 52))
+            // More headroom than a linear dB meter: ordinary music sits below the
+            // top, leaving space for transients instead of a constantly tall wall.
+            levels[band] = pow(normalized, 1.7)
         }
         guard lock.try() else { return }
         // Fast attack and softer release keep the waveform responsive without flicker.
         for band in 0..<32 {
             frame.previous[band] = Float(frame.level(at: band, time: time))
-            let blend: Float = levels[band] > frame.levels[band] ? 0.85 : 0.45
+            let blend: Float = levels[band] > frame.levels[band] ? 0.95 : 0.6
             frame.levels[band] += (levels[band] - frame.levels[band]) * blend
         }
         frame.timestamp = time

@@ -10,14 +10,14 @@ final class EchoAudioEngineTests: XCTestCase {
         _ = try await player.preparedDuration()
         player.setVisualizationEnabled(true)
         player.play()
-        try await until { player.isPlaying && player.visualization.snapshot().levels[0] > 0 }
+        try await until { player.isPlaying && (0..<32).contains { player.visualization.snapshot().levels[$0] > 0 } }
         let position = player.currentTime
         player.setVisualizationEnabled(false)
         try await until { player.visualization.snapshot().timestamp == 0 }
         try await until { player.currentTime > position + 0.1 }
         XCTAssertTrue(player.isPlaying)
         player.setVisualizationEnabled(true)
-        try await until { player.visualization.snapshot().levels[0] > 0 }
+        try await until { (0..<32).contains { player.visualization.snapshot().levels[$0] > 0 } }
         XCTAssertTrue(player.isPlaying)
     }
 

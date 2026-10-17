@@ -8,6 +8,7 @@ enum HomeSection: String, Codable, CaseIterable, Identifiable {
     case playlists, favoriteAlbums
 
     var id: String { rawValue }
+    var detailKey: String { "home_section_detail_" + rawValue }
     var titleKey: String {
         switch self {
         case .nowPlaying: "home_now_playing"

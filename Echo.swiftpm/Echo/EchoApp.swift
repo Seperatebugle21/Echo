@@ -118,8 +118,6 @@ struct EchoApp: App {
 
             // MARK: - Appearance
 
-           // .tint(.red)
-
             .echoThemeRoot()
 
 
