@@ -40,6 +40,8 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     private let control = DispatchQueue(label: "com.echomusic.audio-control", qos: .userInitiated)
     private let opening = DispatchQueue(label: "com.echomusic.audio-open", qos: .userInitiated, attributes: .concurrent)
     private let logger = Logger(subsystem: "com.echomusic.app", category: "Playback")
+    let visualization = AudioVisualization()
+    private var visualizationEnabled = false
     private var graph: Graph?, decks: [Deck?] = [nil, nil], active = 0
     private var generation = UUID(), wantsPlayback = false, preparedNext: UUID?, currentURL: URL?
     private var playbackIdentity = UUID()
@@ -70,6 +72,11 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
     }
     #endif
 
+    /// Applied on the existing audio graph's control queue, independently of EQ and crossfade gain.
+    func setIntelligenceGain(_ gain: Float) {
+        control.async { [weak self] in self?.graph?.engine.mainMixerNode.outputVolume = min(1, max(0, gain)) }
+    }
+
     private final class Graph {
         let engine = AVAudioEngine(), eq = AVAudioUnitEQ(numberOfBands: 6), sum = AVAudioMixerNode()
         let nodes = [AVAudioPlayerNode(), AVAudioPlayerNode()]
@@ -84,6 +91,23 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
             }
             engine.connect(sum, to: eq, format: format); engine.connect(eq, to: engine.mainMixerNode, format: format)
             engine.prepare()
+        }
+        private var hasVisualizationTap = false
+        func visualize(_ mailbox: AudioVisualization, enabled: Bool) {
+            guard enabled != hasVisualizationTap else { return }
+            if enabled {
+                // Post-EQ audio follows the actual mix, including fades and transitions.
+                // The debug capture uses the main mixer, so both taps can coexist.
+                eq.installTap(onBus: 0, bufferSize: 1024, format: nil) { buffer, _ in
+                    guard let samples = buffer.floatChannelData?[0] else { return }
+                    mailbox.ingest(samples, otherChannel: buffer.format.channelCount > 1 ? buffer.floatChannelData?[1] : nil,
+                                   count: Int(buffer.frameLength), time: ProcessInfo.processInfo.systemUptime)
+                }
+            } else {
+                eq.removeTap(onBus: 0)
+                mailbox.reset()
+            }
+            hasVisualizationTap = enabled
         }
         func apply(_ value: EqualizerConfiguration) {
             for band in EqualizerBand.allCases {
@@ -140,6 +164,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         control.async { [weak self] in
             guard let self else { return }
             self.graph = Graph(); self.graph?.apply(value)
+            self.graph?.visualize(self.visualization, enabled: self.visualizationEnabled)
             let timer = DispatchSource.makeTimerSource(queue: self.control)
             timer.schedule(deadline: .now(), repeating: .milliseconds(50)); timer.setEventHandler { [weak self] in self?.tick() }
             self.monitor = timer; timer.resume()
@@ -190,6 +215,13 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         if newMedia { mediaVersion &+= 1 }
         if state == .preparing { cached.duration = 0; cached.position = 0 }
         return commandVersion
+    }
+    func setVisualizationEnabled(_ enabled: Bool) {
+        control.async { [weak self] in
+            guard let self else { return }
+            self.visualizationEnabled = enabled
+            self.graph?.visualize(self.visualization, enabled: enabled)
+        }
     }
     var duration: Double { snapshot().duration }
     var stateValue: LocalPlaybackState { snapshot().state }
@@ -591,6 +623,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         recovered = true; let offset = position(active)
         let configuration = graph.map { EqualizerConfiguration(enabled: !$0.eq.bands[0].bypass, gains: $0.eq.bands.map(\.gain), preset: .custom) } ?? EqualizerConfiguration()
         graph?.nodes.forEach { $0.stop() }; graph?.engine.stop(); graph = Graph(); graph?.apply(configuration)
+        graph?.visualize(visualization, enabled: visualizationEnabled)
         reload(offset: offset, preserveStart: true, state: .recovering, version: version())
     }
     private func fail() {

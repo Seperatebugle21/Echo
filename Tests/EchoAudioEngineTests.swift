@@ -4,6 +4,23 @@ import XCTest
 /// Live render-clock checks; run on an iOS Simulator or device.
 @MainActor
 final class EchoAudioEngineTests: XCTestCase {
+    func testVisualizationFollowsRenderedAudioAndCanBeDetachedDuringPlayback() async throws {
+        let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 48000, channels: 2, seconds: 15))
+        defer { player.stop() }
+        _ = try await player.preparedDuration()
+        player.setVisualizationEnabled(true)
+        player.play()
+        try await until { player.isPlaying && (0..<32).contains { player.visualization.snapshot().levels[$0] > 0 } }
+        let position = player.currentTime
+        player.setVisualizationEnabled(false)
+        try await until { player.visualization.snapshot().timestamp == 0 }
+        try await until { player.currentTime > position + 0.1 }
+        XCTAssertTrue(player.isPlaying)
+        player.setVisualizationEnabled(true)
+        try await until { (0..<32).contains { player.visualization.snapshot().levels[$0] > 0 } }
+        XCTAssertTrue(player.isPlaying)
+    }
+
     func testRepeatedPauseResumeKeepsPositionAndDoesNotRestartTheSong() async throws {
         let player = try EqualizedAudioPlayer(contentsOf: fixture(rate: 44100, channels: 1, seconds: 15))
         defer { player.stop() }

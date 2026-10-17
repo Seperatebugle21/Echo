@@ -780,7 +780,7 @@ struct FavoritesFeatureArtwork: View {
                         weight: .semibold
                     )
                 )
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.accentColor)
             }
         }
     }

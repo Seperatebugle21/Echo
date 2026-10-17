@@ -78,7 +78,7 @@ struct FavoritesView: View {
                         
                         Image(systemName: "heart.fill")
                             .font(.system(size: 60))
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.accentColor)
                             .frame(width: 120, height: 120)
                             .background(.thinMaterial)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -159,7 +159,7 @@ struct FavoritesView: View {
                         
                         if editMode == .inactive {
                             Image(systemName: "heart.fill")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Color.accentColor)
                         }
                     }
                     .contentShape(Rectangle())
@@ -183,7 +183,7 @@ struct FavoritesView: View {
                         } label: {
                             Label("action_remove", systemImage: "heart.slash")
                         }
-                        .tint(.red)
+                        .tint(.accentColor)
                     }
                 }
             }

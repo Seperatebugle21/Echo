@@ -8,6 +8,16 @@ This README describes the **Widget** branch. Echo requires **iOS or iPadOS 26.0 
 
 ## Features
 
+### Personalized Home
+
+Settings → Your experience → App customization includes a live layout preview, ten accent color presets and a custom color picker. The selected accent is saved independently of the background and applies to buttons, highlights, favorites and playback states.
+
+In Home layout, add, remove and reorder every Home section, including individual smart music sections. Keep at least two sections, with no additional limit on the available sections you can add. The layout editor includes a preview, descriptive section rows and a searchable gallery for adding sections. Changes save automatically; empty sections appear once they have content. Playlists and Favorite albums are available as extra Home shortcuts.
+
+The Now Playing card shows a waveform between the track information and playback time, driven by 32 frequency bands in the rendered local music after the equalizer. Bass, vocals and treble move independently, with fast attack, softer release and headroom for musical peaks. Its small Canvas requests up to 120 Hz on supported displays and interpolates audio updates smoothly. Animation stops when paused, offscreen, inactive or Reduce Motion is enabled. Actual frame rate still needs ProMotion device validation. Your albums opens the complete searchable album collection, and Quick Access includes Songs.
+
+Echo Intelligence is available under Settings → Experimental. Enable it to show its Home button; provider and other configuration remains accessible there when it is disabled.
+
 ### Local music library
 
 Build a personal library from imported audio files and listen offline. Organize music into playlists, browse songs, albums, and artists, and edit track metadata and artwork. Favorites, listening history, and library-based recommendations help you return to the music you play most.

@@ -8,12 +8,15 @@ final class HomeInteractionTests: XCTestCase {
 
     override func setUpWithError() throws { continueAfterFailure = false }
 
-    private func launch(theme: String = "light") {
+    private func launch(theme: String = "light", intelligenceEnabled: Bool? = false) {
         app.terminate()
         app.launchArguments = ["-hasCompletedEchoOnboarding", "YES", "-selectedLanguage", "en",
                                "-AppleLanguages", "(en)", "-appearanceMode", theme,
                                "-theme.first", "182235", "-theme.second", "64478C",
                                "-theme.gradient", "YES", "-theme.whiteText", "YES"]
+        if let intelligenceEnabled {
+            app.launchArguments += ["-echo.intelligence.enabled.v1", intelligenceEnabled ? "YES" : "NO"]
+        }
         app.launch()
         XCTAssertTrue(toggle.waitForExistence(timeout: 15))
     }
@@ -34,6 +37,10 @@ final class HomeInteractionTests: XCTestCase {
     private func waitForPlayerOpen() {
         let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: closePlayer)
         XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 10), .completed)
+        XCTAssertFalse(app.buttons["home-settings"].isHittable, "Now Playing must block underlying Home controls")
+        XCTAssertFalse(app.buttons["home-search"].isHittable)
+        XCTAssertFalse(app.buttons.matching(identifier: "mini-player-open").allElementsBoundByIndex.contains { $0.isHittable },
+                       "The hidden MiniPlayer must not receive taps through Now Playing")
     }
 
     private func waitForHome() {
@@ -95,6 +102,46 @@ final class HomeInteractionTests: XCTestCase {
         print("Unreachable Home control frame: \(element.exists ? element.frame : .zero)")
         XCTFail("Home control was not reachable: \(identifier)")
         return element
+    }
+
+    func testExperimentalIntelligenceToggleControlsHomeEntry() {
+        launch(intelligenceEnabled: nil)
+        app.buttons["home-settings"].tap()
+        let setting = app.switches["settings-intelligence-enabled"]
+        XCTAssertTrue(setting.waitForExistence(timeout: 8))
+        if setting.value as? String == "1" { setting.tap() }
+        launch(intelligenceEnabled: nil)
+        XCTAssertFalse(app.buttons["home-intelligence"].exists)
+        app.buttons["home-settings"].tap()
+        XCTAssertTrue(setting.waitForExistence(timeout: 8))
+        setting.tap()
+        launch(intelligenceEnabled: nil)
+        XCTAssertTrue(app.buttons["home-intelligence"].exists)
+        app.buttons["home-settings"].tap()
+        XCTAssertTrue(setting.waitForExistence(timeout: 8))
+        setting.tap()
+        launch(intelligenceEnabled: nil)
+        XCTAssertFalse(app.buttons["home-intelligence"].exists)
+    }
+
+    func testIntelligenceUniversePreservesMusicAndReturnsHome() {
+        launch(intelligenceEnabled: true)
+        startPlayback()
+        app.buttons["home-intelligence"].tap()
+        let close = app.buttons["intelligence-close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Echo Intelligence"].exists)
+        XCTAssertFalse(app.staticTexts["The 3D renderer could not start. Conversations remain available."].exists)
+        let universe = app.otherElements["Interactive golden universe"]
+        if universe.exists {
+            universe.swipeLeft()
+            universe.doubleTap()
+        }
+        capture("echo-intelligence-universe")
+        XCTAssertTrue(app.buttons["Pause music"].exists)
+        close.tap()
+        waitForHome()
+        waitForLabel("Pause")
     }
 
     func testSmartVibesSurpriseAndRealQueueOpen() {

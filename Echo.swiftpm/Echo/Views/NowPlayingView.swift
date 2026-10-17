@@ -145,7 +145,7 @@ struct NowPlayingView: View {
                         .font(.title2)
                         .foregroundStyle(
                             audioPlayer.shuffleEnabled
-                            ? Color.red
+                            ? Color.accentColor
                             : Color.white
                         )
                     }
@@ -246,7 +246,7 @@ struct NowPlayingView: View {
                             audioPlayer.repeatMode
                             == .off
                             ? Color.white
-                            : Color.red
+                            : Color.accentColor
                         )
                     }
                     .buttonStyle(.plain)

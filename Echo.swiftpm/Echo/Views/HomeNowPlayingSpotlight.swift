@@ -85,7 +85,7 @@ struct HomeNowPlayingCardFace: View {
                     .font(.system(size: 9, weight: .semibold)).tracking(2)
                 Text(song.title).font(.title3.bold()).lineLimit(2)
                 Text(song.artist).font(.subheadline).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
-                HomePlaybackWave(isPlaying: player.currentSong != nil && player.isPlaying)
+                HomePlaybackWave()
                     .frame(height: 28).padding(.top, 2)
                 HomePlaybackProgress(isActive: player.currentSong != nil)
             }.frame(maxWidth: .infinity, alignment: .leading)
@@ -150,28 +150,50 @@ private struct HomePlaybackProgress: View {
 }
 
 private struct HomePlaybackWave: View {
-    let isPlaying: Bool
+    @Environment(AudioPlayerManager.self) private var player
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
+    @State private var visible = false
+    @State private var capturing = false
+
+    private var animated: Bool {
+        visible && player.currentSong != nil && player.isPlaying && !player.isPodcast &&
+            !player.isPreparingAudio && !reduceMotion && scenePhase == .active
+    }
+
     var body: some View {
-        // Timeline is confined to a small Canvas and stopped while paused/backgrounded.
-        let animated = isPlaying && !reduceMotion && scenePhase == .active
-        TimelineView(.animation(minimumInterval: 1 / 12, paused: !animated)) { context in
+        // Only Canvas redraws at display cadence; the Home layout never receives frame ticks.
+        TimelineView(.animation(minimumInterval: 1.0 / 120.0, paused: !animated)) { _ in
             Canvas { drawing, size in
-                let phase = animated ? context.date.timeIntervalSinceReferenceDate * 2.4 : 0
-                let count = 24
-                let step = size.width / CGFloat(count)
-                for index in 0..<count {
-                    let envelope = 0.3 + 0.7 * sin(Double(index + 1) / Double(count + 1) * .pi)
-                    let motion = animated ? 0.5 + 0.5 * sin(phase + Double(index) * 1.7) : 0.35
-                    let height = max(3, size.height * envelope * motion)
+                let frame = player.homeVisualizationFrame()
+                let time = ProcessInfo.processInfo.systemUptime
+                let step = size.width / 32
+                for index in 0..<32 {
+                    let level = animated ? frame.level(at: index, time: time) : 0
+                    let height = 2 + (size.height - 2) * level
                     let rect = CGRect(x: CGFloat(index) * step, y: (size.height - height) / 2,
-                                      width: max(1, step * 0.34), height: height)
-                    drawing.fill(Path(roundedRect: rect, cornerRadius: 2),
-                                 with: .color(index < 10 ? .accentColor : .white.opacity(0.55)))
+                                      width: max(1, step * 0.48), height: height)
+                    drawing.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(.white.opacity(0.8)))
                 }
             }
-        }.accessibilityHidden(true)
+        }
+        .onAppear { visible = true; updateCapture() }
+        .onScrollVisibilityChange(threshold: 0.01) { visible = $0 }
+        .onChange(of: animated) { updateCapture() }
+        .onDisappear { visible = false; stopCapture() }
+        .accessibilityHidden(true)
+    }
+
+    private func updateCapture() {
+        if animated && !capturing {
+            capturing = true
+            player.beginHomeVisualization()
+        } else if !animated { stopCapture() }
+    }
+    private func stopCapture() {
+        guard capturing else { return }
+        capturing = false
+        player.endHomeVisualization()
     }
 }
 

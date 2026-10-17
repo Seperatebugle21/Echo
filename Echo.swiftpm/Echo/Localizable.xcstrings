@@ -2,6 +2,3791 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "customization_intro_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Make Echo yours"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Maak Echo van jou"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Un Echo à votre image"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dein Echo, dein Stil"
+        }
+      }
+    }
+  },
+  "customization_intro_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choose your colors, shape your Home and keep your favorite screens close."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kies je kleuren, deel Home in en houd je favoriete schermen dichtbij."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choisissez vos couleurs, organisez l’accueil et gardez vos écrans préférés à portée de main."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wähle deine Farben, gestalte die Startseite und halte deine Lieblingsansichten griffbereit."
+        }
+      }
+    }
+  },
+  "customization_live_preview": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Live preview"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Live voorbeeld"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aperçu en direct"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Live-Vorschau"
+        }
+      }
+    }
+  },
+  "customization_layout_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your layout"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw indeling"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre disposition"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dein Layout"
+        }
+      }
+    }
+  },
+  "customization_home_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Arrange your music, discoveries and shortcuts in your own order."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zet je muziek, ontdekkingen en snelkoppelingen in jouw volgorde."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Organisez musique, découvertes et raccourcis dans l’ordre de votre choix."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ordne Musik, Entdeckungen und Schnellzugriffe nach deinen Wünschen."
+        }
+      }
+    }
+  },
+  "customization_home_count %lld": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld sections"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld secties"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld sections"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%lld Bereiche"
+        }
+      }
+    }
+  },
+  "customization_appearance_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Light, dark or a background made by you."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Licht, donker of een achtergrond van jezelf."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Clair, sombre ou un fond personnalisé."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Hell, dunkel oder dein eigener Hintergrund."
+        }
+      }
+    }
+  },
+  "customization_saved_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your choices stay with you when you reopen Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je keuzes blijven bewaard wanneer je Echo opnieuw opent."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vos choix sont conservés à la réouverture d’Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Auswahl bleibt beim nächsten Öffnen von Echo erhalten."
+        }
+      }
+    }
+  },
+  "customization_accent_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Accent color"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Accentkleur"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Couleur d’accent"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Akzentfarbe"
+        }
+      }
+    }
+  },
+  "customization_accent_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Give buttons, highlights and playback controls your color."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geef knoppen, accenten en afspeelbediening jouw kleur."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Donnez votre couleur aux boutons, accents et commandes de lecture."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gib Tasten, Hervorhebungen und Wiedergabesteuerung deine Farbe."
+        }
+      }
+    }
+  },
+  "customization_accent_custom": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choose your own color"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kies je eigen kleur"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choisir votre couleur"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Eigene Farbe wählen"
+        }
+      }
+    }
+  },
+  "customization_accent_reset": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Use Echo red"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo-rood gebruiken"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Utiliser le rouge Echo"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo-Rot verwenden"
+        }
+      }
+    }
+  },
+  "home_editor_intro_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your Home, your order"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw Home, jouw volgorde"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre accueil, votre ordre"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Startseite, deine Reihenfolge"
+        }
+      }
+    }
+  },
+  "home_editor_intro_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Drag sections into place below. Add something new or remove what you don’t need."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Versleep de secties hieronder. Voeg iets nieuws toe of haal weg wat je niet nodig hebt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Déplacez les sections ci-dessous. Ajoutez du nouveau ou retirez ce dont vous n’avez pas besoin."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verschiebe die Bereiche unten. Füge Neues hinzu oder entferne, was du nicht brauchst."
+        }
+      }
+    }
+  },
+  "home_editor_options": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Layout options"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Indelingsopties"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Options de disposition"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Layoutoptionen"
+        }
+      }
+    }
+  },
+  "home_editor_add_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Tap a section to add it to Home. You can add several and arrange them afterward."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Tik op een sectie om die toe te voegen aan Home. Je kunt er meerdere toevoegen en ze daarna ordenen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Touchez une section pour l’ajouter à l’accueil. Ajoutez-en plusieurs et organisez-les ensuite."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Tippe auf einen Bereich, um ihn hinzuzufügen. Du kannst mehrere hinzufügen und anschließend anordnen."
+        }
+      }
+    }
+  },
+  "home_editor_all_added": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "All sections added"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alle secties toegevoegd"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Toutes les sections sont ajoutées"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alle Bereiche hinzugefügt"
+        }
+      }
+    }
+  },
+  "home_editor_search": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Find a section"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zoek een sectie"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechercher une section"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bereich suchen"
+        }
+      }
+    }
+  },
+  "accent_color_red": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo red"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo-rood"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rouge Echo"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo-Rot"
+        }
+      }
+    }
+  },
+  "accent_color_orange": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Orange"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Oranje"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Orange"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Orange"
+        }
+      }
+    }
+  },
+  "accent_color_gold": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gold"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Goud"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Or"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gold"
+        }
+      }
+    }
+  },
+  "accent_color_green": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Green"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Groen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vert"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Grün"
+        }
+      }
+    }
+  },
+  "accent_color_mint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mint"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mint"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Menthe"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mint"
+        }
+      }
+    }
+  },
+  "accent_color_teal": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Teal"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Petrol"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bleu sarcelle"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Petrol"
+        }
+      }
+    }
+  },
+  "accent_color_blue": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Blue"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Blauw"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bleu"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Blau"
+        }
+      }
+    }
+  },
+  "accent_color_indigo": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Indigo"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Indigo"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Indigo"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Indigo"
+        }
+      }
+    }
+  },
+  "accent_color_purple": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Purple"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Paars"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Violet"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Violett"
+        }
+      }
+    }
+  },
+  "accent_color_pink": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pink"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Roze"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rose"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pink"
+        }
+      }
+    }
+  },
+  "home_section_detail_nowPlaying": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your current track and playback controls."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je huidige nummer en afspeelbediening."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre titre actuel et les commandes de lecture."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dein aktueller Titel und die Wiedergabesteuerung."
+        }
+      }
+    }
+  },
+  "home_section_detail_quickAccess": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your favorite library shortcuts in one place."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je favoriete bibliotheeksnelkoppelingen bij elkaar."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vos raccourcis de bibliothèque réunis."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Bibliotheksfavoriten an einem Ort."
+        }
+      }
+    }
+  },
+  "home_section_detail_quickPicks": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songs picked from your listening taste."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nummers gekozen op basis van jouw smaak."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Des titres choisis selon vos goûts."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Titel passend zu deinem Musikgeschmack."
+        }
+      }
+    }
+  },
+  "home_section_detail_forYou": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Personal mixes for your next listening session."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Persoonlijke mixes voor je volgende luistersessie."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Des mixes personnels pour votre prochaine écoute."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Persönliche Mixe für deine nächste Hörsession."
+        }
+      }
+    }
+  },
+  "home_section_detail_recentlyPlayed": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Return to the songs you played most recently."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ga terug naar je laatst afgespeelde nummers."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Retrouvez vos titres écoutés récemment."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kehre zu deinen zuletzt gehörten Titeln zurück."
+        }
+      }
+    }
+  },
+  "home_section_detail_artists": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The artists you love, ready to explore."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De artiesten waar je van houdt, klaar om te ontdekken."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vos artistes préférés à explorer."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Lieblingskünstler zum Entdecken."
+        }
+      }
+    }
+  },
+  "home_section_detail_recentlyAdded": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The newest additions to your library."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De nieuwste toevoegingen aan je bibliotheek."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Les derniers ajouts à votre bibliothèque."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Die neuesten Titel in deiner Bibliothek."
+        }
+      }
+    }
+  },
+  "home_section_detail_discovery": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fresh music, artists and podcasts to try."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nieuwe muziek, artiesten en podcasts om te proberen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musique, artistes et podcasts à découvrir."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Neue Musik, Künstler und Podcasts zum Ausprobieren."
+        }
+      }
+    }
+  },
+  "home_section_detail_albums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Album covers from your own collection."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albumhoezen uit je eigen collectie."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Les pochettes de votre collection."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albumcover aus deiner eigenen Sammlung."
+        }
+      }
+    }
+  },
+  "home_section_detail_favorites": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The songs you marked with a heart."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De nummers die je een hartje gaf."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Les titres que vous avez aimés."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Die Titel, die du mit einem Herz markiert hast."
+        }
+      }
+    }
+  },
+  "home_section_detail_podcasts": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Podcast recommendations for your next episode."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Podcastaanbevelingen voor je volgende aflevering."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Des podcasts recommandés pour votre prochaine écoute."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Podcastempfehlungen für deine nächste Folge."
+        }
+      }
+    }
+  },
+  "home_section_detail_onlineAlbums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Explore albums beyond your local library."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ontdek albums buiten je lokale bibliotheek."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Explorez des albums au-delà de votre bibliothèque locale."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Entdecke Alben außerhalb deiner lokalen Bibliothek."
+        }
+      }
+    }
+  },
+  "home_section_detail_hiddenGems": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rediscover songs that deserve another listen."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Herontdek nummers die nog een luisterbeurt verdienen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Redécouvrez des titres qui méritent une nouvelle écoute."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Entdecke Titel wieder, die du erneut hören solltest."
+        }
+      }
+    }
+  },
+  "home_section_detail_revisitAlbums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albums from your library to spend time with again."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Albums uit je bibliotheek om opnieuw te beluisteren."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Des albums de votre bibliothèque à réécouter."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alben aus deiner Bibliothek zum Wiederhören."
+        }
+      }
+    }
+  },
+  "home_section_detail_listeningWeek": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your listening time, songs and artists this week."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je luistertijd, nummers en artiesten van deze week."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre temps d’écoute, vos titres et artistes de la semaine."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Hörzeit, Titel und Künstler dieser Woche."
+        }
+      }
+    }
+  },
+  "home_section_detail_vibe": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Start music that fits your mood."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Start muziek die bij je stemming past."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lancez de la musique selon votre humeur."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Starte Musik passend zu deiner Stimmung."
+        }
+      }
+    }
+  },
+  "home_section_detail_surprise": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Let Echo choose your next song."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Laat Echo je volgende nummer kiezen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Laissez Echo choisir le prochain titre."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lass Echo deinen nächsten Titel wählen."
+        }
+      }
+    }
+  },
+  "home_section_detail_flow": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "A continuous mix shaped around you."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Een doorlopende mix afgestemd op jou."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Un mix continu adapté à vos goûts."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ein fortlaufender Mix passend zu dir."
+        }
+      }
+    }
+  },
+  "home_section_detail_timeMachine": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Travel back through your listening history."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Reis terug door je luistergeschiedenis."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voyagez dans votre historique d’écoute."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Reise durch deinen Hörverlauf."
+        }
+      }
+    }
+  },
+  "home_section_detail_upNext": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "See and open your upcoming music queue."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bekijk en open je komende afspeelwachtrij."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Consultez et ouvrez votre file de lecture."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sieh dir deine nächsten Titel an und öffne die Warteschlange."
+        }
+      }
+    }
+  },
+  "home_section_detail_playlists": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "A direct route to your playlists."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rechtstreeks naar je afspeellijsten."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Un accès direct à vos playlists."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Direkt zu deinen Playlists."
+        }
+      }
+    }
+  },
+  "home_section_detail_favoriteAlbums": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "A shortcut to the albums you saved as favorites."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Een snelkoppeling naar je favoriete albums."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Un raccourci vers vos albums favoris."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ein Schnellzugriff auf deine Lieblingsalben."
+        }
+      }
+    }
+  },
+  "settings_experimental": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Experimental"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Experimenteel"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Expérimental"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Experimentell"
+        }
+      }
+    }
+  },
+  "settings_intelligence_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enable Echo Intelligence to show its button on Home. Your configuration is saved when you turn it off."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Schakel Echo Intelligence in om de knop op Home te tonen. Je configuratie blijft bewaard als je het uitschakelt."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Activez Echo Intelligence pour afficher son bouton sur l’accueil. Votre configuration est conservée après désactivation."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aktiviere Echo Intelligence, um die Taste auf der Startseite anzuzeigen. Deine Konfiguration bleibt beim Ausschalten gespeichert."
+        }
+      }
+    }
+  },
+  "settings_app_customization": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "App customization"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "App aanpassen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Personnaliser l’app"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "App anpassen"
+        }
+      }
+    }
+  },
+  "home_customization_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Home layout"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Home-indeling"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Disposition de l’accueil"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Startseitenlayout"
+        }
+      }
+    }
+  },
+  "home_customization_sections": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your sections"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw secties"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vos sections"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine Bereiche"
+        }
+      }
+    }
+  },
+  "home_customization_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Drag to reorder. Keep at least two sections; add as many available sections as you like. Changes save automatically. Empty sections appear when they have content."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Versleep om de volgorde te wijzigen. Behoud minimaal twee secties; voeg zoveel beschikbare secties toe als je wilt. Wijzigingen worden automatisch bewaard. Lege secties verschijnen zodra ze inhoud hebben."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Faites glisser pour réorganiser. Gardez au moins deux sections et ajoutez autant de sections disponibles que vous le souhaitez. Les modifications sont enregistrées automatiquement. Les sections vides apparaissent dès qu’elles ont du contenu."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ziehe die Bereiche in die gewünschte Reihenfolge. Behalte mindestens zwei Bereiche und füge beliebig viele verfügbare Bereiche hinzu. Änderungen werden automatisch gespeichert. Leere Bereiche erscheinen, sobald sie Inhalte haben."
+        }
+      }
+    }
+  },
+  "home_customization_available": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add sections"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Secties toevoegen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter des sections"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bereiche hinzufügen"
+        }
+      }
+    }
+  },
+  "home_customization_remove %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Remove %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ verwijderen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Supprimer %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ entfernen"
+        }
+      }
+    }
+  },
+  "home_customization_add %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ toevoegen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ hinzufügen"
+        }
+      }
+    }
+  },
+  "ai_http_authentication": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The API key was rejected. Enter an API key from this provider, then save it. A ChatGPT subscription does not include API credit."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De API-sleutel is geweigerd. Voer een API-sleutel van deze provider in en sla hem op. Een ChatGPT-abonnement bevat geen API-tegoed."
+        }
+      }
+    }
+  },
+  "ai_http_forbidden": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This account is not allowed to use this model. Check model access and project permissions."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit account mag dit model niet gebruiken. Controleer de modeltoegang en projectrechten."
+        }
+      }
+    }
+  },
+  "ai_http_quota": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The API account has no available quota or credit. Check API billing and project spending limits."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het API-account heeft geen beschikbaar tegoed of quotum. Controleer API-facturatie en de bestedingslimiet van het project."
+        }
+      }
+    }
+  },
+  "ai_http_rate": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Too many API requests. Wait briefly and try again."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Te veel API-verzoeken. Wacht even en probeer opnieuw."
+        }
+      }
+    }
+  },
+  "ai_http_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The model is unavailable for this API key. Check the exact model name and your account access."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit model is niet beschikbaar voor deze API-sleutel. Controleer de exacte modelnaam en de toegang van je account."
+        }
+      }
+    }
+  },
+  "ai_http_parameter": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The model rejected a request parameter. Choose a model supporting Chat Completions streaming and function tools for app control."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het model weigert een verzoekparameter. Kies een model dat Chat Completions-streaming en functies voor appbediening ondersteunt."
+        }
+      }
+    }
+  },
+  "ai_http_endpoint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The API endpoint was not found. Check the server base URL and Chat Completions support."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het API-adres is niet gevonden. Controleer het basisadres van de server en ondersteuning voor Chat Completions."
+        }
+      }
+    }
+  },
+  "ai_http_server": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider is temporarily unavailable. Try again later."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider is tijdelijk niet beschikbaar. Probeer later opnieuw."
+        }
+      }
+    }
+  },
+  "ai_http_other": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider rejected this request. Check that the selected model supports this API and app tools."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider heeft dit verzoek geweigerd. Controleer of het gekozen model deze API en appfuncties ondersteunt."
+        }
+      }
+    }
+  },
+  "ai_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Intelligence"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Intelligence"
+        }
+      }
+    }
+  },
+  "ai_subtitle": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your music universe"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw muziekuniversum"
+        }
+      }
+    }
+  },
+  "ai_close": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Close Intelligence"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Intelligence sluiten"
+        }
+      }
+    }
+  },
+  "ai_options": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Options"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opties"
+        }
+      }
+    }
+  },
+  "ai_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Conversations"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprekken"
+        }
+      }
+    }
+  },
+  "ai_action_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Action history"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Actiegeschiedenis"
+        }
+      }
+    }
+  },
+  "ai_new": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "New conversation"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nieuw gesprek"
+        }
+      }
+    }
+  },
+  "ai_settings": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Intelligence settings"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Intelligence-instellingen"
+        }
+      }
+    }
+  },
+  "ai_listening": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "I’m listening…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ik luister…"
+        }
+      }
+    }
+  },
+  "ai_speaking": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speaking…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aan het spreken…"
+        }
+      }
+    }
+  },
+  "ai_thinking": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Thinking…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Even nadenken…"
+        }
+      }
+    }
+  },
+  "ai_ready": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "What’s on your mind?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Waar denk je aan?"
+        }
+      }
+    }
+  },
+  "ai_expand": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Expand the conversation"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprek uitvouwen"
+        }
+      }
+    }
+  },
+  "ai_prompt": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ask a question or give a command…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stel een vraag of geef een opdracht…"
+        }
+      }
+    }
+  },
+  "ai_stop_listening": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stop listening"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stoppen met luisteren"
+        }
+      }
+    }
+  },
+  "ai_voice_input": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voice input"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spraakinvoer"
+        }
+      }
+    }
+  },
+  "ai_stop": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stop"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stoppen"
+        }
+      }
+    }
+  },
+  "ai_send": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Send"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Versturen"
+        }
+      }
+    }
+  },
+  "ai_confirm_action": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Allow this action?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze actie toestaan?"
+        }
+      }
+    }
+  },
+  "ai_deny": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Don’t allow"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Niet toestaan"
+        }
+      }
+    }
+  },
+  "ai_allow": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Allow"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Toestaan"
+        }
+      }
+    }
+  },
+  "ai_you": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "You"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jij"
+        }
+      }
+    }
+  },
+  "ai_done": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Done"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Klaar"
+        }
+      }
+    }
+  },
+  "ai_delete": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Delete"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verwijderen"
+        }
+      }
+    }
+  },
+  "ai_conversation": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Conversation"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprek"
+        }
+      }
+    }
+  },
+  "ai_pause": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pause music"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek pauzeren"
+        }
+      }
+    }
+  },
+  "ai_resume": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Resume music"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek hervatten"
+        }
+      }
+    }
+  },
+  "ai_provider": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI provider"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-provider"
+        }
+      }
+    }
+  },
+  "ai_provider_automatic": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatic · prefer on-device"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatisch · bij voorkeur lokaal"
+        }
+      }
+    }
+  },
+  "ai_provider_apple": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Foundation Models"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Foundation Models"
+        }
+      }
+    }
+  },
+  "ai_provider_qwen": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen Local"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen lokaal"
+        }
+      }
+    }
+  },
+  "ai_provider_openAI": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "OpenAI"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "OpenAI"
+        }
+      }
+    }
+  },
+  "ai_provider_gemini": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Google Gemini"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Google Gemini"
+        }
+      }
+    }
+  },
+  "ai_provider_custom": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Custom server"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Eigen server"
+        }
+      }
+    }
+  },
+  "ai_offline": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Offline Only"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alleen offline"
+        }
+      }
+    }
+  },
+  "ai_offline_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI prompts stay on this device. Voice input also requires on-device recognition. Explicit model downloads require internet; music and podcast networking is unchanged."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-vragen blijven op dit apparaat. Spraakinvoer vereist ook lokale herkenning. Een model downloaden vereist internet; muziek- en podcastverbindingen blijven ongewijzigd."
+        }
+      }
+    }
+  },
+  "ai_apple_available": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple’s on-device model is available. Language support is checked when sending."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het lokale Apple-model is beschikbaar. Taalondersteuning wordt bij het versturen gecontroleerd."
+        }
+      }
+    }
+  },
+  "ai_apple_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Intelligence is not available. Enable it on a supported device or choose another provider."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Apple Intelligence is niet beschikbaar. Schakel het in op een ondersteund apparaat of kies een andere provider."
+        }
+      }
+    }
+  },
+  "ai_cloud_consent": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Allow AI requests to leave this device"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-verzoeken buiten dit apparaat toestaan"
+        }
+      }
+    }
+  },
+  "ai_cloud_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The selected provider receives your conversation context and focused tool results, such as requested song metadata. No audio files or full library are uploaded. Automatic can use OpenAI only when configured and allowed."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De geselecteerde provider ontvangt gesprekscontext en gerichte actieresultaten, zoals opgevraagde metadata. Audiobestanden en de volledige bibliotheek worden niet geüpload. Automatisch kan OpenAI alleen gebruiken als dit ingesteld en toegestaan is."
+        }
+      }
+    }
+  },
+  "ai_permissions": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI permissions"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI-machtigingen"
+        }
+      }
+    }
+  },
+  "ai_permission_chatOnly": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Chat Only"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Alleen chatten"
+        }
+      }
+    }
+  },
+  "ai_permission_ask": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ask Before Actions"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vragen vóór acties"
+        }
+      }
+    }
+  },
+  "ai_permission_full": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Full App Control"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Volledige appbediening"
+        }
+      }
+    }
+  },
+  "ai_permissions_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Full App Control only authorizes registered Echo actions. Playlist deletion always asks. The assistant cannot change these permissions, credentials or security settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Volledige appbediening geldt alleen voor geregistreerde Echo-acties. Afspeellijsten verwijderen vereist altijd bevestiging. De assistent kan deze machtigingen, sleutels of beveiligingsinstellingen niet wijzigen."
+        }
+      }
+    }
+  },
+  "ai_voice": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voice"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stem"
+        }
+      }
+    }
+  },
+  "ai_spoken": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spoken responses"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesproken antwoorden"
+        }
+      }
+    }
+  },
+  "ai_voice_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "With Offline Only disabled, Apple speech recognition may send microphone audio to Apple. Your spoken question is sent automatically after a brief pause."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Als Alleen offline uitstaat, kan Apple spraakherkenning microfoonaudio naar Apple sturen. Je gesproken vraag wordt automatisch verstuurd na een korte pauze."
+        }
+      }
+    }
+  },
+  "ai_default": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatic"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Automatisch"
+        }
+      }
+    }
+  },
+  "ai_music_during_speech": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Music during speech"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek tijdens spraak"
+        }
+      }
+    }
+  },
+  "ai_mix": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Keep music playing"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek laten spelen"
+        }
+      }
+    }
+  },
+  "ai_duck": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lower music temporarily"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziek tijdelijk zachter"
+        }
+      }
+    }
+  },
+  "ai_interrupt": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pause and resume"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Pauzeren en hervatten"
+        }
+      }
+    }
+  },
+  "ai_universe": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Universe"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Universum"
+        }
+      }
+    }
+  },
+  "ai_auto_rotate": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rotate slowly"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Langzaam draaien"
+        }
+      }
+    }
+  },
+  "ai_intensity": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Animation intensity"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Animatie-intensiteit"
+        }
+      }
+    }
+  },
+  "ai_quality": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Rendering quality"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Renderkwaliteit"
+        }
+      }
+    }
+  },
+  "ai_low": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Energy saving"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Energiebesparing"
+        }
+      }
+    }
+  },
+  "ai_high": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "High"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Hoog"
+        }
+      }
+    }
+  },
+  "ai_motion_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Respects Reduce Motion. Frame rate and resolution decrease in Low Power Mode or when the device is hot."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Respecteert Verminder beweging. Beeldsnelheid en resolutie dalen bij energiebesparing of een warm apparaat."
+        }
+      }
+    }
+  },
+  "ai_save_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Save conversations on this device"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprekken op dit apparaat bewaren"
+        }
+      }
+    }
+  },
+  "ai_history_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saved locally with file protection and excluded from backups. Keeps up to 50 conversations and 200 action records. Disabling saving does not delete existing history."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lokaal opgeslagen met bestandsbeveiliging en uitgesloten van back-ups. Bewaart maximaal 50 gesprekken en 200 actieregistraties. Opslaan uitschakelen verwijdert bestaande geschiedenis niet."
+        }
+      }
+    }
+  },
+  "ai_clear_history": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Clear conversations and action history?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gesprekken en actiegeschiedenis wissen?"
+        }
+      }
+    }
+  },
+  "ai_delete_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Delete downloaded model?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Gedownload model verwijderen?"
+        }
+      }
+    }
+  },
+  "ai_connection": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Connection"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verbinding"
+        }
+      }
+    }
+  },
+  "ai_server_url": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "HTTPS base URL (including /v1)"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "HTTPS-basis-URL (inclusief /v1)"
+        }
+      }
+    }
+  },
+  "ai_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Model name"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Modelnaam"
+        }
+      }
+    }
+  },
+  "ai_key": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "API key (optional for custom server)"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "API-sleutel (optioneel bij eigen server)"
+        }
+      }
+    }
+  },
+  "ai_save_key": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Save key securely"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sleutel veilig bewaren"
+        }
+      }
+    }
+  },
+  "ai_saved": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saved in Keychain. An empty key removes the stored credential."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Opgeslagen in Sleutelhanger. Een lege sleutel verwijdert de opgeslagen sleutel."
+        }
+      }
+    }
+  },
+  "ai_check": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Test connection"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Verbinding testen"
+        }
+      }
+    }
+  },
+  "ai_check_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Tests the key shown above with a short prompt. Tap Save Key to use it in conversations. Your provider may charge for this request. Models must support Chat Completions streaming and function tools for app control."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Test de sleutel hierboven met een korte vraag. Tik op Sleutel opslaan om hem in gesprekken te gebruiken. Je provider kan dit verzoek aanrekenen. Modellen moeten Chat Completions-streaming en functies ondersteunen voor appbediening."
+        }
+      }
+    }
+  },
+  "ai_connected": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The model responded successfully."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Het model heeft succesvol geantwoord."
+        }
+      }
+    }
+  },
+  "ai_qwen_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Optional download from Hugging Face (~500 MB; allow 1.5 GB free space). Runs with MLX on a physical iPhone with at least 4 GB RAM. This small model supports chat, not app actions. Weights are loaded for each request and released afterward."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Optionele download van Hugging Face (~500 MB; houd 1,5 GB vrij). Werkt via MLX op een fysieke iPhone met minstens 4 GB RAM. Dit kleine model ondersteunt chat, geen app-acties. Het model wordt per verzoek geladen en daarna vrijgegeven."
+        }
+      }
+    }
+  },
+  "ai_qwen_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen requires a physical Metal-capable device and an MLX-enabled build. It is unavailable in Simulator."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen vereist een fysiek apparaat met Metal en een build met MLX. Niet beschikbaar in Simulator."
+        }
+      }
+    }
+  },
+  "ai_cancel_download": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cancel download"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download annuleren"
+        }
+      }
+    }
+  },
+  "ai_download_model": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download Qwen model"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Qwen-model downloaden"
+        }
+      }
+    }
+  },
+  "ai_universe_label": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Interactive golden universe"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Interactief gouden universum"
+        }
+      }
+    }
+  },
+  "ai_universe_hint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Drag to rotate, pinch to zoom, use two fingers to pan and rotate, double tap to reset."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sleep om te draaien, knijp om te zoomen, gebruik twee vingers om te verschuiven en roteren, dubbeltik om te herstellen."
+        }
+      }
+    }
+  },
+  "ai_error_metal": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The 3D renderer could not start. Conversations remain available."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De 3D-renderer kon niet starten. Gesprekken blijven beschikbaar."
+        }
+      }
+    }
+  },
+  "ai_error_http": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider rejected the request. Check the model, key and account limits. HTTP status"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider weigert het verzoek. Controleer model, sleutel en accountlimieten. HTTP-status"
+        }
+      }
+    }
+  },
+  "ai_error_unavailable": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No supported model is available. Open Intelligence settings to choose and configure a provider."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geen ondersteund model beschikbaar. Kies en configureer een provider in de Intelligence-instellingen."
+        }
+      }
+    }
+  },
+  "ai_error_offline": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Online AI requests are disabled. Use a local provider or explicitly allow cloud access in settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Online AI-verzoeken zijn uitgeschakeld. Gebruik een lokale provider of sta cloudtoegang expliciet toe in de instellingen."
+        }
+      }
+    }
+  },
+  "ai_error_credentials": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Save an API key for this provider in Intelligence settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bewaar een API-sleutel voor deze provider in de Intelligence-instellingen."
+        }
+      }
+    }
+  },
+  "ai_error_arguments": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The requested action has invalid or unsupported arguments. Nothing further was executed."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De gevraagde actie heeft ongeldige of niet-ondersteunde argumenten. Er is niets verder uitgevoerd."
+        }
+      }
+    }
+  },
+  "ai_error_endpoint": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enter an HTTPS base URL without credentials, query parameters or a fragment."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voer een HTTPS-basis-URL in zonder aanmeldgegevens, queryparameters of fragment."
+        }
+      }
+    }
+  },
+  "ai_error_response": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The provider returned an incomplete or unsupported response. Actions were not inferred from this text."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De provider gaf een onvolledig of niet-ondersteund antwoord. Uit deze tekst zijn geen acties afgeleid."
+        }
+      }
+    }
+  },
+  "ai_error_limit": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This request exceeds the conversation or action limit. Start a new conversation or split the request."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit verzoek overschrijdt de gespreks- of actielimiet. Begin een nieuw gesprek of splits de opdracht."
+        }
+      }
+    }
+  },
+  "ai_error_permission": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This action is not allowed by your current permissions."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze actie is niet toegestaan met je huidige machtigingen."
+        }
+      }
+    }
+  },
+  "ai_error_missing": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The requested music, playlist or episode is not available in Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De gevraagde muziek, afspeellijst of aflevering is niet beschikbaar in Echo."
+        }
+      }
+    }
+  },
+  "ai_error_playback": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Playback could not be confirmed. Check the player before trying again."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspelen kon niet worden bevestigd. Controleer de speler voordat je opnieuw probeert."
+        }
+      }
+    }
+  },
+  "ai_error_storage": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Could not save or read local data. Check available storage."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lokale gegevens konden niet worden opgeslagen of gelezen. Controleer de vrije opslagruimte."
+        }
+      }
+    }
+  },
+  "ai_error_voice": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speech recognition is unavailable or permission was denied. Offline Only requires on-device support for this language."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spraakherkenning is niet beschikbaar of toestemming is geweigerd. Alleen offline vereist lokale ondersteuning voor deze taal."
+        }
+      }
+    }
+  },
+  "ai_error_local": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download the Qwen model on a supported physical device first. No online fallback was used."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Download het Qwen-model eerst op een ondersteund fysiek apparaat. Er is geen online alternatief gebruikt."
+        }
+      }
+    }
+  },
+  "ai_tool_library_search": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search library"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bibliotheek doorzoeken"
+        }
+      }
+    }
+  },
+  "ai_tool_playback_status": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Read playback status"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeelstatus lezen"
+        }
+      }
+    }
+  },
+  "ai_tool_play_songs": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Play selected songs"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Geselecteerde nummers afspelen"
+        }
+      }
+    }
+  },
+  "ai_tool_transport": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Control playback"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspelen bedienen"
+        }
+      }
+    }
+  },
+  "ai_tool_seek": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Seek in track"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Positie in nummer wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_playback_options": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Change playback options"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeelopties wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_queue_edit": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update upcoming queue"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Komende wachtrij wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_favorite": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update favorite"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Favoriet wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_playlists": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Read playlists"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijsten lezen"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_create": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Create playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst maken"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_edit": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Edit playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst bewerken"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_play": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Play playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst afspelen"
+        }
+      }
+    }
+  },
+  "ai_tool_playlist_delete": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Delete playlist"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Afspeellijst verwijderen"
+        }
+      }
+    }
+  },
+  "ai_tool_echo_flow": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Control Echo Flow"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Flow bedienen"
+        }
+      }
+    }
+  },
+  "ai_tool_dj_mix": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update DJ mix"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "DJ-mix bijwerken"
+        }
+      }
+    }
+  },
+  "ai_tool_podcast_search": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Search podcasts"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Podcasts doorzoeken"
+        }
+      }
+    }
+  },
+  "ai_tool_podcast_action": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Update podcast"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Podcast bijwerken"
+        }
+      }
+    }
+  },
+  "ai_tool_settings_change": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Change app setting"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Appinstelling wijzigen"
+        }
+      }
+    }
+  },
+  "ai_tool_navigate": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Open screen"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Scherm openen"
+        }
+      }
+    }
+  },
   "smart_queue_open": {
     "extractionState": "manual",
     "localizations": {

@@ -891,7 +891,7 @@ struct SongsView: View {
                 )
             }
 
-            .tint(.red)
+            .tint(.accentColor)
         }
     }
 }

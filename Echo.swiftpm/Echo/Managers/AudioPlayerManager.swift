@@ -48,9 +48,22 @@ class AudioPlayerManager:
 
     private var player:
         EqualizedAudioPlayer?
+    @ObservationIgnored private var visualizationUsers = 0
+    func beginHomeVisualization() {
+        visualizationUsers += 1
+        if visualizationUsers == 1 { player?.setVisualizationEnabled(true) }
+    }
+    func endHomeVisualization() {
+        visualizationUsers = max(0, visualizationUsers - 1)
+        if visualizationUsers == 0 { player?.setVisualizationEnabled(false) }
+    }
+    func homeVisualizationFrame() -> AudioVisualization.Frame {
+        player?.visualization.snapshot() ?? AudioVisualization.Frame()
+    }
     private var playbackRequest = UUID()
     private var localIntent = PlaybackIntent()
     var playbackGeneration: UUID { playbackRequest }
+    private(set) var intelligenceTransportRevision: UInt64 = 0
     private var transitionTask: Task<Void, Never>?
     private var transitionStarts: [UUID: Song] = [:]
     private typealias PreparedTransition = (token: UUID, song: Song, index: Int?, automatic: Bool)
@@ -85,6 +98,13 @@ class AudioPlayerManager:
     private var podcastResumeAfterInterruption = false
     var podcastSpeed: Float = 1
     var isPodcast: Bool { currentSong?.podcastEpisodeID != nil }
+    /// Actual engine state, not the user's pending play intention.
+    var intelligencePlaybackConfirmed: Bool {
+        if let podcastPlayer { return podcastPlayer.timeControlStatus == .playing }
+        return localPlaybackState == .playing || localPlaybackState == .transitioning
+    }
+    private var intelligenceFlowCandidates: Set<UUID>?
+
 
 
     private var timer:
@@ -618,6 +638,7 @@ class AudioPlayerManager:
 
             if let player { try player.replace(with: url) }
             else { player = try EqualizedAudioPlayer(contentsOf: url) }
+            player?.setVisualizationEnabled(visualizationUsers > 0)
             let request = playbackRequest
             player?.onStateChanged = { [weak self, weak player = self.player] update in
                 guard let self, let player, self.player === player,
@@ -1225,6 +1246,25 @@ class AudioPlayerManager:
 
 
     // ========================================================
+    /// Atomically replace upcoming songs and cancel any preloaded transition.
+    /// Keep the playing occurrence, history and shuffle's original queue consistent.
+    func replaceIntelligenceUpcoming(_ songs: [Song]) {
+        cancelUpcomingTransition()
+        let prefix: [Song]
+        if let currentSong, queue.indices.contains(currentIndex), queue[currentIndex].id == currentSong.id {
+            prefix = Array(queue.prefix(currentIndex + 1))
+        } else { prefix = currentSong.map { [$0] } ?? []; currentIndex = currentSong == nil ? -1 : 0 }
+        queue = prefix + songs
+        originalQueue = queue
+        autoNextQueue.removeAll()
+        flowSongIDs.removeAll()
+    }
+
+    func setIntelligenceDucking(_ enabled: Bool) {
+        player?.setIntelligenceGain(enabled ? 0.25 : 1)
+        podcastPlayer?.volume = enabled ? 0.25 : 1
+    }
+
     // MARK: - Auto Next
     // ========================================================
 
@@ -1250,6 +1290,7 @@ class AudioPlayerManager:
     }
 
     func setPlaybackDesired(_ playing: Bool) {
+        intelligenceTransportRevision &+= 1
         if isPreviewing {
             stopTransitionPreview(resume: false)
         }
@@ -1593,10 +1634,12 @@ extension AudioPlayerManager {
 
     /// Starting Flow explicitly selects endless playback. Later repeat choices suspend refill;
     /// shuffle continues to reorder the one real queue. Activity is intentionally not restored.
-    @MainActor func startEchoFlow(from seedSong: Song? = nil) {
+    @MainActor func startEchoFlow(from seedSong: Song? = nil, allowedSongIDs: Set<UUID>? = nil, preserveCurrent: Bool = false) {
         let library = MusicLibraryManager.shared
-        let available = library.songs.filter { $0.podcastEpisodeID == nil && getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true }
+        let available = library.songs.filter { (allowedSongIDs?.contains($0.id) ?? true) && $0.podcastEpisodeID == nil && getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true }
         guard !available.isEmpty else { return }
+        intelligenceFlowCandidates = allowedSongIDs
+        flowRefillTask?.cancel(); flowRefillTask = nil
         flowGeneration = UUID(); flowActive = true; flowSeed &+= 1; flowFailedIDs.removeAll()
         repeatMode = .off
         autoNextQueue.removeAll()
@@ -1604,14 +1647,15 @@ extension AudioPlayerManager {
         if let seedSong, let song = available.first(where: { $0.id == seedSong.id }), let url = getURL(for: song) {
             let retained = queue.dropFirst(max(0, currentIndex + 1)).filter { $0.id != song.id && !flowSongIDs.contains($0.id) }
             play(song: song, url: url, queue: [song] + retained)
-        } else if currentSong == nil || isPodcast || !available.contains(where: { $0.id == currentSong?.id }) {
+        } else if currentSong == nil || isPodcast || (!preserveCurrent && !available.contains(where: { $0.id == currentSong?.id })) {
             let snapshot = RecommendationManager.shared.selectionSnapshot(songs: available, favorites: library.favoriteSongIDs, seed: flowSeed)
             guard let first = snapshot.ranked(limit: 1, discover: flowMode == .discover).first, let url = getURL(for: first) else { stopEchoFlow(); return }
             play(song: first, url: url, queue: [first])
-        } else if !isPlaying { setPlaybackDesired(true) }
+        } else if !isPlaying && !preserveCurrent { setPlaybackDesired(true) }
         requestFlowRefill()
     }
     func stopEchoFlow() {
+        intelligenceFlowCandidates = nil
         flowActive = false; flowGeneration = UUID(); flowRefillTask?.cancel(); flowRefillTask = nil
         // Current playback and every queued item (including manual edits) remain intact.
     }
@@ -1632,9 +1676,9 @@ extension AudioPlayerManager {
         let generation = flowGeneration
         flowRefillTask = Task { @MainActor [weak self] in
             guard let self else { return }
-            defer { self.flowRefillTask = nil }
+            defer { if self.flowGeneration == generation { self.flowRefillTask = nil } }
             let library = MusicLibraryManager.shared
-            let songs = library.songs
+            let songs = library.songs.filter { self.intelligenceFlowCandidates?.contains($0.id) ?? true }
             let favorites = library.favoriteSongIDs
             let seed = self.flowSeed; self.flowSeed &+= 1
             let current = self.currentSong, mode = self.flowMode
