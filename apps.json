@@ -1,19 +1,143 @@
 {
   "name": "Echo - MusicApp",
-  "identifier": "com.echomusic.repo",
-  "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/Widget/Echo.swiftpm/Assets.xcassets/AppIcon.appiconset/AppIcon24.png",
+  "identifier": "com.echomusoc.repo",
   "apps": [
     {
       "name": "Echo",
       "bundleIdentifier": "com.echomusic.app",
       "developerName": "Seperatebugle21",
-      "version": "1.0",
-      "versionDate": "2026-09-19T22:10:45Z",
+      "version": "v1.0",
+      "versionDate": "2026-10-18T16:32:59Z",
       "downloadURL": "https://github.com/Seperatebugle21/Echo/releases/download/v1.0/Echo.ipa",
-      "localizedDescription": "The first release of Echo brings local music, podcasts, and audio discovery together in a native iPhone and iPad app built with Swift and SwiftUI.",
-      "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/Widget/Echo.swiftpm/Assets.xcassets/AppIcon.appiconset/AppIcon24.png",
-      "tintColor": "007AFF",
-      "size": 17000000
+      "localizedDescription": "<html>
+<body>
+<!--StartFragment--><h1><span>Echo — First Release</span></h1><h3><span>Your music. Your podcasts. Your listening experience.</span></h3><p><span>Meet </span><strong><span>Echo</span></strong><span>, a native music and podcast player for </span><strong><span>iPhone and iPad</span></strong><span>. Bring your personal music collection, playlists, podcasts, and audio discovery together in one customizable app.</span></p><p><span>The first release introduces </span><strong><span>offline listening, smart playlists, advanced audio controls, Spotify playlist transfer, interactive widgets</span></strong><span>, and </span><strong><span>Echo Intelligence</span></strong><span>, an optional experimental assistant.</span></p><hr><h2><span>Your Music, Organized Your Way</span></h2><p><span>Build a personal library from imported audio files and enjoy your collection offline.</span></p><ul><li><span>Browse your music by </span><strong><span>song, album, or artist</span></strong><span>.</span></li><li><span>Edit track information and album artwork.</span></li><li><span>Save </span><strong><span>favorite songs and favorite albums</span></strong><span> independently.</span></li><li><span>Return to recently played tracks and explore newly added music.</span></li><li><span>Use listening history and library-based recommendations to rediscover your collection.</span></li></ul><h3><span>Playlists That Work for You</span></h3><p><span>Create personal playlists with </span><strong><span>built-in covers or custom artwork</span></strong><span>, including image cropping and positioning.</span></p><p><span>For collections that evolve automatically, use </span><strong><span>Smart Playlists</span></strong><span>. Choose a preset or build rules around genre, release year, favorites, and listening activity, with configurable filters and sorting.</span></p><hr><h2><span>A Home Screen Built Around You</span></h2><p><span>Make Home reflect how you listen. </span><strong><span>Add, remove, and reorder sections</span></strong><span> to keep your most-used collections within reach.</span></p><p><span>Explore:</span></p><ul><li><strong><span>Quick Picks</span></strong><span> and personalized recommendations.</span></li><li><span>Recently played and recently added music.</span></li><li><span>Favorite artists, songs, and albums.</span></li><li><span>Hidden gems and albums worth revisiting.</span></li><li><span>Listening activity and podcast recommendations.</span></li><li><strong><span>Echo Flow</span></strong><span>, a continuous listening session drawn from your library.</span></li></ul><p><span>The Home Now Playing card includes an </span><strong><span>audio-reactive visualization</span></strong><span> that responds to local music playback.</span></p><hr><h2><span>More Control Over Your Sound</span></h2><p><span>Move between the </span><strong><span>mini-player and full-screen player</span></strong><span>, manage a shared music and podcast queue, and keep listening in the background.</span></p><ul><li><span>Add tracks to play next and reorder the queue.</span></li><li><span>Use shuffle and repeat.</span></li><li><span>Control playback from the </span><strong><span>Lock Screen and Control Center</span></strong><span>.</span></li><li><span>Send audio to compatible devices using </span><strong><span>AirPlay</span></strong><span>.</span></li></ul><h3><span>Equalizer and Audio Output</span></h3><p><span>Shape local music playback with a </span><strong><span>six-band equalizer</span></strong><span>, built-in presets, and custom adjustments. Choose </span><strong><span>stereo or mono output</span></strong><span> to suit your preferences.</span></p><h3><span>Choose How Tracks Connect</span></h3><div><div><div>
+Playback mode | Experience
+-- | --
+Direct | Standard track-to-track playback.
+Gapless | Continuous playback between tracks.
+Crossfade | Adjustable overlap from 1 to 12 seconds.
+Mix | Automatic transitions that attempt beat alignment for suitable tracks, with an energy-based crossfade when reliable alignment is unavailable.
+
+</div></div></div><p><strong><span>Playlist deletion always requires confirmation.</span></strong></p><p><span>Provider options include </span><strong><span>Apple’s on-device models</span></strong><span>, a downloadable </span><strong><span>local Qwen model</span></strong><span>, and configurable cloud services. Capabilities vary by provider. Local Qwen supports conversation, with a separate command path for common music controls.</span></p><p><span>Experimental Intelligence features currently support </span><strong><span>English and Dutch</span></strong><span>, with English fallback for other app languages.</span></p><hr><h2><span>Compatibility and Availability</span></h2><p><strong><span>Requires iOS or iPadOS 26.0 or later.</span></strong></p><ul><li><strong><span>Offline listening:</span></strong><span> Available for imported music and downloaded podcast episodes.</span></li><li><strong><span>Online features:</span></strong><span> Discovery, downloads, lyrics, Spotify account features, and cloud AI require internet access and may need authentication, API keys, or provider configuration.</span></li><li><strong><span>Podcasts:</span></strong><span> Availability depends on public publisher feeds. Apple subscriber-only audio is excluded, and notification timing depends on iOS background scheduling.</span></li><li><strong><span>Widgets:</span></strong><span> Require installation with the widget extension and correctly configured shared access.</span></li><li><strong><span>On-device AI:</span></strong><span> Requires compatible hardware and model availability.</span></li><li><strong><span>Cloud AI:</span></strong><span> Requires explicit permission before requests can leave the device.</span></li></ul><h2><span>Feedback and Support</span></h2><p><span>Report bugs or suggest features through </span><a href="https://github.com/Seperatebugle21/Echo/issues"><span><span><strong><span>Echo’s GitHub Issues</span></strong></span></span></a><span>.</span></p><p><span>For bug reports, include your </span><strong><span>device model, iOS version, Echo build, and steps to reproduce the issue</span></strong><span>.</span></p><!--EndFragment-->
+</body>
+</html>Echo — First Release
+Your music. Your podcasts. Your listening experience.
+Meet Echo, a native music and podcast player for iPhone and iPad. Bring your personal music collection, playlists, podcasts, and audio discovery together in one customizable app.
+The first release introduces offline listening, smart playlists, advanced audio controls, Spotify playlist transfer, interactive widgets, and Echo Intelligence, an optional experimental assistant.
+Your Music, Organized Your Way
+Build a personal library from imported audio files and enjoy your collection offline.
+- Browse your music by song, album, or artist.
+- Edit track information and album artwork.
+- Save favorite songs and favorite albums independently.
+- Return to recently played tracks and explore newly added music.
+- Use listening history and library-based recommendations to rediscover your collection.
+Playlists That Work for You
+Create personal playlists with built-in covers or custom artwork, including image cropping and positioning.
+For collections that evolve automatically, use Smart Playlists. Choose a preset or build rules around genre, release year, favorites, and listening activity, with configurable filters and sorting.
+A Home Screen Built Around You
+Make Home reflect how you listen. Add, remove, and reorder sections to keep your most-used collections within reach.
+Explore:
+- Quick Picks and personalized recommendations.
+- Recently played and recently added music.
+- Favorite artists, songs, and albums.
+- Hidden gems and albums worth revisiting.
+- Listening activity and podcast recommendations.
+- Echo Flow, a continuous listening session drawn from your library.
+The Home Now Playing card includes an audio-reactive visualization that responds to local music playback.
+More Control Over Your Sound
+Move between the mini-player and full-screen player, manage a shared music and podcast queue, and keep listening in the background.
+- Add tracks to play next and reorder the queue.
+- Use shuffle and repeat.
+- Control playback from the Lock Screen and Control Center.
+- Send audio to compatible devices using AirPlay.
+Equalizer and Audio Output
+Shape local music playback with a six-band equalizer, built-in presets, and custom adjustments. Choose stereo or mono output to suit your preferences.
+Choose How Tracks Connect
+Playback mode	Experience
+Direct	Standard track-to-track playback.
+Gapless	Continuous playback between tracks.
+Crossfade	Adjustable overlap from 1 to 12 seconds.
+Mix	Automatic transitions that attempt beat alignment for suitable tracks, with an energy-based crossfade when reliable alignment is unavailable.
+
+
+Preview transitions using built-in examples or songs from your own library.
+Podcasts, Online and Offline
+Discover podcasts through Apple’s podcast catalog and explore episodes from publishers’ public RSS feeds.
+- Save shows and individual episodes.
+- Download episodes for offline listening.
+- Resume unfinished episodes from your saved position.
+- Adjust playback speed.
+- Rewind 15 seconds or skip forward 30 seconds.
+- Queue episodes alongside music.
+- Read publisher-provided transcripts when available in a supported format.
+- Follow shows and optionally receive notifications for newly detected episodes.
+Podcast playback uses Echo’s shared player, including AirPlay and Lock Screen controls.
+Discover Music and Bring It Into Echo
+Spotify Playlist Transfer
+Connect Spotify to browse your library and transfer playlists into Echo.
+Echo reuses matching songs already in your local collection and can queue missing tracks through Fetch while preserving their playlist positions.
+Spotify supplies catalog and playlist information. Audio retrieval depends on the configured Fetch sources.
+Fetch: Search, Download, and Import
+Bring audio discovery and downloads into one workflow.
+- Search supported catalogs for songs, artists, and albums.
+- Explore Spotify and YouTube Music catalog results.
+- Open supported links and direct MP3 sources.
+- Use supported YouTube sources and configurable download providers.
+- Select output bitrates of 128, 192, or 320 kbps.
+- Process metadata and artwork where available.
+- Use Find missing songs to compare a local album with an online edition and select missing tracks for download.
+Source availability and download results depend on the selected provider and its configuration.
+Lyrics That Follow the Music
+View synchronized lyrics when available, follow the current line during playback, and tap a timed line to jump to that moment in the song.
+When timing information is unavailable, Echo can display plain lyrics instead.
+Lyrics availability depends on provider access and track matching.
+Make Echo Your Own
+Personalize both the appearance and navigation of the app.
+- Choose system, light, dark, or custom appearance.
+- Create solid-color or gradient backgrounds.
+- Select from ten accent presets or choose a custom accent color.
+- Preview appearance changes.
+- Customize Home sections, navigation tabs, and your starting tab.
+Echo’s main interface supports English, Dutch, French, and German.
+Playback Within Reach
+Interactive Widgets
+Choose from four player widget layouts and a Quick Picks widget.
+Supported layouts offer playback controls and favorite actions, while Quick Picks provides direct access to recommended songs. A Lock Screen launcher lets you open Echo quickly.
+Siri and Shortcuts
+Access supported playback and library actions through Siri and Apple Shortcuts.
+Echo Intelligence
+Optional. Experimental. Disabled by default.
+Enable Echo Intelligence in Settings → Experimental to access an assistant with text input, voice interaction, and an animated visual interface.
+Supported actions include:
+- Finding music in your local library.
+- Controlling playback and managing the queue.
+- Creating and managing playlists.
+- Working with saved podcasts.
+- Adjusting selected app and audio settings.
+You Choose Its Access
+Permission mode	Behavior
+Chat Only	Conversations and read-only queries.
+Ask Before Actions	Confirmation before changes are made.
+Full App Control	Direct execution of supported actions.
+
+
+Playlist deletion always requires confirmation.
+Provider options include Apple’s on-device models, a downloadable local Qwen model, and configurable cloud services. Capabilities vary by provider. Local Qwen supports conversation, with a separate command path for common music controls.
+Experimental Intelligence features currently support English and Dutch, with English fallback for other app languages.
+Compatibility and Availability
+Requires iOS or iPadOS 26.0 or later.
+- Offline listening: Available for imported music and downloaded podcast episodes.
+- Online features: Discovery, downloads, lyrics, Spotify account features, and cloud AI require internet access and may need authentication, API keys, or provider configuration.
+- Podcasts: Availability depends on public publisher feeds. Apple subscriber-only audio is excluded, and notification timing depends on iOS background scheduling.
+- Widgets: Require installation with the widget extension and correctly configured shared access.
+- On-device AI: Requires compatible hardware and model availability.
+- Cloud AI: Requires explicit permission before requests can leave the device.
+Feedback and Support
+Report bugs or suggest features through [Echo’s GitHub Issues](https://github.com/Seperatebugle21/Echo/issues).
+For bug reports, include your device model, iOS version, Echo build, and steps to reproduce the issue.",
+      "iconURL": "https://raw.githubusercontent.com/Seperatebugle21/Echo/main/icon.png",
+      "tintColor": "007AFF"
     }
   ]
 }
