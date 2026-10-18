@@ -98,7 +98,7 @@ struct FavoriteAlbumsFeatureArtwork: View {
                 }.opacity(0.72).offset(y: 14)
                 Circle().fill(.regularMaterial).frame(width: 72, height: 72).shadow(radius: 10, y: 4)
                 Image(systemName: "opticaldisc.fill").font(.system(size: 34, weight: .semibold)).foregroundStyle(.pink)
-                    .overlay(alignment: .bottomTrailing) { Image(systemName: "heart.fill").font(.caption).foregroundStyle(.red) }
+                    .overlay(alignment: .bottomTrailing) { Image(systemName: "heart.fill").font(.caption).foregroundStyle(Color.accentColor) }
             }
         }
     }

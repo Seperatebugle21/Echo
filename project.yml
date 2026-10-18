@@ -12,6 +12,9 @@ settings:
     TARGETED_DEVICE_FAMILY: "1,2"
 
 packages:
+  MLXLanguageModels:
+    url: https://github.com/ml-explore/mlx-swift-examples
+    exactVersion: 2.25.6
   SwiftSoup:
     url: https://github.com/scinfu/SwiftSoup.git
     from: 2.6.0
@@ -50,6 +53,10 @@ targets:
         Release:
           OTHER_LDFLAGS: "$(inherited) -Xlinker -export_dynamic -Xlinker -force_load -Xlinker $(ECHO_PYTHON_BIN)"
     dependencies:
+      - package: MLXLanguageModels
+        product: MLXLLM
+      - package: MLXLanguageModels
+        product: MLXLMCommon
       - package: SwiftSoup
       - package: YoutubeDL
       - package: PythonKit
@@ -92,6 +99,26 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.home-ui-tests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: Echo
+
+  EchoIntelligenceTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests/EchoIntelligenceTests.swift
+      - path: Echo.swiftpm/Echo/Intelligence/AIDJSelection.swift
+      - path: Echo.swiftpm/Echo/Intelligence/AIResponseSafety.swift
+      - path: Echo.swiftpm/Echo/Models/Song.swift
+      - path: Tests/EchoIntelligencePersistenceTests.swift
+      - path: Tests/EchoAppleToolTests.swift
+      - path: Echo.swiftpm/Echo/Intelligence/AppleAITools.swift
+      - path: Echo.swiftpm/Echo/Intelligence/AISettingsStore.swift
+      - path: Echo.swiftpm/Echo/Intelligence/AIModels.swift
+      - path: Echo.swiftpm/Echo/Intelligence/EchoToolRegistry.swift
+      - path: Echo.swiftpm/Echo/Models/EchoLocalization.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.intelligence-tests
+        GENERATE_INFOPLIST_FILE: YES
 
   EchoArtistTests:
     type: bundle.unit-test
@@ -144,6 +171,7 @@ targets:
       - path: Echo.swiftpm/Echo/Podcasts/PodcastTranscript.swift
       - path: Echo.swiftpm/Echo/Views/TabBarSettingsView.swift
       - path: Echo.swiftpm/Echo/Views/EchoAppearance.swift
+      - path: Echo.swiftpm/Echo/Models/EchoAccentColor.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.podcast-tests
@@ -169,6 +197,10 @@ targets:
       - path: Echo.swiftpm/Echo/Models/LibraryAlbums.swift
       - path: Echo.swiftpm/Echo/Spotify/SpotifyURLParser.swift
       - path: Echo.swiftpm/Echo/YoutubeMusic/YouTubeMusicMetadata.swift
+      - path: Tests/HomeConfigurationTests.swift
+      - path: Echo.swiftpm/Echo/Models/HomeConfiguration.swift
+      - path: Tests/AudioVisualizationTests.swift
+      - path: Echo.swiftpm/Echo/Managers/AudioVisualization.swift
       - path: Tests/HomeMusicSelectionTests.swift
       - path: Tests/SmartMusicTests.swift
       - path: Echo.swiftpm/Echo/Models/SmartMusicSelection.swift
@@ -181,6 +213,7 @@ targets:
       - path: Tests/EchoReleaseDetectionTests.swift
       - path: Tests/EchoAudioEngineTests.swift
       - path: Tests/EchoThemeTests.swift
+      - path: Tests/EchoAccentColorTests.swift
       - path: Tests/EchoPlaybackInteractionTests.swift
       - path: Tests/EchoSmartPlaylistOverrideTests.swift
       - path: Echo.swiftpm/Echo/Models/Song.swift
@@ -198,12 +231,19 @@ targets:
       - path: Echo.swiftpm/Echo/Podcasts/PodcastModels.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastReleaseDetection.swift
       - path: Echo.swiftpm/Echo/Views/EchoAppearance.swift
+      - path: Echo.swiftpm/Echo/Models/EchoAccentColor.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.feature-tests
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:
+  EchoIntelligenceTests:
+    build:
+      targets:
+        EchoIntelligenceTests: all
+    test:
+      targets: [EchoIntelligenceTests]
   EchoHomeInteractionTests:
     build:
       targets:

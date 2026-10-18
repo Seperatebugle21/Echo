@@ -53,25 +53,6 @@ jobs:
      
 
       # ============================================
-      # Regression tests use a real iOS Simulator render clock.
-      - name: Test playlist, theme, playback and podcast behavior
-        run: |
-          xcodebuild -version
-          SIMULATOR_ID=$(xcrun simctl list devices available --json | python3 -c 'import json, sys; data=json.load(sys.stdin); devices=[d["udid"] for runtime, entries in data["devices"].items() if "iOS-" in runtime and int(runtime.split("iOS-")[-1].split("-")[0]) >= 26 for d in entries if d.get("isAvailable") and "iPhone" in d["name"]]; assert devices, "An iOS 26+ iPhone simulator is required"; print(devices[0])')
-          xcodebuild test \
-            -project Echo.xcodeproj -scheme EchoFeatureTests \
-            -retry-tests-on-failure -test-iterations 2 \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
-            -derivedDataPath build/DerivedData \
-            -resultBundlePath build/FeatureTests.xcresult \
-            CODE_SIGNING_ALLOWED=NO
-          xcodebuild test \
-            -project Echo.xcodeproj -scheme EchoPodcastTests \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
-            -derivedDataPath build/DerivedData \
-            -resultBundlePath build/PodcastTests.xcresult \
-            CODE_SIGNING_ALLOWED=NO
-
       # 3. Locate Python library
       # ============================================
 

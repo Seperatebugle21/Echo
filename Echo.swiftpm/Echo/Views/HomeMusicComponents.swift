@@ -210,6 +210,7 @@ struct HomeForYouSection: View {
                     }
                 }.padding(.horizontal, 20).padding(.vertical, 8)
             }.scrollIndicators(.hidden)
+                .scrollClipDisabled()
         }.sensoryFeedback(.selection, trigger: playbackFeedback)
     }
 }

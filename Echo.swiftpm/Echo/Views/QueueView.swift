@@ -22,7 +22,7 @@ struct QueueView: View {
                             Image(systemName: audioPlayer.repeatMode == .one ? "repeat.1" : "repeat")
                                 .font(.title3)
                                 .bold()
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Color.accentColor)
                             
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(audioPlayer.repeatMode == .one ? "repeat_one_active" : "repeat_all_active")
@@ -58,7 +58,7 @@ struct QueueView: View {
                             Spacer()
                             
                             Image(systemName: "speaker.wave.2.fill")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Color.accentColor)
                         }
                     }
                 }

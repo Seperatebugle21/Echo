@@ -4,6 +4,8 @@ struct HomeView: View {
     @Environment(MusicLibraryManager.self) private var library
     @Environment(AudioPlayerManager.self) private var player
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage(HomeConfiguration.storageKey) private var storedLayout = ""
+    @AppStorage(AISettingsStore.enabledKey) private var intelligenceEnabled = false
     @State private var picks: [Song] = []
     @State private var recent: [Song] = []
     @State private var added: [Song] = []
@@ -16,6 +18,7 @@ struct HomeView: View {
     @State private var selectedSong: Song?
     @State private var optionsFeedback = 0
     @State private var podcastRecommendations = PodcastRecommendationsModel()
+    private let smartModel = HomeSmartSectionsModel.shared
     private let session = HomeSessionManager.shared
     private let recommendations = RecommendationManager.shared
 
@@ -26,46 +29,9 @@ struct HomeView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         header
-                        HomeNowPlayingSpotlight(fallback: recent.first ?? added.first, queue: localSongs)
-                            .padding(.horizontal, 20)
-                        quickAccess(layout: layout)
-                        if !picks.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                HomeSectionTitle(title: "home_quick_picks").padding(.horizontal, 20)
-                                songRail(picks, width: layout.song)
-                            }
+                        ForEach(HomeConfiguration.decode(storedLayout).sections) { section in
+                            homeSection(section, layout: layout)
                         }
-                        if !mixes.isEmpty {
-                            HomeForYouSection(mixes: mixes, width: layout.mix, play: play)
-                        }
-                        if !recent.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                HomeSectionLink(title: "homeview_recent_played") { RecentPlayedView() }
-                                songRail(Array(recent.prefix(12)), width: layout.song)
-                            }
-                        }
-                        if !artistIDs.isEmpty { artistSection(width: layout.song) }
-                        if !added.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                HomeSectionLink(title: "homeview_recent_added") { RecentAddedView() }
-                                songRail(Array(added.prefix(12)), width: layout.song)
-                            }
-                        }
-                        HomeDiscoverySection(recommendations: podcastRecommendations.shows, playSong: play, width: layout.discovery)
-                        // Keep Echo's existing album, favorite and podcast entry points.
-                        HomeLocalAlbumSection(coverWidth: layout.song)
-                        if !favorites.isEmpty {
-                            VStack(alignment: .leading, spacing: 10) {
-                                HomeSectionLink(title: "homeview_favorites") { FavoritesView() }
-                                songRail(Array(favorites.prefix(12)), width: layout.song)
-                            }
-                        }
-                        PodcastRecommendationsSection(
-                            shows: podcastRecommendations.shows, loading: podcastRecommendations.loading,
-                            failed: podcastRecommendations.failed, retry: { podcastRecommendations.retry += 1 }
-                        )
-                        HomeOnlineAlbumSection(coverWidth: layout.song)
-                        HomeSmartSections(coverWidth: layout.song)
                     }
                     .padding(.top, 8)
                     // ContentView already reserves the live MiniPlayer and tab safe areas.
@@ -82,14 +48,94 @@ struct HomeView: View {
             .sheet(isPresented: Bindable(library).showEditSheet) {
                 if let song = library.editingSong { EditSongView(song: song) }
             }
+            .task(id: library.songRevision) { await smartModel.prepare(library: library); await smartModel.updateListening() }
+            .task(id: library.favoriteRevision) { await smartModel.prepare(library: library) }
+            .task(id: recommendations.revision) { await smartModel.updateListening() }
+            .onChange(of: player.playbackErrorKey) { if let key = player.playbackErrorKey { smartModel.reportPlaybackError(key) } }
+            .alert("smart_playback_error", isPresented: Binding(get: { smartModel.errorKey != nil }, set: { if !$0 { smartModel.dismissError() } })) {
+                Button("action_close") { smartModel.dismissError() }
+            } message: { Text(LocalizedStringKey(smartModel.errorKey ?? "smart_file_unavailable")) }
             .task(id: podcastRecommendations.taskID) { await podcastRecommendations.load() }
             .onAppear(perform: prepare)
             .onChange(of: library.songRevision) { prepare() }
             .onChange(of: library.favoriteRevision) { prepare() }
             .onChange(of: library.artistGroups.map(\.id)) { prepareArtists() }
-            .onChange(of: scenePhase) { if scenePhase == .active { prepare() } }
+            .onChange(of: scenePhase) {
+                if scenePhase == .active {
+                    prepare()
+                    Task { await smartModel.prepare(library: library); await smartModel.updateListening() }
+                }
+            }
             .sensoryFeedback(.selection, trigger: optionsFeedback)
         }
+    }
+
+    @ViewBuilder
+    private func homeSection(_ section: HomeSection, layout: HomeCardLayout) -> some View {
+        switch section {
+        case .nowPlaying:
+            HomeNowPlayingSpotlight(fallback: recent.first ?? added.first, queue: localSongs)
+                .padding(.horizontal, 20)
+        case .quickAccess: quickAccess(layout: layout)
+        case .quickPicks:
+            if !picks.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HomeSectionTitle(title: "home_quick_picks").padding(.horizontal, 20)
+                    songRail(picks, width: layout.song)
+                }
+            }
+        case .forYou:
+            if !mixes.isEmpty { HomeForYouSection(mixes: mixes, width: layout.mix, play: play) }
+        case .recentlyPlayed:
+            if !recent.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HomeSectionLink(title: "homeview_recent_played") { RecentPlayedView() }
+                    songRail(Array(recent.prefix(12)), width: layout.song)
+                }
+            }
+        case .artists:
+            if !artistIDs.isEmpty { artistSection(width: layout.song) }
+        case .recentlyAdded:
+            if !added.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HomeSectionLink(title: "homeview_recent_added") { RecentAddedView() }
+                    songRail(Array(added.prefix(12)), width: layout.song)
+                }
+            }
+        case .discovery:
+            HomeDiscoverySection(recommendations: podcastRecommendations.shows, playSong: play, width: layout.discovery)
+        case .albums: HomeLocalAlbumSection(coverWidth: layout.song)
+        case .favorites:
+            if !favorites.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HomeSectionLink(title: "homeview_favorites") { FavoritesView() }
+                    songRail(Array(favorites.prefix(12)), width: layout.song)
+                }
+            }
+        case .podcasts:
+            PodcastRecommendationsSection(
+                shows: podcastRecommendations.shows, loading: podcastRecommendations.loading,
+                failed: podcastRecommendations.failed, retry: { podcastRecommendations.retry += 1 }
+            )
+        case .onlineAlbums: HomeOnlineAlbumSection(coverWidth: layout.song)
+        case .playlists:
+            homeLibraryShortcut(title: "libraryview_playlists", symbol: "music.note.list") { PlaylistsView() }
+        case .favoriteAlbums:
+            homeLibraryShortcut(title: "library_favorite_albums", symbol: "heart.fill") { FavoriteAlbumsView() }
+        default:
+            HomeSmartSections(coverWidth: layout.song, selectedSection: section)
+        }
+    }
+
+    private func homeLibraryShortcut<Destination: View>(title: LocalizedStringKey, symbol: String,
+                                                       @ViewBuilder destination: () -> Destination) -> some View {
+        NavigationLink { destination().toolbarVisibility(.visible, for: .navigationBar) } label: {
+            HStack {
+                Label(title, systemImage: symbol).font(.headline)
+                Spacer()
+                Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+            }.frame(minHeight: 44).smartCard()
+        }.buttonStyle(HomePressStyle()).padding(.horizontal, 20)
     }
 
     private var header: some View {
@@ -100,6 +146,9 @@ struct HomeView: View {
                     .foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
             }
             Spacer(minLength: 4)
+            if intelligenceEnabled {
+                headerButton("sparkles", label: "ai_title") { AppRouter.shared.showIntelligence = true }
+            }
             headerButton("magnifyingglass", label: "tab_search") { showSearch = true }
             headerButton("gearshape", label: "tab_settings") { showSettings = true }
         }.padding(.horizontal, 20)
@@ -112,7 +161,7 @@ struct HomeView: View {
                 .overlay { Circle().strokeBorder(.primary.opacity(0.06)) }
                 .contentShape(.circle)
         }.buttonStyle(HomePressStyle()).accessibilityLabel(label)
-            .accessibilityIdentifier(symbol == "gearshape" ? "home-settings" : "home-search")
+            .accessibilityIdentifier(symbol == "sparkles" ? "home-intelligence" : symbol == "gearshape" ? "home-settings" : "home-search")
     }
 
     private func quickAccess(layout: HomeCardLayout) -> some View {
@@ -129,7 +178,7 @@ struct HomeView: View {
                                             playlists: false, song: recent.first, width: layout.access)
                     }
                     NavigationLink { SongsView().toolbarVisibility(.visible, for: .navigationBar) } label: {
-                        HomeQuickAccessCard(title: "home_downloads", symbol: "arrow.down.to.line", count: localSongs.count,
+                        HomeQuickAccessCard(title: "tab_songs", symbol: "music.note", count: localSongs.count,
                                             playlists: false, song: added.first, width: layout.access)
                     }
                     NavigationLink { PlaylistsView().toolbarVisibility(.visible, for: .navigationBar) } label: {
@@ -138,6 +187,7 @@ struct HomeView: View {
                     }
                 }.buttonStyle(HomePressStyle()).padding(.horizontal, 20).padding(.vertical, 8)
             }.scrollIndicators(.hidden)
+                .scrollClipDisabled()
         }
     }
 

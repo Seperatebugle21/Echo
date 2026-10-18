@@ -1,6 +1,30 @@
 import SwiftUI
 import XCTest
 final class EchoThemeTests: XCTestCase {
+    @MainActor func testAccentPersistsWithoutChangingBackgroundOrAppearance() throws {
+        let domain = "EchoThemeTests.\(UUID())"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let theme = EchoTheme(defaults: defaults)
+        XCTAssertEqual(theme.accent.hex, EchoAccentColor.defaultHex)
+        let original = theme.sharedPalette
+        theme.accent = EchoAccentColor(hex: "42A7B3")
+        let restored = EchoTheme(defaults: defaults)
+        XCTAssertEqual(restored.accent.hex, "42A7B3")
+        XCTAssertEqual(restored.sharedPalette, original)
+        XCTAssertEqual(restored.mode, "system")
+        restored.accent = EchoAccentPreset.red.color
+        XCTAssertEqual(EchoTheme(defaults: defaults).accent.hex, EchoAccentColor.defaultHex)
+    }
+
+    @MainActor func testInvalidSavedAccentRecovers() throws {
+        let domain = "EchoThemeTests.\(UUID())"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: domain))
+        defer { defaults.removePersistentDomain(forName: domain) }
+        defaults.set("invalid", forKey: EchoAccentColor.storageKey)
+        XCTAssertEqual(EchoTheme(defaults: defaults).accent.hex, EchoAccentColor.defaultHex)
+    }
+
     @MainActor func testSeparatePalettesFollowSystemRatherThanTextColor() throws {
         let domain = "EchoThemeTests.\(UUID())"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: domain))

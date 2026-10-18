@@ -3,12 +3,14 @@ import Observation
 import UIKit
 
 struct ContentView: View {
+    @AppStorage(AISettingsStore.enabledKey) private var intelligenceEnabled = false
     @State private var miniPlayerHidden = false
     private let router = AppRouter.shared
     @State private var routedSheet: RoutedSheet?
     @State private var routedPodcast: PodcastShow?
+    @State private var routedTab: AppTab = .home
     private enum RoutedSheet: String, Identifiable {
-        case fetch, podcast
+        case fetch, podcast, tab
         var id: String { rawValue }
     }
     @State private var selectedTab = TabBarConfiguration.load().startTab
@@ -42,9 +44,6 @@ struct ContentView: View {
             GeometryReader { safeGeometry in
                 GeometryReader { fullGeometry in
                     ZStack(alignment: .topLeading) {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .allowsHitTesting(presentation.isVisible)
                         // One persistent player; tabs only report its reserved space.
                         let slot = presentation.dockSlotFrame
                         let dockReady = audioPlayer.currentSong != nil && slot.width > 0
@@ -65,7 +64,9 @@ struct ContentView: View {
                             x: slot.minX - fullGeometry.frame(in: .global).minX + 8,
                             y: slot.minY - fullGeometry.frame(in: .global).minY
                         )
-                        .allowsHitTesting(dockReady && !coverEntrance)
+                        // Keep the finger that started an opening drag attached until release.
+                        .allowsHitTesting(dockReady && !coverEntrance
+                            && (!presentation.isVisible || presentation.isTrackingOpening))
                         .accessibilityHidden(presentation.isVisible)
 
                         if dockReady && coverEntrance, let song = presentation.entranceSong {
@@ -86,6 +87,13 @@ struct ContentView: View {
                             .allowsHitTesting(false)
                             .accessibilityHidden(true)
                         }
+
+                        // Above the dock: new touches cannot reach its hidden controls,
+                        // while an already-started opening drag can finish normally.
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { }
+                            .allowsHitTesting(presentation.isVisible)
 
                         if audioPlayer.currentSong != nil {
                             ExpandedPlayerSurface(
@@ -132,10 +140,21 @@ struct ContentView: View {
         .sheet(item: $routedSheet) { item in
             switch item {
             case .fetch: FetchView()
+            case .tab: tabContent(routedTab)
             case .podcast:
                 if let routedPodcast { NavigationStack { PodcastDetailView(show: routedPodcast) } }
             }
         }
+        .fullScreenCover(isPresented: Binding(
+            get: { intelligenceEnabled && router.showIntelligence },
+            set: { router.showIntelligence = $0 }
+        ), onDismiss: {
+            if let destination = router.intelligenceDestination {
+                router.intelligenceDestination = nil
+                router.open(.tab(destination))
+            }
+        }) { EchoIntelligenceView() }
+        .onChange(of: intelligenceEnabled) { if !intelligenceEnabled { router.showIntelligence = false } }
         .onChange(of: router.revision) { consumeRoute() }
         .onAppear { consumeRoute() }
         .alert("podcasts_error_title", isPresented: Binding(
@@ -169,6 +188,9 @@ private extension ContentView {
         router.pending = nil
         showTabSettings = false
         switch route {
+        case .tab(let tab):
+            if tabConfiguration.tabs.contains(tab) { selectedTab = tab }
+            else { routedTab = tab; routedSheet = .tab }
         case .fetch:
             if tabConfiguration.tabs.contains(.fetch) { selectedTab = .fetch }
             else { routedSheet = .fetch }
@@ -740,13 +762,15 @@ final class MiniPlayerPresentation {
     private func settle(open: Bool, reduceMotion: Bool) {
         let currentToken = UUID()
         token = currentToken
+        // This is the interaction destination, not an animation-completion flag.
+        // Buttons and closing gestures must work while a tap-open is still moving.
+        isExpanded = open
         let animation: Animation = reduceMotion
             ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 0.92)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
             guard self.token == currentToken else { return }
-            self.isExpanded = open
             self.isVisible = open
             if self.homeCardSong != nil {
                 // At full size the source rectangle no longer affects the surface.

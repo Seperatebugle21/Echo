@@ -13,7 +13,7 @@ struct HomeLocalAlbumSection: View {
     var body: some View {
         if !shown.isEmpty {
             VStack(alignment: .leading, spacing: 13) {
-                Text("home_local_albums").font(.title2.bold()).padding(.horizontal, 20)
+                HomeSectionLink(title: "home_local_albums") { AlbumsView() }
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 12) {
                         ForEach(shown) { album in

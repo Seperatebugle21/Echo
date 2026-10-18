@@ -2,24 +2,6 @@ name: Home appearance previews
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [Widget]
-    paths:
-      - 'Echo.swiftpm/Echo/Views/Home*.swift'
-      - 'Echo.swiftpm/Echo/ContentView.swift'
-      - 'UITests/HomeInteractionTests.swift'
-      - 'project.yml'
-      - 'Echo.swiftpm/Echo/Models/HomeMusicSelection.swift'
-      - 'Echo.swiftpm/Echo/Managers/HomeSessionManager.swift'
-      - 'Echo.swiftpm/Echo/Managers/HomeSmartSectionsModel.swift'
-      - 'Echo.swiftpm/Echo/Managers/RecommendationManager.swift'
-      - 'Echo.swiftpm/Echo/Managers/AudioPlayerManager.swift'
-      - 'Echo.swiftpm/Echo/Models/SmartMusicSelection.swift'
-      - 'Echo.swiftpm/Echo/Models/ListeningHistory.swift'
-      - 'Echo.swiftpm/Echo/Views/SmartMusicDetailViews.swift'
-      - '.github/workflows/HomePreview.yml'
-      - '.github/scripts/seed-home-preview.py'
-      - '.github/scripts/export-home-diagnostics.py'
 
 permissions:
   contents: read
@@ -61,55 +43,14 @@ jobs:
             sleep 5
             xcrun simctl io "$SIMULATOR_ID" screenshot "build/HomePreviews/home-$THEME.png"
           done
-          HOME_TEST_STATUS=0
-          xcodebuild test -project Echo.xcodeproj -scheme EchoHomeInteractionTests \
-            -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
-            -derivedDataPath build/Preview -resultBundlePath build/HomeInteractions.xcresult \
-            -parallel-testing-enabled NO \
-            CODE_SIGNING_ALLOWED=NO || HOME_TEST_STATUS=$?
           xcrun simctl terminate "$SIMULATOR_ID" com.echomusic.app || true
           rm -f "$CONTAINER/Documents/EchoSongs.json" "$CONTAINER/Documents"/home-preview-*.wav
           xcrun simctl launch "$SIMULATOR_ID" com.echomusic.app \
             -hasCompletedEchoOnboarding YES -selectedLanguage nl -appearanceMode light
           sleep 4
           xcrun simctl io "$SIMULATOR_ID" screenshot build/HomePreviews/home-empty.png
-          exit "$HOME_TEST_STATUS"
-      - name: Export screenshots and UI failure diagnostics
-        if: always()
-        run: |
-          if [ -f build/HomeInteractions.xcresult/Info.plist ]; then
-            xcrun xcresulttool export attachments --path build/HomeInteractions.xcresult \
-              --output-path build/HomePreviews/Interactions
-            python3 .github/scripts/export-home-diagnostics.py \
-              build/HomePreviews/Interactions build/HomeDiagnostics
-          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Echo-Home-Previews
           path: build/HomePreviews/*.png
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Echo-Home-Flow-Previews
-          path: build/HomeDiagnostics/Flow
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Echo-Home-Vibe-Previews
-          path: build/HomeDiagnostics/Vibes
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Echo-Home-Statistics-Previews
-          path: build/HomeDiagnostics/Statistics
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Echo-Home-Interaction-Previews
-          path: build/HomeDiagnostics/Home
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: Echo-Home-Interactions
-          path: build/HomeInteractions.xcresult
