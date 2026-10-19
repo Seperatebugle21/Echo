@@ -1,4 +1,5 @@
 import SwiftUI
+import AppIntents
 
 
 @main
@@ -124,6 +125,7 @@ struct EchoApp: App {
             // MARK: - Prepare Background Fetch
 
             .task {
+                EchoShortcuts.updateAppShortcutParameters()
                 PodcastStore.shared.prepare()
                 EchoWidgetSnapshotPublisher.refresh()
 

@@ -7,35 +7,24 @@ import AppIntents
 // ============================================================
 
 enum EchoSiriError: LocalizedError {
+    case songNotFound, playlistNotFound, playlistEmpty, audioFileMissing, nothingPlaying
+    case localMusicRequired, operationFailed, commandNotUnderstood, invalidDuration
 
-    case songNotFound
-    case playlistNotFound
-    case playlistEmpty
-    case audioFileMissing
-    case nothingPlaying
-
-    var errorDescription: String? {
-
+    var localizationKey: String {
         switch self {
-
-        case .songNotFound:
-            return "Ik kan dat nummer niet vinden in Echo."
-
-        case .playlistNotFound:
-            return "Ik kan die playlist niet vinden in Echo."
-
-        case .playlistEmpty:
-            return "Die playlist bevat geen nummers."
-
-        case .audioFileMissing:
-            return "Het audiobestand kon niet worden gevonden."
-
-        case .nothingPlaying:
-            return "Er speelt momenteel geen nummer in Echo."
+        case .songNotFound: "siri_error_song"
+        case .playlistNotFound: "siri_error_playlist"
+        case .playlistEmpty: "siri_error_empty"
+        case .audioFileMissing: "siri_error_audio"
+        case .nothingPlaying: "siri_error_current"
+        case .localMusicRequired: "siri_error_local"
+        case .operationFailed: "siri_error_failed"
+        case .commandNotUnderstood: "siri_error_command"
+        case .invalidDuration: "siri_error_duration"
         }
     }
+    var errorDescription: String? { EchoSiriText.string(localizationKey) }
 }
-
 
 // ============================================================
 // MARK: - Fuzzy Siri Matcher
@@ -88,46 +77,10 @@ enum EchoSiriMatcher {
     }
 
 
-    static func cleanedRequest(
-        _ value: String
-    ) -> String {
-
-        var result =
-            normalize(
-                value
-            )
-
-
-        let removable = [
-
-            "speel ",
-            "play ",
-            "start ",
-            "nummer ",
-            "liedje ",
-            "song ",
-            "playlist ",
-            "afspeellijst ",
-            "met echo",
-            "op echo",
-            "in echo",
-            "via echo"
-        ]
-
-
-        for word in removable {
-
-            result =
-                result.replacingOccurrences(
-                    of: word,
-                    with: ""
-                )
-        }
-
-
-        return normalize(
-            result
-        )
+    static func cleanedRequest(_ value: String) -> String {
+        // Siri already extracts the entity parameter. Stripping command words here
+        // corrupts titles such as “Play That Song” and “Start Me Up”.
+        normalize(value)
     }
 
 
@@ -549,7 +502,7 @@ struct EchoSongEntity:
     static var typeDisplayRepresentation =
         TypeDisplayRepresentation(
             name:
-                "Nummer"
+                "siri_song"
         )
 
 
@@ -563,7 +516,7 @@ struct EchoSongEntity:
 
     @Property(
         title:
-            "Titel"
+            "siri_title"
     )
     var title:
         String
@@ -571,7 +524,7 @@ struct EchoSongEntity:
 
     @Property(
         title:
-            "Artiest"
+            "siri_artist"
     )
     var artist:
         String
@@ -757,7 +710,7 @@ struct EchoPlaylistEntity:
     static var typeDisplayRepresentation =
         TypeDisplayRepresentation(
             name:
-                "Playlist"
+                "siri_playlist"
         )
 
 
@@ -771,7 +724,7 @@ struct EchoPlaylistEntity:
 
     @Property(
         title:
-            "Naam"
+            "siri_name"
     )
     var name:
         String
@@ -941,12 +894,12 @@ struct PlaySongIntent:
 
     static var title:
         LocalizedStringResource =
-        "Speel nummer"
+        "siri_play_song_title"
 
 
     static var description =
         IntentDescription(
-            "Speelt een nummer uit je Echo-bibliotheek."
+            "siri_play_song_description"
         )
 
 
@@ -956,7 +909,7 @@ struct PlaySongIntent:
 
     @Parameter(
         title:
-            "Nummer"
+            "siri_song"
     )
     var song:
         EchoSongEntity
@@ -1066,12 +1019,12 @@ struct PlayPlaylistIntent:
 
     static var title:
         LocalizedStringResource =
-        "Speel playlist"
+        "siri_play_playlist_title"
 
 
     static var description =
         IntentDescription(
-            "Speelt een playlist uit Echo."
+            "siri_play_playlist_description"
         )
 
 
@@ -1081,7 +1034,7 @@ struct PlayPlaylistIntent:
 
     @Parameter(
         title:
-            "Playlist"
+            "siri_playlist"
     )
     var playlist:
         EchoPlaylistEntity
@@ -1205,12 +1158,12 @@ struct PlayFavoritesIntent:
 
     static var title:
         LocalizedStringResource =
-        "Speel favorieten"
+        "siri_play_favorites_title"
 
 
     static var description =
         IntentDescription(
-            "Speelt je favoriete nummers in Echo."
+            "siri_favorites_description"
         )
 
 
@@ -1274,7 +1227,7 @@ struct EnableShuffleIntent:
 
     static var title:
         LocalizedStringResource =
-        "Shuffle aan"
+        "siri_shuffle_on_title"
 
 
     static var openAppWhenRun =
@@ -1304,7 +1257,7 @@ struct DisableShuffleIntent:
 
     static var title:
         LocalizedStringResource =
-        "Shuffle uit"
+        "siri_shuffle_off_title"
 
 
     static var openAppWhenRun =
@@ -1338,7 +1291,7 @@ struct RepeatCurrentSongIntent:
 
     static var title:
         LocalizedStringResource =
-        "Herhaal dit nummer"
+        "siri_repeat_one_title"
 
 
     static var openAppWhenRun =
@@ -1380,7 +1333,7 @@ struct RepeatAllIntent:
 
     static var title:
         LocalizedStringResource =
-        "Herhaal alles"
+        "siri_repeat_all_title"
 
 
     static var openAppWhenRun =
@@ -1410,7 +1363,7 @@ struct DisableRepeatIntent:
 
     static var title:
         LocalizedStringResource =
-        "Herhalen uit"
+        "siri_repeat_off_title"
 
 
     static var openAppWhenRun =
@@ -1439,184 +1392,51 @@ struct DisableRepeatIntent:
 // MARK: - Shortcuts
 // ============================================================
 
-struct EchoShortcuts:
-    AppShortcutsProvider {
-
-    static var appShortcuts:
-        [AppShortcut] {
-
-        AppShortcut(
-            intent:
-                PlaySongIntent(),
-
-            phrases: [
-
-                "Speel \(\.$song) op \(.applicationName)",
-
-                "Speel \(\.$song) met \(.applicationName)",
-
-                "Speel \(\.$song) in \(.applicationName)",
-
-                "Start \(\.$song) op \(.applicationName)",
-
-                "Speel nummer \(\.$song) op \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Speel nummer",
-
-            systemImageName:
-                "play.fill"
-        )
-
-
-        AppShortcut(
-            intent:
-                PlayPlaylistIntent(),
-
-            phrases: [
-
-                "Speel playlist \(\.$playlist) op \(.applicationName)",
-
-                "Speel playlist \(\.$playlist) met \(.applicationName)",
-
-                "Speel \(\.$playlist) op \(.applicationName)",
-
-                "Start playlist \(\.$playlist) op \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Speel playlist",
-
-            systemImageName:
-                "music.note.list"
-        )
-
-
-        AppShortcut(
-            intent:
-                PlayFavoritesIntent(),
-
-            phrases: [
-
-                "Speel favorieten op \(.applicationName)",
-
-                "Speel mijn favorieten op \(.applicationName)",
-
-                "Start favorieten in \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Speel favorieten",
-
-            systemImageName:
-                "heart.fill"
-        )
-
-
-        AppShortcut(
-            intent:
-                EnableShuffleIntent(),
-
-            phrases: [
-
-                "Shuffle op \(.applicationName)",
-
-                "Zet shuffle aan op \(.applicationName)",
-
-                "Zet shuffle aan in \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Shuffle aan",
-
-            systemImageName:
-                "shuffle"
-        )
-
-
-        AppShortcut(
-            intent:
-                DisableShuffleIntent(),
-
-            phrases: [
-
-                "Zet shuffle uit op \(.applicationName)",
-
-                "Shuffle uit op \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Shuffle uit",
-
-            systemImageName:
-                "shuffle"
-        )
-
-
-        AppShortcut(
-            intent:
-                RepeatCurrentSongIntent(),
-
-            phrases: [
-
-                "Herhaal dit nummer op \(.applicationName)",
-
-                "Herhaal dit liedje op \(.applicationName)",
-
-                "Zet dit nummer op repeat in \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Herhaal nummer",
-
-            systemImageName:
-                "repeat.1"
-        )
-
-
-        AppShortcut(
-            intent:
-                RepeatAllIntent(),
-
-            phrases: [
-
-                "Herhaal alles op \(.applicationName)",
-
-                "Zet repeat aan op \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Herhaal alles",
-
-            systemImageName:
-                "repeat"
-        )
-
-
-        AppShortcut(
-            intent:
-                DisableRepeatIntent(),
-
-            phrases: [
-
-                "Zet herhalen uit op \(.applicationName)",
-
-                "Stop herhalen op \(.applicationName)",
-
-                "Zet repeat uit op \(.applicationName)"
-            ],
-
-            shortTitle:
-                "Herhalen uit",
-
-            systemImageName:
-                "repeat"
-        )
+struct EchoShortcuts: AppShortcutsProvider {
+    // Apple's limit is ten automatically discoverable App Shortcuts. Additional
+    // intents remain available as actions in Shortcuts, including free-form commands.
+    static var appShortcuts: [AppShortcut] {
+        AppShortcut(intent: PlaySongIntent(), phrases: [
+            "Play \(\.$song) in \(.applicationName)",
+            "Start \(\.$song) with \(.applicationName)"
+        ], shortTitle: "siri_play_song_title", systemImageName: "play.fill")
+        AppShortcut(intent: PlayPlaylistIntent(), phrases: [
+            "Play playlist \(\.$playlist) in \(.applicationName)",
+            "Start playlist \(\.$playlist) with \(.applicationName)"
+        ], shortTitle: "siri_play_playlist_title", systemImageName: "music.note.list")
+        AppShortcut(intent: PlayFavoritesIntent(), phrases: [
+            "Play favorites in \(.applicationName)",
+            "Play my favorites with \(.applicationName)"
+        ], shortTitle: "siri_play_favorites_title", systemImageName: "heart.fill")
+        AppShortcut(intent: EnableShuffleIntent(), phrases: [
+            "Shuffle in \(.applicationName)",
+            "Shuffle this song in \(.applicationName)",
+            "Turn shuffle on in \(.applicationName)"
+        ], shortTitle: "siri_shuffle_on_title", systemImageName: "shuffle")
+        AppShortcut(intent: DisableShuffleIntent(), phrases: [
+            "Turn shuffle off in \(.applicationName)",
+            "Disable shuffle in \(.applicationName)"
+        ], shortTitle: "siri_shuffle_off_title", systemImageName: "shuffle")
+        AppShortcut(intent: RepeatCurrentSongIntent(), phrases: [
+            "Repeat this song in \(.applicationName)",
+            "Loop this track in \(.applicationName)"
+        ], shortTitle: "siri_repeat_one_title", systemImageName: "repeat.1")
+        AppShortcut(intent: RepeatAllIntent(), phrases: [
+            "Repeat all in \(.applicationName)"
+        ], shortTitle: "siri_repeat_all_title", systemImageName: "repeat")
+        AppShortcut(intent: DisableRepeatIntent(), phrases: [
+            "Stop repeating in \(.applicationName)",
+            "Turn repeat off in \(.applicationName)"
+        ], shortTitle: "siri_repeat_off_title", systemImageName: "repeat")
+        AppShortcut(intent: StartEchoFlowIntent(), phrases: [
+            "Start flow in \(.applicationName)",
+            "Start flow from this song in \(.applicationName)",
+            "Flow with \(.applicationName)"
+        ], shortTitle: "siri_flow_title", systemImageName: "waveform")
+        AppShortcut(intent: FavoriteCurrentSongIntent(), phrases: [
+            "Favorite this song in \(.applicationName)",
+            "Like this song in \(.applicationName)"
+        ], shortTitle: "siri_favorite_title", systemImageName: "heart")
     }
-
-
-    static var shortcutTileColor:
-        ShortcutTileColor =
-        .red
+    static var shortcutTileColor: ShortcutTileColor = .red
 }
