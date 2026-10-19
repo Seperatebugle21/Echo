@@ -2,6 +2,35 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "widget_quick_picks_play %@ %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Play %@ by %@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speel %@ van %@"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lire %@ de %@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%@ von %@ abspielen"
+        }
+      }
+    }
+  },
   "add_to_playlist_action": {
     "localizations": {
       "nl": {
@@ -13004,7 +13033,7 @@
       "nl": {
         "stringUnit": {
           "state": "translated",
-          "value": "Quick Picks"
+          "value": "Snelle keuzes"
         }
       },
       "fr": {
@@ -13033,7 +13062,7 @@
       "nl": {
         "stringUnit": {
           "state": "translated",
-          "value": "Jouw Quick Picks uit Echo. Tik op een cover om dat nummer af te spelen."
+          "value": "Jouw snelle keuzes uit Echo. Tik op een cover om dat nummer af te spelen."
         }
       },
       "fr": {

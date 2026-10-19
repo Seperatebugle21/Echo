@@ -246,7 +246,7 @@ struct EchoQuickPicksView: View {
                                     .frame(width: width)
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Speel \(song.title) van \(song.artist)")
+                                .accessibilityLabel("widget_quick_picks_play \(song.title) \(song.artist)")
                             }
                         }
                     }
