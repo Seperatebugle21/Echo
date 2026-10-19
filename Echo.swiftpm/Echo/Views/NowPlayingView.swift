@@ -84,31 +84,9 @@ struct NowPlayingView: View {
 
                         Spacer()
 
-                        if let id = song.podcastEpisodeID,
-                           let episode = PodcastStore.shared.state.episodes[id] {
-                            PodcastEpisodeMenu(episode: episode).foregroundStyle(.white)
-                        } else {
-                        Button {
-                            showPlaylistPicker = true
-                        } label: {
-
-                            Image(
-                                systemName:
-                                    "music.note.list"
-                            )
-                            .font(
-                                .title3
-                                    .weight(.medium)
-                            )
-                            .foregroundStyle(.white)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(
-                            LocalizedStringKey(
-                                "add_to_playlist_action"
-                            )
-                        )
-                        }
+                        NowPlayingOptionsButton(song: song,
+                            addToPlaylist: { showPlaylistPicker = true },
+                            showLyrics: { showLyrics = true })
                     }
                     .padding(.horizontal, 28)
                 }

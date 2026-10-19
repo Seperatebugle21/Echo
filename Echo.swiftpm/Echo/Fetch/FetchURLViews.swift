@@ -361,6 +361,7 @@ struct FetchURLInputSheet:
                     placement:
                         .topBarTrailing
                 ) {
+                    Group {
 
                     Button(
                         "fetchurlviews_done"
@@ -368,6 +369,7 @@ struct FetchURLInputSheet:
 
                         dismiss()
                     }
+                    }.tint(.primary)
                 }
             }
 
@@ -676,6 +678,7 @@ struct LegacyFetchURLPreviewView:
                 placement:
                     .topBarTrailing
             ) {
+                Group {
 
                 Button(
                     "fetchurlviews_done"
@@ -683,6 +686,7 @@ struct LegacyFetchURLPreviewView:
 
                     dismiss()
                 }
+                }.tint(.primary)
             }
         }
 

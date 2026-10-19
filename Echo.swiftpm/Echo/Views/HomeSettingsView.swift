@@ -63,6 +63,7 @@ struct HomeSettingsView: View {
         .sheet(isPresented: $showSectionPicker) { HomeSectionPicker() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Group {
                 Menu {
                     Button("tabbarsettingsview_restore_defaults", systemImage: "arrow.counterclockwise") {
                         storedLayout = HomeConfiguration.defaults.encoded
@@ -70,6 +71,7 @@ struct HomeSettingsView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle").frame(width: 44, height: 44)
                 }.accessibilityLabel("home_editor_options")
+                }.tint(.primary)
             }
         }
     }
@@ -143,7 +145,10 @@ private struct HomeSectionPicker: View {
             .echoBackground()
             .navigationTitle("home_customization_available")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("action_done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) {
+                Group { Button("action_done") { dismiss() }
+                }.tint(.primary)
+            } }
         }
     }
 }

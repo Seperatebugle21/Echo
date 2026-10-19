@@ -22,7 +22,9 @@ struct FetchURLPreviewView: View {
         .toolbar {
             if needsDoneButton {
                 ToolbarItem(placement: .topBarTrailing) {
+                    Group {
                     Button("catalog_done") { dismiss() }
+                    }.tint(.primary)
                 }
             }
         }
@@ -189,7 +191,9 @@ struct OnlineAlbumDetailView: View {
         .toolbar {
             if showsFavoriteAction {
                 ToolbarItem(placement: .topBarTrailing) {
+                    Group {
                     AlbumFavoriteButton(album: FavoriteAlbum(album: album)).labelStyle(.iconOnly)
+                    }.tint(.primary)
                 }
             }
         }

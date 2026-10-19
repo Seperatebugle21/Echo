@@ -152,12 +152,14 @@ struct FetchView: View {
                         ToolbarItem(
                             placement: .topBarTrailing
                         ) {
+                            Group {
 
                             Button(
                                 "fetchview_done"
                             ) {
                                 showDownloadsFromTrack = false
                             }
+                            }.tint(.primary)
                         }
                     }
             }

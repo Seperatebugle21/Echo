@@ -106,9 +106,11 @@ struct PlaylistPickerView: View {
             .tint(.primary)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    Group {
                     Button(LocalizedStringKey("action_cancel")) {
                         dismiss()
                     }
+                    }.tint(.primary)
                 }
             }
         }

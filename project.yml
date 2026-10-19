@@ -207,6 +207,8 @@ targets:
       - path: Echo.swiftpm/Echo/Models/ListeningHistory.swift
       - path: Echo.swiftpm/Echo/Models/HomeMusicSelection.swift
       - path: Tests/EchoFeatureLogicTests.swift
+      - path: Tests/EchoSleepTimerTests.swift
+      - path: Echo.swiftpm/Echo/Models/SleepTimerState.swift
       - path: Tests/EchoArtworkTests.swift
       - path: Echo.swiftpm/Echo/Components/ArtworkThumbnailStore.swift
       - path: Echo.swiftpm/Echo/Models/ArtistCredits.swift

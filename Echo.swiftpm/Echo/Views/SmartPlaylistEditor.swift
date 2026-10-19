@@ -102,8 +102,14 @@ struct SmartPlaylistEditor: View {
                 }
             }.echoBackground().navigationTitle(LocalizedStringKey(smartMode ? "smart_editor_title" : "create_playlist_navigation_title")).navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("action_cancel") { dismiss() } }
-                    ToolbarItem(placement: .confirmationAction) { Button("action_save", action: save).disabled(!valid) }
+                    ToolbarItem(placement: .cancellationAction) {
+                        Group { Button("action_cancel") { dismiss() }
+                        }.tint(.primary)
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Group { Button("action_save", action: save).disabled(!valid)
+                        }.tint(.primary)
+                    }
                 }
                 .onReceive(clock) { now = $0 }
 

@@ -123,6 +123,7 @@ struct SpotifyTrackDetailView: View {
                     placement:
                         .topBarTrailing
                 ) {
+                    Group {
 
                     Button(
                         "spotifytrackdetailview_done"
@@ -130,6 +131,7 @@ struct SpotifyTrackDetailView: View {
 
                         onClose()
                     }
+                    }.tint(.primary)
                 }
             }
         }

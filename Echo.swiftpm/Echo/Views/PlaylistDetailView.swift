@@ -212,6 +212,7 @@ struct PlaylistDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
+                Group {
                 if editMode == .active {
                     Button {
                         showDeleteConfirmation = true
@@ -221,11 +222,13 @@ struct PlaylistDetailView: View {
                     }
                     .disabled(selectedSongs.isEmpty)
                 }
+                }.tint(.primary)
             }
 
             
             
             ToolbarItem(placement: .topBarTrailing) {
+                Group {
                 HStack(spacing: 16) {
 
      
@@ -294,6 +297,7 @@ struct PlaylistDetailView: View {
                         }
                     }
                 }
+                }.tint(.primary)
             }
         }
         .sheet(isPresented: $showSongPicker) {

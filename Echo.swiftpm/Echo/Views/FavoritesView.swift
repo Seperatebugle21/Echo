@@ -197,6 +197,7 @@ struct FavoritesView: View {
         .navigationTitle(Text(LocalizedStringKey("favorites_navigation_title")))
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
+                Group {
                 if editMode == .active {
                     Button {
                         showDeleteConfirmation = true
@@ -206,9 +207,11 @@ struct FavoritesView: View {
                     }
                     .disabled(selectedSongs.isEmpty)
                 }
+                }.tint(.primary)
             }
             
             ToolbarItem(placement: .topBarTrailing) {
+                Group {
                 HStack(spacing: 16) {
 
                         if !songs.isEmpty {
@@ -277,6 +280,7 @@ struct FavoritesView: View {
                         .accessibilityLabel(LocalizedStringKey("add_songs_action"))
                     }
                 }
+                }.tint(.primary)
             }
         }
         .sheet(isPresented: $showSongPicker) {

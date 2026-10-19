@@ -96,7 +96,7 @@ struct FetchQueueView: View {
 
                     manager
                         .clearCompleted()
-                }
+                }.tint(.primary)
             }
         }
     }

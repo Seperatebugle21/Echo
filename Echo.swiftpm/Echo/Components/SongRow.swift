@@ -15,11 +15,13 @@ struct SongRow: View {
         Text("Test")
             .toolbar {
                 ToolbarItem(placement: .bottomBar) {
+                    Group {
                     Button {
                         print("test")
                     } label: {
                         Image(systemName: "waveform")
                     }
+                    }.tint(.primary)
                 }
             }
     }

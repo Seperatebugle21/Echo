@@ -197,6 +197,7 @@ struct YouTubeMusicResultView:
                     placement:
                         .topBarTrailing
                 ) {
+                    Group {
 
                     Button(
                         "youtubemusicresultview_done"
@@ -204,6 +205,7 @@ struct YouTubeMusicResultView:
 
                         onClose()
                     }
+                    }.tint(.primary)
                 }
             }
         }

@@ -47,7 +47,9 @@ private struct NowPlayingArtistSheet: View {
             ArtistDetailView(artist: artist)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
+                        Group {
                         Button("catalog_done") { dismiss() }
+                        }.tint(.primary)
                     }
                 }
         }

@@ -128,6 +128,7 @@ struct QueueView: View {
             // MARK: - Toolbar met Verwijderknop
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+                    Group {
                     if editMode.isEditing {
                         Button(LocalizedStringKey("action_delete"), role: .destructive) {
                             deleteSelectedSongs()
@@ -138,9 +139,11 @@ struct QueueView: View {
                             dismiss()
                         }
                     }
+                    }.tint(.primary)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
+                    Group {
                     Button(editMode.isEditing ? "action_done" : "action_edit") {
                         withAnimation {
                             editMode = editMode.isEditing ? .inactive : .active
@@ -149,6 +152,7 @@ struct QueueView: View {
                             }
                         }
                     }
+                    }.tint(.primary)
                 }
             }
         }

@@ -169,10 +169,12 @@ struct TabBarSettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
+                Group {
                 Button("tabbarsettingsview_save") {
                     storedTabs = draft.encoded
                     dismiss()
                 }
+                }.tint(.primary)
             }
         }
     }

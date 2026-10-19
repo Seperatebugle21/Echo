@@ -36,7 +36,9 @@ struct PodcastTranscriptView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
+                    Group {
                     Button("action_close") { dismiss() }
+                    }.tint(.primary)
                 }
             }
             .task(id: retry) {

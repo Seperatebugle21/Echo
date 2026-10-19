@@ -98,7 +98,10 @@ struct PlaylistCoverGallery: View {
                     Button("cover_remove", role: .destructive) { imageData = nil; builtinCoverID = nil; dismiss() }
                 }.padding()
             }.echoBackground().navigationTitle("cover_gallery_title").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("action_cancel") { dismiss() } } }
+                .toolbar { ToolbarItem(placement: .cancellationAction) {
+                    Group { Button("action_cancel") { dismiss() }
+                    }.tint(.primary)
+                } }
                 .onChange(of: photo) {
                     loadTask?.cancel(); loading = true
                     let selected = photo
@@ -176,8 +179,12 @@ private struct SquareCoverCropView: View {
                     Spacer()
                 }.frame(maxWidth: .infinity)
                     .toolbar {
-                        ToolbarItem(placement: .cancellationAction) { Button("action_cancel") { dismiss() } }
+                        ToolbarItem(placement: .cancellationAction) {
+                            Group { Button("action_cancel") { dismiss() }
+                            }.tint(.primary)
+                        }
                         ToolbarItem(placement: .confirmationAction) {
+                            Group {
                             Button("cover_use_photo") {
                                 saving = true
                                 let rect = PlaylistCoverGeometry(imageSize: image.size, side: side, zoom: zoom).drawingRect(offset: offset)
@@ -193,6 +200,7 @@ private struct SquareCoverCropView: View {
                                     if let output { save(output) } else { error = true }
                                 }
                             }.disabled(saving)
+                            }.tint(.primary)
                         }
                     }
             }.echoBackground().navigationTitle("cover_crop_title").navigationBarTitleDisplayMode(.inline)

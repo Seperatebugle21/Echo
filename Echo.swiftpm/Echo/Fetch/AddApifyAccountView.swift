@@ -88,18 +88,21 @@ struct AddApifyAccountView: View {
                     placement:
                         .cancellationAction
                 ) {
+                    Group {
 
                     Button(
                         "addapifyaccountview_cancel"
                     ) {
                         dismiss()
                     }
+                    }.tint(.primary)
                 }
 
                 ToolbarItem(
                     placement:
                         .confirmationAction
                 ) {
+                    Group {
 
                     Button(
                         "addapifyaccountview_add"
@@ -120,6 +123,7 @@ struct AddApifyAccountView: View {
                             )
                             .isEmpty
                     )
+                    }.tint(.primary)
                 }
             }
         }

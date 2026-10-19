@@ -30,6 +30,50 @@ class AudioPlayerManager:
     }
 
 
+    private(set) var sleepTimer = SleepTimerState()
+    @ObservationIgnored private var sleepTimerTask: Task<Void, Never>?
+
+    func startSleepTimer(minutes: Int) {
+        cancelSleepTimer()
+        sleepTimer.start(minutes: minutes)
+        sleepTimerTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .seconds(1)) } catch { return }
+                guard let self else { return }
+                if self.expireSleepTimerIfNeeded() { return }
+            }
+        }
+    }
+
+    func sleepAtEndOfItem() {
+        guard let currentSong else { return }
+        cancelSleepTimer()
+        sleepTimer.endOfItem(currentSong.id)
+        // Cancel a preloaded overlap as well as preventing future preparation.
+        cancelUpcomingTransition()
+    }
+
+    func cancelSleepTimer() {
+        sleepTimerTask?.cancel(); sleepTimerTask = nil
+        sleepTimer.cancel()
+    }
+
+    @discardableResult
+    private func expireSleepTimerIfNeeded() -> Bool {
+        guard sleepTimer.isExpired() else { return false }
+        cancelSleepTimer()
+        podcastResumeAfterInterruption = false
+        setPlaybackDesired(false)
+        return true
+    }
+
+    private func finishSleepItemIfNeeded() -> Bool {
+        guard sleepTimer.consumeCompletion(of: currentSong?.id) else { return false }
+        podcastResumeAfterInterruption = false
+        setPlaybackDesired(false)
+        return true
+    }
+
     var lastPlaybackDirection:
         PlaybackDirection =
         .fade
@@ -82,6 +126,7 @@ class AudioPlayerManager:
     private var previewPlayer: EqualizedAudioPlayer?
     private var previewResume = false
     private var previewTimeout: Task<Void, Never>?
+    private var previewGeneration = UUID()
     private var previewNextURL: URL?
     var previewFinished: (() -> Void)?
 
@@ -148,7 +193,10 @@ class AudioPlayerManager:
 
     var currentSong:
         Song? {
-        didSet { EchoWidgetSnapshotPublisher.requestUpdate() }
+        didSet {
+            sleepTimer.selectionChanged(to: currentSong?.id)
+            EchoWidgetSnapshotPublisher.requestUpdate()
+        }
     }
 
 
@@ -587,6 +635,7 @@ class AudioPlayerManager:
         url: URL,
         queue: [Song] = [], queuePosition: Int? = nil, repeatingCurrent: Bool = false
     ) {
+        if expireSleepTimerIfNeeded() { return }
         recordListeningChange(repeatingCurrent ? .completed : .selected)
         if song.podcastEpisodeID != nil { stopEchoFlow() }
         stopTransitionPreview(resume: false)
@@ -771,7 +820,7 @@ class AudioPlayerManager:
         return autoNextQueue.first.map { ($0, nil, true) }
     }
     private func prepareAutomaticTransition() {
-        guard !isPreviewing, !isPodcast, !transitionCancellationPending,
+        guard sleepTimer.songID == nil, !isPreviewing, !isPodcast, !transitionCancellationPending,
               let player, player.isPlaying, let currentSong else { return }
         let mode = AudioSettings.transition, seconds = AudioSettings.crossfadeSeconds
         let next = nextTransitionSong()
@@ -845,6 +894,10 @@ class AudioPlayerManager:
         else {
             queue.append(target.song); currentIndex = queue.count - 1
         }
+        if sleepTimer.songID != nil {
+            // Keep the end-of-item request attached to the actual audible deck.
+            sleepTimer.endOfItem(target.song.id)
+        }
         currentSong = target.song
         if target.automatic {
             PlaybackRecommendations.consume(target.song.id, from: &autoNextQueue)
@@ -855,8 +908,14 @@ class AudioPlayerManager:
         loadLyrics(for: target.song); updateNowPlaying()
     }
 
+    var transitionPreviewPosition: (elapsed: Double, duration: Double) {
+        (max(0, previewPlayer?.currentTime ?? 0), max(0, previewPlayer?.duration ?? 0))
+    }
+
     @MainActor func startTransitionPreview(first: URL, second: URL) async throws {
         stopTransitionPreview()
+        let generation = UUID()
+        previewGeneration = generation
         let request = playbackRequest
         previewResume = isPlaying
         isPreviewing = true
@@ -873,7 +932,7 @@ class AudioPlayerManager:
                 intro = try await AudioBeatCache.shared.analysis(second).intro
             }
             try Task.checkCancellation()
-            guard request == playbackRequest, isPreviewing else { return }
+            guard request == playbackRequest, isPreviewing, previewGeneration == generation else { return }
             let plan = AudioTransitionPlan.make(mode: mode, seconds: AudioSettings.crossfadeSeconds,
                 outgoingDuration: demoDuration, incomingDuration: nextDuration, outro: outro, intro: intro)
             demo.currentTime = max(0, demoDuration - min(15, max(4, plan.overlap + 2)))
@@ -892,10 +951,14 @@ class AudioPlayerManager:
                 try? await Task.sleep(for: .seconds(20))
                 if !Task.isCancelled { self?.stopTransitionPreview() }
             }
-        } catch { stopTransitionPreview(); throw error }
+        } catch {
+            if previewGeneration == generation { stopTransitionPreview() }
+            throw error
+        }
     }
     func stopTransitionPreview(resume: Bool = true) {
         guard isPreviewing else { return }
+        previewGeneration = UUID()
         previewTimeout?.cancel(); previewTimeout = nil
         previewPlayer?.stop(); previewPlayer = nil; previewNextURL = nil
         isPreviewing = false
@@ -971,6 +1034,8 @@ class AudioPlayerManager:
     // ========================================================
 
     func next(manuallyInitiated: Bool = true) {
+        if !manuallyInitiated && (expireSleepTimerIfNeeded() || finishSleepItemIfNeeded()) { return }
+        if manuallyInitiated && sleepTimer.songID != nil { cancelSleepTimer() }
         recordListeningChange(manuallyInitiated ? .skipped : .completed)
         stopTransitionPreview(resume: false)
         if isPodcast && currentIndex + 1 >= queue.count {
@@ -1290,6 +1355,7 @@ class AudioPlayerManager:
     }
 
     func setPlaybackDesired(_ playing: Bool) {
+        if playing && expireSleepTimerIfNeeded() { return }
         intelligenceTransportRevision &+= 1
         if isPreviewing {
             stopTransitionPreview(resume: false)
@@ -1583,6 +1649,8 @@ class AudioPlayerManager:
             updateNowPlaying()
             return
         }
+
+        if expireSleepTimerIfNeeded() || finishSleepItemIfNeeded() { return }
 
         if repeatMode ==
             .one {

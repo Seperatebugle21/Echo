@@ -44,12 +44,15 @@ struct EditSongView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
+                    Group {
                     Button(LocalizedStringKey("cancel_action")) {
                         dismiss()
                     }
+                    }.tint(.primary)
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
+                    Group {
                     Button(LocalizedStringKey("save_action")) {
                         library.updateSong(
                             song,
@@ -61,6 +64,7 @@ struct EditSongView: View {
                         dismiss()
                     }
                     .bold()
+                    }.tint(.primary)
                 }
             }
         }

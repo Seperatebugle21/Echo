@@ -340,6 +340,7 @@ struct LibraryView: View {
             )
             .toolbar {
                 ToolbarItem(placement: .largeTitle) {
+                    Group {
                     HStack(alignment: .center) {
                         Text("libraryview_title")
                             .font(.largeTitle.bold())
@@ -357,6 +358,7 @@ struct LibraryView: View {
                         .accessibilityLabel("library_add_title")
                     }
                     .frame(maxWidth: .infinity)
+                    }.tint(.primary)
                 }
                 .sharedBackgroundVisibility(.hidden)
             }
@@ -1202,11 +1204,13 @@ struct ArtistDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Group {
                 NavigationLink {
                     ArtistCompletionView(name: artist.name)
                 } label: {
                     Label("artist_find_online", systemImage: "magnifyingglass")
                 }.labelStyle(.iconOnly)
+                }.tint(.primary)
             }
         }
         .safeAreaInset(edge: .top) {
@@ -1387,6 +1391,7 @@ struct AlbumDetailView: View {
         .searchable(text: $searchText, prompt: "album_search")
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                Group {
                 AlbumFavoriteButton(album: FavoriteAlbum(album: album)).labelStyle(.iconOnly)
                 Menu {
                     Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {
@@ -1394,6 +1399,7 @@ struct AlbumDetailView: View {
                     }
                 } label: { Image(systemName: "arrow.up.arrow.down.circle") }
                 .accessibilityLabel("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE")
+                }.tint(.primary)
             }
         }
         .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
@@ -1401,7 +1407,10 @@ struct AlbumDetailView: View {
             NavigationStack {
                 AlbumCompletionView(title: album.name, artist: album.artist)
                     .toolbar {
-                        ToolbarItem(placement: .topBarLeading) { Button("catalog_done") { findMissing = false } }
+                        ToolbarItem(placement: .topBarLeading) {
+                            Group { Button("catalog_done") { findMissing = false }
+                            }.tint(.primary)
+                        }
                     }
             }
         }

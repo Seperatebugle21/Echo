@@ -154,7 +154,7 @@ struct EchoIntelligenceView: View {
                     }
                     if !conversation.streaming.isEmpty { Text(conversation.streaming).textSelection(.enabled) }
                 }.padding(24)
-            }.navigationTitle("ai_conversation").toolbar { Button("ai_done") { showTranscript = false } }
+            }.navigationTitle("ai_conversation").toolbar { Button("ai_done") { showTranscript = false }.tint(.primary) }
         }
     }
     private var history: some View {
@@ -171,7 +171,7 @@ struct EchoIntelligenceView: View {
                         }
                     }.swipeActions { Button("ai_delete", role: .destructive) { AIHistoryStore.shared.delete(item.id) } }
                 }
-            }.navigationTitle("ai_history").toolbar { Button("ai_done") { showHistory = false } }
+            }.navigationTitle("ai_history").toolbar { Button("ai_done") { showHistory = false }.tint(.primary) }
         }
     }
 }

@@ -233,6 +233,7 @@ struct SongPickerView: View {
                     placement:
                         .topBarLeading
                 ) {
+                    Group {
 
                     Button(
                         LocalizedStringKey(
@@ -241,12 +242,14 @@ struct SongPickerView: View {
                     ) {
                         dismiss()
                     }
+                    }.tint(.primary)
                 }
 
                 ToolbarItem(
                     placement:
                         .topBarTrailing
                 ) {
+                    Group {
 
                     Button {
 
@@ -280,6 +283,7 @@ struct SongPickerView: View {
                     .disabled(
                         selectedSongs.isEmpty
                     )
+                    }.tint(.primary)
                 }
             }
 

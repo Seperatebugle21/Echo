@@ -61,7 +61,10 @@ struct EqualizerView: View {
                 Text("equalizerview_saved_hint").font(.footnote).foregroundStyle(.secondary)
             }.padding().frame(maxWidth: 900).frame(maxWidth: .infinity)
         }.echoBackground().navigationTitle("equalizerview_title").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("equalizerview_reset") { settings.select(.flat) } } }
+            .toolbar { ToolbarItem(placement: .topBarTrailing) {
+                Group { Button("equalizerview_reset") { settings.select(.flat) }
+                }.tint(.primary)
+            } }
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: settings.configuration.enabled)
             .onDisappear { settings.flush() }
     }

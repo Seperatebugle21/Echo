@@ -65,6 +65,7 @@ struct PodcastsView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    Group {
                     if !isSearchPresented {
                         Button {
                             isSearchPresented = true
@@ -73,6 +74,7 @@ struct PodcastsView: View {
                         }
                         .accessibilityLabel("podcasts_search")
                     }
+                    }.tint(.primary)
                 }
             }
             .animation(reduceMotion ? nil : .smooth(duration: 0.42), value: query.isEmpty)
@@ -857,6 +859,7 @@ struct PodcastDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Group {
                 Button { Task { await notifications.toggle(show) } } label: {
                     if notifications.busy.contains(show.id) { ProgressView() }
                     else { Image(systemName: notifications.follows[show.id] == nil ? "bell" : "bell.badge.fill") }
@@ -864,6 +867,7 @@ struct PodcastDetailView: View {
                 .frame(minWidth: 44, minHeight: 44)
                 .disabled(notifications.busy.contains(show.id))
                 .accessibilityLabel(LocalizedStringKey(notifications.follows[show.id] == nil ? "podcast_notifications_enable" : "podcast_notifications_disable"))
+                }.tint(.primary)
             }
         }
         .alert("podcast_notifications_permission", isPresented: Binding(get: { notifications.permissionDenied }, set: { notifications.permissionDenied = $0 })) {

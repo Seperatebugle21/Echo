@@ -187,6 +187,7 @@ struct SpotifyPlaylistDetailView: View {
                 placement:
                     .topBarTrailing
             ) {
+                Group {
 
                 Menu {
 
@@ -235,6 +236,7 @@ struct SpotifyPlaylistDetailView: View {
                 .accessibilityLabel(
                     "spotifyplaylistdetailview_playlist_actions"
                 )
+                }.tint(.primary)
             }
         }
 

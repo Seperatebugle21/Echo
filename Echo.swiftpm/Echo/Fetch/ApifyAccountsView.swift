@@ -67,6 +67,7 @@ struct ApifyAccountsView: View {
                 placement:
                     .topBarTrailing
             ) {
+                Group {
 
                 Button {
 
@@ -78,6 +79,7 @@ struct ApifyAccountsView: View {
                         systemName: "plus"
                     )
                 }
+                }.tint(.primary)
             }
         }
 

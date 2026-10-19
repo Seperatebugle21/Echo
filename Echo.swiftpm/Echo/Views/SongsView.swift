@@ -188,6 +188,7 @@ struct SongsView: View {
             ToolbarItem(
                 placement: .topBarLeading
             ) {
+                Group {
 
                 Button(
                     editMode == .active
@@ -216,6 +217,7 @@ struct SongsView: View {
                         }
                     }
                 }
+                }.tint(.primary)
             }
 
 
@@ -226,6 +228,7 @@ struct SongsView: View {
                     placement:
                         .topBarTrailing
                 ) {
+                    Group {
 
                     Button {
 
@@ -278,6 +281,7 @@ struct SongsView: View {
                     .disabled(
                         selectedSongIDs.isEmpty
                     )
+                    }.tint(.primary)
                 }
 
             } else {
@@ -286,6 +290,7 @@ struct SongsView: View {
                     placement:
                         .topBarTrailing
                 ) {
+                    Group {
 
                     Menu {
 
@@ -383,6 +388,7 @@ struct SongsView: View {
                     }
 
                     .disabled(isImporting)
+                    }.tint(.primary)
                 }
             }
         }
