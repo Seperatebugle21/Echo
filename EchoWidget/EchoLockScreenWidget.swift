@@ -20,10 +20,8 @@ struct EchoLockScreenWidget: Widget {
                     for: .widget
                 )
         }
-        .configurationDisplayName("widget_lock_screen_title")
-        .description(
-            "widget_lock_screen_description"
-        )
+        .configurationDisplayName(Text("widget_lock_screen_title", tableName: "WidgetGallery", bundle: .main))
+        .description(Text("widget_lock_screen_description", tableName: "WidgetGallery", bundle: .main))
         .supportedFamilies([
             .accessoryCircular
         ])

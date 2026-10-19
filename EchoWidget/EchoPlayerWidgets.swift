@@ -8,8 +8,8 @@ struct EchoRoundedPlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.rounded, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .rounded)
         }
-        .configurationDisplayName("widget_rounded_title")
-        .description("widget_rounded_description")
+        .configurationDisplayName(Text("widget_rounded_title", tableName: "WidgetGallery", bundle: .main))
+        .description(Text("widget_rounded_description", tableName: "WidgetGallery", bundle: .main))
         .supportedFamilies([.systemMedium])
         .contentMarginsDisabled()
     }
@@ -20,8 +20,8 @@ struct EchoCoverPlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.cover, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .cover)
         }
-        .configurationDisplayName("widget_cover_title")
-        .description("widget_cover_description")
+        .configurationDisplayName(Text("widget_cover_title", tableName: "WidgetGallery", bundle: .main))
+        .description(Text("widget_cover_description", tableName: "WidgetGallery", bundle: .main))
         .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()
     }
@@ -32,8 +32,8 @@ struct EchoEdgePlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.edge, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .edge)
         }
-        .configurationDisplayName("widget_edge_title")
-        .description("widget_edge_description")
+        .configurationDisplayName(Text("widget_edge_title", tableName: "WidgetGallery", bundle: .main))
+        .description(Text("widget_edge_description", tableName: "WidgetGallery", bundle: .main))
         .supportedFamilies([.systemMedium])
         .contentMarginsDisabled()
     }
@@ -44,8 +44,8 @@ struct EchoCompactPlayerWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.compact, provider: EchoWidgetProvider()) {
             EchoPlayerWidgetView(entry: $0, style: .compact)
         }
-        .configurationDisplayName("widget_compact_title")
-        .description("widget_compact_description")
+        .configurationDisplayName(Text("widget_compact_title", tableName: "WidgetGallery", bundle: .main))
+        .description(Text("widget_compact_description", tableName: "WidgetGallery", bundle: .main))
         .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()
     }
@@ -212,8 +212,8 @@ struct EchoQuickPicksWidget: Widget {
         StaticConfiguration(kind: EchoWidgetKinds.quickPicks, provider: EchoWidgetProvider()) { entry in
             EchoQuickPicksView(entry: entry)
         }
-        .configurationDisplayName("widget_quick_picks_title")
-        .description("widget_quick_picks_description")
+        .configurationDisplayName(Text("widget_quick_picks_title", tableName: "WidgetGallery", bundle: .main))
+        .description(Text("widget_quick_picks_description", tableName: "WidgetGallery", bundle: .main))
         .supportedFamilies([.systemMedium])
         .contentMarginsDisabled()
     }
@@ -246,7 +246,7 @@ struct EchoQuickPicksView: View {
                                     .frame(width: width)
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("widget_quick_picks_play \(song.title) \(song.artist)")
+                                .accessibilityLabel("Speel \(song.title) van \(song.artist)")
                             }
                         }
                     }
