@@ -2,6 +2,63 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "add_to_playlist_action": {
+    "localizations": {
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voeg toe aan playlist"
+        }
+      },
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Add to Playlist"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ajouter à une liste de lecture"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zur Wiedergabeliste hinzufügen"
+        }
+      }
+    }
+  },
+  "lyrics_action": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lyrics"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songtekst"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Paroles"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Liedtext"
+        }
+      }
+    }
+  },
   "player_more_options": {
     "extractionState": "manual",
     "localizations": {

@@ -21,8 +21,9 @@ struct NowPlayingOptionsButton: View {
             Image(systemName: "ellipsis")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.white)
+                .rotationEffect(.degrees(90))
                 .frame(width: 44, height: 44)
-                .background(.white.opacity(0.12), in: .circle)
+                .contentShape(.rect)
                 .overlay(alignment: .topTrailing) {
                     if player.sleepTimer.isActive {
                         Image(systemName: "moon.fill").font(.caption2).foregroundStyle(.white)
