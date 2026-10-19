@@ -562,6 +562,18 @@ struct EchoSongEntity:
     }
 
 
+    // Retain existing song UUIDs; playlist destinations use a separate namespace.
+    var playlistID: UUID? {
+        guard id.hasPrefix("playlist:") else { return nil }
+        return UUID(uuidString: String(id.dropFirst("playlist:".count)))
+    }
+
+    init(playlist: Playlist) {
+        id = "playlist:" + playlist.id.uuidString
+        title = playlist.displayName()
+        artist = EchoSiriText.string("siri_playlist")
+    }
+
     var displayRepresentation:
         DisplayRepresentation {
 
@@ -589,22 +601,15 @@ struct EchoSongQuery:
         -> [EchoSongEntity] {
 
         await MainActor.run {
-
-            MusicLibraryManager.shared
-                .songs
-                .filter {
-
-                    identifiers.contains(
-                        $0.id.uuidString
-                    )
+            let library = MusicLibraryManager.shared
+            return identifiers.compactMap { identifier in
+                if identifier.hasPrefix("playlist:"),
+                   let id = UUID(uuidString: String(identifier.dropFirst("playlist:".count))),
+                   let playlist = library.playlists.first(where: { $0.id == id }) {
+                    return EchoSongEntity(playlist: playlist)
                 }
-                .map {
-
-                    EchoSongEntity(
-                        song:
-                            $0
-                    )
-                }
+                return library.songs.first(where: { $0.id.uuidString == identifier }).map { EchoSongEntity(song: $0) }
+            }
         }
     }
 
@@ -629,8 +634,27 @@ struct EchoSongQuery:
 
 
         return await MainActor.run {
+            let library = MusicLibraryManager.shared
+            // Resolve exact playlist names before allowing a similar song to match.
+            // Include translated automatic names independently of Echo's UI language.
+            let playlistPrefixes = ["playlist ", "afspeellijst ", "de playlist ", "de afspeellijst ", "the playlist ", "la playlist ", "liste de lecture ", "la liste de lecture ", "die playlist ", "wiedergabeliste ", "die wiedergabeliste "]
+            let playlistQuery = playlistPrefixes.first(where: { query.hasPrefix($0) })
+                .map { String(query.dropFirst($0.count)) }
+            func matches(_ name: String) -> [Playlist] {
+                library.playlists.filter { playlist in
+                    let names = [playlist.name] + ["en", "nl", "fr", "de"].map { playlist.displayName(language: $0) }
+                    return names.contains { EchoSiriMatcher.normalize($0) == name }
+                }
+            }
+            let playlists = matches(query)
+            if !playlists.isEmpty { return playlists.map { EchoSongEntity(playlist: $0) } }
+            if let playlistQuery {
+                // An explicit playlist request must never fall back to a song.
+                return matches(playlistQuery).map { EchoSongEntity(playlist: $0) }
+            }
 
-            MusicLibraryManager.shared
+
+            return MusicLibraryManager.shared
                 .songs
                 .map {
                     song in
@@ -675,26 +699,11 @@ struct EchoSongQuery:
     }
 
 
-    func suggestedEntities()
-        async throws
-        -> [EchoSongEntity] {
-
+    func suggestedEntities() async throws -> [EchoSongEntity] {
         await MainActor.run {
-
-            Array(
-                MusicLibraryManager.shared
-                    .songs
-                    .prefix(
-                        50
-                    )
-            )
-            .map {
-
-                EchoSongEntity(
-                    song:
-                        $0
-                )
-            }
+            let library = MusicLibraryManager.shared
+            return library.playlists.prefix(25).map { EchoSongEntity(playlist: $0) }
+                + library.songs.prefix(25).map { EchoSongEntity(song: $0) }
         }
     }
 }
@@ -831,14 +840,9 @@ struct EchoPlaylistQuery:
                             playlist,
 
                         score:
-                            EchoSiriMatcher
-                                .score(
-                                    candidate:
-                                        playlist.displayName(),
-
-                                    query:
-                                        query
-                                )
+                            ([playlist.name] + ["en", "nl", "fr", "de"].map { playlist.displayName(language: $0) })
+                                .map { EchoSiriMatcher.score(candidate: $0, query: query) }
+                                .max() ?? 0
                     )
                 }
                 .filter {
@@ -930,6 +934,11 @@ struct PlaySongIntent:
     func perform()
         async throws
         -> some IntentResult {
+
+        if let playlistID = song.playlistID {
+            try await MainActor.run { try EchoSiriPlayback.playPlaylist(id: playlistID) }
+            return .result()
+        }
 
         guard let uuid =
             UUID(
@@ -1053,98 +1062,29 @@ struct PlayPlaylistIntent:
     }
 
 
-    func perform()
-        async throws
-        -> some IntentResult {
-
-        guard let uuid =
-            UUID(
-                uuidString:
-                    playlist.id
-            )
-        else {
-
-            throw EchoSiriError
-                .playlistNotFound
-        }
-
-
-        try await MainActor.run {
-
-            let library =
-                MusicLibraryManager.shared
-
-
-            guard let foundPlaylist =
-                library.playlists
-                    .first(
-                        where: {
-
-                            $0.id ==
-                                uuid
-                        }
-                    )
-            else {
-
-                throw EchoSiriError
-                    .playlistNotFound
-            }
-
-
-            let songs =
-                foundPlaylist.songIDs
-                    .compactMap {
-                        id in
-
-                        library.songs
-                            .first(
-                                where: {
-
-                                    $0.id ==
-                                        id
-                                }
-                            )
-                    }
-
-
-            guard
-                let first =
-                    songs.first,
-
-                let url =
-                    library.getURL(
-                        for:
-                            first
-                    )
-            else {
-
-                throw EchoSiriError
-                    .playlistEmpty
-            }
-
-
-            let audio =
-                AudioPlayerManager.shared
-
-
-            audio.allSongs =
-                library.songs
-
-
-            audio.play(
-                song:
-                    first,
-
-                url:
-                    url,
-
-                queue:
-                    songs
-            )
-        }
-
-
+    func perform() async throws -> some IntentResult {
+        guard let id = UUID(uuidString: playlist.id) else { throw EchoSiriError.playlistNotFound }
+        try await MainActor.run { try EchoSiriPlayback.playPlaylist(id: id) }
         return .result()
+    }
+}
+
+@MainActor
+private enum EchoSiriPlayback {
+    static func playPlaylist(id: UUID) throws {
+        let library = MusicLibraryManager.shared
+        guard let playlist = library.playlists.first(where: { $0.id == id }) else {
+            throw EchoSiriError.playlistNotFound
+        }
+        let songs = library.songs(in: playlist).filter { song in
+            library.getURL(for: song).map { FileManager.default.fileExists(atPath: $0.path) } == true
+        }
+        guard let first = songs.first, let url = library.getURL(for: first) else {
+            throw EchoSiriError.playlistEmpty
+        }
+        let audio = AudioPlayerManager.shared
+        audio.allSongs = library.songs
+        audio.play(song: first, url: url, queue: songs)
     }
 }
 
