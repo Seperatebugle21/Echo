@@ -51,10 +51,9 @@ final class YTDLPUpdateManager {
         }
 
 
-        return Self.compareVersions(
-            installedVersion,
-            latestVersion
-        ) == .orderedAscending
+        // Treat every other version as an update candidate. In particular,
+        // this lets Echo roll back an incompatible newer yt-dlp release. 
+        return installedVersion != latestVersion
     }
 
 
@@ -98,18 +97,9 @@ final class YTDLPUpdateManager {
         }
 
 
-        do {
-
-            latestVersion =
-                try await Self
-                    .fetchLatestVersion()
-
-        } catch {
-
-            errors.append(
-                error.localizedDescription
-            )
-        }
+        // Do not follow yt-dlp's moving "latest" release while Echo uses
+        // Python 3.10. The supported version is deliberately pinned.
+        latestVersion = YTDLPCompatibility.supportedVersion
 
 
         if !errors.isEmpty {
@@ -144,33 +134,27 @@ final class YTDLPUpdateManager {
 
         do {
 
-            let resolvedLatestVersion:
-                String
+            let resolvedLatestVersion =
+                YTDLPCompatibility.supportedVersion
 
-
-            if let latestVersion {
-
-                resolvedLatestVersion =
-                    latestVersion
-
-            } else {
-
-                resolvedLatestVersion =
-                    try await Self
-                        .fetchLatestVersion()
-
-                latestVersion =
-                    resolvedLatestVersion
-            }
-
+            latestVersion = resolvedLatestVersion
 
             try await YTDLPRunner
                 .shared
-                .installLatestVersion()
+                .installCompatibleVersion()
 
+            let verifiedVersion = try await YTDLPRunner
+                .shared
+                .installedVersion()
 
-            installedVersion =
-                resolvedLatestVersion
+            guard verifiedVersion == resolvedLatestVersion else {
+                throw YTDLPUpdateError.versionMismatch(
+                    expected: resolvedLatestVersion,
+                    actual: verifiedVersion
+                )
+            }
+
+            installedVersion = verifiedVersion
 
             hasLoadedVersions = true
             didInstallUpdate = true
@@ -183,199 +167,17 @@ final class YTDLPUpdateManager {
     }
 
 
-    private nonisolated static func fetchLatestVersion()
-        async throws -> String
-    {
 
-        let url =
-            URL(
-                string:
-                    "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest"
-            )!
-
-
-        var request =
-            URLRequest(
-                url: url
-            )
-
-
-        request.setValue(
-            "application/vnd.github+json",
-            forHTTPHeaderField:
-                "Accept"
-        )
-
-        request.setValue(
-            "2022-11-28",
-            forHTTPHeaderField:
-                "X-GitHub-Api-Version"
-        )
-
-        request.setValue(
-            "Echo-iOS",
-            forHTTPHeaderField:
-                "User-Agent"
-        )
-
-
-        let (
-            data,
-            response
-        ) = try await URLSession
-            .shared
-            .data(
-                for: request
-            )
-
-
-        guard
-            let httpResponse =
-                response as?
-                HTTPURLResponse,
-            (200..<300)
-                .contains(
-                    httpResponse
-                        .statusCode
-                )
-        else {
-            throw YTDLPUpdateError
-                .invalidResponse
-        }
-
-
-        let release =
-            try JSONDecoder()
-                .decode(
-                    LatestRelease.self,
-                    from: data
-                )
-
-
-        guard !release.tagName
-            .isEmpty
-        else {
-            throw YTDLPUpdateError
-                .missingVersion
-        }
-
-
-        return release.tagName
-    }
-
-
-    private nonisolated static func compareVersions(
-        _ left: String,
-        _ right: String
-    ) -> ComparisonResult {
-
-        let leftParts =
-            versionComponents(left)
-
-        let rightParts =
-            versionComponents(right)
-
-        let count =
-            max(
-                leftParts.count,
-                rightParts.count
-            )
-
-
-        for index in 0..<count {
-
-            let leftPart =
-                index < leftParts.count
-                ? leftParts[index]
-                : 0
-
-            let rightPart =
-                index < rightParts.count
-                ? rightParts[index]
-                : 0
-
-
-            if leftPart < rightPart {
-                return .orderedAscending
-            }
-
-
-            if leftPart > rightPart {
-                return .orderedDescending
-            }
-        }
-
-
-        return .orderedSame
-    }
-
-
-    private nonisolated static func versionComponents(
-        _ version: String
-    ) -> [Int] {
-
-        version
-            .split(
-                separator: "."
-            )
-            .map { component in
-
-                let digits =
-                    component
-                        .prefix {
-                            $0.isNumber
-                        }
-
-
-                return Int(digits)
-                    ?? 0
-            }
-    }
 }
 
 
-private struct LatestRelease:
-    Decodable,
-    Sendable {
+private enum YTDLPUpdateError: LocalizedError {
+    case versionMismatch(expected: String, actual: String?)
 
-    let tagName: String
-
-
-    private enum CodingKeys:
-        String,
-        CodingKey {
-
-        case tagName =
-            "tag_name"
-    }
-}
-
-
-private enum YTDLPUpdateError:
-    LocalizedError {
-
-    case invalidResponse
-    case missingVersion
-
-
-    var errorDescription:
-        String? {
-
+    var errorDescription: String? {
         switch self {
-
-        case .invalidResponse:
-
-            return String(
-                localized:
-                    "developerview_ytdlp_error_response"
-            )
-
-        case .missingVersion:
-
-            return String(
-                localized:
-                    "developerview_ytdlp_error_version"
-            )
+        case let .versionMismatch(expected, actual):
+            return "yt-dlp install verification failed. Expected \\(expected), got \\(actual ?? "no installed version")."
         }
     }
 }
