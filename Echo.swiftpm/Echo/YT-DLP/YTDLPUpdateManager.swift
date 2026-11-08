@@ -177,7 +177,7 @@ private enum YTDLPUpdateError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case let .versionMismatch(expected, actual):
-            return "yt-dlp install verification failed. Expected \\(expected), got \\(actual ?? "no installed version")."
+            return "yt-dlp install verification failed. Expected \(expected), got \(actual ?? "no installed version")."
         }
     }
 }
