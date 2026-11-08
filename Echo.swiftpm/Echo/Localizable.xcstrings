@@ -23276,25 +23276,25 @@
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nieuwste versie"
+            "value": "Ondersteunde versie"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Latest Version"
+            "value": "Supported Version"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dernière version"
+            "value": "Version prise en charge"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Neueste Version"
+            "value": "Unterstützte Version"
           }
         }
       }
@@ -23479,25 +23479,25 @@
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Echo controleert GitHub op de nieuwste stabiele yt-dlp-versie. Installeren gebeurt alleen wanneer je op de installatieknop tikt."
+            "value": "Echo gebruikt tijdelijk yt-dlp 2026.10.21 omdat de ingebouwde Python-versie 3.10 is. Na de Python-upgrade kan Echo opnieuw nieuwere yt-dlp-versies gebruiken."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Echo checks GitHub for the latest stable yt-dlp version. Installation only starts when you tap the install button."
+            "value": "Echo temporarily uses yt-dlp 2026.10.21 because its embedded Python runtime is 3.10. Newer yt-dlp releases can be enabled after the Python runtime upgrade."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Echo consulte GitHub pour obtenir la dernière version stable de yt-dlp. L’installation ne démarre que lorsque vous touchez le bouton d’installation."
+            "value": "Echo utilise temporairement yt-dlp 2026.10.21 car sa version intégrée de Python est 3.10. Les versions plus récentes de yt-dlp pourront être utilisées après la mise à niveau de Python."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Echo prüft GitHub auf die neueste stabile yt-dlp-Version. Die Installation startet erst, wenn du auf die Installationsschaltfläche tippst."
+            "value": "Echo verwendet vorübergehend yt-dlp 2026.10.21, da die eingebettete Python-Version 3.10 ist. Neuere yt-dlp-Versionen können nach dem Python-Upgrade verwendet werden."
           }
         }
       }
