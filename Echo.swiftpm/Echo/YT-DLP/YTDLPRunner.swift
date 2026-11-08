@@ -3,6 +3,19 @@ import PythonKit
 import YoutubeDL
 
 
+// yt-dlp 2026.10.26+ requires Python 3.11.
+ // Echo currently embeds Python 3.10, so keep the downloader on the
+ // last release verified to support that runtime until the Python
+ // runtime migration is completed.
+enum YTDLPCompatibility {
+    static let supportedVersion = "2026.10.21"
+
+    static let downloadURL = URL(
+        string: "https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.21/yt-dlp"
+    )!
+}
+
+
 // MARK: - Python Serial Executor
 
 final class YTDLPPythonSerialExecutor:
@@ -124,14 +137,13 @@ actor YTDLPRunner {
     }
 
 
-    func installLatestVersion()
+    func installCompatibleVersion()
         async throws
     {
-
         try await runIsolated {
-
-            try await YoutubeDL
-                .downloadPythonModule()
+            try await YoutubeDL.downloadPythonModule(
+                from: YTDLPCompatibility.downloadURL
+            )
         }
     }
 
