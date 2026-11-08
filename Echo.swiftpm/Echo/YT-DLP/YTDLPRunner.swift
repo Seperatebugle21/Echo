@@ -4,7 +4,7 @@ import YoutubeDL
 
 
 // yt-dlp 2026.10.26+ requires Python 3.11.
- // Echo currently embeds Python 3.10, so keep the downloader on the
+// Echo currently embeds Python 3.10, so keep the downloader on the
  // last release verified to support that runtime until the Python
  // runtime migration is completed.
 enum YTDLPCompatibility {
