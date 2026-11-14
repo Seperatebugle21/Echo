@@ -76,10 +76,17 @@ struct AppCustomizationSettingsView: View {
 private struct AccentColorPanel: View {
     @Bindable private var theme = EchoTheme.shared
     private var colorBinding: Binding<Color> {
-        Binding(get: { theme.accentColor }, set: { theme.accent = EchoAccentColor(hex: $0.echoHex) })
+        Binding(get: { Color(echoHex: theme.accent.hex) }, set: {
+            theme.accent = EchoAccentColor(hex: $0.echoHex)
+            theme.accentFromArtwork = false
+        })
     }
     private var selectedTitle: LocalizedStringKey {
-        LocalizedStringKey(EchoAccentPreset.allCases.first { $0.color == theme.accent }?.titleKey ?? "theme_custom")
+        if theme.accentFromArtwork { return "customization_artwork_colors" }
+        return LocalizedStringKey(EchoAccentPreset.allCases.first { $0.color == theme.accent }?.titleKey ?? "theme_custom")
+    }
+    private func artworkToggleChanged() {
+        AudioPlayerManager.shared.updateThemeArtwork()
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -93,10 +100,29 @@ private struct AccentColorPanel: View {
                 Image(systemName: "slider.horizontal.3").foregroundStyle(Color.accentColor).accessibilityHidden(true)
             }
             Text("customization_accent_detail").font(.subheadline).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                Toggle(isOn: $theme.accentFromArtwork) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("customization_artwork_colors").font(.subheadline.weight(.semibold))
+                        Text("customization_artwork_colors_detail").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .accessibilityIdentifier("accent-from-artwork")
+                Toggle(isOn: $theme.backgroundFromArtwork) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("customization_artwork_background").font(.subheadline.weight(.semibold))
+                        Text("customization_artwork_background_detail").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .accessibilityIdentifier("background-from-artwork")
+            }
+            .onChange(of: theme.accentFromArtwork) { artworkToggleChanged() }
+            .onChange(of: theme.backgroundFromArtwork) { artworkToggleChanged() }
+            Divider()
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: 10)], spacing: 12) {
                 ForEach(EchoAccentPreset.allCases) { preset in
-                    let selected = theme.accent == preset.color
-                    Button { theme.accent = preset.color } label: {
+                    let selected = !theme.accentFromArtwork && theme.accent == preset.color
+                    Button { theme.accent = preset.color; theme.accentFromArtwork = false } label: {
                         Circle().fill(Color(echoHex: preset.color.hex))
                             .overlay {
                                 if selected {
@@ -119,11 +145,12 @@ private struct AccentColorPanel: View {
                 .accessibilityIdentifier("accent-custom-color")
             Button {
                 theme.accent = EchoAccentColor(hex: EchoAccentColor.defaultHex)
+                theme.accentFromArtwork = false
             } label: {
                 Label("customization_accent_reset", systemImage: "arrow.counterclockwise")
                     .font(.subheadline).frame(minHeight: 44)
             }
-            .disabled(theme.accent.hex == EchoAccentColor.defaultHex)
+            .disabled(theme.accent.hex == EchoAccentColor.defaultHex && !theme.accentFromArtwork)
         }
         .padding(18).customizationSurface()
         .accessibilityIdentifier("customization-accent")

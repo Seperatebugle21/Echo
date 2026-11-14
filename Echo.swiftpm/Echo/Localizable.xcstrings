@@ -14546,6 +14546,122 @@
       }
     }
   },
+  "customization_artwork_colors": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Colors from the cover"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kleuren van de cover"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Couleurs de la pochette"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Farben vom Cover"
+        }
+      }
+    }
+  },
+  "customization_artwork_colors_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Buttons and highlights take the color of the song that is playing. Your chosen color returns when nothing plays or the cover has no clear color."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Knoppen en accenten nemen de kleur over van het nummer dat speelt. Je gekozen kleur komt terug als er niets speelt of de cover geen duidelijke kleur heeft."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Les boutons et les accents prennent la couleur du morceau en cours. Votre couleur revient quand rien ne joue ou si la pochette n’a pas de couleur nette."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Tasten und Akzente übernehmen die Farbe des laufenden Songs. Deine gewählte Farbe kehrt zurück, wenn nichts läuft oder das Cover keine klare Farbe hat."
+        }
+      }
+    }
+  },
+  "customization_artwork_background": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Background from the cover"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Achtergrond van de cover"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fond de la pochette"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Hintergrund vom Cover"
+        }
+      }
+    }
+  },
+  "customization_artwork_background_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The app background becomes a soft gradient in the cover's colors, dark or light to match the appearance."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De achtergrond van de app wordt een zachte kleurovergang in de kleuren van de cover, donker of licht volgens de weergave."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Le fond de l’app devient un dégradé doux aux couleurs de la pochette, sombre ou clair selon l’apparence."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Der App-Hintergrund wird zu einem sanften Verlauf in den Farben des Covers, dunkel oder hell passend zur Darstellung."
+        }
+      }
+    }
+  },
   "audio_mono_short": {
     "extractionState": "manual",
     "localizations": {
