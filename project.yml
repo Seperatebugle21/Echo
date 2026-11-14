@@ -20,13 +20,10 @@ packages:
     from: 2.6.0
   YoutubeDL:
     url: https://github.com/Seperatebugle21/YoutubeDL-iOS.git
-    branch: main
+    branch: claude/yt-dlp-python-version-9t8xg4
   PythonKit:
     url: https://github.com/pvieito/PythonKit.git
     exactVersion: 0.5.1
-  Python-iOS:
-    url: https://github.com/kewlbear/Python-iOS.git
-    exactVersion: 0.1.1-b20230423-090254
   EchoNativeAudio:
     path: Packages/EchoNativeAudio
 
@@ -49,9 +46,9 @@ targets:
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
         SUPPORTS_MACCATALYST: NO
-      configs:
-        Release:
-          OTHER_LDFLAGS: "$(inherited) -Xlinker -export_dynamic -Xlinker -force_load -Xlinker $(ECHO_PYTHON_BIN)"
+        # The Python build phase reads Python.xcframework and writes into
+        # the app bundle.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
     dependencies:
       - package: MLXLanguageModels
         product: MLXLLM
@@ -60,11 +57,18 @@ targets:
       - package: SwiftSoup
       - package: YoutubeDL
       - package: PythonKit
-      - package: Python-iOS
+      # CPython 3.13 (BeeWare). Downloaded by Scripts/fetch-python.sh.
+      - framework: Python/Python.xcframework
+        embed: true
       - package: EchoNativeAudio
         product: CLame
       - target: EchoWidget
         embed: true
+    postBuildScripts:
+      - name: Install Python standard library
+        basedOnDependencyAnalysis: false
+        script: |
+          "$PROJECT_DIR/Scripts/install-python-stdlib.sh"
 
   EchoWidget:
     type: app-extension

@@ -104,22 +104,32 @@ actor YTDLPRunner {
 
         return try await runIsolated {
 
-            let _ =
-                try await
-                YtDlp()
+            // Download yt-dlp if needed (no Python involved), then
+            // run all Python work on the dedicated Python thread.
+            try await YoutubeDL
+                .ensurePythonModule()
 
 
-            let module =
-                try Python.attemptImport(
-                    "yt_dlp"
+            return try await PythonRuntime.run {
+
+                () throws -> String? in
+
+                let _ =
+                    try YtDlp.prepared()
+
+
+                let module =
+                    try Python.attemptImport(
+                        "yt_dlp"
+                    )
+
+
+                return String(
+                    module
+                        .version
+                        .__version__
                 )
-
-
-            return String(
-                module
-                    .version
-                    .__version__
-            )
+            }
         }
     }
 
@@ -173,292 +183,302 @@ actor YTDLPRunner {
             // Make sure embedded Python / yt-dlp
             // has been initialized.
 
-            let _ =
-                try await
-                YtDlp()
+            // Download yt-dlp if needed (no Python involved), then
+            // run all Python work on the dedicated Python thread.
+            try await YoutubeDL
+                .ensurePythonModule()
 
 
-            Self.stage(
-                "PYTHON SEARCH 2 - YtDlp ready"
-            )
+            return try await PythonRuntime.run {
+
+                () throws -> SearchResult in
+
+                let _ =
+                    try YtDlp.prepared()
 
 
-            let module =
-                try Python.attemptImport(
-                    "yt_dlp"
+                Self.stage(
+                    "PYTHON SEARCH 2 - YtDlp ready"
                 )
 
 
-            Self.stage(
-                "PYTHON SEARCH 3 - module imported"
-            )
+                let module =
+                    try Python.attemptImport(
+                        "yt_dlp"
+                    )
 
 
-            // =====================================
-            // Search options
-            // =====================================
-
-            let options =
-                PythonObject(
-                    [:]
-                        as
-                    [String: PythonObject]
+                Self.stage(
+                    "PYTHON SEARCH 3 - module imported"
                 )
 
 
-            options[
-                "quiet"
-            ] =
-                true
+                // =====================================
+                // Search options
+                // =====================================
+
+                let options =
+                    PythonObject(
+                        [:]
+                            as
+                        [String: PythonObject]
+                    )
 
 
-            options[
-                "no_warnings"
-            ] =
-                true
+                options[
+                    "quiet"
+                ] =
+                    true
 
 
-            options[
-                "nocheckcertificate"
-            ] =
-                true
+                options[
+                    "no_warnings"
+                ] =
+                    true
 
 
-            options[
-                "socket_timeout"
-            ] =
-                30.0
+                options[
+                    "nocheckcertificate"
+                ] =
+                    true
 
 
-            // We only want the search result here.
-            // The actual media extraction happens
-            // afterwards in extract(url:).
-
-            options[
-                "extract_flat"
-            ] =
-                true
+                options[
+                    "socket_timeout"
+                ] =
+                    30.0
 
 
-            options[
-                "skip_download"
-            ] =
-                true
+                // We only want the search result here.
+                // The actual media extraction happens
+                // afterwards in extract(url:).
+
+                options[
+                    "extract_flat"
+                ] =
+                    true
 
 
-            options[
-                "noplaylist"
-            ] =
-                false
+                options[
+                    "skip_download"
+                ] =
+                    true
 
 
-            let ydl =
-                module.YoutubeDL(
-                    options
+                options[
+                    "noplaylist"
+                ] =
+                    false
+
+
+                let ydl =
+                    module.YoutubeDL(
+                        options
+                    )
+
+
+                Self.stage(
+                    "PYTHON SEARCH 4 - YoutubeDL ready"
                 )
 
 
-            Self.stage(
-                "PYTHON SEARCH 4 - YoutubeDL ready"
-            )
+                // =====================================
+                // ytsearch1:
+                //
+                // Ask yt-dlp for only the first result.
+                // =====================================
+
+                let searchValue =
+                    "ytsearch1:\(query)"
 
 
-            // =====================================
-            // ytsearch1:
-            //
-            // Ask yt-dlp for only the first result.
-            // =====================================
+                let info =
+                    try ydl
+                        .extract_info
+                        .throwing
+                        .dynamicallyCall(
+                            withArguments: [
+                                searchValue,
+                                false
+                            ]
+                        )
 
-            let searchValue =
-                "ytsearch1:\(query)"
+
+                Self.stage(
+                    "PYTHON SEARCH 5 - search returned"
+                )
 
 
-            let info =
-                try ydl
-                    .extract_info
-                    .throwing
-                    .dynamicallyCall(
-                        withArguments: [
-                            searchValue,
-                            false
+                // =====================================
+                // Entries
+                // =====================================
+
+                guard let entriesObject =
+                    info.checking[
+                        "entries"
+                    ]
+                else {
+
+                    throw YTDLPRunnerError
+                        .noSearchResult
+                }
+
+
+                let entries:
+                    [PythonObject] =
+                    Array(
+                        entriesObject
+                    )
+
+
+                guard let first =
+                    entries.first
+                else {
+
+                    throw YTDLPRunnerError
+                        .noSearchResult
+                }
+
+
+                // =====================================
+                // Video ID
+                // =====================================
+
+                let videoID =
+                    first
+                        .checking[
+                            "id"
                         ]
-                    )
+                        .flatMap(
+                            String.init
+                        )
 
 
-            Self.stage(
-                "PYTHON SEARCH 5 - search returned"
-            )
+                // =====================================
+                // Title
+                // =====================================
+
+                let resultTitle =
+                    first
+                        .checking[
+                            "title"
+                        ]
+                        .flatMap(
+                            String.init
+                        )
+                    ??
+                    cleanedTitle
 
 
-            // =====================================
-            // Entries
-            // =====================================
+                // =====================================
+                // Uploader / channel
+                // =====================================
 
-            guard let entriesObject =
-                info.checking[
-                    "entries"
-                ]
-            else {
+                let uploader =
+                    first
+                        .checking[
+                            "uploader"
+                        ]
+                        .flatMap(
+                            String.init
+                        )
+                    ??
+                    first
+                        .checking[
+                            "channel"
+                        ]
+                        .flatMap(
+                            String.init
+                        )
 
-                throw YTDLPRunnerError
-                    .noSearchResult
-            }
+
+                // =====================================
+                // URL
+                // =====================================
+
+                var videoURL:
+                    URL?
 
 
-            let entries:
-                [PythonObject] =
-                Array(
-                    entriesObject
+                if let webpage =
+                    first
+                        .checking[
+                            "webpage_url"
+                        ]
+                        .flatMap(
+                            String.init
+                        ) {
+
+                    videoURL =
+                        URL(
+                            string:
+                                webpage
+                        )
+                }
+
+
+                if videoURL == nil,
+                   let originalURL =
+                    first
+                        .checking[
+                            "url"
+                        ]
+                        .flatMap(
+                            String.init
+                        ),
+                   originalURL.hasPrefix(
+                        "http"
+                   ) {
+
+                    videoURL =
+                        URL(
+                            string:
+                                originalURL
+                        )
+                }
+
+
+                // extract_flat commonly gives us the
+                // video ID instead of the complete URL.
+
+                if videoURL == nil,
+                   let videoID,
+                   !videoID.isEmpty {
+
+                    videoURL =
+                        URL(
+                            string:
+                                "https://www.youtube.com/watch?v=\(videoID)"
+                        )
+                }
+
+
+                guard let videoURL else {
+
+                    throw YTDLPRunnerError
+                        .invalidSearchResult
+                }
+
+
+                Self.stage(
+                    "PYTHON SEARCH 6 - COMPLETE"
                 )
 
 
-            guard let first =
-                entries.first
-            else {
+                return SearchResult(
+                    title:
+                        resultTitle,
 
-                throw YTDLPRunnerError
-                    .noSearchResult
+                    uploader:
+                        uploader,
+
+                    videoID:
+                        videoID,
+
+                    videoURL:
+                        videoURL
+                )
             }
-
-
-            // =====================================
-            // Video ID
-            // =====================================
-
-            let videoID =
-                first
-                    .checking[
-                        "id"
-                    ]
-                    .flatMap(
-                        String.init
-                    )
-
-
-            // =====================================
-            // Title
-            // =====================================
-
-            let resultTitle =
-                first
-                    .checking[
-                        "title"
-                    ]
-                    .flatMap(
-                        String.init
-                    )
-                ??
-                cleanedTitle
-
-
-            // =====================================
-            // Uploader / channel
-            // =====================================
-
-            let uploader =
-                first
-                    .checking[
-                        "uploader"
-                    ]
-                    .flatMap(
-                        String.init
-                    )
-                ??
-                first
-                    .checking[
-                        "channel"
-                    ]
-                    .flatMap(
-                        String.init
-                    )
-
-
-            // =====================================
-            // URL
-            // =====================================
-
-            var videoURL:
-                URL?
-
-
-            if let webpage =
-                first
-                    .checking[
-                        "webpage_url"
-                    ]
-                    .flatMap(
-                        String.init
-                    ) {
-
-                videoURL =
-                    URL(
-                        string:
-                            webpage
-                    )
-            }
-
-
-            if videoURL == nil,
-               let originalURL =
-                first
-                    .checking[
-                        "url"
-                    ]
-                    .flatMap(
-                        String.init
-                    ),
-               originalURL.hasPrefix(
-                    "http"
-               ) {
-
-                videoURL =
-                    URL(
-                        string:
-                            originalURL
-                    )
-            }
-
-
-            // extract_flat commonly gives us the
-            // video ID instead of the complete URL.
-
-            if videoURL == nil,
-               let videoID,
-               !videoID.isEmpty {
-
-                videoURL =
-                    URL(
-                        string:
-                            "https://www.youtube.com/watch?v=\(videoID)"
-                    )
-            }
-
-
-            guard let videoURL else {
-
-                throw YTDLPRunnerError
-                    .invalidSearchResult
-            }
-
-
-            Self.stage(
-                "PYTHON SEARCH 6 - COMPLETE"
-            )
-
-
-            return SearchResult(
-                title:
-                    resultTitle,
-
-                uploader:
-                    uploader,
-
-                videoID:
-                    videoID,
-
-                videoURL:
-                    videoURL
-            )
         }
     }
 
@@ -485,493 +505,503 @@ actor YTDLPRunner {
             )
 
 
-            let _ =
-                try await
-                YtDlp()
+            // Download yt-dlp if needed (no Python involved), then
+            // run all Python work on the dedicated Python thread.
+            try await YoutubeDL
+                .ensurePythonModule()
 
 
-            Self.stage(
-                "PYTHON 3 - YtDlp ready"
-            )
+            return try await PythonRuntime.run {
+
+                () throws -> Result in
+
+                let _ =
+                    try YtDlp.prepared()
 
 
-            // =====================================
-            // Import module
-            // =====================================
-
-            let module =
-                try Python.attemptImport(
-                    "yt_dlp"
+                Self.stage(
+                    "PYTHON 3 - YtDlp ready"
                 )
 
 
-            Self.stage(
-                "PYTHON 5 - yt_dlp imported"
-            )
+                // =====================================
+                // Import module
+                // =====================================
+
+                let module =
+                    try Python.attemptImport(
+                        "yt_dlp"
+                    )
 
 
-            // =====================================
-            // Options
-            // =====================================
-
-            let options =
-                PythonObject(
-                    [:]
-                        as
-                    [String: PythonObject]
+                Self.stage(
+                    "PYTHON 5 - yt_dlp imported"
                 )
 
 
-            options[
-                "noplaylist"
-            ] =
-                true
+                // =====================================
+                // Options
+                // =====================================
+
+                let options =
+                    PythonObject(
+                        [:]
+                            as
+                        [String: PythonObject]
+                    )
 
 
-            options[
-                "nocheckcertificate"
-            ] =
-                true
+                options[
+                    "noplaylist"
+                ] =
+                    true
 
 
-            options[
-                "quiet"
-            ] =
-                true
+                options[
+                    "nocheckcertificate"
+                ] =
+                    true
 
 
-            options[
-                "no_warnings"
-            ] =
-                true
+                options[
+                    "quiet"
+                ] =
+                    true
 
 
-            options[
-                "socket_timeout"
-            ] =
-                30.0
+                options[
+                    "no_warnings"
+                ] =
+                    true
 
 
-            // Do not spawn ffmpeg subprocess.
+                options[
+                    "socket_timeout"
+                ] =
+                    30.0
 
-            options[
-                "ffmpeg_location"
-            ] =
-                PythonObject(
-                    "/dev/null/no-ffmpeg"
+
+                // Do not spawn ffmpeg subprocess.
+
+                options[
+                    "ffmpeg_location"
+                ] =
+                    PythonObject(
+                        "/dev/null/no-ffmpeg"
+                    )
+
+
+                Self.stage(
+                    "PYTHON 6 - options created"
                 )
 
 
-            Self.stage(
-                "PYTHON 6 - options created"
-            )
+                // =====================================
+                // YoutubeDL object
+                // =====================================
+
+                let ydl =
+                    module.YoutubeDL(
+                        options
+                    )
 
 
-            // =====================================
-            // YoutubeDL object
-            // =====================================
-
-            let ydl =
-                module.YoutubeDL(
-                    options
+                Self.stage(
+                    "PYTHON 8 - YoutubeDL ready"
                 )
 
 
-            Self.stage(
-                "PYTHON 8 - YoutubeDL ready"
-            )
+                // =====================================
+                // Extract
+                // =====================================
+
+                let info =
+                    try ydl
+                        .extract_info
+                        .throwing
+                        .dynamicallyCall(
+
+                            withArguments: [
+
+                                url
+                                    .absoluteString,
+
+                                false
+                            ]
+                        )
 
 
-            // =====================================
-            // Extract
-            // =====================================
+                Self.stage(
+                    "PYTHON 10 - extract_info returned"
+                )
 
-            let info =
-                try ydl
-                    .extract_info
-                    .throwing
-                    .dynamicallyCall(
 
-                        withArguments: [
+                // =====================================
+                // Metadata
+                // =====================================
 
-                            url
-                                .absoluteString,
-
-                            false
+                let title =
+                    info
+                        .checking[
+                            "title"
                         ]
-                    )
+                        .flatMap(
+                            String.init
+                        )
+                    ??
+                    "Onbekend"
 
 
-            Self.stage(
-                "PYTHON 10 - extract_info returned"
-            )
+                let uploader =
+                    info
+                        .checking[
+                            "uploader"
+                        ]
+                        .flatMap(
+                            String.init
+                        )
+                    ??
+                    info
+                        .checking[
+                            "channel"
+                        ]
+                        .flatMap(
+                            String.init
+                        )
 
 
-            // =====================================
-            // Metadata
-            // =====================================
+                let duration =
+                    info
+                        .checking[
+                            "duration"
+                        ]
+                        .flatMap(
+                            Double.init
+                        )
 
-            let title =
-                info
-                    .checking[
-                        "title"
-                    ]
-                    .flatMap(
-                        String.init
-                    )
-                ??
-                "Onbekend"
 
+                // =====================================
+                // Formats
+                // =====================================
 
-            let uploader =
-                info
-                    .checking[
-                        "uploader"
-                    ]
-                    .flatMap(
-                        String.init
-                    )
-                ??
-                info
-                    .checking[
-                        "channel"
-                    ]
-                    .flatMap(
-                        String.init
-                    )
+                var formatCount =
+                    0
 
 
-            let duration =
-                info
-                    .checking[
-                        "duration"
-                    ]
-                    .flatMap(
-                        Double.init
-                    )
+                var audioCount =
+                    0
 
 
-            // =====================================
-            // Formats
-            // =====================================
+                var bestFormatID:
+                    String?
 
-            var formatCount =
-                0
 
+                var bestURL:
+                    String?
 
-            var audioCount =
-                0
 
+                var bestExtension:
+                    String?
 
-            var bestFormatID:
-                String?
 
+                var bestCodec:
+                    String?
 
-            var bestURL:
-                String?
 
+                var bestBitrate:
+                    Double?
 
-            var bestExtension:
-                String?
 
+                var bestCompatibilityScore =
+                    -1
 
-            var bestCodec:
-                String?
 
+                if let formatsObject =
+                    info
+                        .checking[
+                            "formats"
+                        ] {
 
-            var bestBitrate:
-                Double?
+                    let formats:
+                        [PythonObject] =
+                        Array(
+                            formatsObject
+                        )
 
 
-            var bestCompatibilityScore =
-                -1
+                    formatCount =
+                        formats.count
 
 
-            if let formatsObject =
-                info
-                    .checking[
-                        "formats"
-                    ] {
+                    for format
+                        in formats {
 
-                let formats:
-                    [PythonObject] =
-                    Array(
-                        formatsObject
-                    )
+                        let formatID =
+                            format
+                                .checking[
+                                    "format_id"
+                                ]
+                                .flatMap(
+                                    String.init
+                                )
 
 
-                formatCount =
-                    formats.count
-
-
-                for format
-                    in formats {
-
-                    let formatID =
-                        format
-                            .checking[
-                                "format_id"
-                            ]
-                            .flatMap(
-                                String.init
-                            )
-
-
-                    let directURL =
-                        format
-                            .checking[
-                                "url"
-                            ]
-                            .flatMap(
-                                String.init
-                            )
-
-
-                    let extensionName =
-                        format
-                            .checking[
-                                "ext"
-                            ]
-                            .flatMap(
-                                String.init
-                            )?
-                            .lowercased()
-
-
-                    let audioCodec =
-                        format
-                            .checking[
-                                "acodec"
-                            ]
-                            .flatMap(
-                                String.init
-                            )
-                        ??
-                        ""
-
-
-                    let videoCodec =
-                        format
-                            .checking[
-                                "vcodec"
-                            ]
-                            .flatMap(
-                                String.init
-                            )
-                        ??
-                        ""
-
-
-                    let bitrate =
-                        format
-                            .checking[
-                                "abr"
-                            ]
-                            .flatMap(
-                                Double.init
-                            )
-
-
-                    let hasAudio =
-                        !audioCodec
-                            .isEmpty
-                        &&
-                        audioCodec !=
-                        "none"
-
-
-                    let hasVideo =
-                        !videoCodec
-                            .isEmpty
-                        &&
-                        videoCodec !=
-                        "none"
-
-
-                    guard
-                        hasAudio,
-                        !hasVideo,
-                        directURL != nil
-                    else {
-
-                        continue
-                    }
-
-
-                    audioCount +=
-                        1
-
-
-                    // =================================
-                    // Prefer formats AVFoundation
-                    // handles well on iOS.
-                    // =================================
-
-                    let compatibilityScore:
-                        Int
-
-
-                    switch extensionName {
-
-                    case "m4a",
-                         "mp4":
-
-                        compatibilityScore =
-                            3
-
-
-                    case "aac":
-
-                        compatibilityScore =
-                            2
-
-
-                    case "webm",
-                         "opus",
-                         "ogg":
-
-                        compatibilityScore =
+                        let directURL =
+                            format
+                                .checking[
+                                    "url"
+                                ]
+                                .flatMap(
+                                    String.init
+                                )
+
+
+                        let extensionName =
+                            format
+                                .checking[
+                                    "ext"
+                                ]
+                                .flatMap(
+                                    String.init
+                                )?
+                                .lowercased()
+
+
+                        let audioCodec =
+                            format
+                                .checking[
+                                    "acodec"
+                                ]
+                                .flatMap(
+                                    String.init
+                                )
+                            ??
+                            ""
+
+
+                        let videoCodec =
+                            format
+                                .checking[
+                                    "vcodec"
+                                ]
+                                .flatMap(
+                                    String.init
+                                )
+                            ??
+                            ""
+
+
+                        let bitrate =
+                            format
+                                .checking[
+                                    "abr"
+                                ]
+                                .flatMap(
+                                    Double.init
+                                )
+
+
+                        let hasAudio =
+                            !audioCodec
+                                .isEmpty
+                            &&
+                            audioCodec !=
+                            "none"
+
+
+                        let hasVideo =
+                            !videoCodec
+                                .isEmpty
+                            &&
+                            videoCodec !=
+                            "none"
+
+
+                        guard
+                            hasAudio,
+                            !hasVideo,
+                            directURL != nil
+                        else {
+
+                            continue
+                        }
+
+
+                        audioCount +=
                             1
 
 
-                    default:
+                        // =================================
+                        // Prefer formats AVFoundation
+                        // handles well on iOS.
+                        // =================================
 
-                        compatibilityScore =
+                        let compatibilityScore:
+                            Int
+
+
+                        switch extensionName {
+
+                        case "m4a",
+                             "mp4":
+
+                            compatibilityScore =
+                                3
+
+
+                        case "aac":
+
+                            compatibilityScore =
+                                2
+
+
+                        case "webm",
+                             "opus",
+                             "ogg":
+
+                            compatibilityScore =
+                                1
+
+
+                        default:
+
+                            compatibilityScore =
+                                0
+                        }
+
+
+                        let currentBitrate =
+                            bitrate ??
                             0
-                    }
 
 
-                    let currentBitrate =
-                        bitrate ??
-                        0
+                        let previousBitrate =
+                            bestBitrate ??
+                            -1
 
 
-                    let previousBitrate =
-                        bestBitrate ??
-                        -1
+                        let shouldReplace:
+                            Bool
 
 
-                    let shouldReplace:
-                        Bool
+                        if compatibilityScore >
+                            bestCompatibilityScore {
+
+                            shouldReplace =
+                                true
 
 
-                    if compatibilityScore >
-                        bestCompatibilityScore {
+                        } else if
+                            compatibilityScore ==
+                                bestCompatibilityScore,
+                            currentBitrate >
+                                previousBitrate {
 
-                        shouldReplace =
-                            true
-
-
-                    } else if
-                        compatibilityScore ==
-                            bestCompatibilityScore,
-                        currentBitrate >
-                            previousBitrate {
-
-                        shouldReplace =
-                            true
+                            shouldReplace =
+                                true
 
 
-                    } else {
+                        } else {
 
-                        shouldReplace =
-                            false
-                    }
-
-
-                    if shouldReplace {
-
-                        bestCompatibilityScore =
-                            compatibilityScore
+                            shouldReplace =
+                                false
+                        }
 
 
-                        bestFormatID =
-                            formatID
+                        if shouldReplace {
+
+                            bestCompatibilityScore =
+                                compatibilityScore
 
 
-                        bestURL =
-                            directURL
+                            bestFormatID =
+                                formatID
 
 
-                        bestExtension =
-                            extensionName
+                            bestURL =
+                                directURL
 
 
-                        bestCodec =
-                            audioCodec
+                            bestExtension =
+                                extensionName
 
 
-                        bestBitrate =
-                            bitrate
+                            bestCodec =
+                                audioCodec
+
+
+                            bestBitrate =
+                                bitrate
+                        }
                     }
                 }
-            }
 
 
-            Self.stage(
-                "PYTHON 12 - formats converted"
-            )
-
-
-            guard bestURL !=
-                    nil
-            else {
-
-                throw YTDLPRunnerError
-                    .noAudioFormat
-            }
-
-
-            let version =
-                String(
-                    module
-                        .version
-                        .__version__
+                Self.stage(
+                    "PYTHON 12 - formats converted"
                 )
-                ??
-                "unknown"
 
 
-            Self.stage(
-                "PYTHON 13 - COMPLETE"
-            )
+                guard bestURL !=
+                        nil
+                else {
+
+                    throw YTDLPRunnerError
+                        .noAudioFormat
+                }
 
 
-            return Result(
+                let version =
+                    String(
+                        module
+                            .version
+                            .__version__
+                    )
+                    ??
+                    "unknown"
 
-                title:
-                    title,
 
-                uploader:
-                    uploader,
+                Self.stage(
+                    "PYTHON 13 - COMPLETE"
+                )
 
-                duration:
-                    duration,
 
-                formatCount:
-                    formatCount,
+                return Result(
 
-                audioFormatCount:
-                    audioCount,
+                    title:
+                        title,
 
-                formatID:
-                    bestFormatID,
+                    uploader:
+                        uploader,
 
-                fileExtension:
-                    bestExtension,
+                    duration:
+                        duration,
 
-                audioCodec:
-                    bestCodec,
+                    formatCount:
+                        formatCount,
 
-                bitrate:
-                    bestBitrate,
+                    audioFormatCount:
+                        audioCount,
 
-                directURL:
-                    bestURL,
+                    formatID:
+                        bestFormatID,
 
-                ytdlpVersion:
-                    version
-            )
+                    fileExtension:
+                        bestExtension,
+
+                    audioCodec:
+                        bestCodec,
+
+                    bitrate:
+                        bestBitrate,
+
+                    directURL:
+                        bestURL,
+
+                    ytdlpVersion:
+                        version
+                )
+            }
         }
     }
 

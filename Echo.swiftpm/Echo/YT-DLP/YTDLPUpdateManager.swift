@@ -1,6 +1,5 @@
 import Foundation
 import Observation
-import YoutubeDL
 
 
 @MainActor
@@ -52,14 +51,10 @@ final class YTDLPUpdateManager {
         }
 
 
-        // The target is a pinned version, not "newest". Offer the
-        // install whenever the installed version differs, so a newer
-        // release that this Python runtime can't run (2026.10.26+)
-        // is replaced by the pinned one.
         return Self.compareVersions(
             installedVersion,
             latestVersion
-        ) != .orderedSame
+        ) == .orderedAscending
     }
 
 
@@ -192,11 +187,80 @@ final class YTDLPUpdateManager {
         async throws -> String
     {
 
-        // yt-dlp 2026.10.26 requires Python 3.11+, but the embedded
-        // runtime is Python 3.10, so the target is the pinned release
-        // that the YoutubeDL package downloads, not GitHub's newest.
-        // Remove the pin once the Python runtime is upgraded.
-        YoutubeDL.pinnedVersion
+        let url =
+            URL(
+                string:
+                    "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest"
+            )!
+
+
+        var request =
+            URLRequest(
+                url: url
+            )
+
+
+        request.setValue(
+            "application/vnd.github+json",
+            forHTTPHeaderField:
+                "Accept"
+        )
+
+        request.setValue(
+            "2022-11-28",
+            forHTTPHeaderField:
+                "X-GitHub-Api-Version"
+        )
+
+        request.setValue(
+            "Echo-iOS",
+            forHTTPHeaderField:
+                "User-Agent"
+        )
+
+
+        let (
+            data,
+            response
+        ) = try await URLSession
+            .shared
+            .data(
+                for: request
+            )
+
+
+        guard
+            let httpResponse =
+                response as?
+                HTTPURLResponse,
+            (200..<300)
+                .contains(
+                    httpResponse
+                        .statusCode
+                )
+        else {
+            throw YTDLPUpdateError
+                .invalidResponse
+        }
+
+
+        let release =
+            try JSONDecoder()
+                .decode(
+                    LatestRelease.self,
+                    from: data
+                )
+
+
+        guard !release.tagName
+            .isEmpty
+        else {
+            throw YTDLPUpdateError
+                .missingVersion
+        }
+
+
+        return release.tagName
     }
 
 

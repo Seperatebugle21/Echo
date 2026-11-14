@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build app for an iPhone simulator
         run: |
+          Scripts/fetch-python.sh
           brew install xcodegen
           xcodegen generate --spec project.yml
           SIMULATOR_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; d=json.load(sys.stdin); ids=[x["udid"] for r,entries in d["devices"].items() if "iOS-" in r and int(r.split("iOS-")[-1].split("-")[0]) >= 26 for x in entries if x.get("isAvailable") and "iPhone" in x["name"]]; assert ids; print(ids[0])')

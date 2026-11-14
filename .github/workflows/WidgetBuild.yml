@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - Widget
+      - claude/yt-dlp-python-version-9t8xg4
 
   pull_request:
     branches:
@@ -39,6 +40,9 @@ jobs:
       - name: Generate project and resolve dependencies
         run: |
 
+          # CPython 3.13 for iOS (BeeWare), needed by yt-dlp.
+          Scripts/fetch-python.sh
+
           brew install xcodegen
           xcodegen generate --spec project.yml
           mkdir -p build
@@ -53,97 +57,11 @@ jobs:
      
 
       # ============================================
-      # 3. Locate Python library
-      # ============================================
-
-      - name: Locate Python library
-        run: |
-
-          echo ""
-          echo "========================================"
-          echo " SEARCHING LIBPYTHON"
-          echo "========================================"
-          echo ""
-
-          PYTHON_XCFRAMEWORK=$(find build/DerivedData \
-            -type d \
-            -path "*libpython3.xcframework" \
-            | head -n 1)
-
-          if [ -z "$PYTHON_XCFRAMEWORK" ]; then
-            echo "ERROR: libpython3.xcframework niet gevonden."
-            exit 1
-          fi
-
-          PYTHON_XCFRAMEWORK=$(realpath "$PYTHON_XCFRAMEWORK")
-
-          echo "XCFramework:"
-          echo "$PYTHON_XCFRAMEWORK"
-
-
-          PYTHON_BIN=$(find "$PYTHON_XCFRAMEWORK/ios-arm64" \
-            -maxdepth 1 \
-            -type f \
-            -name "libpython*.a" \
-            | head -n 1)
-
-          if [ -z "$PYTHON_BIN" ]; then
-
-            echo "ERROR: iOS arm64 libpython binary niet gevonden."
-
-            find "$PYTHON_XCFRAMEWORK/ios-arm64" \
-              -maxdepth 2 \
-              -print || true
-
-            exit 1
-          fi
-
-          PYTHON_BIN=$(realpath "$PYTHON_BIN")
-
-          if [ ! -f "$PYTHON_BIN" ]; then
-            echo "ERROR: Python binary bestaat niet."
-            exit 1
-          fi
-
-          echo ""
-          echo "Python device binary:"
-          echo "$PYTHON_BIN"
-
-          lipo -info "$PYTHON_BIN"
-
-          nm -g "$PYTHON_BIN" \
-            | grep " T _Py_Initialize$" \
-            | head -n 5 || true
-
-          nm -g "$PYTHON_BIN" \
-            | grep " T _Py_IsInitialized$" \
-            | head -n 5 || true
-
-          nm -g "$PYTHON_BIN" \
-            | grep " T _PyUnicode_FromString$" \
-            | head -n 5 || true
-
-
-          echo "PYTHON_BIN=$PYTHON_BIN" >> "$GITHUB_ENV"
-
-
-      # ============================================
       # 4. Build
       # ============================================
 
       - name: Build Echo with widgets
         run: |
-
-          if [ -z "$PYTHON_BIN" ]; then
-            echo "ERROR: PYTHON_BIN ontbreekt."
-            exit 1
-          fi
-
-          if [ ! -f "$PYTHON_BIN" ]; then
-            echo "ERROR: Python library bestaat niet:"
-            echo "$PYTHON_BIN"
-            exit 1
-          fi
 
           mkdir -p build
 
@@ -162,7 +80,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            "ECHO_PYTHON_BIN=$PYTHON_BIN" \
             DEAD_CODE_STRIPPING=NO \
             COPY_PHASE_STRIP=NO \
             STRIP_INSTALLED_PRODUCT=NO
@@ -218,43 +135,57 @@ jobs:
 
 
           # ============================================
-          # Python support bundle
+          # Python 3.13 runtime (BeeWare Python.xcframework)
           # ============================================
 
-          PYTHON_SUPPORT_BUNDLE=$(find "$APP_PATH" \
-            -type d \
-            -name "*PythonSupport.bundle" \
-            | head -n 1)
+          PYTHON_FRAMEWORK="$APP_PATH/Frameworks/Python.framework/Python"
 
-
-          if [ -z "$PYTHON_SUPPORT_BUNDLE" ]; then
-            echo "ERROR: PythonSupport bundle ontbreekt."
+          if [ ! -f "$PYTHON_FRAMEWORK" ]; then
+            echo "ERROR: Python.framework ontbreekt in Frameworks."
+            ls "$APP_PATH/Frameworks" || true
             exit 1
           fi
 
-
-          # ============================================
-          # Python stdlib
-          # ============================================
-
-          PYTHON_RESOURCE=$(find "$PYTHON_SUPPORT_BUNDLE" \
-            \( \
-              -name "python310.zip" \
-              -o \
-              -path "*python3.10*" \
-            \) \
-            | head -n 1)
-
-
-          if [ -z "$PYTHON_RESOURCE" ]; then
-            echo "ERROR: Python stdlib ontbreekt."
+          if ! otool -L "$EXECUTABLE" | grep -q "Python.framework/Python"; then
+            echo "ERROR: Echo linkt niet tegen Python.framework."
+            otool -L "$EXECUTABLE"
             exit 1
           fi
 
+          echo "Python.framework:"
+          lipo -info "$PYTHON_FRAMEWORK"
 
-          echo ""
-          echo "Python stdlib:"
-          echo "$PYTHON_RESOURCE"
+
+          # ============================================
+          # Python stdlib + binary modules
+          # ============================================
+
+          STDLIB="$APP_PATH/python/lib/python3.13"
+
+          for FILE in os.py encodings/__init__.py ssl.py; do
+            if [ ! -f "$STDLIB/$FILE" ]; then
+              echo "ERROR: Python stdlib ontbreekt: $STDLIB/$FILE"
+              exit 1
+            fi
+          done
+
+          FWORK_COUNT=$(find "$STDLIB/lib-dynload" -name "*.fwork" | wc -l | tr -d ' ')
+          SO_COUNT=$(find "$APP_PATH/python" -name "*.so" | wc -l | tr -d ' ')
+
+          echo "Binary modules (.fwork): $FWORK_COUNT"
+
+          if [ "$FWORK_COUNT" -lt 50 ] || [ "$SO_COUNT" -ne 0 ]; then
+            echo "ERROR: binaire Python-modules niet correct omgezet ($FWORK_COUNT .fwork, $SO_COUNT .so)."
+            exit 1
+          fi
+
+          for MODULE in _ssl _hashlib _sqlite3 _ctypes zlib; do
+            if [ ! -f "$APP_PATH/Frameworks/$MODULE.framework/$MODULE" ]; then
+              echo "ERROR: module-framework ontbreekt: $MODULE"
+              ls "$APP_PATH/Frameworks"
+              exit 1
+            fi
+          done
 
 
           # ============================================
@@ -265,8 +196,8 @@ jobs:
 
             SYMBOL="$1"
 
-            if xcrun nm -gU "$EXECUTABLE" \
-              | grep -q "$SYMBOL"; then
+            if xcrun nm -gU "$PYTHON_FRAMEWORK" \
+              | grep -q " $SYMBOL$"; then
 
               echo "OK: $SYMBOL"
 
@@ -278,16 +209,18 @@ jobs:
           }
 
 
-          check_symbol "_Py_Initialize"
+          check_symbol "_Py_InitializeEx"
           check_symbol "_Py_IsInitialized"
+          check_symbol "_PyGILState_Ensure"
+          check_symbol "_PyEval_SaveThread"
+          check_symbol "_PyRun_SimpleString"
           check_symbol "_PyUnicode_FromString"
-          check_symbol "_PyObject_GetAttrString"
           check_symbol "_Py_DecRef"
 
 
           echo ""
           echo "========================================"
-          echo " PYTHON LINKING OK"
+          echo " PYTHON 3.13 RUNTIME OK"
           echo "========================================"
 
 
