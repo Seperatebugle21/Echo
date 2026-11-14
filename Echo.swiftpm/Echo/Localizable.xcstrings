@@ -13734,6 +13734,818 @@
       }
     }
   },
+  "settings_backup_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back up & restore"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back-up en herstel"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sauvegarde et restauration"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Backup & Wiederherstellung"
+        }
+      }
+    }
+  },
+  "settings_backup_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Save your library to Files or iCloud Drive"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bewaar je bibliotheek in Bestanden of iCloud Drive"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enregistrez votre bibliothèque dans Fichiers ou iCloud Drive"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Mediathek in Dateien oder iCloud Drive sichern"
+        }
+      }
+    }
+  },
+  "backup_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back up & restore"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back-up en herstel"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sauvegarde et restauration"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Backup & Wiederherstellung"
+        }
+      }
+    }
+  },
+  "backup_restored_banner": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your backup has been restored."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je back-up is teruggezet."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre sauvegarde a été restaurée."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dein Backup wurde wiederhergestellt."
+        }
+      }
+    }
+  },
+  "backup_pending_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ready to restore"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Klaar om terug te zetten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Prêt à restaurer"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bereit zur Wiederherstellung"
+        }
+      }
+    }
+  },
+  "backup_pending_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "The backup is applied the next time Echo starts. Changes you make before then are replaced."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "De back-up wordt toegepast wanneer Echo opnieuw start. Wat je tot dan verandert, wordt vervangen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "La sauvegarde sera appliquée au prochain démarrage d’Echo. Les modifications faites d’ici là seront remplacées."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Das Backup wird beim nächsten Start von Echo angewendet. Änderungen bis dahin werden ersetzt."
+        }
+      }
+    }
+  },
+  "backup_restart_now": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Close Echo now"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo nu sluiten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Fermer Echo maintenant"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo jetzt schließen"
+        }
+      }
+    }
+  },
+  "backup_cancel_restore": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cancel restore"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Herstel annuleren"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Annuler la restauration"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wiederherstellung abbrechen"
+        }
+      }
+    }
+  },
+  "backup_include_music": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Include music files"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Muziekbestanden meenemen"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Inclure les fichiers musicaux"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Musikdateien einschließen"
+        }
+      }
+    }
+  },
+  "backup_creating": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Creating backup…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back-up maken…"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Création de la sauvegarde…"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Backup wird erstellt …"
+        }
+      }
+    }
+  },
+  "backup_create": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Create backup"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back-up maken"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Créer une sauvegarde"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Backup erstellen"
+        }
+      }
+    }
+  },
+  "backup_create_header": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "New backup"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nieuwe back-up"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nouvelle sauvegarde"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Neues Backup"
+        }
+      }
+    }
+  },
+  "backup_create_footer_music": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Saves songs, artwork, playlists, favorites, listening history, podcasts and settings, plus all music files, in one file you can store in Files or iCloud Drive. Spotify and other sign-ins are not included."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Bewaart nummers, covers, playlists, favorieten, luistergeschiedenis, podcasts en instellingen, plus alle muziekbestanden, in één bestand dat je in Bestanden of iCloud Drive kunt zetten. Aanmeldingen zoals Spotify gaan niet mee."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enregistre morceaux, pochettes, playlists, favoris, historique d’écoute, podcasts et réglages, ainsi que tous les fichiers musicaux, dans un seul fichier à placer dans Fichiers ou iCloud Drive. Les connexions comme Spotify ne sont pas incluses."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speichert Songs, Cover, Playlists, Favoriten, Hörverlauf, Podcasts und Einstellungen sowie alle Musikdateien in einer Datei für Dateien oder iCloud Drive. Anmeldungen wie Spotify sind nicht enthalten."
+        }
+      }
+    }
+  },
+  "backup_create_footer_no_music": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Without music files the backup is small, but it only works on a device that still has the same music. Songs whose file is missing are removed after restoring."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zonder muziekbestanden is de back-up klein, maar hij werkt alleen op een toestel waar dezelfde muziek nog staat. Nummers waarvan het bestand ontbreekt, worden na het terugzetten verwijderd."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Sans fichiers musicaux, la sauvegarde est légère, mais ne fonctionne que sur un appareil qui contient encore la même musique. Les morceaux dont le fichier manque sont supprimés après la restauration."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ohne Musikdateien ist das Backup klein, funktioniert aber nur auf einem Gerät, das dieselbe Musik noch hat. Songs ohne Datei werden nach der Wiederherstellung entfernt."
+        }
+      }
+    }
+  },
+  "backup_preparing_restore": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Checking backup…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back-up controleren…"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Vérification de la sauvegarde…"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Backup wird geprüft …"
+        }
+      }
+    }
+  },
+  "backup_restore": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restore from backup"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back-up terugzetten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restaurer une sauvegarde"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aus Backup wiederherstellen"
+        }
+      }
+    }
+  },
+  "backup_restore_header": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restore"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Terugzetten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restauration"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wiederherstellen"
+        }
+      }
+    }
+  },
+  "backup_restore_footer": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choose an Echo backup (.echobackup). It replaces your current library, playlists and settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Kies een Echo-back-up (.echobackup). Die vervangt je huidige bibliotheek, playlists en instellingen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Choisissez une sauvegarde Echo (.echobackup). Elle remplace votre bibliothèque, vos playlists et vos réglages actuels."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wähle ein Echo-Backup (.echobackup). Es ersetzt deine aktuelle Mediathek, Playlists und Einstellungen."
+        }
+      }
+    }
+  },
+  "backup_restore_confirm_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restore this backup?"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze back-up terugzetten?"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restaurer cette sauvegarde ?"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dieses Backup wiederherstellen?"
+        }
+      }
+    }
+  },
+  "backup_restore_confirm_action": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restore"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Terugzetten"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Restaurer"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wiederherstellen"
+        }
+      }
+    }
+  },
+  "backup_cancel": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cancel"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Annuleren"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Annuler"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Abbrechen"
+        }
+      }
+    }
+  },
+  "backup_restore_confirm_music": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your current library, music files, playlists and settings will be replaced."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Je huidige bibliotheek, muziekbestanden, playlists en instellingen worden vervangen."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Votre bibliothèque, vos fichiers musicaux, vos playlists et vos réglages actuels seront remplacés."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deine aktuelle Mediathek, Musikdateien, Playlists und Einstellungen werden ersetzt."
+        }
+      }
+    }
+  },
+  "backup_restore_confirm_no_music": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This backup has no music files. Your music files stay; your library, playlists and settings are replaced. Songs whose file is not on this device are removed."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze back-up bevat geen muziekbestanden. Je muziekbestanden blijven staan; je bibliotheek, playlists en instellingen worden vervangen. Nummers waarvan het bestand niet op dit toestel staat, worden verwijderd."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cette sauvegarde ne contient pas de fichiers musicaux. Vos fichiers musicaux restent ; votre bibliothèque, vos playlists et vos réglages sont remplacés. Les morceaux dont le fichier n’est pas sur cet appareil sont supprimés."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dieses Backup enthält keine Musikdateien. Deine Musikdateien bleiben; Mediathek, Playlists und Einstellungen werden ersetzt. Songs, deren Datei nicht auf diesem Gerät ist, werden entfernt."
+        }
+      }
+    }
+  },
+  "backup_error_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Backup failed"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Back-up mislukt"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Échec de la sauvegarde"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Backup fehlgeschlagen"
+        }
+      }
+    }
+  },
+  "backup_error_not_backup": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This file is not an Echo backup."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dit bestand is geen Echo-back-up."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Ce fichier n’est pas une sauvegarde Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Diese Datei ist kein Echo-Backup."
+        }
+      }
+    }
+  },
+  "backup_error_version": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This backup was made by a newer version of Echo."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze back-up is gemaakt met een nieuwere versie van Echo."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cette sauvegarde a été créée par une version plus récente d’Echo."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dieses Backup stammt von einer neueren Echo-Version."
+        }
+      }
+    }
+  },
+  "backup_error_damaged": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "This backup is incomplete or damaged. Nothing was changed."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Deze back-up is onvolledig of beschadigd. Er is niets veranderd."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Cette sauvegarde est incomplète ou endommagée. Rien n’a été modifié."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Dieses Backup ist unvollständig oder beschädigt. Es wurde nichts geändert."
+        }
+      }
+    }
+  },
+  "backup_summary %@ %lld %@": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%1$@ · %2$lld songs · %3$@"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%1$@ · %2$lld nummers · %3$@"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%1$@ · %2$lld morceaux · %3$@"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "%1$@ · %2$lld Songs · %3$@"
+        }
+      }
+    }
+  },
   "audio_mono_short": {
     "extractionState": "manual",
     "localizations": {

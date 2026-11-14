@@ -5,6 +5,14 @@ import AppIntents
 @main
 struct EchoApp: App {
 
+    // Must stay the first stored property: properties initialize in order, and a
+    // staged backup has to be in place before the library managers below load.
+    private let restoredBackup: Void = {
+        if EchoBackup.applyPendingRestore() != nil {
+            UserDefaults.standard.set(true, forKey: "backup.justRestored")
+        }
+    }()
+
     @UIApplicationDelegateAdaptor(
         EchoAppDelegate.self
     )
