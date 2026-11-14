@@ -131,6 +131,14 @@ class MusicLibraryManager {
         removeMissingSongReferences()
         isRestoringLibrary = false
         syncDocumentsFolder()
+        // Measure loudness of the library in the background, after launch work settles.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in self?.measureLoudness() }
+    }
+
+    /// Queues every library track for loudness measuring (skips measured ones).
+    func measureLoudness() {
+        let urls = songs.filter { $0.podcastEpisodeID == nil }.compactMap { getURL(for: $0) }
+        LoudnessNormalizer.shared.measure(urls, urgent: false)
     }
     
     func removeAllLyrics() {

@@ -13676,6 +13676,64 @@
       }
     }
   },
+  "audio_normalization_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Volume normalization"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Volumenormalisatie"
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Normalisation du volume"
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lautstärkeausgleich"
+        }
+      }
+    }
+  },
+  "audio_normalization_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Plays your songs at a similar volume, whatever their source. Each song is measured once in the background; songs that are not measured yet play unchanged."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Speelt je nummers even luid af, ongeacht de bron. Elk nummer wordt één keer op de achtergrond gemeten; nummers die nog niet gemeten zijn, spelen ongewijzigd af."
+        }
+      },
+      "fr": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Lit vos morceaux à un volume similaire, quelle que soit leur source. Chaque morceau est mesuré une fois en arrière-plan ; les morceaux pas encore mesurés sont lus sans changement."
+        }
+      },
+      "de": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Spielt deine Songs unabhängig von der Quelle ähnlich laut ab. Jeder Song wird einmal im Hintergrund gemessen; noch nicht gemessene Songs werden unverändert abgespielt."
+        }
+      }
+    }
+  },
   "audio_mono_short": {
     "extractionState": "manual",
     "localizations": {

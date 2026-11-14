@@ -237,39 +237,64 @@ final class EchoFeatureLogicTests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.5)
         XCTAssertEqual(try JSONDecoder().decode([Song].self, from: Data(contentsOf: url)), [])
     }
-    func testArtworkIsStoredOutsideLibraryJSONAndReloaded() throws {
+    func testArtworkIsStoredOutsideLibraryJSONAndLoadedOnDemand() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let store = SongArtworkStore.shared
+        let originalDirectory = store.artworkDirectory
+        store.useDirectory(folder.appendingPathComponent("Artwork", isDirectory: true))
+        defer { store.useDirectory(originalDirectory); try? FileManager.default.removeItem(at: folder) }
         let url = folder.appendingPathComponent("EchoSongs.json")
-
-        var withArt = song("Art"); withArt.coverData = Data(repeating: 7, count: 4096); withArt.imageData = Data([1, 2, 3])
-        let plain = song("Plain")
+        let cover = Data(repeating: 7, count: 4096), image = Data([1, 2, 3])
 
         // A library saved by an older version keeps artwork inside the JSON.
-        try JSONEncoder().encode([withArt, plain]).write(to: url)
+        let legacyID = UUID(), plainID = UUID()
+        let legacy: [[String: Any]] = [
+            ["id": legacyID.uuidString, "title": "Art", "artist": "Artist", "fileName": "Art.wav",
+             "dateAdded": 100, "coverData": cover.base64EncodedString(), "imageData": image.base64EncodedString()],
+            ["id": plainID.uuidString, "title": "Plain", "artist": "Artist", "fileName": "Plain.wav", "dateAdded": 100]
+        ]
+        try JSONSerialization.data(withJSONObject: legacy).write(to: url)
 
         let persistence = SongLibraryPersistence(url: url)
-        XCTAssertEqual(try persistence.load(), [withArt, plain])
-        try saveAndWait(persistence, [withArt, plain])
+        let loaded = try XCTUnwrap(persistence.load())
+        XCTAssertEqual(loaded.map(\.id), [legacyID, plainID])
+        XCTAssertEqual(loaded[0].coverData, cover); XCTAssertEqual(loaded[0].imageData, image)
+        XCTAssertNil(loaded[1].coverData)
+        try saveAndWait(persistence, loaded)
 
-        // JSON no longer carries artwork; files do.
-        let stored = try JSONDecoder().decode([Song].self, from: Data(contentsOf: url))
-        XCTAssertNil(stored[0].coverData); XCTAssertNil(stored[0].imageData)
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: persistence.artworkDirectory.path).count, 2)
-        XCTAssertLessThan(try Data(contentsOf: url).count, 2048)
+        // The JSON no longer carries artwork; the store's files do.
+        let json = try Data(contentsOf: url)
+        XCTAssertLessThan(json.count, 1024)
+        XCTAssertFalse(String(decoding: json, as: UTF8.self).contains("coverData"))
+        XCTAssertEqual(Set(try FileManager.default.contentsOfDirectory(atPath: store.artworkDirectory.path)),
+                       [legacyID.uuidString + "-cover", legacyID.uuidString + "-image"])
 
-        // A fresh instance (next launch) gets the artwork back.
-        let reopened = SongLibraryPersistence(url: url)
-        XCTAssertEqual(try reopened.load(), [withArt, plain])
+        // A fresh load (as after relaunch, with an empty cache) reads artwork from disk.
+        store.useDirectory(store.artworkDirectory)
+        let reloaded = try XCTUnwrap(SongLibraryPersistence(url: url).load())
+        XCTAssertEqual(reloaded, loaded)
+        XCTAssertEqual(reloaded[0].coverData, cover)
 
-        // Removing a cover and deleting a song removes their files.
-        var noCover = withArt; noCover.coverData = nil
-        try saveAndWait(reopened, [noCover])
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: reopened.artworkDirectory.path), [withArt.id.uuidString + "-image"])
-        XCTAssertEqual(try SongLibraryPersistence(url: url).load(), [noCover])
-        try saveAndWait(reopened, [])
-        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: reopened.artworkDirectory.path), [])
+        // Removing a cover changes the song and removes its file; deleting a song removes the rest.
+        var noCover = reloaded[0]
+        let before = noCover
+        noCover.coverData = nil
+        XCTAssertNotEqual(noCover, before)
+        XCTAssertNil(noCover.coverData)
+        try saveAndWait(persistence, [noCover])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: store.artworkDirectory.path), [legacyID.uuidString + "-image"])
+        try saveAndWait(persistence, [])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: store.artworkDirectory.path), [])
+    }
+    func testAssigningTheSameArtworkDoesNotChangeTheSong() {
+        var value = song("Same")
+        value.coverData = Data([9, 9])
+        let assigned = value
+        value.coverData = Data([9, 9])
+        XCTAssertEqual(value, assigned)
+        value.coverData = Data([8])
+        XCTAssertNotEqual(value, assigned)
     }
     func testLoadReturnsNilWithoutSavedLibrary() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")

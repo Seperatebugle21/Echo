@@ -136,8 +136,11 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
         var identifier: UUID?, fadeOutStart: Double?
         var fadeIn = 0.0, rate = 1.0, fadeRate = 1.0
         var hostStart: UInt64 = 0
+        /// Loudness normalization for this track (1 when off or not measured yet).
+        let loudnessGain: Float
         init(url: URL, offset: Double, format: AVAudioFormat) throws {
             self.url = url; self.format = format; file = try AVAudioFile(forReading: url)
+            loudnessGain = LoudnessNormalizer.shared.gain(for: url)
             duration = Double(file.length) / file.processingFormat.sampleRate
             guard duration.isFinite, duration > 0, let converter = AVAudioConverter(from: file.processingFormat, to: format) else { throw NSError(domain: "EchoAudio", code: 1) }
             self.converter = converter; self.offset = min(duration, max(0, offset)); end = duration
@@ -503,6 +506,7 @@ final class EqualizedAudioPlayer: @unchecked Sendable {
                     gain = elapsed <= deck.fadeIn ? AudioTransitionPlan.incomingGain(elapsed / deck.fadeIn) : Float(min(1, 0.70710678 + (elapsed - deck.fadeIn) * 0.29289322))
                 }
                 if mono { let value = (channels[0][frame] + channels[1][frame]) * 0.5; channels[0][frame] = value; channels[1][frame] = value }
+                gain *= deck.loudnessGain
                 channels[0][frame] *= gain; channels[1][frame] *= gain
             }
         }

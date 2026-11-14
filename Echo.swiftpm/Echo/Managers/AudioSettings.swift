@@ -7,6 +7,11 @@ enum AudioSettings {
     static var isMonoEnabled: Bool {
         UserDefaults.standard.bool(forKey: monoKey)
     }
+    static let normalizationKey = "audio.normalization.enabled"
+    /// Plays local tracks at a similar loudness. On by default.
+    static var isNormalizationEnabled: Bool {
+        UserDefaults.standard.object(forKey: normalizationKey) as? Bool ?? true
+    }
     static let transitionKey = "audio.transition.v1"
     static let crossfadeKey = "audio.crossfadeSeconds"
     static var transition: AudioTransitionMode {
