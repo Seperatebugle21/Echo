@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - Widget
-      - claude/yt-dlp-python-version-9t8xg4
 
   pull_request:
     branches:

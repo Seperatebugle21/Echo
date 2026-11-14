@@ -20,7 +20,7 @@ packages:
     from: 2.6.0
   YoutubeDL:
     url: https://github.com/Seperatebugle21/YoutubeDL-iOS.git
-    branch: claude/yt-dlp-python-version-9t8xg4
+    branch: main
   PythonKit:
     url: https://github.com/pvieito/PythonKit.git
     exactVersion: 0.5.1
