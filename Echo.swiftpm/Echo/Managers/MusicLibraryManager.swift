@@ -779,24 +779,17 @@ class MusicLibraryManager {
     
     
     private func loadSongs() {
-        
-        guard FileManager.default.fileExists(
-            atPath: songsFileURL.path
-        ) else {
-            return
-        }
-        
+
         do {
-            
-            let data = try Data(
-                contentsOf: songsFileURL
-            )
-            
-            songs = try JSONDecoder().decode(
-                [Song].self,
-                from: data
-            )
-            
+
+            // Artwork lives in separate files next to the JSON;
+            // the persistence layer reattaches it here.
+            guard let loaded = try songPersistence.load() else {
+                return
+            }
+
+            songs = loaded
+
             print(
                 "Songs geladen:",
                 songs.count

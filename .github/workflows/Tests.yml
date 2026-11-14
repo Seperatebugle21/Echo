@@ -1,0 +1,95 @@
+name: Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - Widget
+  pull_request:
+    branches:
+      - Widget
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme:
+          - EchoFeatureTests
+          - EchoPodcastTests
+          - EchoArtistTests
+          - EchoLyricsTests
+          - EchoWidgetModelTests
+          - EchoIntelligenceTests
+
+    name: ${{ matrix.scheme }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Pick an iPhone simulator
+        id: sim
+        run: |
+          xcodebuild -version
+          # Newest available iPhone simulator on the newest iOS runtime.
+          SIM_ID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          data = json.load(sys.stdin)["devices"]
+          best = None
+          for runtime, devices in data.items():
+              if "iOS" not in runtime:
+                  continue
+              version = tuple(int(p) for p in runtime.rsplit(".", 1)[-1].split("-")[1:] if p.isdigit())
+              for d in devices:
+                  if d["name"].startswith("iPhone"):
+                      key = (version, d["name"])
+                      if best is None or key > best[0]:
+                          best = (key, d["udid"], runtime, d["name"])
+          if best is None:
+              sys.exit("No iPhone simulator available")
+          print(best[1])
+          print(best[2], best[3], file=sys.stderr)
+          ')
+          echo "id=$SIM_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Run ${{ matrix.scheme }}
+        run: |
+          mkdir -p build
+          LOG="build/${{ matrix.scheme }}.log"
+          set +e
+          xcodebuild test \
+            -project Echo.xcodeproj \
+            -scheme "${{ matrix.scheme }}" \
+            -destination "id=${{ steps.sim.outputs.id }}" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath "build/${{ matrix.scheme }}.xcresult" \
+            CODE_SIGNING_ALLOWED=NO \
+            > "$LOG" 2>&1
+          STATUS=$?
+          set -e
+          # Short summary in the job log; the full log is uploaded below.
+          grep -E "error:|Test Case .*(passed|failed)|Executed|\*\* TEST" "$LOG" || tail -n 80 "$LOG"
+          exit $STATUS
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.scheme }}-results
+          path: |
+            build/${{ matrix.scheme }}.xcresult
+            build/${{ matrix.scheme }}.log
+          if-no-files-found: ignore

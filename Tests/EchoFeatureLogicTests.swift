@@ -237,6 +237,49 @@ final class EchoFeatureLogicTests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.5)
         XCTAssertEqual(try JSONDecoder().decode([Song].self, from: Data(contentsOf: url)), [])
     }
+    func testArtworkIsStoredOutsideLibraryJSONAndReloaded() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let url = folder.appendingPathComponent("EchoSongs.json")
+
+        var withArt = song("Art"); withArt.coverData = Data(repeating: 7, count: 4096); withArt.imageData = Data([1, 2, 3])
+        let plain = song("Plain")
+
+        // A library saved by an older version keeps artwork inside the JSON.
+        try JSONEncoder().encode([withArt, plain]).write(to: url)
+
+        let persistence = SongLibraryPersistence(url: url)
+        XCTAssertEqual(try persistence.load(), [withArt, plain])
+        try saveAndWait(persistence, [withArt, plain])
+
+        // JSON no longer carries artwork; files do.
+        let stored = try JSONDecoder().decode([Song].self, from: Data(contentsOf: url))
+        XCTAssertNil(stored[0].coverData); XCTAssertNil(stored[0].imageData)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: persistence.artworkDirectory.path).count, 2)
+        XCTAssertLessThan(try Data(contentsOf: url).count, 2048)
+
+        // A fresh instance (next launch) gets the artwork back.
+        let reopened = SongLibraryPersistence(url: url)
+        XCTAssertEqual(try reopened.load(), [withArt, plain])
+
+        // Removing a cover and deleting a song removes their files.
+        var noCover = withArt; noCover.coverData = nil
+        try saveAndWait(reopened, [noCover])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: reopened.artworkDirectory.path), [withArt.id.uuidString + "-image"])
+        XCTAssertEqual(try SongLibraryPersistence(url: url).load(), [noCover])
+        try saveAndWait(reopened, [])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: reopened.artworkDirectory.path), [])
+    }
+    func testLoadReturnsNilWithoutSavedLibrary() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+        XCTAssertNil(try SongLibraryPersistence(url: url).load())
+    }
+    private func saveAndWait(_ persistence: SongLibraryPersistence, _ songs: [Song]) throws {
+        let written = expectation(description: "Library written")
+        persistence.submit(songs, immediately: true) { written.fulfill() }
+        wait(for: [written], timeout: 30)
+    }
     func testMixMatchesCompatibleTempoAndFallsBackForOthers() {
         let outro = BeatAnalysis(bpm: 120, confidence: 0.9, firstBeat: 0.2), intro = BeatAnalysis(bpm: 116, confidence: 0.9, firstBeat: 0.1)
         let matched = AudioTransitionPlan.make(mode: .mix, seconds: 5, outgoingDuration: 120, incomingDuration: 120, outro: outro, intro: intro)
