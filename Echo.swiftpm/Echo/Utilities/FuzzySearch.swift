@@ -7,15 +7,30 @@ enum FuzzySearch {
         in values: [String?]
     ) -> Bool {
 
-        let queryWords = words(in: query)
+        matches(
+            queryWords: words(in: query),
+            candidateWords: normalizedWords(values)
+        )
+    }
+
+    /// Normalized (case- and diacritic-folded) words of `values`. Compute
+    /// these once per item and reuse them with `matches(queryWords:...)`.
+    static func normalizedWords(_ values: [String?]) -> [String] {
+        values
+            .compactMap { $0 }
+            .flatMap(words)
+    }
+
+    /// Same as `matches(query:in:)`, with both sides already normalized
+    /// through `words(in:)` / `normalizedWords(_:)`.
+    static func matches(
+        queryWords: [String],
+        candidateWords: [String]
+    ) -> Bool {
 
         guard !queryWords.isEmpty else {
             return true
         }
-
-        let candidateWords = values
-            .compactMap { $0 }
-            .flatMap(words)
 
         guard !candidateWords.isEmpty else {
             return false
@@ -28,7 +43,7 @@ enum FuzzySearch {
         }
     }
 
-    private static func words(in value: String) -> [String] {
+    static func words(in value: String) -> [String] {
         value
             .folding(
                 options: [.caseInsensitive, .diacriticInsensitive],

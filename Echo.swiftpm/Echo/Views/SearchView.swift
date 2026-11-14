@@ -13,6 +13,12 @@ struct SearchView: View {
     @State private var showAllSongs = false
     @State private var showSettings = false
 
+    /// Built in the background whenever the library changes.
+    @State private var searchIndex = LibrarySearchIndex.empty
+
+    /// Results of the last finished search (computed in the background).
+    @State private var results = LibrarySearchResults.empty
+
     // MARK: - Search history
 
     @AppStorage("echo_search_recent_queries_v1")
@@ -57,143 +63,149 @@ struct SearchView: View {
 
     private var recentlySearchedSongs: [Song] {
 
-        recentSearchSongIDs.compactMap { id in
-
-            library.songs.first {
-                $0.id == id
-            }
+        recentSearchSongIDs.compactMap {
+            library.song(withID: $0)
         }
     }
 
 
-    // MARK: - Songs
+    // MARK: - Query
+
+    private var trimmedQuery: String {
+        searchText.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+    }
+
+
+    // MARK: - Results (cached, see refreshResults)
 
     private var matchingSongs: [Song] {
-
-        let query =
-            searchText.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
-
-        guard !query.isEmpty else {
-            return []
-        }
-
-        return library.songs.filter { song in
-            FuzzySearch.matches(
-                query: query,
-                in: [song.title, song.artist, song.album]
-            )
-        }
+        results.songs
     }
 
     private var displayedSongs: [Song] {
 
         if showAllSongs {
-            return matchingSongs
+            return results.songs
         }
 
         return Array(
-            matchingSongs.prefix(10)
+            results.songs.prefix(10)
         )
     }
 
+    private var matchingArtists: [ArtistGroup] {
+        results.artists
+    }
 
-    // MARK: - Artists
+    private var matchingAlbums: [AlbumGroup] {
+        results.albums
+    }
+
+    private var matchingPlaylists: [Playlist] {
+        results.playlists
+    }
+
+
+    // MARK: - Idle sources
 
     private var allArtists: [ArtistGroup] {
         library.artistGroups
     }
 
-    private var matchingArtists: [ArtistGroup] {
-
-        let query =
-            searchText.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
-
-        guard !query.isEmpty else {
-            return []
-        }
-
-        return allArtists.filter {
-
-            $0.name
-                .localizedCaseInsensitiveContains(
-                    query
-                )
-        }
-    }
-
-
-    // MARK: - Albums
-
     private var allAlbums: [AlbumGroup] {
-        LibraryAlbums.groups(from: library.songs)
+        searchIndex.albums
     }
 
-    private var matchingAlbums: [AlbumGroup] {
 
-        let query =
-            searchText.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            )
+    // MARK: - Background search
+
+    /// Rebuilds the search index off the main thread.
+    private func rebuildIndex() async {
+
+        let songs = library.songs
+        let revision = library.songRevision
+
+        let index =
+            await Task.detached(
+                priority: .userInitiated
+            ) {
+                LibrarySearchIndex(
+                    songs: songs,
+                    revision: revision
+                )
+            }
+            .value
+
+        guard !Task.isCancelled else {
+            return
+        }
+
+        searchIndex = index
+
+        await refreshResults(debounce: false)
+    }
+
+
+    /// Searches off the main thread so typing never waits for filtering.
+    /// Called through `.task(id: searchText)`, which cancels the previous
+    /// search as soon as another character is typed.
+    private func refreshResults(
+        debounce: Bool
+    ) async {
+
+        let query = trimmedQuery
 
         guard !query.isEmpty else {
-            return []
+            results = .empty
+            return
         }
 
-        return allAlbums.filter { album in
+        if debounce {
 
-            album.name
-                .localizedCaseInsensitiveContains(
-                    query
-                )
-
-            ||
-
-            album.artist
-                .localizedCaseInsensitiveContains(
-                    query
-                )
-        }
-    }
-
-
-    // MARK: - Playlists
-
-    private var matchingPlaylists: [Playlist] {
-
-        let query =
-            searchText.trimmingCharacters(
-                in: .whitespacesAndNewlines
+            try? await Task.sleep(
+                for: .milliseconds(120)
             )
 
-        guard !query.isEmpty else {
-            return []
+            guard !Task.isCancelled else {
+                return
+            }
         }
 
-        return library.playlists.filter {
+        let index = searchIndex
+        let artists = library.artistGroups
+        let playlists = library.playlists.map {
+            (playlist: $0, name: $0.displayName())
+        }
 
-            $0.displayName()
-                .localizedCaseInsensitiveContains(
-                    query
+        let task =
+            Task.detached(
+                priority: .userInitiated
+            ) {
+                LibrarySearch.search(
+                    query,
+                    in: index,
+                    artists: artists,
+                    playlists: playlists
                 )
+            }
+
+        let found =
+            await withTaskCancellationHandler {
+                await task.value
+            } onCancel: {
+                task.cancel()
+            }
+
+        guard
+            !Task.isCancelled,
+            query == trimmedQuery
+        else {
+            return
         }
-    }
 
-
-    // MARK: - Results
-
-    private var hasResults: Bool {
-
-        !matchingSongs.isEmpty
-        ||
-        !matchingArtists.isEmpty
-        ||
-        !matchingAlbums.isEmpty
-        ||
-        !matchingPlaylists.isEmpty
+        results = found
     }
 
 
@@ -214,16 +226,14 @@ struct SearchView: View {
 
                     searchBar
 
-                    if searchText
-                        .trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        )
-                        .isEmpty
-                    {
+                    if trimmedQuery.isEmpty {
 
                         idleContent
 
-                    } else if !hasResults {
+                    } else if
+                        results.query == trimmedQuery,
+                        results.isEmpty
+                    {
 
                         noResultsView
 
@@ -251,6 +261,18 @@ struct SearchView: View {
             .onChange(of: searchText) {
 
                 showAllSongs = false
+            }
+
+            .task(id: library.songRevision) {
+
+                await rebuildIndex()
+            }
+
+            .task(id: searchText) {
+
+                await refreshResults(
+                    debounce: true
+                )
             }
         }
     }
@@ -844,10 +866,13 @@ struct SearchView: View {
             .font(.title2.bold())
             .padding(.horizontal)
 
+            let songs = displayedSongs
+            let lastSongID = songs.last?.id
+
             VStack(spacing: 0) {
 
                 ForEach(
-                    displayedSongs
+                    songs
                 ) { song in
 
                     Button {
@@ -868,11 +893,7 @@ struct SearchView: View {
                     }
                     .buttonStyle(.plain)
 
-                    if
-                        song.id
-                        !=
-                        displayedSongs.last?.id
-                    {
+                    if song.id != lastSongID {
 
                         Divider()
                             .padding(
