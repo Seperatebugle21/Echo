@@ -239,6 +239,10 @@ targets:
       - path: Echo.swiftpm/Echo/Managers/AudioSettings.swift
       - path: Echo.swiftpm/Echo/Managers/EqualizerSettings.swift
       - path: Echo.swiftpm/Echo/Managers/EqualizedAudioPlayer.swift
+      - path: Echo.swiftpm/Echo/Managers/LoudnessNormalization.swift
+      - path: Tests/EchoLoudnessTests.swift
+      - path: Echo.swiftpm/Echo/Managers/EchoBackup.swift
+      - path: Tests/EchoBackupTests.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastModels.swift
       - path: Echo.swiftpm/Echo/Podcasts/PodcastReleaseDetection.swift
       - path: Echo.swiftpm/Echo/Views/EchoAppearance.swift

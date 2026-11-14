@@ -200,6 +200,7 @@ class AudioPlayerManager:
             sleepTimer.selectionChanged(to: currentSong?.id)
             EchoWidgetSnapshotPublisher.requestUpdate()
             syncLiveActivity()
+            measureUpcomingLoudness()
         }
     }
 
@@ -476,6 +477,16 @@ class AudioPlayerManager:
             .nowPlayingInfo =
             info
         syncLiveActivity()
+    }
+
+    /// Measures the next few local songs first, so they start at the right level.
+    private func measureUpcomingLoudness() {
+        guard let current = currentSong, current.podcastEpisodeID == nil else { return }
+        let start = queue.firstIndex { $0.id == current.id }.map { $0 + 1 } ?? 0
+        let upcoming = queue.dropFirst(start).prefix(4).filter { $0.podcastEpisodeID == nil }
+        let library = MusicLibraryManager.shared
+        let urls = upcoming.compactMap { library.getURL(for: $0) }
+        LoudnessNormalizer.shared.measure(urls, urgent: true)
     }
 
     /// Mirrors the current song, play state and position into the Live Activity.

@@ -46,9 +46,13 @@ Albums can be added to favorites from their detail page, by holding an album cov
 
 ### Playback and sound control
 
-Play music in the background, manage a shared music and podcast queue, and route audio to AirPlay devices. A six-band equalizer provides presets and custom adjustments for local music playback.
+Play music in the background, manage a shared music and podcast queue, and route audio to AirPlay devices. Volume normalization (on by default, Settings → Audio) measures each local song once in the background (EBU R128) and plays it around -14 LUFS, so downloads from different sources sound equally loud. A six-band equalizer provides presets and custom adjustments for local music playback.
 
 The mini-player and full-screen player provide a consistent listening interface across the app, with system playback controls available while the device is locked.
+
+### Backup and restore
+
+Settings → Back up & restore saves the library, artwork, playlists, favorites, listening history, podcasts and settings, optionally with all music files, as one `.echobackup` file in Files or iCloud Drive. Restoring checks the file first and applies it the next time Echo starts. Sign-ins such as Spotify are not included.
 
 ### Lyrics with synchronized playback
 

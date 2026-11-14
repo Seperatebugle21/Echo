@@ -3,6 +3,7 @@ import SwiftUI
 struct AudioOptionsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(AudioSettings.monoKey) private var mono = false
+    @AppStorage(AudioSettings.normalizationKey) private var normalize = true
     @AppStorage(AudioSettings.transitionKey) private var mode = AudioTransitionMode.direct.rawValue
     @AppStorage(AudioSettings.crossfadeKey) private var seconds = 5.0
     @State private var showPreview = false
@@ -34,6 +35,19 @@ struct AudioOptionsView: View {
                     Text("audio_output_mode").font(.title3.bold()).accessibilityAddTraits(.isHeader)
                     outputChoice(mono: false)
                     outputChoice(mono: true)
+                    Toggle(isOn: $normalize) {
+                        HStack(alignment: .top, spacing: 14) {
+                            Image(systemName: "speaker.wave.2.bubble").font(.title3)
+                                .foregroundStyle(Color.accentColor).frame(width: 28)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("audio_normalization_title").font(.headline)
+                                Text("audio_normalization_detail").font(.subheadline).foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .padding(18).customizationSurface()
                 }
                 VStack(alignment: .leading, spacing: 12) {
                     Text("audio_transitions_title").font(.title3.bold()).accessibilityAddTraits(.isHeader)
@@ -64,6 +78,10 @@ struct AudioOptionsView: View {
             .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.88), value: mode)
             .sheet(isPresented: $showPreview) { AudioTransitionPreviewView() }
             .onChange(of: mono) { NotificationCenter.default.post(name: AudioSettings.didChange, object: nil) }
+            .onChange(of: normalize) {
+                NotificationCenter.default.post(name: AudioSettings.didChange, object: nil)
+                if normalize { MusicLibraryManager.shared.measureLoudness() }
+            }
     }
 
     private func outputChoice(mono value: Bool) -> some View {

@@ -176,6 +176,9 @@ struct SettingsView: View {
             NavigationLink { SettingsLyricsServicesView() } label: {
                 SettingsRow(title: "settingsview_lyrics_services", subtitle: "settingsview_lyrics_services_detail", symbol: "text.quote", color: .teal)
             }
+            NavigationLink { BackupView() } label: {
+                SettingsRow(title: "settings_backup_title", subtitle: "settings_backup_detail", symbol: "externaldrive.fill.badge.timemachine", color: .indigo)
+            }
         }
     }
 
