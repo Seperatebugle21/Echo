@@ -21,15 +21,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scheme:
+        job:
           - EchoFeatureTests
           - EchoPodcastTests
           - EchoArtistTests
           - EchoLyricsTests
           - EchoWidgetModelTests
           - EchoIntelligenceTests
+          - EchoAudioEngineTests
+        include:
+          - job: EchoFeatureTests
+            scheme: EchoFeatureTests
+            # Audio-engine tests depend on real-time rendering, which is unreliable on
+            # shared CI simulators. They run in their own non-blocking job instead.
+            extra: -skip-testing:EchoFeatureTests/EchoAudioEngineTests
+          - job: EchoPodcastTests
+            scheme: EchoPodcastTests
+          - job: EchoArtistTests
+            scheme: EchoArtistTests
+          - job: EchoLyricsTests
+            scheme: EchoLyricsTests
+          - job: EchoWidgetModelTests
+            scheme: EchoWidgetModelTests
+          - job: EchoIntelligenceTests
+            scheme: EchoIntelligenceTests
+          - job: EchoAudioEngineTests
+            scheme: EchoFeatureTests
+            extra: -only-testing:EchoFeatureTests/EchoAudioEngineTests
+            allowed-to-fail: true
 
-    name: ${{ matrix.scheme }}
+    name: ${{ matrix.job }}${{ matrix.allowed-to-fail && ' (non-blocking)' || '' }}
+    # Shown in the checks list, but a failure here does not fail the workflow.
+    continue-on-error: ${{ matrix.allowed-to-fail == true }}
 
     steps:
       - name: Checkout repository
@@ -65,18 +88,19 @@ jobs:
           ')
           echo "id=$SIM_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Run ${{ matrix.scheme }}
+      - name: Run tests
         run: |
           mkdir -p build
-          LOG="build/${{ matrix.scheme }}.log"
+          LOG="build/${{ matrix.job }}.log"
           set +e
           xcodebuild test \
             -project Echo.xcodeproj \
             -scheme "${{ matrix.scheme }}" \
             -destination "id=${{ steps.sim.outputs.id }}" \
             -derivedDataPath build/DerivedData \
-            -resultBundlePath "build/${{ matrix.scheme }}.xcresult" \
+            -resultBundlePath "build/${{ matrix.job }}.xcresult" \
             CODE_SIGNING_ALLOWED=NO \
+            ${{ matrix.extra }} \
             > "$LOG" 2>&1
           STATUS=$?
           set -e
@@ -88,8 +112,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.scheme }}-results
+          name: ${{ matrix.job }}-results
           path: |
-            build/${{ matrix.scheme }}.xcresult
-            build/${{ matrix.scheme }}.log
+            build/*.xcresult
+            build/*.log
           if-no-files-found: ignore

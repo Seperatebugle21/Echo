@@ -60,7 +60,7 @@ Provider availability, credentials, and track matching determine which lyrics ca
 
 Access playback through four player widget layouts and a Quick Picks widget based on Echo's Home recommendations. Supported layouts provide playback controls and favorite actions, while Quick Picks starts selected songs directly.
 
-A Lock Screen launcher provides quick access to Echo. Widgets share playback information and artwork with the app through an App Group.
+While music or a podcast plays, a Live Activity shows the song, artwork, progress and playback controls on the Lock Screen and in the Dynamic Island. It starts when playback starts in the app, and can be turned off per app in iOS Settings. A Lock Screen launcher provides quick access to Echo. Widgets share playback information and artwork with the app through an App Group.
 
 ## Installation
 
