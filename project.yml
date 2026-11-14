@@ -77,6 +77,7 @@ targets:
       - path: EchoWidget
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetModels.swift
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetIntents.swift
+      - path: Echo.swiftpm/Echo/Widgets/EchoLiveActivityAttributes.swift
       - path: Echo.swiftpm/Echo/Localizable.xcstrings
         buildPhase: resources
     settings:
@@ -158,6 +159,8 @@ targets:
     sources:
       - path: Tests/EchoWidgetModelTests.swift
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetModels.swift
+      - path: Tests/EchoLiveActivityStateTests.swift
+      - path: Echo.swiftpm/Echo/Widgets/EchoLiveActivityAttributes.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.echomusic.app.widget-model-tests

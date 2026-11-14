@@ -50,6 +50,11 @@ enum EchoWidgetSnapshotPublisher {
         do {
             try EchoWidgetSnapshotStore.save(snapshot)
             for kind in EchoWidgetKinds.homeScreen { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
+            // The Live Activity reads artwork from this snapshot; redraw it now that it is saved.
+            if snapshot.currentSong?.id != previous.currentSong?.id
+                || snapshot.currentSong?.artworkData != previous.currentSong?.artworkData {
+                EchoLiveActivityController.shared.refresh()
+            }
         } catch {
             logger.error("Widget snapshot failed; check App Group entitlements: \(error.localizedDescription, privacy: .public)")
         }

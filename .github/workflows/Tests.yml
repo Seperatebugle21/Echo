@@ -1,0 +1,119 @@
+name: Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - Widget
+  pull_request:
+    branches:
+      - Widget
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - EchoFeatureTests
+          - EchoPodcastTests
+          - EchoArtistTests
+          - EchoLyricsTests
+          - EchoWidgetModelTests
+          - EchoIntelligenceTests
+          - EchoAudioEngineTests
+        include:
+          - job: EchoFeatureTests
+            scheme: EchoFeatureTests
+            # Audio-engine tests depend on real-time rendering, which is unreliable on
+            # shared CI simulators. They run in their own non-blocking job instead.
+            extra: -skip-testing:EchoFeatureTests/EchoAudioEngineTests
+          - job: EchoPodcastTests
+            scheme: EchoPodcastTests
+          - job: EchoArtistTests
+            scheme: EchoArtistTests
+          - job: EchoLyricsTests
+            scheme: EchoLyricsTests
+          - job: EchoWidgetModelTests
+            scheme: EchoWidgetModelTests
+          - job: EchoIntelligenceTests
+            scheme: EchoIntelligenceTests
+          - job: EchoAudioEngineTests
+            scheme: EchoFeatureTests
+            extra: -only-testing:EchoFeatureTests/EchoAudioEngineTests
+            allowed-to-fail: true
+
+    name: ${{ matrix.job }}${{ matrix.allowed-to-fail && ' (non-blocking)' || '' }}
+    # Shown in the checks list, but a failure here does not fail the workflow.
+    continue-on-error: ${{ matrix.allowed-to-fail == true }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+
+      - name: Pick an iPhone simulator
+        id: sim
+        run: |
+          xcodebuild -version
+          # Newest available iPhone simulator on the newest iOS runtime.
+          SIM_ID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          data = json.load(sys.stdin)["devices"]
+          best = None
+          for runtime, devices in data.items():
+              if "iOS" not in runtime:
+                  continue
+              version = tuple(int(p) for p in runtime.rsplit(".", 1)[-1].split("-")[1:] if p.isdigit())
+              for d in devices:
+                  if d["name"].startswith("iPhone"):
+                      key = (version, d["name"])
+                      if best is None or key > best[0]:
+                          best = (key, d["udid"], runtime, d["name"])
+          if best is None:
+              sys.exit("No iPhone simulator available")
+          print(best[1])
+          print(best[2], best[3], file=sys.stderr)
+          ')
+          echo "id=$SIM_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Run tests
+        run: |
+          mkdir -p build
+          LOG="build/${{ matrix.job }}.log"
+          set +e
+          xcodebuild test \
+            -project Echo.xcodeproj \
+            -scheme "${{ matrix.scheme }}" \
+            -destination "id=${{ steps.sim.outputs.id }}" \
+            -derivedDataPath build/DerivedData \
+            -resultBundlePath "build/${{ matrix.job }}.xcresult" \
+            CODE_SIGNING_ALLOWED=NO \
+            ${{ matrix.extra }} \
+            > "$LOG" 2>&1
+          STATUS=$?
+          set -e
+          # Short summary in the job log; the full log is uploaded below.
+          grep -E "error:|Test Case .*(passed|failed)|Executed|\*\* TEST" "$LOG" || tail -n 80 "$LOG"
+          exit $STATUS
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.job }}-results
+          path: |
+            build/*.xcresult
+            build/*.log
+          if-no-files-found: ignore

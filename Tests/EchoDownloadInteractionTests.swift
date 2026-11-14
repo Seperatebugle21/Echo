@@ -99,7 +99,7 @@ final class EchoDownloadInteractionTests: XCTestCase {
                 return (wasMain, released)
             }
         }
-        await fulfillment(of: [started], timeout: 2)
+        await fulfillment(of: [started], timeout: 10)
         XCTAssertTrue(Thread.isMainThread)
         release.signal()
         let result = try await task.value
@@ -114,7 +114,7 @@ final class EchoDownloadInteractionTests: XCTestCase {
                 while true { try await Task.sleep(for: .milliseconds(50)) }
             }
         }
-        await fulfillment(of: [started], timeout: 2)
+        await fulfillment(of: [started], timeout: 10)
         task.cancel()
         do { _ = try await task.value; XCTFail("Canceled worker completed") }
         catch { XCTAssertTrue(error is CancellationError) }

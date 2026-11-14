@@ -186,7 +186,10 @@ class AudioPlayerManager:
     var isPlaying =
         false {
         didSet {
-            if isPlaying != oldValue { EchoWidgetSnapshotPublisher.requestUpdate() }
+            if isPlaying != oldValue {
+                EchoWidgetSnapshotPublisher.requestUpdate()
+                syncLiveActivity()
+            }
         }
     }
 
@@ -196,6 +199,7 @@ class AudioPlayerManager:
         didSet {
             sleepTimer.selectionChanged(to: currentSong?.id)
             EchoWidgetSnapshotPublisher.requestUpdate()
+            syncLiveActivity()
         }
     }
 
@@ -471,6 +475,20 @@ class AudioPlayerManager:
             .default()
             .nowPlayingInfo =
             info
+        syncLiveActivity()
+    }
+
+    /// Mirrors the current song, play state and position into the Live Activity.
+    /// The controller drops updates that would not change what is shown.
+    func syncLiveActivity() {
+        guard !isPreviewing else { return }
+        let song = currentSong, playing = isPlaying, elapsed = currentTime, length = duration
+        let rate = isPodcast ? Double(podcastSpeed) : (player?.currentRate ?? 1)
+        Task { @MainActor in
+            guard let song else { EchoLiveActivityController.shared.end(); return }
+            EchoLiveActivityController.shared.update(song: song, isPlaying: playing,
+                                                     elapsed: elapsed, duration: length, rate: rate)
+        }
     }
 
 
@@ -1972,5 +1990,6 @@ extension AudioPlayerManager {
             info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        syncLiveActivity()
     }
 }
