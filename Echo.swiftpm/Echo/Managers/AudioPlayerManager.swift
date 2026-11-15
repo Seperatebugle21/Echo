@@ -197,6 +197,7 @@ class AudioPlayerManager:
             sleepTimer.selectionChanged(to: currentSong?.id)
             EchoWidgetSnapshotPublisher.requestUpdate()
             measureUpcomingLoudness()
+            updateThemeArtwork()
         }
     }
 
@@ -472,6 +473,16 @@ class AudioPlayerManager:
             .default()
             .nowPlayingInfo =
             info
+    }
+
+    /// Lets "colors from the cover" follow the song that is playing.
+    func updateThemeArtwork() {
+        let song = currentSong
+        Task { @MainActor in
+            let theme = EchoTheme.shared
+            guard theme.usesArtworkColors, let song else { theme.showArtwork(nil, key: nil); return }
+            theme.showArtwork(song.coverData ?? song.imageData, key: "\(song.id)-\(song.artworkRevision)")
+        }
     }
 
     /// Measures the next few local songs first, so they start at the right level.

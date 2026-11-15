@@ -17,7 +17,28 @@ struct EchoThemePalette: Codable, Equatable {
 @MainActor @Observable final class EchoTheme {
     static let shared = EchoTheme()
     var accent: EchoAccentColor { didSet { defaults.set(accent.hex, forKey: EchoAccentColor.storageKey) } }
-    var accentColor: Color { Color(echoHex: accent.hex) }
+    /// The accent in use: the cover's color while "colors from the cover" is on, otherwise `accent`.
+    var accentColor: Color {
+        if accentFromArtwork, let dark = artworkPalette?.accentForDark, let light = artworkPalette?.accentForLight {
+            return Color(uiColor: UIColor { traits in
+                let rgb = traits.userInterfaceStyle == .dark ? dark : light
+                return UIColor(red: rgb.r, green: rgb.g, blue: rgb.b, alpha: 1)
+            })
+        }
+        return Color(echoHex: accent.hex)
+    }
+    /// Takes the accent from the artwork of the song that is playing.
+    var accentFromArtwork: Bool { didSet { defaults.set(accentFromArtwork, forKey: Self.accentFromArtworkKey) } }
+    /// Also tints the app background with the artwork's colors.
+    var backgroundFromArtwork: Bool { didSet { defaults.set(backgroundFromArtwork, forKey: Self.backgroundFromArtworkKey) } }
+    /// Colors of the current song's artwork; nil when nothing plays or the artwork has none.
+    private(set) var artworkPalette: ArtworkPalette?
+    var usesArtworkColors: Bool { accentFromArtwork || backgroundFromArtwork }
+    static let accentFromArtworkKey = "theme.accentFromArtwork"
+    static let backgroundFromArtworkKey = "theme.backgroundFromArtwork"
+    @ObservationIgnored private var artworkKey: String?
+    @ObservationIgnored private var paletteCache: [String: ArtworkPalette?] = [:]
+    @ObservationIgnored private var paletteOrder: [String] = []
     var mode: String { didSet { defaults.set(mode, forKey: "appearanceMode") } }
     var darkStyle: String { didSet { defaults.set(darkStyle, forKey: "darkBackgroundStyle") } }
     var sharedPalette: EchoThemePalette { didSet { save() } }
@@ -43,6 +64,8 @@ struct EchoThemePalette: Codable, Equatable {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         accent = EchoAccentColor(hex: defaults.string(forKey: EchoAccentColor.storageKey) ?? EchoAccentColor.defaultHex)
+        accentFromArtwork = defaults.bool(forKey: Self.accentFromArtworkKey)
+        backgroundFromArtwork = defaults.bool(forKey: Self.backgroundFromArtworkKey)
         mode = defaults.string(forKey: "appearanceMode") ?? "system"
         darkStyle = defaults.string(forKey: "darkBackgroundStyle") ?? "charcoal"
         let legacy = EchoThemePalette(gradient: defaults.bool(forKey: "theme.gradient"),
@@ -73,6 +96,31 @@ struct EchoThemePalette: Codable, Equatable {
     func palette(for systemScheme: ColorScheme) -> EchoThemePalette {
         separatePalettes ? (systemScheme == .dark ? dark : light) : sharedPalette
     }
+    /// Follows the artwork of the song that is playing. `key` identifies the artwork
+    /// (song and artwork revision); colors are computed once per key, off the main thread.
+    func showArtwork(_ data: Data?, key: String?) {
+        guard usesArtworkColors, let key, let data else {
+            artworkKey = nil
+            if artworkPalette != nil { artworkPalette = nil }
+            return
+        }
+        guard key != artworkKey else { return }
+        artworkKey = key
+        if let cached = paletteCache[key] { artworkPalette = cached; return }
+        Task.detached(priority: .utility) {
+            let palette = ArtworkPalette.from(imageData: data)
+            await MainActor.run {
+                self.remember(palette, for: key)
+                if self.artworkKey == key { self.artworkPalette = palette }
+            }
+        }
+    }
+
+    private func remember(_ palette: ArtworkPalette?, for key: String) {
+        if paletteCache.updateValue(palette, forKey: key) == nil { paletteOrder.append(key) }
+        while paletteOrder.count > 40 { paletteCache[paletteOrder.removeFirst()] = nil }
+    }
+
     func setPalette(_ palette: EchoThemePalette, for systemScheme: ColorScheme) {
         if !separatePalettes { sharedPalette = palette }
         else if systemScheme == .dark { dark = palette }
@@ -125,18 +173,26 @@ private struct EchoBackgroundModifier: ViewModifier {
 
     private var usesCharcoal: Bool { colorScheme == .dark && theme.darkStyle == "charcoal" }
     private var palette: EchoThemePalette { theme.palette(for: systemScheme) }
+    private var artworkColors: [Color]? {
+        guard theme.backgroundFromArtwork, let artwork = theme.artworkPalette else { return nil }
+        return (colorScheme == .dark ? artwork.darkBackground : artwork.lightBackground)
+            .map { Color(red: $0.r, green: $0.g, blue: $0.b) }
+    }
 
     func body(content: Content) -> some View {
         content
-            .scrollContentBackground(theme.mode == "custom" || usesCharcoal ? .hidden : .automatic)
+            .scrollContentBackground(theme.mode == "custom" || usesCharcoal || artworkColors != nil ? .hidden : .automatic)
             .background {
-                if theme.mode == "custom" {
+                if let artworkColors {
+                    LinearGradient(colors: artworkColors, startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea()
+                } else if theme.mode == "custom" {
                     palette.background.ignoresSafeArea()
                 } else if usesCharcoal {
                     Color(red: 0.11, green: 0.12, blue: 0.14).ignoresSafeArea()
                 }
             }
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: palette)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.6), value: theme.artworkPalette)
     }
 }
 
