@@ -53,8 +53,6 @@
         <string>UIInterfaceOrientationPortraitUpsideDown</string>
     </array>
 
-    <key>NSSupportsLiveActivities</key>
-    <true/>
     <key>UIBackgroundModes</key>
     <array>
         <string>audio</string><string>fetch</string>

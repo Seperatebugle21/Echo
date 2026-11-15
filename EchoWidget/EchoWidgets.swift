@@ -11,6 +11,5 @@ struct EchoWidgets: WidgetBundle {
         EchoEdgePlayerWidget()
         EchoCompactPlayerWidget()
         EchoQuickPicksWidget()
-        EchoLiveActivityWidget()
     }
 }

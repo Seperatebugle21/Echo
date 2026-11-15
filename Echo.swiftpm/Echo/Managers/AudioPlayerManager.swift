@@ -186,10 +186,7 @@ class AudioPlayerManager:
     var isPlaying =
         false {
         didSet {
-            if isPlaying != oldValue {
-                EchoWidgetSnapshotPublisher.requestUpdate()
-                syncLiveActivity()
-            }
+            if isPlaying != oldValue { EchoWidgetSnapshotPublisher.requestUpdate() }
         }
     }
 
@@ -199,7 +196,6 @@ class AudioPlayerManager:
         didSet {
             sleepTimer.selectionChanged(to: currentSong?.id)
             EchoWidgetSnapshotPublisher.requestUpdate()
-            syncLiveActivity()
             measureUpcomingLoudness()
         }
     }
@@ -476,7 +472,6 @@ class AudioPlayerManager:
             .default()
             .nowPlayingInfo =
             info
-        syncLiveActivity()
     }
 
     /// Measures the next few local songs first, so they start at the right level.
@@ -487,19 +482,6 @@ class AudioPlayerManager:
         let library = MusicLibraryManager.shared
         let urls = upcoming.compactMap { library.getURL(for: $0) }
         LoudnessNormalizer.shared.measure(urls, urgent: true)
-    }
-
-    /// Mirrors the current song, play state and position into the Live Activity.
-    /// The controller drops updates that would not change what is shown.
-    func syncLiveActivity() {
-        guard !isPreviewing else { return }
-        let song = currentSong, playing = isPlaying, elapsed = currentTime, length = duration
-        let rate = isPodcast ? Double(podcastSpeed) : (player?.currentRate ?? 1)
-        Task { @MainActor in
-            guard let song else { EchoLiveActivityController.shared.end(); return }
-            EchoLiveActivityController.shared.update(song: song, isPlaying: playing,
-                                                     elapsed: elapsed, duration: length, rate: rate)
-        }
     }
 
 
@@ -2001,6 +1983,5 @@ extension AudioPlayerManager {
             info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
-        syncLiveActivity()
     }
 }
