@@ -37,6 +37,8 @@ final class RecommendationManager {
         observedMaximumTime = accumulator.audibleSeconds
         pendingEndReason = reason
         finishObservedSongIfNeeded()
+        // Taste AI re-curates its own queue after repeated skips or when it runs low.
+        if UserDefaults.standard.bool(forKey: TasteAIManager.enabledKey) { TasteAIManager.shared.playbackEnded(reason) }
     }
     func playbackStateChanged(position: Double, playing: Bool) {
         sampleListening(position: position, playing: playing)

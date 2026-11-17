@@ -18,6 +18,7 @@ struct HomeSmartSections: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             switch selectedSection {
+            case .tasteAI: TasteHomeSection(play: { play($0, $1) }, options: { selectedSong = $0 })
             case .hiddenGems: if !model.gems.isEmpty { hiddenGems }
             case .revisitAlbums: if !model.albums.isEmpty { revisitingAlbums }
             case .listeningWeek: weeklyMusic

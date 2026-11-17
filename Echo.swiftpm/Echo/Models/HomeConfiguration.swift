@@ -6,6 +6,7 @@ enum HomeSection: String, Codable, CaseIterable, Identifiable {
     case discovery, albums, favorites, podcasts, onlineAlbums
     case hiddenGems, revisitAlbums, listeningWeek, vibe, surprise, flow, timeMachine, upNext
     case playlists, favoriteAlbums
+    case tasteAI
 
     var id: String { rawValue }
     var detailKey: String { "home_section_detail_" + rawValue }
@@ -33,6 +34,7 @@ enum HomeSection: String, Codable, CaseIterable, Identifiable {
         case .upNext: "smart_up_next"
         case .playlists: "libraryview_playlists"
         case .favoriteAlbums: "library_favorite_albums"
+        case .tasteAI: "taste_home_title"
         }
     }
 
@@ -57,6 +59,7 @@ enum HomeSection: String, Codable, CaseIterable, Identifiable {
         case .timeMachine: "clock.arrow.circlepath"
         case .upNext: "list.bullet"
         case .playlists: "music.note.list"
+        case .tasteAI: "sparkles.rectangle.stack"
         }
     }
 }
@@ -66,7 +69,7 @@ struct HomeConfiguration: Equatable {
     static let minimumSections = 2
     static let defaults = Self(sections: [
         .nowPlaying, .quickAccess, .quickPicks, .forYou, .recentlyPlayed, .artists, .recentlyAdded,
-        .discovery, .albums, .favorites, .podcasts, .onlineAlbums, .hiddenGems, .revisitAlbums,
+        .discovery, .albums, .favorites, .podcasts, .onlineAlbums, .tasteAI, .hiddenGems, .revisitAlbums,
         .listeningWeek, .vibe, .surprise, .flow, .timeMachine, .upNext
     ])
     private(set) var sections: [HomeSection]

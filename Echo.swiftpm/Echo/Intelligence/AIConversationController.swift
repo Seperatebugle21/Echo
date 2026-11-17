@@ -177,6 +177,7 @@ import Observation
         Search first for real IDs. Request focused results, never the entire library. Ask clarifying questions for ambiguity.
         For multi-step requests query, select, mutate, then report actual results and any partial failure. Never retry a denied action.
         DJ mood is inferred from real metadata/preferences, not measured audio energy. No beatmatching claims. Use dj_mix to update upcoming tracks without interrupting current music, echo_flow for continuous adaptive playback.
+        For personal questions about taste ('what do I like', 'why this song') use taste_profile. For 'make it calmer' or 'something for now' prefer taste_curate when available.
         Return only the useful answer, without internal reasoning or think tags.
         Current DJ session data: \(actionEngine.djContext)
         """

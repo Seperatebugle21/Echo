@@ -149,6 +149,25 @@ import Foundation
                 try await verifyPlayback()
             } else { player.stopEchoFlow() }
         case "dj_mix": return try await mix(args)
+        case "taste_profile":
+            let taste = TasteAIManager.shared
+            if args["songID"] != nil { return try json(taste.explain(try song(args["songID"]))) }
+            return try json(taste.profileJSON)
+        case "taste_curate":
+            let taste = TasteAIManager.shared
+            guard taste.active else { throw AIError.unavailable }
+            let result = await taste.curateQueue(intent: args["intent"] as? String, startNow: args["startNow"] as? Bool ?? false)
+            guard !result.songs.isEmpty else { throw AIError.missing }
+            return try json(["status": "taste_queue_updated", "count": result.songs.count, "usedAI": result.usedAI,
+                             "first": result.songs.prefix(5).map { song -> [String: Any] in
+                                 var item = metadata(song); item["reason"] = result.reasons[song.id] ?? ""; return item
+                             }])
+        case "taste_forget":
+            let taste = TasteAIManager.shared
+            guard let value = args["insightID"] as? String, let id = UUID(uuidString: value),
+                  let insight = taste.profile.insights.first(where: { $0.id == id }) else { throw AIError.missing }
+            taste.forget(insight)
+            return try json(["status": "completed", "action": "taste_forget"])
         case "podcast_search":
             let term = args["query"] as? String ?? ""
             return try json(episodes.filter { $0.matches(term) }.prefix(30).map {

@@ -8,6 +8,7 @@ struct QueueView: View {
     @State private var showAutoNext = true
     @State private var editMode: EditMode = .inactive
     @State private var selectedSongIDs = Set<UUID>() // Slaat de geselecteerde nummers op
+    @State private var taste = TasteAIManager.shared
     
     var body: some View {
         
@@ -15,6 +16,26 @@ struct QueueView: View {
             
             List(selection: $selectedSongIDs) {
                 
+                // MARK: - Taste AI banner
+                if taste.queueIsCurated {
+                    Section {
+                        HStack(spacing: 12) {
+                            Image(systemName: "sparkles").font(.title3).foregroundStyle(Color.accentColor)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("taste_queue_curated").font(.subheadline).bold()
+                                Text(LocalizedStringKey(taste.lastCurationUsedAI ? "taste_queue_curated_detail" : "taste_queue_fallback_detail"))
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if taste.status == .curating { ProgressView() }
+                            else {
+                                Button("taste_reshuffle") { Task { await taste.curateQueue() } }
+                                    .font(.caption.bold()).buttonStyle(.bordered)
+                            }
+                        }
+                    }
+                }
+
                 // MARK: - Herhaal Status Banner
                 if audioPlayer.repeatMode != .off {
                     Section {
@@ -205,6 +226,13 @@ struct QueueView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+
+                if taste.curatedQueueIDs.contains(song.id), let reason = taste.reason(for: song.id) {
+                    Label(reason, systemImage: "sparkles")
+                        .font(.caption2)
+                        .foregroundStyle(Color.accentColor)
+                        .lineLimit(2)
+                }
             }
             
             Spacer()

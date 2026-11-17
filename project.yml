@@ -210,6 +210,8 @@ targets:
       - path: Tests/SmartMusicTests.swift
       - path: Echo.swiftpm/Echo/Models/SmartMusicSelection.swift
       - path: Echo.swiftpm/Echo/Models/ListeningHistory.swift
+      - path: Tests/TasteAITests.swift
+      - path: Echo.swiftpm/Echo/Intelligence/Taste/TasteModels.swift
       - path: Echo.swiftpm/Echo/Models/HomeMusicSelection.swift
       - path: Tests/EchoFeatureLogicTests.swift
       - path: Tests/EchoSleepTimerTests.swift

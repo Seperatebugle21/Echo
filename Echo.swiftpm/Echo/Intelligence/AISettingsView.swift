@@ -52,6 +52,10 @@ struct AISettingsView: View {
                 }
                 Text("ai_motion_detail").font(.caption).foregroundStyle(.secondary)
             }
+            Section("taste_title") {
+                NavigationLink("taste_title") { TasteProfileView() }
+                Text("taste_enabled_detail").font(.caption).foregroundStyle(.secondary)
+            }
             Section("ai_history") {
                 Toggle("ai_save_history", isOn: $store.value.saveHistory)
                 Text("ai_history_detail").font(.caption).foregroundStyle(.secondary)

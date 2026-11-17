@@ -2,6 +2,431 @@
   "sourceLanguage": "en",
   "version": "1.0",
   "strings": {
+  "taste_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Taste AI"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Smaak-AI"
+        }
+      }
+    }
+  },
+  "taste_enabled": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Personal Taste AI"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Persoonlijke smaak-AI"
+        }
+      }
+    }
+  },
+  "taste_enabled_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Intelligence learns personal patterns from your listening and curates recommendations and your queue. Uses your selected AI provider and privacy settings."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo Intelligence leert persoonlijke patronen uit je luistergedrag en stelt aanbevelingen en je wachtrij samen. Gebruikt je gekozen AI-aanbieder en privacy-instellingen."
+        }
+      }
+    }
+  },
+  "taste_summary": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Your taste"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Jouw smaak"
+        }
+      }
+    }
+  },
+  "taste_empty": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "No taste profile yet. Listen to some music, then refresh."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nog geen smaakprofiel. Luister wat muziek en vernieuw daarna."
+        }
+      }
+    }
+  },
+  "taste_refresh": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Analyze my taste"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Analyseer mijn smaak"
+        }
+      }
+    }
+  },
+  "taste_requires_intelligence": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Turn on Echo Intelligence under Settings → Experimental to use Taste AI."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Zet Echo Intelligence aan onder Instellingen → Experimenteel om de smaak-AI te gebruiken."
+        }
+      }
+    }
+  },
+  "taste_not_enough_data": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Not enough listening history yet (at least 15 plays)."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nog niet genoeg luistergeschiedenis (minstens 15 nummers)."
+        }
+      }
+    }
+  },
+  "taste_insights": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "What Echo knows about you"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Wat Echo over je weet"
+        }
+      }
+    }
+  },
+  "taste_insights_footer": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Swipe an insight and choose \"Not true\" to correct it. Echo remembers the correction."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Veeg over een inzicht en kies \"Klopt niet\" om het te corrigeren. Echo onthoudt die correctie."
+        }
+      }
+    }
+  },
+  "taste_wrong": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Not true"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Klopt niet"
+        }
+      }
+    }
+  },
+  "taste_evolution": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "How your taste evolves"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Hoe je smaak evolueert"
+        }
+      }
+    }
+  },
+  "taste_corrections": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Corrections"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Correcties"
+        }
+      }
+    }
+  },
+  "taste_privacy": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Only aggregated statistics are sent to the model, never your full history. The profile is stored on this device and excluded from backups."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Enkel samengevatte statistieken gaan naar het model, nooit je volledige geschiedenis. Het profiel blijft op dit toestel en zit niet in back-ups."
+        }
+      }
+    }
+  },
+  "taste_clear": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Clear taste profile"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Smaakprofiel wissen"
+        }
+      }
+    }
+  },
+  "taste_home_title": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "For you, now"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Voor jou, nu"
+        }
+      }
+    }
+  },
+  "home_section_detail_tasteAI": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Songs the Taste AI picks for this moment, with a personal reason."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Nummers die de smaak-AI voor dit moment kiest, met een persoonlijke reden."
+        }
+      }
+    }
+  },
+  "taste_home_empty": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo is getting to know your taste."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Echo leert je smaak kennen."
+        }
+      }
+    }
+  },
+  "taste_curating": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Curating for this moment…"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Aan het samenstellen voor dit moment…"
+        }
+      }
+    }
+  },
+  "taste_refresh_picks": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Refresh picks"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Keuzes vernieuwen"
+        }
+      }
+    }
+  },
+  "taste_curate_queue": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Build my queue"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Stel mijn wachtrij samen"
+        }
+      }
+    }
+  },
+  "taste_queue_curated": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Curated by Taste AI"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Samengesteld door smaak-AI"
+        }
+      }
+    }
+  },
+  "taste_queue_curated_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Adapts after repeated skips."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Past zich aan na herhaald overslaan."
+        }
+      }
+    }
+  },
+  "taste_queue_fallback_detail": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI unavailable, using Echo's own ranking."
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "AI niet beschikbaar, Echo's eigen rangschikking gebruikt."
+        }
+      }
+    }
+  },
+  "taste_reshuffle": {
+    "extractionState": "manual",
+    "localizations": {
+      "en": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Re-curate"
+        }
+      },
+      "nl": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "Herschik"
+        }
+      }
+    }
+  },
   "siri_play_song_title": {
     "extractionState": "manual",
     "localizations": {

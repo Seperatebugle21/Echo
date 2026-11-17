@@ -162,7 +162,7 @@ private struct AppleEchoTool: Tool {
     let description: String
     let executor: @MainActor (AIToolCall) async throws -> String
     @Generable struct Arguments {
-        @Guide(description: "Exact registered action name for advanced actions. Use the separate native tools for library search, playback status, playing, transport and favorites.", .anyOf(["seek", "playback_options", "queue_edit", "playlists", "playlist_create", "playlist_edit", "playlist_play", "playlist_delete", "echo_flow", "dj_mix", "podcast_search", "podcast_action", "settings_change", "navigate"])) var action: String
+        @Guide(description: "Exact registered action name for advanced actions. Use the separate native tools for library search, playback status, playing, transport and favorites.", .anyOf(["seek", "playback_options", "queue_edit", "playlists", "playlist_create", "playlist_edit", "playlist_play", "playlist_delete", "echo_flow", "dj_mix", "taste_profile", "taste_curate", "taste_forget", "podcast_search", "podcast_action", "settings_change", "navigate"])) var action: String
         @Guide(description: "A valid JSON object string matching the selected action's schema. Use {} for no arguments. Do not use markdown or invent song or playlist IDs.") var argumentsJSON: String
     }
     func call(arguments: Arguments) async throws -> String {
