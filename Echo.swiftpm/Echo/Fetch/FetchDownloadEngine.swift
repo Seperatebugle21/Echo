@@ -173,6 +173,13 @@ final class FetchDownloadEngine:
     private var claimedRecords:
         Set<UUID> = []
 
+    /// Downloads waiting on the slow background session, so they can move to the fast
+    /// downloader once Echo may work at full speed again. Guarded by `stateLock`.
+    private var backgroundTransfers: [UUID: (task: URLSessionDownloadTask, url: URL, record: BackgroundFetchRecord)] = [:]
+    private var acceleratingIDs: Set<UUID> = []
+    /// Files whose server does not allow the fast downloader; they stay on the background session.
+    private var fastPathUnavailable: Set<UUID> = []
+
 
     private var backgroundCompletionHandler:
         (() -> Void)?
@@ -1259,9 +1266,80 @@ final class FetchDownloadEngine:
                 task.taskDescription =
                     record.id.uuidString
 
+                stateLock.lock()
+                backgroundTransfers[record.id] = (task, downloadURL, record)
+                stateLock.unlock()
 
                 task.resume()
             }
+    }
+
+    // MARK: - Move Back To The Fast Downloader
+
+    /// A download that started while Echo could not work at full speed runs on the background
+    /// session, which iOS throttles heavily. As soon as Echo is back on screen (or iOS grants
+    /// background time), stop it and download the file again with the fast parallel downloader.
+    @MainActor
+    func accelerateBackgroundTransfers() {
+        guard FetchBackgroundState.allowsFullSpeedWork else { return }
+        stateLock.lock()
+        let candidates = backgroundTransfers.filter { entry in
+            continuations[entry.key] != nil && !claimedRecords.contains(entry.key)
+                && !acceleratingIDs.contains(entry.key) && !fastPathUnavailable.contains(entry.key)
+        }
+        acceleratingIDs.formUnion(candidates.keys)
+        stateLock.unlock()
+
+        for (id, transfer) in candidates {
+            // Detach the slow task first so its cancellation is not reported as a failed download.
+            transfer.task.taskDescription = nil
+            transfer.task.cancel()
+            stateLock.lock()
+            backgroundTransfers.removeValue(forKey: id)
+            let handler = progressHandlers[id]
+            stateLock.unlock()
+
+            Task { @MainActor in
+                defer {
+                    self.stateLock.lock()
+                    self.acceleratingIDs.remove(id)
+                    self.stateLock.unlock()
+                }
+                do {
+                    guard let probe = try await self.probeParallelDownload(url: transfer.url),
+                          probe.totalBytes >= self.minimumParallelFileSize else { throw CancellationError() }
+                    let file = try await self.downloadInParallel(record: transfer.record, downloadURL: transfer.url,
+                                                                 probe: probe) { value in handler?(value) }
+                    self.stateLock.lock()
+                    let continuation = self.continuations.removeValue(forKey: id)
+                    self.progressHandlers.removeValue(forKey: id)
+                    self.stateLock.unlock()
+                    continuation?.resume(returning: file)
+                } catch {
+                    // The fast path is unavailable for this file: start the background download again
+                    // and do not interrupt it again.
+                    self.stateLock.lock()
+                    self.fastPathUnavailable.insert(id)
+                    self.stateLock.unlock()
+                    self.restartBackgroundTransfer(id: id, url: transfer.url, record: transfer.record)
+                }
+            }
+        }
+    }
+
+    private func restartBackgroundTransfer(id: UUID, url: URL, record: BackgroundFetchRecord) {
+        stateLock.lock()
+        let stillWaiting = continuations[id] != nil
+        stateLock.unlock()
+        guard stillWaiting else { return }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 180
+        let task = session.downloadTask(with: request)
+        task.taskDescription = id.uuidString
+        stateLock.lock()
+        backgroundTransfers[id] = (task, url, record)
+        stateLock.unlock()
+        task.resume()
     }
 
 

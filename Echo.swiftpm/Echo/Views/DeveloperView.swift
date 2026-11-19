@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct DeveloperView: View {
     @AppStorage("developerShowLyricsSources") private var showLyricsSources = false
@@ -20,6 +21,22 @@ struct DeveloperView: View {
                 Toggle("developer_lyrics_sources", isOn: $showLyricsSources)
             } footer: {
                 Text("developer_lyrics_sources_hint")
+            }
+
+            // Diagnostics for background downloads; English like the other technical values here.
+            Section {
+                LabeledContent {
+                    Text(verbatim: FetchContinuedProcessing.shared.status)
+                        .multilineTextAlignment(.trailing)
+                        .textSelection(.enabled)
+                } label: {
+                    Text(verbatim: "Background downloads")
+                }
+                LabeledContent {
+                    Text(verbatim: UIApplication.shared.backgroundRefreshStatus == .available ? "On" : "Off")
+                } label: {
+                    Text(verbatim: "Background App Refresh")
+                }
             }
 
             Section {

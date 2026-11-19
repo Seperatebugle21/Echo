@@ -8,13 +8,16 @@ import UserNotifications
 /// continued-processing task after the user left it. Readable from any thread,
 /// including URLSession delegate queues.
 enum FetchBackgroundState {
-    private struct Flags { var appActive = false; var continuedTask = false }
+    private struct Flags { var appActive = false; var continuedTask = false; var graceTime = false }
     private static let flags = OSAllocatedUnfairLock(initialState: Flags())
     @MainActor private static var observers: [NSObjectProtocol] = []
 
-    static var allowsFullSpeedWork: Bool { flags.withLock { $0.appActive || $0.continuedTask } }
+    static var allowsFullSpeedWork: Bool { flags.withLock { $0.appActive || $0.continuedTask || $0.graceTime } }
     static var continuedTaskRunning: Bool { flags.withLock { $0.continuedTask } }
     static func setContinuedTask(_ running: Bool) { flags.withLock { $0.continuedTask = running } }
+    /// The ~30 seconds iOS gives every app after it leaves the screen: long enough for a
+    /// fast download of a few seconds, so a song does not drop to the slow background session.
+    static func setGraceTime(_ available: Bool) { flags.withLock { $0.graceTime = available } }
 
     @MainActor static func startObserving() {
         guard observers.isEmpty else { return }
@@ -23,6 +26,8 @@ enum FetchBackgroundState {
         observers = [
             center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
                 flags.withLock { $0.appActive = true }
+                // Downloads that fell back to the slow background session continue at full speed.
+                MainActor.assumeIsolated { FetchDownloadEngine.shared.accelerateBackgroundTransfers() }
             },
             center.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { _ in
                 flags.withLock { $0.appActive = false }
@@ -40,11 +45,17 @@ enum FetchBackgroundState {
 
     private static let suffix = "fetch-downloads"
     /// The bundle ID changes when SideStore re-signs Echo, so both forms are allowed in Info.plist.
-    private lazy var identifier: String? = {
+    private lazy var identifiers: [String] = {
         let candidates = [Bundle.main.bundleIdentifier.map { "\($0).\(Self.suffix)" }, "com.echomusic.app.\(Self.suffix)"]
-        return candidates.compactMap { $0 }.first(where: Self.isPermitted)
+        var unique: [String] = []
+        for candidate in candidates.compactMap({ $0 }) where Self.isPermitted(candidate) && !unique.contains(candidate) {
+            unique.append(candidate)
+        }
+        return unique
     }()
-    private var registered = false
+    private var registered: Set<String> = []
+    /// What iOS answered last time, shown under Settings > Developer to diagnose background downloads.
+    private(set) var status = "Not requested yet"
     private var task: BGContinuedProcessingTask?
     private var submitted = false
     private var graceTask: UIBackgroundTaskIdentifier = .invalid
@@ -59,19 +70,28 @@ enum FetchBackgroundState {
         FetchBackgroundState.startObserving()
         requestNotificationPermissionIfNeeded()
         trackPendingItems()
+        beginGrace()
         startTicker()
         FetchLiveActivity.shared.update(liveState())
-        guard !submitted, task == nil, UIApplication.shared.applicationState == .active,
-              let identifier, register(identifier) else { return }
-        let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: title, subtitle: subtitle)
-        request.strategy = .fail
-        do {
-            try BGTaskScheduler.shared.submit(request)
-            submitted = true
-        } catch {
-            Logger(subsystem: "com.echomusic.app", category: "Fetch")
-                .error("Continued processing unavailable: \(error.localizedDescription, privacy: .public)")
+        guard !submitted, task == nil, UIApplication.shared.applicationState == .active else { return }
+        guard !identifiers.isEmpty else { status = "No permitted task identifier for \(Bundle.main.bundleIdentifier ?? "?")"; return }
+        var problems: [String] = []
+        // SideStore changes the bundle ID, so try each permitted form until iOS accepts one.
+        for identifier in identifiers {
+            guard register(identifier) else { problems.append("\(identifier): could not register"); continue }
+            let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: title, subtitle: subtitle)
+            request.strategy = .fail
+            do {
+                try BGTaskScheduler.shared.submit(request)
+                submitted = true
+                status = "Requested as \(identifier); waiting for iOS"
+                return
+            } catch {
+                problems.append("\(identifier): \(error.localizedDescription)")
+            }
         }
+        status = "iOS refused background downloads. " + problems.joined(separator: " / ")
+        Logger(subsystem: "com.echomusic.app", category: "Fetch").error("\(self.status, privacy: .public)")
     }
 
     /// Call when the queue has no more work.
@@ -96,32 +116,39 @@ enum FetchBackgroundState {
     // MARK: - Task
 
     private func register(_ identifier: String) -> Bool {
-        if registered { return true }
+        if registered.contains(identifier) { return true }
         // iOS raises an uncatchable exception for an identifier it does not accept. If a previous
         // attempt never returned, skip continued processing instead of crashing on every download.
         let guardKey = "fetch.continuedProcessing.registering"
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: guardKey) else { return false }
+        guard !defaults.bool(forKey: guardKey) else {
+            status = "Skipped: registering crashed Echo once before"
+            return false
+        }
         defaults.set(true, forKey: guardKey)
         defaults.synchronize()
-        registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main) { [weak self] task in
+        let accepted = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main) { [weak self] task in
             MainActor.assumeIsolated {
                 guard let task = task as? BGContinuedProcessingTask else { task.setTaskCompleted(success: false); return }
                 self?.launched(task)
             }
         }
         defaults.set(false, forKey: guardKey)
-        return registered
+        if accepted { registered.insert(identifier) }
+        return accepted
     }
 
     private func launched(_ task: BGContinuedProcessingTask) {
         guard submitted else { task.setTaskCompleted(success: true); return }
         self.task = task
+        status = "Running: iOS keeps downloads going in the background"
         FetchBackgroundState.setContinuedTask(true)
+        FetchDownloadEngine.shared.accelerateBackgroundTransfers()
         task.expirationHandler = { [weak self] in
             // The user stopped it from the system UI, or iOS needs the resources back.
             Task { @MainActor in
                 FetchBackgroundState.setContinuedTask(false)
+                self?.status = "Stopped early by iOS or from the Lock Screen"
                 self?.task = nil
                 self?.submitted = false
                 self?.beginGrace()
@@ -135,6 +162,7 @@ enum FetchBackgroundState {
         ticker = Task { [weak self] in
             while !Task.isCancelled {
                 self?.trackPendingItems()
+                self?.refreshGrace()
                 self?.updateProgress()
                 if let self { FetchLiveActivity.shared.update(self.liveState()) }
                 try? await Task.sleep(for: .seconds(1))
@@ -186,11 +214,21 @@ enum FetchBackgroundState {
     private func beginGrace() {
         guard graceTask == .invalid else { return }
         graceTask = UIApplication.shared.beginBackgroundTask(withName: "Echo downloads") { [weak self] in
-            Task { @MainActor in self?.endGrace() }
+            // Must end before this handler returns, or iOS terminates Echo.
+            MainActor.assumeIsolated { self?.endGrace() }
         }
     }
 
+    /// Renews the grace period after each return to Echo and stops starting fast downloads
+    /// when too little of it is left to finish one.
+    private func refreshGrace() {
+        let application = UIApplication.shared
+        if graceTask == .invalid, application.applicationState == .active, !batch.isEmpty { beginGrace() }
+        FetchBackgroundState.setGraceTime(graceTask != .invalid && application.backgroundTimeRemaining > 15)
+    }
+
     private func endGrace() {
+        FetchBackgroundState.setGraceTime(false)
         guard graceTask != .invalid else { return }
         UIApplication.shared.endBackgroundTask(graceTask)
         graceTask = .invalid
