@@ -541,8 +541,10 @@ struct EchoSpokenCommand: Equatable {
         (.zh, ["睡眠定时#分钟", "#分钟后停止", "#分钟后暂停"]),
     ]
 
-    private static let sleepPatterns: [(Language, NSRegularExpression)] = sleepTemplates.flatMap { language, templates in
-        templates.compactMap { template in
+    private static let sleepPatterns: [(Language, NSRegularExpression)] = sleepTemplates.flatMap {
+        (entry: (Language, [String])) -> [(Language, NSRegularExpression)] in
+        let language = entry.0
+        return entry.1.compactMap { (template: String) -> (Language, NSRegularExpression)? in
             let parts = template.components(separatedBy: "#").map { normalize($0) }
             guard parts.count == 2 else { return nil }
             let pattern = "^" + NSRegularExpression.escapedPattern(for: parts[0]) + " ?([0-9]{1,3}) ?"

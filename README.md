@@ -16,6 +16,8 @@ In Home layout, add, remove and reorder every Home section, including individual
 
 The Now Playing card shows a waveform between the track information and playback time, driven by 32 frequency bands in the rendered local music after the equalizer. Bass, vocals and treble move independently, with fast attack, softer release and headroom for musical peaks. Its small Canvas requests up to 120 Hz on supported displays and interpolates audio updates smoothly. Animation stops when paused, offscreen, inactive or Reduce Motion is enabled. Actual frame rate still needs ProMotion device validation. Your albums opens the complete searchable album collection, and Quick Access includes Songs.
 
+Settings → App Language offers English, Nederlands, Français, Deutsch, Español, Italiano, Português, Polski, Türkçe, 日本語, 한국어 and 简体中文, each listed in its own language. Until you choose one, Echo follows the first of your iOS languages it supports. Home Screen widgets follow the language chosen in Echo; the widget gallery and Siri follow iOS.
+
 Echo Intelligence is available under Settings → Experimental. Enable it to show its Home button; provider and other configuration remains accessible there when it is disabled.
 
 ### Local music library

@@ -1,615 +1,1623 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "Play ${song} in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play ${song} in ${applicationName}"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Play ${song} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play ${song} in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Speel ${song} in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speel ${song} in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joue ${song} dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joue ${song} dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spiele ${song} in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiele ${song} in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduce ${song} en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riproduci ${song} su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduz ${song} no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odtwórz ${song} w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile ${song} çal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}で${song}を再生"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 ${song} 재생"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中播放${song}"
           }
         }
       }
     },
-    "Start ${song} with ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start ${song} with ${applicationName}"
+    "Start ${song} with ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start ${song} with ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start ${song} met ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start ${song} met ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lance ${song} avec ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lance ${song} avec ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starte ${song} mit ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte ${song} mit ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pon ${song} con ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvia ${song} con ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Põe ${song} com o ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz ${song} w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile ${song} başlat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}で${song}をかけて"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}로 ${song} 틀어 줘"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}放${song}"
           }
         }
       }
     },
-    "Play playlist ${playlist} in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play playlist ${playlist} in ${applicationName}"
+    "Play playlist ${playlist} in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play playlist ${playlist} in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Speel playlist ${playlist} in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speel playlist ${playlist} in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joue la playlist ${playlist} dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joue la playlist ${playlist} dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spiele die Playlist ${playlist} in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiele die Playlist ${playlist} in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduce la playlist ${playlist} en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riproduci la playlist ${playlist} su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduz a playlist ${playlist} no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odtwórz playlistę ${playlist} w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile ${playlist} çalma listesini çal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でプレイリスト${playlist}を再生"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 ${playlist} 플레이리스트 재생"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中播放歌单${playlist}"
           }
         }
       }
     },
-    "Start playlist ${playlist} with ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start playlist ${playlist} with ${applicationName}"
+    "Start playlist ${playlist} with ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start playlist ${playlist} with ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start afspeellijst ${playlist} met ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start afspeellijst ${playlist} met ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lance la playlist ${playlist} avec ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lance la playlist ${playlist} avec ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starte die Playlist ${playlist} mit ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte die Playlist ${playlist} mit ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pon la lista ${playlist} con ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvia la playlist ${playlist} con ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Põe a playlist ${playlist} com o ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz playlistę ${playlist} w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile ${playlist} listesini başlat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}で${playlist}のプレイリストをかけて"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}로 ${playlist} 플레이리스트 틀어 줘"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}放歌单${playlist}"
           }
         }
       }
     },
-    "Play favorites in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play favorites in ${applicationName}"
+    "Play favorites in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play favorites in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Speel favorieten in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speel favorieten in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joue les favoris dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joue les favoris dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spiele Favoriten in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiele Favoriten in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduce favoritos en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riproduci i preferiti su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduz os favoritos no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odtwórz ulubione w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile favorileri çal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でお気に入りを再生"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 즐겨찾기 재생"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中播放收藏"
           }
         }
       }
     },
-    "Play my favorites with ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play my favorites with ${applicationName}"
+    "Play my favorites with ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play my favorites with ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Speel mijn favorieten met ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speel mijn favorieten met ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joue mes favoris avec ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joue mes favoris avec ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Spiele meine Favoriten mit ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spiele meine Favoriten mit ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pon mis favoritos con ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metti i miei preferiti con ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Põe os meus favoritos com o ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz moje ulubione w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile favorilerimi çal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}で私のお気に入りをかけて"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}로 내 즐겨찾기 틀어 줘"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}放我的收藏"
           }
         }
       }
     },
-    "Shuffle in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle in ${applicationName}"
+    "Shuffle in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lecture aléatoire dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture aléatoire dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zufallswiedergabe in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zufallswiedergabe in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aleatorio en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riproduzione casuale su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aleatório no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Losowo w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile karışık çal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でシャッフル"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 셔플"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中随机播放"
           }
         }
       }
     },
-    "Shuffle this song in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle this song in ${applicationName}"
+    "Shuffle this song in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle this song in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle dit liedje in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle dit liedje in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mélange les titres dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mélange les titres dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mische die Lieder in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mische die Lieder in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mezcla esta canción en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mescola i brani su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baralha as músicas no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odtwarzaj losowo w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile şarkıları karıştır"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でシャッフル再生"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 셔플 재생"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}随机播放"
           }
         }
       }
     },
-    "Turn shuffle on in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Turn shuffle on in ${applicationName}"
+    "Turn shuffle on in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn shuffle on in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zet shuffle aan in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet shuffle aan in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Active le mode aléatoire dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active le mode aléatoire dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schalte die Zufallswiedergabe in ${applicationName} ein"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalte die Zufallswiedergabe in ${applicationName} ein"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa el modo aleatorio en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attiva la riproduzione casuale su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativa a reprodução aleatória no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz odtwarzanie losowe w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile karışık çalmayı aç"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でシャッフルをオン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 셔플 켜 줘"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中打开随机播放"
           }
         }
       }
     },
-    "Turn shuffle off in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Turn shuffle off in ${applicationName}"
+    "Turn shuffle off in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn shuffle off in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zet shuffle uit in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet shuffle uit in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Désactive le mode aléatoire dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactive le mode aléatoire dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schalte die Zufallswiedergabe in ${applicationName} aus"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalte die Zufallswiedergabe in ${applicationName} aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva el modo aleatorio en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattiva la riproduzione casuale su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativa a reprodução aleatória no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłącz odtwarzanie losowe w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile karışık çalmayı kapat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でシャッフルをオフ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 셔플 꺼 줘"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中关闭随机播放"
           }
         }
       }
     },
-    "Disable shuffle in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Disable shuffle in ${applicationName}"
+    "Disable shuffle in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disable shuffle in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle uit in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle uit in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arrête la lecture aléatoire dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrête la lecture aléatoire dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shuffle ausschalten in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shuffle ausschalten in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quita el modo aleatorio en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Togli la riproduzione casuale su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desliga a reprodução aleatória no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłącz shuffle w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile shuffle kapat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でシャッフルを解除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 셔플 해제"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中取消随机播放"
           }
         }
       }
     },
-    "Repeat this song in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Repeat this song in ${applicationName}"
+    "Repeat this song in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat this song in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Herhaal dit liedje in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herhaal dit liedje in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Répète cette chanson dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répète cette chanson dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wiederhole dieses Lied in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiederhole dieses Lied in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repite esta canción en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ripeti questa canzone su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repete esta música no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powtarzaj ten utwór w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile bu şarkıyı tekrarla"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でこの曲をリピート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 이 노래 반복"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中单曲循环"
           }
         }
       }
     },
-    "Loop this track in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loop this track in ${applicationName}"
+    "Loop this track in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loop this track in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Herhaal dit nummer in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herhaal dit nummer in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ce morceau en boucle dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce morceau en boucle dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wiederhole diesen Titel in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiederhole diesen Titel in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pon esta canción en bucle en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metti questo brano in loop su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Põe esta música em repetição no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapętl ten utwór w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile bu şarkıyı döngüye al"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でこの曲を繰り返して"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 이 곡 한 곡 반복"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}循环播放这首歌"
           }
         }
       }
     },
-    "Repeat all in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Repeat all in ${applicationName}"
+    "Repeat all in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat all in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Herhaal alles in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herhaal alles in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Répète tout dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répète tout dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alles wiederholen in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles wiederholen in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repite todo en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ripeti tutto su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repete tudo no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Powtarzaj wszystko w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile hepsini tekrarla"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}で全曲リピート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 전체 반복"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中全部循环"
           }
         }
       }
     },
-    "Stop repeating in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop repeating in ${applicationName}"
+    "Stop repeating in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop repeating in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop herhalen in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop herhalen in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arrête la répétition dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrête la répétition dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wiederholung ausschalten in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wiederholung ausschalten in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deja de repetir en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smetti di ripetere su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para de repetir no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Przestań powtarzać w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile tekrarlamayı kapat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でリピートを解除"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 반복 해제"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中取消循环播放"
           }
         }
       }
     },
-    "Turn repeat off in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Turn repeat off in ${applicationName}"
+    "Turn repeat off in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn repeat off in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zet herhalen uit in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zet herhalen uit in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Désactive la répétition dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactive la répétition dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schalte die Wiederholung in ${applicationName} aus"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalte die Wiederholung in ${applicationName} aus"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactiva la repetición en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disattiva la ripetizione su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativa a repetição no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyłącz powtarzanie w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile tekrarı kapat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でリピートをオフ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 반복 꺼 줘"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中关闭循环"
           }
         }
       }
     },
-    "Start flow in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start flow in ${applicationName}"
+    "Start flow in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start flow in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start de flow in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start de flow in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lance le flow dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lance le flow dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starte Flow in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte Flow in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia el flow en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvia il flow su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia o flow no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz flow w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile flow başlat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でフローを開始"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 플로우 시작"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中开始心流"
           }
         }
       }
     },
-    "Start flow from this song in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start flow from this song in ${applicationName}"
+    "Start flow from this song in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start flow from this song in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start de flow uit dit liedje in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start de flow uit dit liedje in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lance le flow avec ce morceau dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lance le flow avec ce morceau dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Starte Flow mit diesem Lied in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starte Flow mit diesem Lied in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia el flow con esta canción en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avvia il flow con questa canzone su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia o flow com esta música no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz flow od tego utworu w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile bu şarkıdan flow başlat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でこの曲からフローを開始"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 이 노래로 플로우 시작"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中从这首歌开始心流"
           }
         }
       }
     },
-    "Flow with ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flow with ${applicationName}"
+    "Flow with ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow with ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flow met ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow met ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flow avec ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow avec ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flow mit ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow mit ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow con ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow con ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow com o ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile flow"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でフロー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}로 플로우"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用${applicationName}开启心流"
           }
         }
       }
     },
-    "Favorite this song in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorite this song in ${applicationName}"
+    "Favorite this song in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favorite this song in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maak dit liedje favoriet in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak dit liedje favoriet in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajoute cette chanson aux favoris dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute cette chanson aux favoris dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Markiere dieses Lied als Favorit in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiere dieses Lied als Favorit in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade esta canción a favoritos en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi questa canzone ai preferiti su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adiciona esta música aos favoritos no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodaj ten utwór do ulubionych w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile bu şarkıyı favorilere ekle"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でこの曲をお気に入りに追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 이 노래를 즐겨찾기에 추가"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中收藏这首歌"
           }
         }
       }
     },
-    "Like this song in ${applicationName}": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Like this song in ${applicationName}"
+    "Like this song in ${applicationName}" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Like this song in ${applicationName}"
           }
         },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Maak dit nummer favoriet in ${applicationName}"
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maak dit nummer favoriet in ${applicationName}"
           }
         },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajoute ce morceau aux favoris dans ${applicationName}"
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute ce morceau aux favoris dans ${applicationName}"
           }
         },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diesen Titel favorisieren in ${applicationName}"
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diesen Titel favorisieren in ${applicationName}"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Me gusta esta canción en ${applicationName}"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi piace questa canzone su ${applicationName}"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gosto desta música no ${applicationName}"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Polub ten utwór w ${applicationName}"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName} ile bu şarkıyı beğen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}でこの曲をお気に入りにして"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "${applicationName}에서 이 곡 좋아요"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在${applicationName}中喜欢这首歌"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

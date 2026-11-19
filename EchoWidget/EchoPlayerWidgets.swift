@@ -133,7 +133,7 @@ struct EchoPlayerWidgetView: View {
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text(song.isFavorite == true ? "widget_a11y_unfavorite" : "widget_a11y_favorite"))
+        .accessibilityLabel(Text(LocalizedStringKey(song.isFavorite == true ? "widget_a11y_unfavorite" : "widget_a11y_favorite")))
     }
 
     private func controls(_ song: EchoWidgetSongItem) -> some View {
