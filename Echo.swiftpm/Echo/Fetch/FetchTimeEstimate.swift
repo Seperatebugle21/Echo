@@ -53,8 +53,9 @@ import SwiftUI
         guard seconds >= 60 else { return EchoLocalization.string("fetch_eta_under_minute") }
         let minutes = Int((seconds / 60).rounded(.up))
         let duration = Duration.seconds(minutes * 60)
+        let units: Set<Duration.UnitsFormatStyle.Unit> = minutes >= 60 ? [.hours, .minutes] : [.minutes]
         let formatted = duration.formatted(
-            .units(allowed: minutes >= 60 ? [.hours, .minutes] : [.minutes], width: .abbreviated)
+            .units(allowed: units, width: .abbreviated)
                 .locale(EchoLanguage.current.locale)
         )
         return String(format: EchoLocalization.string("fetch_eta"), formatted)
