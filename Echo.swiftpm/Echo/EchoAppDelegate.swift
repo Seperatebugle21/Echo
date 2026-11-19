@@ -22,6 +22,7 @@ final class EchoAppDelegate:
     ) -> Bool {
 
         PodcastNotifications.shared.registerBackgroundTask()
+        FetchBackgroundState.startObserving()
         configureSiriMediaContext()
         PythonSelfTest.runIfRequested()
 

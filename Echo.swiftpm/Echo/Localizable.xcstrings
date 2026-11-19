@@ -69923,73 +69923,73 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Houd Echo open"
+            "value" : "Downloads gaan door op de achtergrond"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keep Echo Open"
+            "value" : "Downloads keep going in the background"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gardez Echo ouvert"
+            "value" : "Les téléchargements continuent en arrière-plan"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Echo geöffnet lassen"
+            "value" : "Downloads laufen im Hintergrund weiter"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mantén Echo abierto"
+            "value" : "Las descargas siguen en segundo plano"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tieni Echo aperto"
+            "value" : "I download continuano in background"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mantém o Echo aberto"
+            "value" : "As transferências continuam em segundo plano"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nie zamykaj Echo"
+            "value" : "Pobieranie trwa w tle"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Echo’yu Açık Tut"
+            "value" : "İndirmeler arka planda devam eder"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Echoを開いたままにしてください"
+            "value" : "ダウンロードはバックグラウンドで続きます"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Echo를 열어 두세요"
+            "value" : "다운로드는 백그라운드에서 계속됩니다"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请保持 Echo 打开"
+            "value" : "下载会在后台继续"
           }
         }
       }
@@ -70000,73 +70000,73 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Houd Echo open tijdens het downloaden. Downloads kunnen pauzeren of mislukken als de app wordt gesloten of je iPhone wordt vergrendeld."
+            "value" : "Je kunt naar het beginscherm gaan: Echo blijft downloaden en geeft een melding als alles klaar is. Veeg je Echo weg in de appkiezer, dan stoppen de downloads."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keep Echo open while downloading. Downloads may pause or fail if the app is closed or your iPhone is locked."
+            "value" : "You can go to the Home Screen: Echo keeps downloading and notifies you when everything is done. Swiping Echo away in the app switcher stops the downloads."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gardez Echo ouvert pendant le téléchargement. Les téléchargements peuvent être interrompus ou échouer si l’app est fermée ou si votre iPhone est verrouillé."
+            "value" : "Vous pouvez revenir à l’écran d’accueil : Echo continue de télécharger et vous avertit quand tout est terminé. Fermer Echo depuis le sélecteur d’apps arrête les téléchargements."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lass Echo während des Downloads geöffnet. Downloads können pausieren oder fehlschlagen, wenn die App geschlossen oder dein iPhone gesperrt wird."
+            "value" : "Du kannst zum Home-Bildschirm wechseln: Echo lädt weiter und benachrichtigt dich, wenn alles fertig ist. Wenn du Echo im App-Umschalter schließt, stoppen die Downloads."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mantén Echo abierto mientras se descarga. Las descargas pueden pausarse o fallar si cierras la app o bloqueas el iPhone."
+            "value" : "Puedes ir a la pantalla de inicio: Echo sigue descargando y te avisa cuando todo esté listo. Si cierras Echo desde el selector de apps, las descargas se detienen."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tieni Echo aperto durante il download. I download possono interrompersi o non riuscire se chiudi l’app o blocchi l’iPhone."
+            "value" : "Puoi tornare alla schermata Home: Echo continua a scaricare e ti avvisa quando ha finito. Se chiudi Echo dal selettore app, i download si interrompono."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mantém o Echo aberto durante a transferência. As transferências podem parar ou falhar se fechares a app ou bloqueares o iPhone."
+            "value" : "Podes ir para o ecrã principal: o Echo continua a transferir e avisa-te quando tudo estiver concluído. Se fechares o Echo no seletor de apps, as transferências param."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nie zamykaj Echo podczas pobierania. Pobieranie może zostać wstrzymane lub przerwane, jeśli zamkniesz aplikację lub zablokujesz iPhone’a."
+            "value" : "Możesz przejść do ekranu głównego: Echo pobiera dalej i powiadomi Cię, gdy wszystko będzie gotowe. Zamknięcie Echo w przełączniku aplikacji zatrzymuje pobieranie."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "İndirme sırasında Echo’yu açık tut. Uygulama kapatılırsa veya iPhone kilitlenirse indirmeler duraklayabilir ya da başarısız olabilir."
+            "value" : "Ana ekrana geçebilirsin: Echo indirmeye devam eder ve her şey bitince bildirim gönderir. Echo’yu uygulama değiştiricide kaydırarak kapatırsan indirmeler durur."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ダウンロード中はEchoを開いたままにしてください。アプリを閉じたりiPhoneをロックしたりすると、ダウンロードが中断または失敗することがあります。"
+            "value" : "ホーム画面に移動しても、Echoはダウンロードを続け、すべて完了したら通知します。Appスイッチャーで Echo を上にスワイプして閉じると、ダウンロードは停止します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다운로드하는 동안 Echo를 열어 두세요. 앱을 닫거나 iPhone을 잠그면 다운로드가 멈추거나 실패할 수 있습니다."
+            "value" : "홈 화면으로 이동해도 Echo가 계속 다운로드하고 모두 끝나면 알려 드립니다. 앱 전환기에서 Echo를 쓸어 올려 닫으면 다운로드가 중지됩니다."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下载期间请保持 Echo 打开。如果关闭应用或锁定 iPhone，下载可能会暂停或失败。"
+            "value" : "你可以返回主屏幕：Echo 会继续下载，全部完成后通知你。在应用切换器中划掉 Echo 会停止下载。"
           }
         }
       }
@@ -96695,6 +96695,545 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这首歌已无法在 Echo 中使用。"
+          }
+        }
+      }
+    },
+    "fetch_eta" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About %@ left"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nog ongeveer %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encore environ %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch etwa %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quedan unos %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mancano circa %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faltam cerca de %@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozostało około %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yaklaşık %@ kaldı"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "残り約%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "약 %@ 남음"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大约还剩 %@"
+          }
+        }
+      }
+    },
+    "fetch_eta_under_minute" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less than a minute left"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nog minder dan een minuut"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moins d’une minute restante"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch weniger als eine Minute"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Queda menos de un minuto"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manca meno di un minuto"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falta menos de um minuto"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozostała niecała minuta"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir dakikadan az kaldı"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "残り1分未満"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1분 미만 남음"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不到一分钟"
+          }
+        }
+      }
+    },
+    "fetch_background_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo is downloading songs"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo downloadt nummers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo télécharge des morceaux"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo lädt Titel herunter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo está descargando canciones"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo sta scaricando brani"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Echo está a transferir músicas"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo pobiera utwory"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo şarkıları indiriyor"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echoが曲をダウンロード中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo에서 노래를 다운로드하는 중"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Echo 正在下载歌曲"
+          }
+        }
+      }
+    },
+    "fetch_background_subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld songs done"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld van %2$lld nummers klaar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld morceaux sur %2$lld terminés"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld von %2$lld Titeln fertig"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld canciones listas"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld di %2$lld brani completati"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld de %2$lld músicas concluídas"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotowe: %1$lld z %2$lld"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld şarkıdan %1$lld tanesi tamam"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld曲中%1$lld曲完了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld곡 중 %1$lld곡 완료"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已完成 %1$lld / %2$lld 首"
+          }
+        }
+      }
+    },
+    "fetch_notification_done_title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloads finished"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloads klaar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargements terminés"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloads abgeschlossen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargas terminadas"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download completati"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transferências concluídas"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pobieranie zakończone"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İndirmeler tamamlandı"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード完了"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다운로드 완료"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载完成"
+          }
+        }
+      }
+    },
+    "fetch_notification_done_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld songs were added to your library."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld nummers zijn aan je bibliotheek toegevoegd."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld morceaux ont été ajoutés à votre bibliothèque."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Titel wurden deiner Mediathek hinzugefügt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se han añadido %lld canciones a tu biblioteca."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld brani sono stati aggiunti alla tua libreria."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foram adicionadas %lld músicas à tua biblioteca."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utwory dodane do biblioteki: %lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arşivine %lld şarkı eklendi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld曲をライブラリに追加しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보관함에 노래 %lld곡을 추가했습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已将 %lld 首歌曲添加到你的资料库。"
+          }
+        }
+      }
+    },
+    "fetch_notification_partial_body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld songs added, %2$lld failed."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld nummers toegevoegd, %2$lld mislukt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld morceaux ajoutés, %2$lld en échec."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Titel hinzugefügt, %2$lld fehlgeschlagen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld canciones añadidas, %2$lld con error."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld brani aggiunti, %2$lld non riusciti."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld músicas adicionadas, %2$lld falharam."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dodano: %1$lld, nie udało się: %2$lld."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld şarkı eklendi, %2$lld başarısız."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld曲を追加、%2$lld曲は失敗しました。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld곡 추가, %2$lld곡 실패."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已添加 %1$lld 首，%2$lld 首失败。"
           }
         }
       }

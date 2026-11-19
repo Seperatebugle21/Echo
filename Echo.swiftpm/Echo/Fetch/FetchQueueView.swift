@@ -18,10 +18,10 @@ struct FetchQueueView: View {
 
                     Image(
                         systemName:
-                            "exclamationmark.triangle.fill"
+                            "arrow.down.app.fill"
                     )
                     .font(.title3)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(.blue)
 
                     VStack(
                         alignment: .leading,
@@ -44,6 +44,11 @@ struct FetchQueueView: View {
                     }
                 }
                 .padding(.vertical, 4)
+
+                // A List row would stay visible even when the label is empty.
+                if manager.items.contains(where: { $0.queueState == .pending }) {
+                    FetchTimeRemainingLabel(items: manager.items, font: .subheadline.weight(.semibold))
+                }
             }
 
             if manager.items.isEmpty {

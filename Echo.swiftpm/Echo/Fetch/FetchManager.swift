@@ -676,6 +676,8 @@ final class FetchManager {
         running =
             true
 
+        // Keeps resolving, downloading and MP3 encoding going on the Home Screen.
+        FetchContinuedProcessing.shared.begin()
 
         Task {
 
@@ -689,6 +691,9 @@ final class FetchManager {
             if hasQueuedItems {
 
                 startIfNeeded()
+            } else {
+
+                FetchContinuedProcessing.shared.finish()
             }
         }
     }
@@ -771,6 +776,10 @@ final class FetchManager {
     private func process(
         _ item: FetchItem
     ) async {
+
+        let started = Date()
+        FetchTimeEstimate.shared.started(item.id, at: started)
+        defer { FetchTimeEstimate.shared.ended(item.id, success: item.status == .completed) }
 
         item.status =
             .preparing(
@@ -1158,9 +1167,7 @@ final class FetchManager {
     func restoreBackgroundDownloads()
         async {
 
-        guard UIApplication.shared
-            .applicationState ==
-            .active
+        guard FetchBackgroundState.allowsFullSpeedWork
 
         else {
 
@@ -1360,9 +1367,7 @@ final class FetchManager {
         _ record: BackgroundFetchRecord
     ) {
 
-        guard UIApplication.shared
-            .applicationState ==
-            .active
+        guard FetchBackgroundState.allowsFullSpeedWork
 
         else {
 

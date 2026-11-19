@@ -613,6 +613,8 @@ struct FetchView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
 
+                            FetchTimeRemainingLabel(items: manager.items)
+
                         } else if manager.items.isEmpty {
 
                             Text(

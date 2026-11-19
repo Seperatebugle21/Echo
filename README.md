@@ -28,6 +28,8 @@ Build a personal library from imported audio files and listen offline. Organize 
 
 Discover podcasts through Apple's podcast search and access episodes from publishers' public RSS feeds. Save shows and episodes, download audio for offline listening, and resume unfinished episodes from your saved playback position.
 
+Tap the bell on a show to get a notification for new episodes. No server is involved: iOS wakes Echo now and then for a background refresh (and for longer processing time while charging), Echo checks the feeds of followed shows in parallel, and while Echo plays in the background it checks every 20 minutes. iOS decides the timing, needs Background App Refresh to be on, and does not wake an app that was swiped away.
+
 Podcast playback shares Echo's player and queue with music, with adjustable playback speed, skip controls, AirPlay, and Lock Screen integration. Transcripts are available when supplied by the publisher in a supported format.
 
 ### Spotify integration and playlist transfer
@@ -40,7 +42,9 @@ Spotify provides catalog and playlist information. Audio availability depends on
 
 Fetch brings audio search, link resolution, downloads, and library import into a single workflow. The app includes YouTube and YouTube Music search, Spotify link handling, direct MP3 sources, and integrations with yt-dlp and Apify.
 
-Downloads support selectable output bitrates of 128, 192, and 320 kbps, with metadata and artwork processing. Available sources and download results depend on the selected provider and its configuration.
+Downloads support selectable output bitrates of 128, 192, and 320 kbps, with metadata and artwork processing.
+
+The download queue keeps running at full speed when you go to the Home Screen, including yt-dlp resolution and MP3 encoding: Echo asks iOS 26 for continued background processing, and iOS shows its progress and lets you stop it. A notification reports how many songs were added. Fetch and the Downloads list show an estimate of the time left, based on how long recent songs took. Swiping Echo away in the app switcher still stops all downloads. Available sources and download results depend on the selected provider and its configuration.
 
 Fetch searches Spotify and YouTube Music for songs, artists, and albums. Open artist catalogs and album releases directly in Echo. From a local album, use **Find missing songs** to choose its online edition and download tracks that are not already in your library or download queue.
 

@@ -55,7 +55,7 @@
 
     <key>UIBackgroundModes</key>
     <array>
-        <string>audio</string><string>fetch</string>
+        <string>audio</string><string>fetch</string><string>processing</string>
     </array>
 
     <key>UIFileSharingEnabled</key>
@@ -93,6 +93,12 @@
         </dict>
     </array>
     <key>BGTaskSchedulerPermittedIdentifiers</key>
-    <array><string>com.echomusic.app.podcast-refresh</string></array>
+    <array>
+        <string>com.echomusic.app.podcast-refresh</string>
+        <string>com.echomusic.app.podcast-processing</string>
+        <string>com.echomusic.app.fetch-downloads</string>
+        <!-- SideStore appends a team ID to the bundle ID; continued tasks use the bundle ID as prefix. -->
+        <string>com.echomusic.app.*</string>
+    </array>
 </dict>
 </plist>

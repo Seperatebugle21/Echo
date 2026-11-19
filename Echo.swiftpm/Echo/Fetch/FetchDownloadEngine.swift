@@ -380,9 +380,7 @@ final class FetchDownloadEngine:
         // Try accelerated mode only while
         // app is active.
 
-        if UIApplication.shared
-            .applicationState ==
-            .active {
+        if FetchBackgroundState.allowsFullSpeedWork {
 
             do {
 
@@ -1458,9 +1456,7 @@ final class FetchDownloadEngine:
 
             if hasLiveDownload {
 
-                if UIApplication.shared
-                    .applicationState ==
-                    .active {
+                if FetchBackgroundState.allowsFullSpeedWork {
 
                     resumeLiveContinuation(
                         record:

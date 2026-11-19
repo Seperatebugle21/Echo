@@ -10,6 +10,8 @@ extension Notification.Name { static let echoOpenPodcast = Notification.Name("Ec
 @MainActor @Observable final class PodcastNotifications: NSObject, UNUserNotificationCenterDelegate {
     static let shared = PodcastNotifications()
     static let taskID = "com.echomusic.app.podcast-refresh"
+    /// Longer runs that iOS usually grants while charging; a second chance besides app refresh.
+    static let processingTaskID = "com.echomusic.app.podcast-processing"
     private(set) var follows: [Int: PodcastFollow] = [:]
     private(set) var busy: Set<Int> = []
     var errorKey: String?
@@ -26,24 +28,47 @@ extension Notification.Name { static let echoOpenPodcast = Notification.Name("Ec
         if let data = try? Data(contentsOf: stateURL), let saved = try? JSONDecoder().decode([Int: PodcastFollow].self, from: data) { follows = saved }
         center.delegate = self
     }
+    /// No server is involved: iOS wakes Echo now and then (app refresh, and processing time while
+    /// charging), and Echo checks the followed feeds itself. While Echo plays in the background it
+    /// also checks every 20 minutes. iOS decides the exact timing and skips apps swiped away.
     func registerBackgroundTask() {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.taskID, using: nil) { task in
-            Task { @MainActor in
-                let work = Task { await self.refresh(force: true) }
-                task.expirationHandler = { work.cancel() }
-                await work.value
-                task.setTaskCompleted(success: !work.isCancelled)
-                self.schedule()
+        for (identifier, budget) in [(Self.taskID, 25.0), (Self.processingTaskID, 120.0)] {
+            BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: nil) { task in
+                Task { @MainActor in
+                    let work = Task { await self.refresh(force: true) }
+                    // App refresh gets about 30 seconds; finish cleanly before iOS stops the app.
+                    let deadline = Task { try await Task.sleep(for: .seconds(budget)); work.cancel() }
+                    task.expirationHandler = { work.cancel() }
+                    await work.value
+                    deadline.cancel()
+                    task.setTaskCompleted(success: !work.isCancelled)
+                    self.schedule()
+                }
             }
         }
         schedule()
+        checkWhileRunningInBackground()
     }
     func schedule() {
         BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: Self.taskID)
+        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: Self.processingTaskID)
         guard !follows.isEmpty else { return }
-        let request = BGAppRefreshTaskRequest(identifier: Self.taskID)
-        request.earliestBeginDate = Date().addingTimeInterval(3600)
-        try? BGTaskScheduler.shared.submit(request)
+        let refresh = BGAppRefreshTaskRequest(identifier: Self.taskID)
+        refresh.earliestBeginDate = Date().addingTimeInterval(15 * 60)
+        try? BGTaskScheduler.shared.submit(refresh)
+        let processing = BGProcessingTaskRequest(identifier: Self.processingTaskID)
+        processing.requiresNetworkConnectivity = true
+        processing.earliestBeginDate = Date().addingTimeInterval(60 * 60)
+        try? BGTaskScheduler.shared.submit(processing)
+    }
+    /// Background audio keeps Echo running; use that time instead of waiting for iOS to wake it.
+    private func checkWhileRunningInBackground() {
+        Task { @MainActor in
+            while true {
+                do { try await Task.sleep(for: .seconds(20 * 60)) } catch { return }
+                if UIApplication.shared.applicationState == .background { await refresh() }
+            }
+        }
     }
     func toggle(_ show: PodcastShow) async {
         guard !busy.contains(show.id) else { return }
@@ -78,16 +103,26 @@ extension Notification.Name { static let echoOpenPodcast = Notification.Name("Ec
         defer { refreshing = false; schedule() }
         let permission = await center.notificationSettings()
         guard [.authorized, .provisional, .ephemeral].contains(permission.authorizationStatus) else { return }
-        for follow in Array(follows.values).sorted(by: { $0.lastChecked < $1.lastChecked }) {
-            guard !Task.isCancelled else { break }
-            guard !busy.contains(follow.show.id), force || Date().timeIntervalSince(follow.lastChecked) >= 3600 else { continue }
-            busy.insert(follow.show.id)
-            do {
-                let feed = try await PodcastCatalog.shared.feed(for: follow.show)
-                try Task.checkCancellation()
-                try await ingest(feed.episodes, show: follow.show)
-            } catch { /* Keep the successful baseline; retry on the next refresh. */ }
-            busy.remove(follow.show.id)
+        let due = Array(follows.values).sorted(by: { $0.lastChecked < $1.lastChecked }).filter {
+            !busy.contains($0.show.id) && (force || Date().timeIntervalSince($0.lastChecked) >= 3600)
+        }
+        busy.formUnion(due.map(\.show.id))
+        defer { busy.subtract(due.map(\.show.id)) }
+        // Fetch feeds side by side so many follows fit in iOS's short background window.
+        await withTaskGroup(of: (PodcastShow, PodcastFeed?).self) { group in
+            var waiting = due.makeIterator()
+            for _ in 0..<6 { // at most six requests at once
+                guard let follow = waiting.next() else { break }
+                group.addTask { (follow.show, try? await PodcastCatalog.shared.feed(for: follow.show)) }
+            }
+            while let result = await group.next() {
+                if let follow = waiting.next() {
+                    group.addTask { (follow.show, try? await PodcastCatalog.shared.feed(for: follow.show)) }
+                }
+                // A failed feed keeps its baseline and is retried on the next refresh.
+                guard let feed = result.1, !Task.isCancelled else { continue }
+                try? await ingest(feed.episodes, show: result.0)
+            }
         }
     }
     func ingest(_ episodes: [PodcastEpisode], show: PodcastShow) async throws {
