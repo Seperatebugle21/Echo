@@ -77,6 +77,7 @@ targets:
       - path: EchoWidget
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetModels.swift
       - path: Echo.swiftpm/Echo/Widgets/EchoWidgetIntents.swift
+      - path: Echo.swiftpm/Echo/Widgets/EchoDownloadActivityAttributes.swift
       - path: Echo.swiftpm/Echo/Localizable.xcstrings
         buildPhase: resources
     settings:

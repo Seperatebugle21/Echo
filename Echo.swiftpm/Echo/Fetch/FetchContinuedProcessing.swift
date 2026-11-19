@@ -60,6 +60,7 @@ enum FetchBackgroundState {
         requestNotificationPermissionIfNeeded()
         trackPendingItems()
         startTicker()
+        FetchLiveActivity.shared.update(liveState())
         guard !submitted, task == nil, UIApplication.shared.applicationState == .active,
               let identifier, register(identifier) else { return }
         let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: title, subtitle: subtitle)
@@ -77,10 +78,11 @@ enum FetchBackgroundState {
     func finish() {
         let items = FetchManager.shared.items.filter { batch.contains($0.id) }
         let added = items.filter { $0.status == .completed }.count
-        let failed = items.filter { if case .failed = $0.status { true } else { false } }.count
+        let failed = items.filter { $0.queueState == .failed }.count
         if UIApplication.shared.applicationState != .active, added + failed > 0 {
             notify(added: added, failed: failed)
         }
+        FetchLiveActivity.shared.finish(liveState(finished: true))
         batch = []
         ticker?.cancel(); ticker = nil
         task?.progress.completedUnitCount = task?.progress.totalUnitCount ?? 0
@@ -134,6 +136,7 @@ enum FetchBackgroundState {
             while !Task.isCancelled {
                 self?.trackPendingItems()
                 self?.updateProgress()
+                if let self { FetchLiveActivity.shared.update(self.liveState()) }
                 try? await Task.sleep(for: .seconds(1))
             }
         }
@@ -147,15 +150,29 @@ enum FetchBackgroundState {
     private func updateProgress() {
         guard let task else { return }
         let items = FetchManager.shared.items.filter { batch.contains($0.id) }
-        let units = items.reduce(0.0) { sum, item in
-            switch item.status {
-            case .completed, .failed: sum + 1
-            default: sum + (item.status.progress ?? 0)
-            }
+        let units = items.reduce(0.0) { (sum: Double, item: FetchItem) -> Double in
+            item.queueState == .pending ? sum + (item.status.progress ?? 0) : sum + 1
         }
         task.progress.totalUnitCount = Int64(max(items.count, 1) * 100)
         task.progress.completedUnitCount = Int64(units * 100)
         task.updateTitle(title, subtitle: subtitle)
+    }
+
+    private func liveState(finished: Bool = false) -> FetchLiveActivity.State {
+        let items = FetchManager.shared.items.filter { batch.contains($0.id) }
+        let current = items.first { $0.status.progress != nil }
+        let units = items.reduce(0.0) { (sum: Double, item: FetchItem) -> Double in
+            item.queueState == .pending ? sum + (item.status.progress ?? 0) : sum + 1
+        }
+        return FetchLiveActivity.State(
+            done: items.filter { $0.queueState != .pending }.count,
+            total: max(items.count, 1),
+            failed: items.filter { $0.queueState == .failed }.count,
+            currentTitle: finished ? nil : current?.title,
+            currentArtist: finished ? nil : current?.artist,
+            progress: finished ? 1 : units / Double(max(items.count, 1)),
+            finishesAt: finished ? nil : FetchTimeEstimate.shared.remaining(for: items).map { Date().addingTimeInterval($0) },
+            finished: finished)
     }
 
     private var title: String { EchoLocalization.string("fetch_background_title") }
