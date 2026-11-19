@@ -72,4 +72,41 @@ final class EchoSpokenCommandTests: XCTestCase {
         XCTAssertEqual(EchoSpokenCommand.parse("répète ce morceau")?.language, .fr)
         XCTAssertEqual(EchoSpokenCommand.parse("nächster Titel")?.language, .de)
     }
+
+    func testNewLanguagesRecognizeCommands() {
+        let samples: [(String, EchoSpokenCommand.Action, EchoSpokenCommand.Language)] = [
+            ("Inicia el flow", .flow, .es), ("Repite esta canción en Echo", .repeatOne, .es),
+            ("Avvia il flow", .flow, .it), ("Aggiungi questa canzone ai preferiti su Echo", .favorite, .it),
+            ("Próxima música", .next, .pt), ("Ativa a reprodução aleatória no Echo", .shuffleOn, .pt),
+            ("Dodaj ten utwór do ulubionych", .favorite, .pl), ("Wyłącz odtwarzanie losowe", .shuffleOff, .pl),
+            ("Bu şarkıyı tekrarla", .repeatOne, .tr), ("Müziği duraklat", .pause, .tr),
+            ("この曲をリピート", .repeatOne, .ja), ("Echoで次の曲", .next, .ja), ("シャッフルしてください", .shuffleOn, .ja),
+            ("셔플 켜 줘", .shuffleOn, .ko), ("이 노래를 즐겨찾기에 추가", .favorite, .ko),
+            ("下一首", .next, .zh), ("请暂停音乐", .pause, .zh), ("在Echo里随机播放", .shuffleOn, .zh),
+        ]
+        for (text, action, language) in samples {
+            XCTAssertEqual(EchoSpokenCommand.parse(text)?.action, action, text)
+            XCTAssertEqual(EchoSpokenCommand.parse(text)?.language, language, text)
+        }
+    }
+    func testWyłączAndWłączStayDistinct() {
+        XCTAssertEqual(EchoSpokenCommand.parse("włącz flow")?.action, .flow)
+        XCTAssertEqual(EchoSpokenCommand.parse("wyłącz flow")?.action, .stopFlow)
+    }
+    func testSleepTimerInNewLanguages() {
+        let samples: [(String, EchoSpokenCommand.Language)] = [
+            ("temporizador 30 minutos", .es), ("timer 30 minuti", .it), ("temporizador 30 minutos", .es),
+            ("wyłącznik czasowy 30 minut", .pl), ("30 dakika sonra durdur", .tr),
+            ("スリープタイマー30分", .ja), ("スリープタイマー３０分", .ja), ("취침 타이머 30분", .ko), ("30分钟后停止", .zh),
+        ]
+        for (text, language) in samples {
+            XCTAssertEqual(EchoSpokenCommand.parse(text)?.action, .sleep(30), text)
+            XCTAssertEqual(EchoSpokenCommand.parse(text)?.language, language, text)
+        }
+        XCTAssertNil(EchoSpokenCommand.parse("スリープタイマー721分"))
+    }
+    func testEveryLanguageHasRepliesBundle() {
+        XCTAssertEqual(Set(EchoSpokenCommand.Language.allCases.map(\.rawValue)),
+                       ["en", "nl", "fr", "de", "es", "it", "pt", "pl", "tr", "ja", "ko", "zh-Hans"])
+    }
 }

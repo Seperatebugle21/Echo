@@ -13,6 +13,9 @@ struct EchoApp: App {
         }
     }()
 
+    // Before anything reads "selectedLanguage": follow the iOS language until the user picks one.
+    private let registeredLanguage: Void = EchoLanguage.registerDefault()
+
     @UIApplicationDelegateAdaptor(
         EchoAppDelegate.self
     )
@@ -112,6 +115,10 @@ struct EchoApp: App {
             .id(
                 selectedLanguage
             )
+
+            .onChange(of: selectedLanguage) {
+                EchoWidgetSnapshotPublisher.requestUpdate()
+            }
 
 
             // MARK: - Shared Managers

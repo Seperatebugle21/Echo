@@ -30,7 +30,7 @@ struct AIReply { var text: String; var calls: [AIToolCall] = [] }
     static var appleAvailable: Bool {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *), SystemLanguageModel.default.availability == .available {
-            return SystemLanguageModel.default.supportsLocale(Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en"))
+            return SystemLanguageModel.default.supportsLocale(Locale(identifier: EchoLanguage.current.speechIdentifier))
         }
         #endif
         return false
@@ -191,7 +191,7 @@ private struct AppleEchoTool: Tool {
                  update: @escaping @MainActor (String) -> Void,
                  execute: @escaping @MainActor (AIToolCall) async throws -> String) async throws -> AIReply {
         guard SystemLanguageModel.default.availability == .available,
-              SystemLanguageModel.default.supportsLocale(Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en")) else { throw AIError.unavailable }
+              SystemLanguageModel.default.supportsLocale(Locale(identifier: EchoLanguage.current.speechIdentifier)) else { throw AIError.unavailable }
         // Keep the native on-device context compact; the executor still validates the full schemas.
         let specialized: Set<String> = ["library_search", "playback_status", "play_songs", "transport", "favorite"]
         let names = Set(tools.compactMap { ($0["function"] as? [String: Any])?["name"] as? String })

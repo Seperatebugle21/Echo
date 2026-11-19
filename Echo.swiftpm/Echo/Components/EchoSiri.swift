@@ -637,12 +637,16 @@ struct EchoSongQuery:
             let library = MusicLibraryManager.shared
             // Resolve exact playlist names before allowing a similar song to match.
             // Include translated automatic names independently of Echo's UI language.
-            let playlistPrefixes = ["playlist ", "afspeellijst ", "de playlist ", "de afspeellijst ", "the playlist ", "la playlist ", "liste de lecture ", "la liste de lecture ", "die playlist ", "wiedergabeliste ", "die wiedergabeliste "]
+            let playlistPrefixes = ["playlist ", "afspeellijst ", "de playlist ", "de afspeellijst ", "the playlist ", "la playlist ", "liste de lecture ", "la liste de lecture ", "die playlist ", "wiedergabeliste ", "die wiedergabeliste ",
+                                   "la lista ", "lista de reproduccion ", "la lista de reproduccion ",
+                                   "lista di riproduzione ", "la lista di riproduzione ", "a playlist ", "lista ",
+                                   "playliste ", "liste ", "calma listesi ", "oynatma listesi ",
+                                   "プレイリスト ", "フレイリスト ", "플레이리스트 ", "歌单 ", "播放列表 "]
             let playlistQuery = playlistPrefixes.first(where: { query.hasPrefix($0) })
                 .map { String(query.dropFirst($0.count)) }
             func matches(_ name: String) -> [Playlist] {
                 library.playlists.filter { playlist in
-                    let names = [playlist.name] + ["en", "nl", "fr", "de"].map { playlist.displayName(language: $0) }
+                    let names = [playlist.name] + EchoLanguage.allCases.map { playlist.displayName(language: $0.rawValue) }
                     return names.contains { EchoSiriMatcher.normalize($0) == name }
                 }
             }
@@ -840,7 +844,7 @@ struct EchoPlaylistQuery:
                             playlist,
 
                         score:
-                            ([playlist.name] + ["en", "nl", "fr", "de"].map { playlist.displayName(language: $0) })
+                            ([playlist.name] + EchoLanguage.allCases.map { playlist.displayName(language: $0.rawValue) })
                                 .map { EchoSiriMatcher.score(candidate: $0, query: query) }
                                 .max() ?? 0
                     )

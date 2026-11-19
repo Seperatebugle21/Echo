@@ -160,10 +160,9 @@ struct SettingsView: View {
                 SettingsRow(title: "settings_app_customization", subtitle: "home_customization_title", symbol: "paintbrush.pointed.fill", color: .purple)
             }
             Picker(selection: $selectedLanguage) {
-                Text("English").tag("en")
-                Text("Nederlands").tag("nl")
-                Text("Français").tag("fr")
-                Text("Deutsch").tag("de")
+                ForEach(EchoLanguage.allCases) { language in
+                    Text(verbatim: language.nativeName).tag(language.rawValue)
+                }
             } label: {
                 SettingsRow(title: "settings_language_label", symbol: "globe", color: .blue)
             }

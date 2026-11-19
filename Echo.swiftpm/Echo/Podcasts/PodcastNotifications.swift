@@ -97,7 +97,7 @@ extension Notification.Name { static let echoOpenPodcast = Notification.Name("Ec
         let now = Date(), fresh = PodcastReleaseDetection.fresh(episodes, follow: follow, now: Date())
         if let newest = fresh.first {
             let content = UNMutableNotificationContent()
-            let locale = Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en")
+            let locale = EchoLanguage.current.locale
             content.title = String(localized: "podcast_notification_title", locale: locale)
             let format = String(localized: fresh.count > 1 ? "podcast_notification_multiple" : "podcast_notification_body", locale: locale)
             content.body = fresh.count > 1 ? String(format: format, show.title, newest.title, fresh.count) : String(format: format, show.title, newest.title)

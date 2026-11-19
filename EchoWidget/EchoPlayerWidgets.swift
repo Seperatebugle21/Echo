@@ -74,7 +74,7 @@ struct EchoPlayerWidgetView: View {
                             }
                             .accessibilityHidden(false)
                             .accessibilityElement(children: .ignore)
-                            .accessibilityLabel("Open Echo: \(song.title) van \(song.artist)")
+                            .accessibilityLabel(Text("widget_a11y_open \(song.title) \(song.artist)"))
                     case .compact:
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(alignment: .top) {
@@ -114,6 +114,7 @@ struct EchoPlayerWidgetView: View {
         .foregroundStyle(.white)
         .containerBackground(for: .widget) { EchoWidgetBackground(song: song) }
         .widgetURL(URL(string: "echo://open"))
+        .echoWidgetLocale(entry.snapshot)
     }
 
     private func metadata(_ song: EchoWidgetSongItem, centered: Bool = false) -> some View {
@@ -132,26 +133,26 @@ struct EchoPlayerWidgetView: View {
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(song.isFavorite == true ? "Verwijder uit favorieten" : "Voeg toe aan favorieten")
+        .accessibilityLabel(Text(song.isFavorite == true ? "widget_a11y_unfavorite" : "widget_a11y_favorite"))
     }
 
     private func controls(_ song: EchoWidgetSongItem) -> some View {
         HStack(spacing: 0) {
-            control(.previous, symbol: "backward.end.fill", label: "Vorig nummer", song: song)
+            control(.previous, symbol: "backward.end.fill", label: "widget_a11y_previous", song: song)
             control(.toggle, symbol: playing ? "pause.fill" : "play.fill",
-                    label: playing ? "Pauzeer" : "Speel af", song: song)
-            control(.next, symbol: "forward.end.fill", label: "Volgend nummer", song: song)
+                    label: playing ? "widget_a11y_pause" : "widget_a11y_play", song: song)
+            control(.next, symbol: "forward.end.fill", label: "widget_a11y_next", song: song)
         }
     }
 
-    private func control(_ action: EchoWidgetAction, symbol: String, label: String,
+    private func control(_ action: EchoWidgetAction, symbol: String, label: LocalizedStringKey,
                          song: EchoWidgetSongItem) -> some View {
         Button(intent: EchoWidgetPlaybackIntent(action, songID: song.id)) {
             Image(systemName: symbol).font(.system(size: 17, weight: .semibold))
                 .frame(maxWidth: .infinity).frame(height: 44).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text(verbatim: label))
+        .accessibilityLabel(Text(label))
     }
 }
 
@@ -197,9 +198,8 @@ struct EchoWidgetEmptyView: View {
                 Text("widget_empty_description")
                     .font(.caption).foregroundStyle(.white.opacity(0.8))
             } else {
-                // Connection errors intentionally stay in English in every locale.
-                Text(verbatim: "Widget not connected").font(.headline)
-                Text(verbatim: "Echo and this widget cannot share music data. Reinstall Echo with its widget extension, then open the app.")
+                Text("widget_not_connected_title").font(.headline)
+                Text("widget_not_connected_description")
                     .font(.caption).foregroundStyle(.white.opacity(0.8))
             }
         }
@@ -246,7 +246,7 @@ struct EchoQuickPicksView: View {
                                     .frame(width: width)
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Speel \(song.title) van \(song.artist)")
+                                .accessibilityLabel(Text("widget_a11y_play_song \(song.title) \(song.artist)"))
                             }
                         }
                     }
@@ -257,5 +257,13 @@ struct EchoQuickPicksView: View {
         .foregroundStyle(.white)
         .containerBackground(for: .widget) { EchoWidgetBackground(song: entry.snapshot.songs.first) }
         .widgetURL(URL(string: "echo://open"))
+        .echoWidgetLocale(entry.snapshot)
+    }
+}
+
+extension View {
+    /// Shows widget text in the language chosen inside Echo; without one, iOS's language applies.
+    @ViewBuilder func echoWidgetLocale(_ snapshot: EchoWidgetSnapshot) -> some View {
+        if let locale = snapshot.locale { environment(\.locale, locale) } else { self }
     }
 }

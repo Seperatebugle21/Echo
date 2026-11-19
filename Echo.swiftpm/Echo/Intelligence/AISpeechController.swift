@@ -39,7 +39,7 @@ import Observation
         let authorized = await withCheckedContinuation { continuation in SFSpeechRecognizer.requestAuthorization { continuation.resume(returning: $0 == .authorized) } }
         let microphone = await AVAudioApplication.requestRecordPermission()
         guard listeningToken == token, !Task.isCancelled else { return }
-        let locale = Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en")
+        let locale = Locale(identifier: EchoLanguage.current.speechIdentifier)
         guard authorized, microphone, let recognizer = SFSpeechRecognizer(locale: locale), recognizer.isAvailable else { error = AIError.voice.localizedDescription; return }
         let offline = AISettingsStore.shared.value.offlineOnly
         guard !offline || recognizer.supportsOnDeviceRecognition else { error = AIError.voice.localizedDescription; return }
@@ -160,7 +160,7 @@ import Observation
         speaking = true; pendingBuffers = 0; synthesisComplete = false
         let token = UUID(); speechToken = token
         let utterance = AVSpeechUtterance(string: String(text.prefix(8000)))
-        utterance.voice = settings.voiceID.isEmpty ? AVSpeechSynthesisVoice(language: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en") : AVSpeechSynthesisVoice(identifier: settings.voiceID)
+        utterance.voice = settings.voiceID.isEmpty ? AVSpeechSynthesisVoice(language: EchoLanguage.current.speechIdentifier) : AVSpeechSynthesisVoice(identifier: settings.voiceID)
         synthesizer.write(utterance) { [weak self] audio in
             guard let buffer = audio as? AVAudioPCMBuffer else { return }
             Task { @MainActor in

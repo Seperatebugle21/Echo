@@ -3,19 +3,20 @@ import Foundation
 
 enum EchoWidgetAction: String, AppEnum {
     case toggle, previous, next, favorite, play
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Muziekbediening"
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "widget_intent_action_type"
     static var caseDisplayRepresentations: [Self: DisplayRepresentation] = [
-        .toggle: "Afspelen of pauzeren", .previous: "Vorig nummer", .next: "Volgend nummer",
-        .favorite: "Favoriet wijzigen", .play: "Nummer afspelen"
+        .toggle: "widget_intent_action_toggle", .previous: "widget_intent_action_previous",
+        .next: "widget_intent_action_next", .favorite: "widget_intent_action_favorite",
+        .play: "widget_intent_action_play"
     ]
 }
 
 // AudioPlaybackIntent runs in the app process, where the actual player lives.
 struct EchoWidgetPlaybackIntent: AudioPlaybackIntent {
-    static var title: LocalizedStringResource = "Bedien Echo"
+    static var title: LocalizedStringResource = "widget_intent_title"
     static var openAppWhenRun: Bool = false
-    @Parameter(title: "Actie") var action: EchoWidgetAction
-    @Parameter(title: "Nummer") var songID: String
+    @Parameter(title: "widget_intent_parameter_action") var action: EchoWidgetAction
+    @Parameter(title: "widget_intent_parameter_song") var songID: String
 
     init() { action = .toggle; songID = "" }
     init(_ action: EchoWidgetAction, songID: UUID? = nil) {
@@ -35,7 +36,7 @@ struct EchoWidgetPlaybackIntent: AudioPlaybackIntent {
 @MainActor enum EchoWidgetPlaybackController {
     enum PlaybackError: LocalizedError {
         case missingSong
-        var errorDescription: String? { "Dit nummer is niet meer beschikbaar in Echo." }
+        var errorDescription: String? { EchoLocalization.string("widget_intent_error_missing_song") }
     }
 
     static func perform(_ action: EchoWidgetAction, songID: UUID?) throws {

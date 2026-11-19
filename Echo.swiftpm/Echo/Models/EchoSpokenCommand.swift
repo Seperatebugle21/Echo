@@ -2,7 +2,10 @@ import Foundation
 
 /// Parses only bounded, complete audio commands, independently of the app language.
 struct EchoSpokenCommand: Equatable {
-    enum Language: String, CaseIterable { case en, nl, fr, de }
+    enum Language: String, CaseIterable {
+        case en, nl, fr, de, es, it, pt, pl, tr, ja, ko
+        case zh = "zh-Hans" // Raw values are the string catalogs' .lproj names.
+    }
     enum Action: Equatable {
         case flow, flowCurrent, stopFlow, favorite, unfavorite, shuffleOn, shuffleOff
         case repeatOne, repeatAll, repeatOff, pause, resume, next, previous, status, cancelSleep
@@ -199,44 +202,403 @@ struct EchoSpokenCommand: Equatable {
         Entry(action: .cancelSleep, language: .fr, phrase: "arrete la minuterie"),
         Entry(action: .cancelSleep, language: .de, phrase: "schlaftimer ausschalten"),
         Entry(action: .cancelSleep, language: .de, phrase: "schlaftimer abbrechen"),
+        // Phrases below are written naturally; they are normalized once when loaded.
+        Entry(action: .flow, language: .es, phrase: "inicia el flow"),
+        Entry(action: .flow, language: .es, phrase: "empieza el flow"),
+        Entry(action: .flow, language: .es, phrase: "activa el flow"),
+        Entry(action: .flow, language: .it, phrase: "avvia il flow"),
+        Entry(action: .flow, language: .it, phrase: "inizia il flow"),
+        Entry(action: .flow, language: .it, phrase: "attiva il flow"),
+        Entry(action: .flow, language: .pt, phrase: "inicia o flow"),
+        Entry(action: .flow, language: .pt, phrase: "começa o flow"),
+        Entry(action: .flow, language: .pt, phrase: "ativa o flow"),
+        Entry(action: .flow, language: .pl, phrase: "włącz flow"),
+        Entry(action: .flow, language: .pl, phrase: "uruchom flow"),
+        Entry(action: .flow, language: .pl, phrase: "zacznij flow"),
+        Entry(action: .flow, language: .tr, phrase: "flow başlat"),
+        Entry(action: .flow, language: .tr, phrase: "flowu başlat"),
+        Entry(action: .flow, language: .tr, phrase: "flow aç"),
+        Entry(action: .flow, language: .ja, phrase: "フローを開始"),
+        Entry(action: .flow, language: .ja, phrase: "フローを始めて"),
+        Entry(action: .flow, language: .ja, phrase: "フローをオン"),
+        Entry(action: .flow, language: .ko, phrase: "플로우 시작"),
+        Entry(action: .flow, language: .ko, phrase: "플로우 시작해 줘"),
+        Entry(action: .flow, language: .ko, phrase: "플로우 켜 줘"),
+        Entry(action: .flow, language: .zh, phrase: "开始心流"),
+        Entry(action: .flow, language: .zh, phrase: "开启心流"),
+        Entry(action: .flow, language: .zh, phrase: "开始flow"),
+        Entry(action: .flowCurrent, language: .es, phrase: "inicia el flow con esta canción"),
+        Entry(action: .flowCurrent, language: .es, phrase: "inicia el flow desde esta canción"),
+        Entry(action: .flowCurrent, language: .it, phrase: "avvia il flow con questa canzone"),
+        Entry(action: .flowCurrent, language: .it, phrase: "avvia il flow da questo brano"),
+        Entry(action: .flowCurrent, language: .pt, phrase: "inicia o flow com esta música"),
+        Entry(action: .flowCurrent, language: .pt, phrase: "inicia o flow a partir desta música"),
+        Entry(action: .flowCurrent, language: .pl, phrase: "włącz flow od tego utworu"),
+        Entry(action: .flowCurrent, language: .pl, phrase: "uruchom flow z tą piosenką"),
+        Entry(action: .flowCurrent, language: .tr, phrase: "bu şarkıdan flow başlat"),
+        Entry(action: .flowCurrent, language: .tr, phrase: "bu şarkıyla flow başlat"),
+        Entry(action: .flowCurrent, language: .ja, phrase: "この曲からフローを開始"),
+        Entry(action: .flowCurrent, language: .ja, phrase: "この曲でフローを始めて"),
+        Entry(action: .flowCurrent, language: .ko, phrase: "이 노래로 플로우 시작"),
+        Entry(action: .flowCurrent, language: .ko, phrase: "이 곡부터 플로우 시작"),
+        Entry(action: .flowCurrent, language: .zh, phrase: "从这首歌开始心流"),
+        Entry(action: .flowCurrent, language: .zh, phrase: "用这首歌开始心流"),
+        Entry(action: .stopFlow, language: .es, phrase: "detén el flow"),
+        Entry(action: .stopFlow, language: .es, phrase: "desactiva el flow"),
+        Entry(action: .stopFlow, language: .es, phrase: "para el flow"),
+        Entry(action: .stopFlow, language: .it, phrase: "ferma il flow"),
+        Entry(action: .stopFlow, language: .it, phrase: "disattiva il flow"),
+        Entry(action: .stopFlow, language: .pt, phrase: "para o flow"),
+        Entry(action: .stopFlow, language: .pt, phrase: "desativa o flow"),
+        Entry(action: .stopFlow, language: .pl, phrase: "wyłącz flow"),
+        Entry(action: .stopFlow, language: .pl, phrase: "zatrzymaj flow"),
+        Entry(action: .stopFlow, language: .tr, phrase: "flow durdur"),
+        Entry(action: .stopFlow, language: .tr, phrase: "flowu durdur"),
+        Entry(action: .stopFlow, language: .tr, phrase: "flow kapat"),
+        Entry(action: .stopFlow, language: .ja, phrase: "フローを停止"),
+        Entry(action: .stopFlow, language: .ja, phrase: "フローをオフ"),
+        Entry(action: .stopFlow, language: .ko, phrase: "플로우 중지"),
+        Entry(action: .stopFlow, language: .ko, phrase: "플로우 꺼 줘"),
+        Entry(action: .stopFlow, language: .zh, phrase: "停止心流"),
+        Entry(action: .stopFlow, language: .zh, phrase: "关闭心流"),
+        Entry(action: .favorite, language: .es, phrase: "añade esta canción a favoritos"),
+        Entry(action: .favorite, language: .es, phrase: "marca esta canción como favorita"),
+        Entry(action: .favorite, language: .es, phrase: "me gusta esta canción"),
+        Entry(action: .favorite, language: .it, phrase: "aggiungi questa canzone ai preferiti"),
+        Entry(action: .favorite, language: .it, phrase: "metti questo brano tra i preferiti"),
+        Entry(action: .favorite, language: .it, phrase: "mi piace questa canzone"),
+        Entry(action: .favorite, language: .pt, phrase: "adiciona esta música aos favoritos"),
+        Entry(action: .favorite, language: .pt, phrase: "marca esta música como favorita"),
+        Entry(action: .favorite, language: .pt, phrase: "gosto desta música"),
+        Entry(action: .favorite, language: .pl, phrase: "dodaj ten utwór do ulubionych"),
+        Entry(action: .favorite, language: .pl, phrase: "dodaj tę piosenkę do ulubionych"),
+        Entry(action: .favorite, language: .pl, phrase: "polub ten utwór"),
+        Entry(action: .favorite, language: .tr, phrase: "bu şarkıyı favorilere ekle"),
+        Entry(action: .favorite, language: .tr, phrase: "bu şarkıyı beğen"),
+        Entry(action: .favorite, language: .ja, phrase: "この曲をお気に入りに追加"),
+        Entry(action: .favorite, language: .ja, phrase: "この曲をお気に入りにして"),
+        Entry(action: .favorite, language: .ko, phrase: "이 노래를 즐겨찾기에 추가"),
+        Entry(action: .favorite, language: .ko, phrase: "이 곡 좋아요"),
+        Entry(action: .favorite, language: .zh, phrase: "收藏这首歌"),
+        Entry(action: .favorite, language: .zh, phrase: "把这首歌加入收藏"),
+        Entry(action: .favorite, language: .zh, phrase: "喜欢这首歌"),
+        Entry(action: .unfavorite, language: .es, phrase: "quita esta canción de favoritos"),
+        Entry(action: .unfavorite, language: .es, phrase: "elimina esta canción de favoritos"),
+        Entry(action: .unfavorite, language: .it, phrase: "togli questa canzone dai preferiti"),
+        Entry(action: .unfavorite, language: .it, phrase: "rimuovi questo brano dai preferiti"),
+        Entry(action: .unfavorite, language: .pt, phrase: "remove esta música dos favoritos"),
+        Entry(action: .unfavorite, language: .pt, phrase: "tira esta música dos favoritos"),
+        Entry(action: .unfavorite, language: .pl, phrase: "usuń ten utwór z ulubionych"),
+        Entry(action: .unfavorite, language: .pl, phrase: "usuń tę piosenkę z ulubionych"),
+        Entry(action: .unfavorite, language: .tr, phrase: "bu şarkıyı favorilerden çıkar"),
+        Entry(action: .unfavorite, language: .tr, phrase: "bu şarkıyı favorilerden kaldır"),
+        Entry(action: .unfavorite, language: .ja, phrase: "この曲をお気に入りから削除"),
+        Entry(action: .unfavorite, language: .ja, phrase: "この曲をお気に入りから外して"),
+        Entry(action: .unfavorite, language: .ko, phrase: "이 노래를 즐겨찾기에서 삭제"),
+        Entry(action: .unfavorite, language: .ko, phrase: "이 곡 즐겨찾기 해제"),
+        Entry(action: .unfavorite, language: .zh, phrase: "取消收藏这首歌"),
+        Entry(action: .unfavorite, language: .zh, phrase: "把这首歌从收藏中移除"),
+        Entry(action: .shuffleOn, language: .es, phrase: "activa el modo aleatorio"),
+        Entry(action: .shuffleOn, language: .es, phrase: "reproducción aleatoria"),
+        Entry(action: .shuffleOn, language: .es, phrase: "mezcla las canciones"),
+        Entry(action: .shuffleOn, language: .it, phrase: "attiva la riproduzione casuale"),
+        Entry(action: .shuffleOn, language: .it, phrase: "riproduzione casuale"),
+        Entry(action: .shuffleOn, language: .it, phrase: "mescola i brani"),
+        Entry(action: .shuffleOn, language: .pt, phrase: "ativa a reprodução aleatória"),
+        Entry(action: .shuffleOn, language: .pt, phrase: "reprodução aleatória"),
+        Entry(action: .shuffleOn, language: .pt, phrase: "baralha as músicas"),
+        Entry(action: .shuffleOn, language: .pl, phrase: "włącz odtwarzanie losowe"),
+        Entry(action: .shuffleOn, language: .pl, phrase: "odtwarzaj losowo"),
+        Entry(action: .shuffleOn, language: .pl, phrase: "włącz shuffle"),
+        Entry(action: .shuffleOn, language: .tr, phrase: "karışık çalmayı aç"),
+        Entry(action: .shuffleOn, language: .tr, phrase: "karışık çal"),
+        Entry(action: .shuffleOn, language: .tr, phrase: "shuffle aç"),
+        Entry(action: .shuffleOn, language: .ja, phrase: "シャッフルをオン"),
+        Entry(action: .shuffleOn, language: .ja, phrase: "シャッフル再生"),
+        Entry(action: .shuffleOn, language: .ja, phrase: "シャッフルして"),
+        Entry(action: .shuffleOn, language: .ko, phrase: "셔플 켜 줘"),
+        Entry(action: .shuffleOn, language: .ko, phrase: "셔플 재생"),
+        Entry(action: .shuffleOn, language: .ko, phrase: "무작위 재생"),
+        Entry(action: .shuffleOn, language: .zh, phrase: "打开随机播放"),
+        Entry(action: .shuffleOn, language: .zh, phrase: "随机播放"),
+        Entry(action: .shuffleOn, language: .zh, phrase: "开启随机播放"),
+        Entry(action: .shuffleOff, language: .es, phrase: "desactiva el modo aleatorio"),
+        Entry(action: .shuffleOff, language: .es, phrase: "quita el modo aleatorio"),
+        Entry(action: .shuffleOff, language: .it, phrase: "disattiva la riproduzione casuale"),
+        Entry(action: .shuffleOff, language: .it, phrase: "togli la riproduzione casuale"),
+        Entry(action: .shuffleOff, language: .pt, phrase: "desativa a reprodução aleatória"),
+        Entry(action: .shuffleOff, language: .pt, phrase: "desliga a reprodução aleatória"),
+        Entry(action: .shuffleOff, language: .pl, phrase: "wyłącz odtwarzanie losowe"),
+        Entry(action: .shuffleOff, language: .pl, phrase: "wyłącz shuffle"),
+        Entry(action: .shuffleOff, language: .tr, phrase: "karışık çalmayı kapat"),
+        Entry(action: .shuffleOff, language: .tr, phrase: "shuffle kapat"),
+        Entry(action: .shuffleOff, language: .ja, phrase: "シャッフルをオフ"),
+        Entry(action: .shuffleOff, language: .ja, phrase: "シャッフルを解除"),
+        Entry(action: .shuffleOff, language: .ko, phrase: "셔플 꺼 줘"),
+        Entry(action: .shuffleOff, language: .ko, phrase: "셔플 해제"),
+        Entry(action: .shuffleOff, language: .zh, phrase: "关闭随机播放"),
+        Entry(action: .shuffleOff, language: .zh, phrase: "取消随机播放"),
+        Entry(action: .repeatOne, language: .es, phrase: "repite esta canción"),
+        Entry(action: .repeatOne, language: .es, phrase: "repetir esta canción"),
+        Entry(action: .repeatOne, language: .es, phrase: "pon esta canción en bucle"),
+        Entry(action: .repeatOne, language: .it, phrase: "ripeti questa canzone"),
+        Entry(action: .repeatOne, language: .it, phrase: "ripeti questo brano"),
+        Entry(action: .repeatOne, language: .it, phrase: "metti questo brano in loop"),
+        Entry(action: .repeatOne, language: .pt, phrase: "repete esta música"),
+        Entry(action: .repeatOne, language: .pt, phrase: "repetir esta música"),
+        Entry(action: .repeatOne, language: .pt, phrase: "põe esta música em repetição"),
+        Entry(action: .repeatOne, language: .pl, phrase: "powtarzaj ten utwór"),
+        Entry(action: .repeatOne, language: .pl, phrase: "powtórz tę piosenkę"),
+        Entry(action: .repeatOne, language: .pl, phrase: "zapętl ten utwór"),
+        Entry(action: .repeatOne, language: .tr, phrase: "bu şarkıyı tekrarla"),
+        Entry(action: .repeatOne, language: .tr, phrase: "bu şarkıyı döngüye al"),
+        Entry(action: .repeatOne, language: .ja, phrase: "この曲をリピート"),
+        Entry(action: .repeatOne, language: .ja, phrase: "この曲を繰り返して"),
+        Entry(action: .repeatOne, language: .ko, phrase: "이 노래 반복"),
+        Entry(action: .repeatOne, language: .ko, phrase: "이 곡 한 곡 반복"),
+        Entry(action: .repeatOne, language: .zh, phrase: "单曲循环"),
+        Entry(action: .repeatOne, language: .zh, phrase: "重复这首歌"),
+        Entry(action: .repeatOne, language: .zh, phrase: "循环播放这首歌"),
+        Entry(action: .repeatAll, language: .es, phrase: "repite todo"),
+        Entry(action: .repeatAll, language: .es, phrase: "repite la cola"),
+        Entry(action: .repeatAll, language: .it, phrase: "ripeti tutto"),
+        Entry(action: .repeatAll, language: .it, phrase: "ripeti la coda"),
+        Entry(action: .repeatAll, language: .pt, phrase: "repete tudo"),
+        Entry(action: .repeatAll, language: .pt, phrase: "repete a fila"),
+        Entry(action: .repeatAll, language: .pl, phrase: "powtarzaj wszystko"),
+        Entry(action: .repeatAll, language: .pl, phrase: "powtarzaj kolejkę"),
+        Entry(action: .repeatAll, language: .tr, phrase: "hepsini tekrarla"),
+        Entry(action: .repeatAll, language: .tr, phrase: "sırayı tekrarla"),
+        Entry(action: .repeatAll, language: .ja, phrase: "全曲リピート"),
+        Entry(action: .repeatAll, language: .ja, phrase: "すべてリピート"),
+        Entry(action: .repeatAll, language: .ko, phrase: "전체 반복"),
+        Entry(action: .repeatAll, language: .ko, phrase: "모두 반복"),
+        Entry(action: .repeatAll, language: .zh, phrase: "全部循环"),
+        Entry(action: .repeatAll, language: .zh, phrase: "列表循环"),
+        Entry(action: .repeatOff, language: .es, phrase: "desactiva la repetición"),
+        Entry(action: .repeatOff, language: .es, phrase: "deja de repetir"),
+        Entry(action: .repeatOff, language: .it, phrase: "disattiva la ripetizione"),
+        Entry(action: .repeatOff, language: .it, phrase: "smetti di ripetere"),
+        Entry(action: .repeatOff, language: .pt, phrase: "desativa a repetição"),
+        Entry(action: .repeatOff, language: .pt, phrase: "para de repetir"),
+        Entry(action: .repeatOff, language: .pl, phrase: "wyłącz powtarzanie"),
+        Entry(action: .repeatOff, language: .pl, phrase: "przestań powtarzać"),
+        Entry(action: .repeatOff, language: .tr, phrase: "tekrarlamayı kapat"),
+        Entry(action: .repeatOff, language: .tr, phrase: "tekrarı kapat"),
+        Entry(action: .repeatOff, language: .ja, phrase: "リピートをオフ"),
+        Entry(action: .repeatOff, language: .ja, phrase: "リピートを解除"),
+        Entry(action: .repeatOff, language: .ko, phrase: "반복 꺼 줘"),
+        Entry(action: .repeatOff, language: .ko, phrase: "반복 해제"),
+        Entry(action: .repeatOff, language: .zh, phrase: "关闭循环"),
+        Entry(action: .repeatOff, language: .zh, phrase: "取消循环播放"),
+        Entry(action: .pause, language: .es, phrase: "pausa"),
+        Entry(action: .pause, language: .es, phrase: "pausa la música"),
+        Entry(action: .pause, language: .es, phrase: "para la música"),
+        Entry(action: .pause, language: .it, phrase: "pausa"),
+        Entry(action: .pause, language: .it, phrase: "metti in pausa la musica"),
+        Entry(action: .pause, language: .it, phrase: "ferma la musica"),
+        Entry(action: .pause, language: .pt, phrase: "pausa"),
+        Entry(action: .pause, language: .pt, phrase: "pausa a música"),
+        Entry(action: .pause, language: .pt, phrase: "para a música"),
+        Entry(action: .pause, language: .pl, phrase: "pauza"),
+        Entry(action: .pause, language: .pl, phrase: "zatrzymaj muzykę"),
+        Entry(action: .pause, language: .pl, phrase: "wstrzymaj muzykę"),
+        Entry(action: .pause, language: .tr, phrase: "duraklat"),
+        Entry(action: .pause, language: .tr, phrase: "müziği duraklat"),
+        Entry(action: .pause, language: .tr, phrase: "müziği durdur"),
+        Entry(action: .pause, language: .ja, phrase: "一時停止"),
+        Entry(action: .pause, language: .ja, phrase: "音楽を止めて"),
+        Entry(action: .pause, language: .ja, phrase: "音楽を一時停止"),
+        Entry(action: .pause, language: .ko, phrase: "일시정지"),
+        Entry(action: .pause, language: .ko, phrase: "음악 멈춰 줘"),
+        Entry(action: .pause, language: .ko, phrase: "음악 일시정지"),
+        Entry(action: .pause, language: .zh, phrase: "暂停"),
+        Entry(action: .pause, language: .zh, phrase: "暂停音乐"),
+        Entry(action: .pause, language: .zh, phrase: "停止音乐"),
+        Entry(action: .resume, language: .es, phrase: "reanuda la música"),
+        Entry(action: .resume, language: .es, phrase: "continúa la reproducción"),
+        Entry(action: .resume, language: .es, phrase: "sigue reproduciendo"),
+        Entry(action: .resume, language: .it, phrase: "riprendi la musica"),
+        Entry(action: .resume, language: .it, phrase: "riprendi la riproduzione"),
+        Entry(action: .resume, language: .it, phrase: "continua a suonare"),
+        Entry(action: .resume, language: .pt, phrase: "retoma a música"),
+        Entry(action: .resume, language: .pt, phrase: "continua a reprodução"),
+        Entry(action: .resume, language: .pt, phrase: "continua a tocar"),
+        Entry(action: .resume, language: .pl, phrase: "wznów muzykę"),
+        Entry(action: .resume, language: .pl, phrase: "wznów odtwarzanie"),
+        Entry(action: .resume, language: .pl, phrase: "graj dalej"),
+        Entry(action: .resume, language: .tr, phrase: "müziğe devam et"),
+        Entry(action: .resume, language: .tr, phrase: "çalmaya devam et"),
+        Entry(action: .resume, language: .tr, phrase: "devam et"),
+        Entry(action: .resume, language: .ja, phrase: "再生を再開"),
+        Entry(action: .resume, language: .ja, phrase: "音楽を再開"),
+        Entry(action: .resume, language: .ja, phrase: "続きを再生"),
+        Entry(action: .resume, language: .ko, phrase: "다시 재생"),
+        Entry(action: .resume, language: .ko, phrase: "음악 다시 재생"),
+        Entry(action: .resume, language: .ko, phrase: "재생 계속"),
+        Entry(action: .resume, language: .zh, phrase: "继续播放"),
+        Entry(action: .resume, language: .zh, phrase: "恢复播放"),
+        Entry(action: .resume, language: .zh, phrase: "继续放音乐"),
+        Entry(action: .next, language: .es, phrase: "siguiente"),
+        Entry(action: .next, language: .es, phrase: "siguiente canción"),
+        Entry(action: .next, language: .es, phrase: "salta esta canción"),
+        Entry(action: .next, language: .it, phrase: "prossima"),
+        Entry(action: .next, language: .it, phrase: "prossima canzone"),
+        Entry(action: .next, language: .it, phrase: "brano successivo"),
+        Entry(action: .next, language: .it, phrase: "salta questa canzone"),
+        Entry(action: .next, language: .pt, phrase: "próxima"),
+        Entry(action: .next, language: .pt, phrase: "próxima música"),
+        Entry(action: .next, language: .pt, phrase: "salta esta música"),
+        Entry(action: .next, language: .pl, phrase: "następny"),
+        Entry(action: .next, language: .pl, phrase: "następny utwór"),
+        Entry(action: .next, language: .pl, phrase: "następna piosenka"),
+        Entry(action: .next, language: .pl, phrase: "pomiń ten utwór"),
+        Entry(action: .next, language: .tr, phrase: "sonraki"),
+        Entry(action: .next, language: .tr, phrase: "sonraki şarkı"),
+        Entry(action: .next, language: .tr, phrase: "bu şarkıyı geç"),
+        Entry(action: .next, language: .ja, phrase: "次の曲"),
+        Entry(action: .next, language: .ja, phrase: "次へ"),
+        Entry(action: .next, language: .ja, phrase: "この曲をスキップ"),
+        Entry(action: .next, language: .ko, phrase: "다음 곡"),
+        Entry(action: .next, language: .ko, phrase: "다음 노래"),
+        Entry(action: .next, language: .ko, phrase: "이 노래 건너뛰기"),
+        Entry(action: .next, language: .zh, phrase: "下一首"),
+        Entry(action: .next, language: .zh, phrase: "下一首歌"),
+        Entry(action: .next, language: .zh, phrase: "跳过这首歌"),
+        Entry(action: .previous, language: .es, phrase: "anterior"),
+        Entry(action: .previous, language: .es, phrase: "canción anterior"),
+        Entry(action: .previous, language: .it, phrase: "precedente"),
+        Entry(action: .previous, language: .it, phrase: "canzone precedente"),
+        Entry(action: .previous, language: .it, phrase: "brano precedente"),
+        Entry(action: .previous, language: .pt, phrase: "anterior"),
+        Entry(action: .previous, language: .pt, phrase: "música anterior"),
+        Entry(action: .previous, language: .pl, phrase: "poprzedni"),
+        Entry(action: .previous, language: .pl, phrase: "poprzedni utwór"),
+        Entry(action: .previous, language: .pl, phrase: "poprzednia piosenka"),
+        Entry(action: .previous, language: .tr, phrase: "önceki"),
+        Entry(action: .previous, language: .tr, phrase: "önceki şarkı"),
+        Entry(action: .previous, language: .ja, phrase: "前の曲"),
+        Entry(action: .previous, language: .ja, phrase: "前へ"),
+        Entry(action: .previous, language: .ko, phrase: "이전 곡"),
+        Entry(action: .previous, language: .ko, phrase: "이전 노래"),
+        Entry(action: .previous, language: .zh, phrase: "上一首"),
+        Entry(action: .previous, language: .zh, phrase: "上一首歌"),
+        Entry(action: .status, language: .es, phrase: "qué está sonando"),
+        Entry(action: .status, language: .es, phrase: "qué canción es esta"),
+        Entry(action: .status, language: .it, phrase: "cosa sta suonando"),
+        Entry(action: .status, language: .it, phrase: "che canzone è questa"),
+        Entry(action: .status, language: .pt, phrase: "o que está a tocar"),
+        Entry(action: .status, language: .pt, phrase: "que música é esta"),
+        Entry(action: .status, language: .pl, phrase: "co teraz gra"),
+        Entry(action: .status, language: .pl, phrase: "jaki to utwór"),
+        Entry(action: .status, language: .tr, phrase: "ne çalıyor"),
+        Entry(action: .status, language: .tr, phrase: "bu hangi şarkı"),
+        Entry(action: .status, language: .ja, phrase: "今何が流れてる"),
+        Entry(action: .status, language: .ja, phrase: "この曲は何"),
+        Entry(action: .status, language: .ko, phrase: "지금 뭐 나와"),
+        Entry(action: .status, language: .ko, phrase: "이 노래 뭐야"),
+        Entry(action: .status, language: .zh, phrase: "现在在放什么"),
+        Entry(action: .status, language: .zh, phrase: "这是什么歌"),
+        Entry(action: .cancelSleep, language: .es, phrase: "cancela el temporizador"),
+        Entry(action: .cancelSleep, language: .es, phrase: "desactiva el temporizador de apagado"),
+        Entry(action: .cancelSleep, language: .it, phrase: "annulla il timer"),
+        Entry(action: .cancelSleep, language: .it, phrase: "disattiva il timer di spegnimento"),
+        Entry(action: .cancelSleep, language: .pt, phrase: "cancela o temporizador"),
+        Entry(action: .cancelSleep, language: .pt, phrase: "desativa o temporizador"),
+        Entry(action: .cancelSleep, language: .pl, phrase: "anuluj wyłącznik czasowy"),
+        Entry(action: .cancelSleep, language: .pl, phrase: "wyłącz wyłącznik czasowy"),
+        Entry(action: .cancelSleep, language: .tr, phrase: "uyku zamanlayıcısını iptal et"),
+        Entry(action: .cancelSleep, language: .tr, phrase: "uyku zamanlayıcısını kapat"),
+        Entry(action: .cancelSleep, language: .ja, phrase: "スリープタイマーを解除"),
+        Entry(action: .cancelSleep, language: .ja, phrase: "スリープタイマーを止めて"),
+        Entry(action: .cancelSleep, language: .ko, phrase: "취침 타이머 취소"),
+        Entry(action: .cancelSleep, language: .ko, phrase: "취침 타이머 꺼 줘"),
+        Entry(action: .cancelSleep, language: .zh, phrase: "取消睡眠定时"),
+        Entry(action: .cancelSleep, language: .zh, phrase: "关闭睡眠定时"),
     ]
 
+    private static let normalizedEntries: [Entry] = entries.map {
+        Entry(action: $0.action, language: $0.language, phrase: clean($0.phrase))
+    }
+
+    /// "#" marks the minutes. Literal text is normalized like the input, so any script works.
+    private static let sleepTemplates: [(Language, [String])] = [
+        (.en, ["sleep timer # minute", "sleep timer # minutes", "stop in # minute", "stop in # minutes",
+               "sleep in # minute", "sleep in # minutes"]),
+        (.nl, ["slaaptimer # minuut", "slaaptimer # minuten", "stop over # minuut", "stop over # minuten"]),
+        (.fr, ["minuterie # minute", "minuterie # minutes", "arrête dans # minute", "arrête dans # minutes"]),
+        (.de, ["schlaftimer # minute", "schlaftimer # minuten", "stoppe in # minute", "stoppe in # minuten"]),
+        (.es, ["temporizador # minuto", "temporizador # minutos", "para en # minuto", "para en # minutos"]),
+        (.it, ["timer # minuto", "timer # minuti", "ferma tra # minuto", "ferma tra # minuti",
+               "spegni tra # minuto", "spegni tra # minuti"]),
+        (.pt, ["temporizador # minuto", "temporizador # minutos", "para daqui a # minuto",
+               "para daqui a # minutos", "parar em # minutos"]),
+        (.pl, ["wyłącznik czasowy # minuta", "wyłącznik czasowy # minuty", "wyłącznik czasowy # minut",
+               "zatrzymaj za # minutę", "zatrzymaj za # minuty", "zatrzymaj za # minut"]),
+        (.tr, ["uyku zamanlayıcısı # dakika", "# dakika sonra durdur", "# dakika uyku zamanlayıcısı"]),
+        (.ja, ["スリープタイマー#分", "#分後に停止", "#分後に止めて"]),
+        (.ko, ["취침 타이머 #분", "#분 후에 정지", "#분 뒤에 꺼 줘"]),
+        (.zh, ["睡眠定时#分钟", "#分钟后停止", "#分钟后暂停"]),
+    ]
+
+    private static let sleepPatterns: [(Language, NSRegularExpression)] = sleepTemplates.flatMap { language, templates in
+        templates.compactMap { template in
+            let parts = template.components(separatedBy: "#").map { normalize($0) }
+            guard parts.count == 2 else { return nil }
+            let pattern = "^" + NSRegularExpression.escapedPattern(for: parts[0]) + " ?([0-9]{1,3}) ?"
+                + NSRegularExpression.escapedPattern(for: parts[1]) + "$"
+            return (try? NSRegularExpression(pattern: pattern)).map { (language, $0) }
+        }
+    }
+
     static func parse(_ text: String) -> Self? {
-        guard text.count <= 200, text.range(of: "[0-9][.,][0-9]|[-−][0-9]", options: .regularExpression) == nil, !text.contains("\""), !text.contains("“") else { return nil }
-        let value = normalize(text)
-            .replacingOccurrences(of: "^(?:hey siri |hey echo |echo )", with: "", options: .regularExpression)
-            .replacingOccurrences(of: "^(?:please |alsjeblieft |bitte )", with: "", options: .regularExpression)
-            .replacingOccurrences(of: " (?:please|alsjeblieft|aub|bitte|sil te plait)$", with: "", options: .regularExpression)
-            .replacingOccurrences(of: " (?:in|on|with|op|met|via|dans|avec|sur|mit|bei) echo$", with: "", options: .regularExpression)
+        guard text.count <= 200, text.range(of: "[0-9][.,][0-9]|[-−][0-9]", options: .regularExpression) == nil,
+              !text.contains("\""), !text.contains("“"), !text.contains("「") else { return nil }
+        let value = clean(text)
         guard !value.isEmpty else { return nil }
-        if let match = entries.first(where: { $0.phrase == value }) {
+        if let match = normalizedEntries.first(where: { $0.phrase == value }) {
             return Self(action: match.action, language: match.language)
         }
-        let sleepPatterns: [(Language, String)] = [
-            (.en, "^(?:sleep timer|stop in|sleep in) ([0-9]{1,3}) minutes?$"),
-            (.nl, "^(?:slaaptimer|stop over) ([0-9]{1,3}) minuten?$"),
-            (.fr, "^(?:minuterie|arrete dans) ([0-9]{1,3}) minutes?$"),
-            (.de, "^(?:schlaftimer|stoppe in) ([0-9]{1,3}) minuten?$" )
-        ]
+        let range = NSRange(value.startIndex..., in: value)
         for (language, pattern) in sleepPatterns {
-            if value.range(of: pattern, options: .regularExpression) != nil,
-               let token = value.split(separator: " ").first(where: { Int($0) != nil }),
-               let minutes = Int(token), (1...720).contains(minutes) {
+            if let result = pattern.firstMatch(in: value, range: range),
+               let token = Range(result.range(at: 1), in: value),
+               let minutes = Int(value[token]), (1...720).contains(minutes) {
                 return Self(action: .sleep(minutes), language: language)
             }
         }
         // Same word count; at most one edit in one word of at least five letters.
         // Short switches (on/off, aan/uit) and all other words must match exactly.
-        let matches = entries.filter { isSingleTypo(value, $0.phrase) }
+        let matches = normalizedEntries.filter { isSingleTypo(value, $0.phrase) }
         guard let match = matches.first,
               matches.allSatisfy({ $0.action == match.action }) else { return nil }
         return Self(action: match.action, language: match.language)
     }
 
+    /// Normalizes and drops the app name, wake words and politeness; applied to input and phrases alike.
+    private static func clean(_ text: String) -> String {
+        // Japanese, Korean and Chinese particles are stripped before accent folding, which
+        // would otherwise turn で into て. These languages often join the app name to a particle.
+        let asian = text.folding(options: [.caseInsensitive, .widthInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+            .replacingOccurrences(of: "^\\s*(?:请|請)\\s*", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "^\\s*(?:在|用)?\\s*echo\\s*(?:で|에서|으로|로|里|中|上)\\s*", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "(?:\\s*(?:ください|下さい|して|주세요|해\\s*줘|吧))+[\\s。.!！?？]*$", with: "", options: .regularExpression)
+        return normalize(asian)
+            .replacingOccurrences(of: "^(?:hey siri |hey echo |echo )", with: "", options: .regularExpression)
+            .replacingOccurrences(of: "^(?:please |alsjeblieft |bitte |por favor |per favore |prosze |lutfen )", with: "", options: .regularExpression)
+            .replacingOccurrences(of: " (?:please|alsjeblieft|aub|bitte|sil te plait|por favor|per favore|prosze|lutfen)$", with: "", options: .regularExpression)
+            .replacingOccurrences(of: " (?:in|on|with|op|met|via|dans|avec|sur|mit|bei|en|con|su|no|em|na|w|z) echo$", with: "", options: .regularExpression)
+            .replacingOccurrences(of: " echo(?:da|de|ta|te|yla|yle)$", with: "", options: .regularExpression)
+    }
+
     static func normalize(_ value: String) -> String {
-        value.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+        // Width folding turns full-width digits (３０分) into ASCII; ł and ı have no
+        // decomposable accent, so they are mapped explicitly.
+        value.folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+            .replacingOccurrences(of: "ł", with: "l")
+            .replacingOccurrences(of: "ı", with: "i")
             .replacingOccurrences(of: "['’]", with: "", options: .regularExpression)
-            .replacingOccurrences(of: "[^\\p{L}\\p{N} ]", with: " ", options: .regularExpression)
+            .replacingOccurrences(of: "[^\\p{L}\\p{M}\\p{N} ]", with: " ", options: .regularExpression)
             .split(whereSeparator: \.isWhitespace).joined(separator: " ")
     }
 
@@ -246,6 +608,11 @@ struct EchoSpokenCommand: Equatable {
         let differences = zip(a, b).filter { $0 != $1 }
         guard differences.count == 1, let pair = differences.first,
               min(pair.0.count, pair.1.count) >= 5 else { return false }
+        // One character can flip a whole Japanese, Korean or Chinese command (オン/オフ), so only
+        // words in alphabetic scripts are guessed.
+        let ideographic = "[\\p{Han}\\p{Hiragana}\\p{Katakana}\\p{Hangul}]"
+        guard String(pair.0).range(of: ideographic, options: .regularExpression) == nil,
+              String(pair.1).range(of: ideographic, options: .regularExpression) == nil else { return false }
         let x = Array(pair.0), y = Array(pair.1)
         guard abs(x.count - y.count) <= 1 else { return false }
         if x.count == y.count {

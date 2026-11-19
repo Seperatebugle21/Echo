@@ -41,12 +41,13 @@ enum EchoWidgetSnapshotPublisher {
         let items = Array(picks.prefix(4)).map { item($0, library: library) }
         let snapshot = EchoWidgetSnapshot(updatedAt: Date(), songs: items,
             currentSong: displayed.map { item($0, library: library) },
-            isPlaying: current != nil && player.isPlaying)
+            isPlaying: current != nil && player.isPlaying,
+            language: EchoLanguage.current.rawValue)
         let keepIDs = Set(items.map(\.id) + (displayed.map { [$0.id] } ?? []))
         artworkCache = artworkCache.filter { keepIDs.contains($0.key) }
         let previous = EchoWidgetSnapshotStore.load()
         guard snapshot.songs != previous.songs || snapshot.currentSong != previous.currentSong
-                || snapshot.isPlaying != previous.isPlaying else { return }
+                || snapshot.isPlaying != previous.isPlaying || snapshot.language != previous.language else { return }
         do {
             try EchoWidgetSnapshotStore.save(snapshot)
             for kind in EchoWidgetKinds.homeScreen { WidgetCenter.shared.reloadTimelines(ofKind: kind) }

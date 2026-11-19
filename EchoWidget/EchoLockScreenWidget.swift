@@ -43,7 +43,8 @@ private struct EchoLockScreenWidgetView: View {
         .widgetURL(
             URL(string: "echo://open")
         )
-        .accessibilityLabel("widget_lock_screen_title")
+        .accessibilityLabel(Text("widget_lock_screen_title"))
+        .echoWidgetLocale(entry.snapshot)
     }
 }
 

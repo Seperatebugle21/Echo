@@ -10,6 +10,14 @@
         <string>nl</string>
         <string>fr</string>
         <string>de</string>
+        <string>es</string>
+        <string>it</string>
+        <string>pt</string>
+        <string>pl</string>
+        <string>tr</string>
+        <string>ja</string>
+        <string>ko</string>
+        <string>zh-Hans</string>
     </array>
     <key>CFBundleDisplayName</key>
     <string>Echo Widgets</string>

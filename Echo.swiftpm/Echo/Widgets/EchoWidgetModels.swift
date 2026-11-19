@@ -40,6 +40,11 @@ struct EchoWidgetSnapshot: Codable, Hashable {
     let songs: [EchoWidgetSongItem]
     var currentSong: EchoWidgetSongItem? = nil
     var isPlaying: Bool? = nil
+    /// Echo's in-app language (an `.lproj` name), so widget text matches the app instead of iOS.
+    var language: String? = nil
+
+    /// Nil keeps the widget on the iOS language, e.g. for snapshots from older Echo versions.
+    var locale: Locale? { language.map(Locale.init(identifier:)) }
 
     static let empty = EchoWidgetSnapshot(
         updatedAt: .distantPast,

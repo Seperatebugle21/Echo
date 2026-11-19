@@ -7,7 +7,7 @@ enum SmartMusicFormatting {
         formatter.unitsStyle = .abbreviated
         formatter.allowedUnits = seconds >= 3600 ? [.hour, .minute] : [.minute, .second]
         formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.calendar?.locale = Locale(identifier: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "en")
+        formatter.calendar?.locale = EchoLanguage.current.locale
         return formatter.string(from: max(0, seconds.isFinite ? seconds : 0)) ?? "0"
     }
     static func period(_ months: Int) -> String { EchoLocalization.string("smart_period_\(months)") }
