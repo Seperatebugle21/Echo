@@ -293,9 +293,24 @@ jobs:
             -c "Add :UIBackgroundModes:1 string fetch" \
             "$INFO_PLIST"
 
+          # BGProcessingTask (podcast checks while charging) needs the processing mode.
+          /usr/libexec/PlistBuddy \
+            -c "Add :UIBackgroundModes:2 string processing" \
+            "$INFO_PLIST"
+
+          # Keep in sync with BGTaskSchedulerPermittedIdentifiers in Echo.swiftpm/Info.plist.
+          # SideStore appends a team ID to the bundle ID (com.echomusic.app.TEAMID), so the
+          # wildcard lets the continued-processing download task use the re-signed bundle ID.
           /usr/libexec/PlistBuddy -c "Delete :BGTaskSchedulerPermittedIdentifiers" "$INFO_PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers array" "$INFO_PLIST"
           /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:0 string com.echomusic.app.podcast-refresh" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:1 string com.echomusic.app.podcast-processing" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:2 string com.echomusic.app.fetch-downloads" "$INFO_PLIST"
+          /usr/libexec/PlistBuddy -c "Add :BGTaskSchedulerPermittedIdentifiers:3 string com.echomusic.app.*" "$INFO_PLIST"
+
+          # Download progress Live Activity on the Lock Screen and in the Dynamic Island.
+          /usr/libexec/PlistBuddy -c "Delete :NSSupportsLiveActivities" "$INFO_PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSSupportsLiveActivities bool true" "$INFO_PLIST"
 
 
           # ============================================

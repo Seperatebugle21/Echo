@@ -119,7 +119,7 @@ enum FetchBackgroundState {
         if registered.contains(identifier) { return true }
         // iOS raises an uncatchable exception for an identifier it does not accept. If a previous
         // attempt never returned, skip continued processing instead of crashing on every download.
-        let guardKey = "fetch.continuedProcessing.registering"
+        let guardKey = "fetch.continuedProcessing.registering.\(identifier)"
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: guardKey) else {
             status = "Skipped: registering crashed Echo once before"
