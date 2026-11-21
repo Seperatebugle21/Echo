@@ -31,7 +31,7 @@ struct HomeView: View {
                 let layout = HomeCardLayout(width: geometry.size.width)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 26) {
-                        HomeHeaderMotion(scroll: scroll) { header }.echoReveal(0)
+                        header.echoReveal(0)
                         ForEach(Array(HomeConfiguration.decode(storedLayout).sections.enumerated()), id: \.element.id) { index, section in
                             homeSection(section, layout: layout)
                                 .echoReveal(index + 1)
@@ -155,17 +155,25 @@ struct HomeView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("homeview_title").font(.largeTitle.weight(.heavy))
-                Text("home_tagline").font(.system(size: 9, weight: .medium)).tracking(3)
-                    .foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
+            // The title grows from the left edge and the buttons from the right edge,
+            // so pulling Home down never pushes anything off screen.
+            HomeHeaderMotion(scroll: scroll, anchor: .leading) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("homeview_title").font(.largeTitle.weight(.heavy))
+                    Text("home_tagline").font(.system(size: 9, weight: .medium)).tracking(3)
+                        .foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
+                }
             }
             Spacer(minLength: 4)
-            if intelligenceEnabled {
-                headerButton("sparkles", label: "ai_title") { AppRouter.shared.showIntelligence = true }
+            HomeHeaderMotion(scroll: scroll, anchor: .trailing) {
+                HStack(spacing: 8) {
+                    if intelligenceEnabled {
+                        headerButton("sparkles", label: "ai_title") { AppRouter.shared.showIntelligence = true }
+                    }
+                    headerButton("magnifyingglass", label: "tab_search") { showSearch = true }
+                    headerButton("gearshape", label: "tab_settings") { showSettings = true }
+                }
             }
-            headerButton("magnifyingglass", label: "tab_search") { showSearch = true }
-            headerButton("gearshape", label: "tab_settings") { showSettings = true }
         }.padding(.horizontal, 20)
     }
 
@@ -313,13 +321,14 @@ final class HomeScrollState {
 /// The title stretches when Home is pulled down, and drifts and fades as it scrolls away.
 private struct HomeHeaderMotion<Content: View>: View {
     let scroll: HomeScrollState
+    let anchor: UnitPoint
     @ViewBuilder let content: Content
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let y = reduceMotion ? 0 : scroll.offset
         content
-            .scaleEffect(y < 0 ? 1 + min(0.14, -y / 500) : 1, anchor: .leading)
+            .scaleEffect(y < 0 ? 1 + min(0.14, -y / 500) : 1, anchor: anchor)
             .offset(y: y > 0 ? y * 0.3 : 0)
             .opacity(y > 0 ? max(0, 1 - y / 140) : 1)
     }

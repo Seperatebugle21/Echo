@@ -256,7 +256,7 @@ private struct HomeSpinningVinyl: View {
     private var active: Bool { spinning && visible && scenePhase == .active }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: !active)) { context in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !active)) { context in
             let running = spinStart.map { max(0, context.date.timeIntervalSince($0)) } ?? 0
             HomeVinyl(song: song)
                 .rotationEffect(.degrees(baseAngle + running * degreesPerSecond))
@@ -286,7 +286,7 @@ private struct HomeSpotlightSurface: View {
     var body: some View {
         ZStack {
             Color.accentColor.opacity(0.25)
-            EchoLivingBackdrop(image: backdrop, animated: animated && visible, dim: 0.22)
+            EchoLivingBackdrop(image: backdrop, animated: false, dim: 0.22)
             LinearGradient(colors: [.black.opacity(0.05), .black.opacity(0.45)],
                            startPoint: .top, endPoint: .bottom)
         }

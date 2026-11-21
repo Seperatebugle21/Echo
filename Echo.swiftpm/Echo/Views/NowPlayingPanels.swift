@@ -22,13 +22,16 @@ struct LyricsScroller: View {
     @State private var activeIndex = -1
     @State private var userScrolling = false
     @State private var resumeTask: Task<Void, Never>?
+    /// The first position is set instantly, so opening lyrics never scrolls through the song.
+    @State private var placed = false
 
     private var anchor: UnitPoint { UnitPoint(x: 0.5, y: embedded ? 0.24 : 0.3) }
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: embedded ? 22 : 26) {
+                // Lazy: only the lines on screen are built and rendered.
+                LazyVStack(alignment: .leading, spacing: embedded ? 22 : 26) {
                     if lines.isEmpty {
                         if let lyrics = audioPlayer.currentLyrics, !lyrics.isEmpty {
                             Text(lyrics)
@@ -103,7 +106,15 @@ struct LyricsScroller: View {
                 LyricsTimeTracker(times: lines.map(\.time)) { index in
                     guard index != activeIndex else { return }
                     activeIndex = index
-                    if !userScrolling { follow(proxy, to: index) }
+                    guard !userScrolling, index >= 0 else { return }
+                    if placed {
+                        follow(proxy, to: index)
+                    } else {
+                        placed = true
+                        var transaction = Transaction()
+                        transaction.disablesAnimations = true
+                        withTransaction(transaction) { proxy.scrollTo(index, anchor: anchor) }
+                    }
                 }
             }
             .onAppear {
@@ -119,6 +130,7 @@ struct LyricsScroller: View {
         .onChange(of: audioPlayer.currentSong?.id) {
             selectedProvider = .automatic
             activeIndex = -1
+            placed = false
         }
         .onChange(of: showLyricsSources) { if !showLyricsSources { selectedProvider = .automatic } }
         .onDisappear { resumeTask?.cancel() }
@@ -250,7 +262,6 @@ private struct LyricsLineRow: View {
                 }
             }
             .foregroundStyle(.white.opacity(opacity))
-            .shadow(color: .white.opacity(isCurrent ? 0.28 : 0), radius: isCurrent ? 14 : 0)
             .blur(radius: blur)
             .scaleEffect(isCurrent || reduceMotion ? 1 : 0.96, anchor: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)

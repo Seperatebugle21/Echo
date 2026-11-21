@@ -38,6 +38,10 @@ struct NowPlayingView: View {
     @Namespace private var coverSpace
     /// Lyrics or queue in place of the large cover; kept while the player is closed.
     @State private var panel: NowPlayingPanel?
+    /// Mounted shortly after the cover starts gliding, so building the lyrics or
+    /// queue never lands on the same frames as the morph.
+    @State private var shownPanel: NowPlayingPanel?
+    @State private var panelToken = 0
     @State private var panelFrame: CGRect = .zero
 
     @Environment(AudioPlayerManager.self)
@@ -79,12 +83,17 @@ struct NowPlayingView: View {
                         compactHeader(song)
                     }
 
-                    panelContent(panel)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { panelFrame = $0 }
-                        .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.asymmetric(
-                            insertion: AnyTransition.offset(y: 40).combined(with: AnyTransition.opacity),
-                            removal: AnyTransition.offset(y: 24).combined(with: AnyTransition.opacity)))
+                    ZStack {
+                        if let shownPanel {
+                            panelContent(shownPanel)
+                                .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.asymmetric(
+                                    insertion: AnyTransition.offset(y: 28).combined(with: AnyTransition.opacity),
+                                    removal: AnyTransition.opacity))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { panelFrame = $0 }
+                    .transition(AnyTransition.opacity)
                 } else {
                     Spacer(minLength: 0)
 
@@ -173,8 +182,26 @@ struct NowPlayingView: View {
     // MARK: - Panels
 
     private func toggle(_ target: NowPlayingPanel) {
-        withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.52, dampingFraction: 0.86)) {
-            panel = panel == target ? nil : target
+        panelToken += 1
+        let token = panelToken
+        let morph: Animation = reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.5, dampingFraction: 0.88)
+        if panel == target {
+            // Closing: let the content go first (cheap), then the cover grows back.
+            withAnimation(.easeOut(duration: 0.14)) { shownPanel = nil }
+            withAnimation(morph) { panel = nil }
+        } else if panel != nil {
+            // Switching between lyrics and queue: no cover movement, just a crossfade.
+            withAnimation(.easeInOut(duration: 0.25)) {
+                panel = target
+                shownPanel = target
+            }
+        } else {
+            withAnimation(morph) { panel = target }
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 260))
+                guard panelToken == token, panel == target else { return }
+                withAnimation(.easeOut(duration: 0.32)) { shownPanel = target }
+            }
         }
     }
 
@@ -532,23 +559,30 @@ struct NowPlayingView: View {
             }
             .opacity(artworkHidden ? 0 : 1)
             // Light from the artwork itself falls behind it.
+            // No live blur: the glow is the already blurred thumbnail with a soft
+            // gradient edge, and the shadow is cast by a plain shape, so moving the
+            // cover never re-renders an offscreen blur.
             .background {
-                if let glow = images.background {
-                    Image(uiImage: glow)
-                        .resizable()
-                        .scaledToFill()
-                        .clipShape(shape)
-                        .blur(radius: 28)
-                        .saturation(1.4)
-                        .opacity(artworkHidden ? 0 : playing ? 0.85 : 0.5)
-                        .scaleEffect(playing ? 1.02 : 0.9)
-                        .offset(y: playing ? 26 : 14)
-                        .animation(.easeOut(duration: 0.45), value: artworkHidden)
-                        .allowsHitTesting(false)
+                ZStack {
+                    if let glow = images.background {
+                        Image(uiImage: glow)
+                            .resizable()
+                            .scaledToFill()
+                            .saturation(1.4)
+                            .mask { EllipticalGradient(colors: [.black, .black.opacity(0.7), .clear], center: .center) }
+                            .scaleEffect(playing ? 1.25 : 1.05)
+                            .offset(y: playing ? 24 : 12)
+                            .opacity(artworkHidden ? 0 : playing ? 0.9 : 0.55)
+                            .animation(.easeOut(duration: 0.45), value: artworkHidden)
+                    }
+                    shape
+                        .fill(.black)
+                        .shadow(color: .black.opacity(playing ? 0.4 : 0.25),
+                                radius: playing ? 28 : 16, y: playing ? 18 : 8)
+                        .opacity(artworkHidden ? 0 : 1)
                 }
+                .allowsHitTesting(false)
             }
-            .shadow(color: .black.opacity(artworkHidden ? 0 : playing ? 0.4 : 0.25),
-                    radius: playing ? 30 : 16, y: playing ? 18 : 8)
             .scaleEffect(artworkScale)
             .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
             .padding(.horizontal, 28)
