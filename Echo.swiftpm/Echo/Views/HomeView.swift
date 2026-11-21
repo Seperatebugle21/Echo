@@ -19,6 +19,8 @@ struct HomeView: View {
     @State private var optionsFeedback = 0
     @State private var podcastRecommendations = PodcastRecommendationsModel()
     @Namespace private var zoom
+    /// Written while scrolling; only the small motion views read it, so Home's body is never rebuilt per frame.
+    @State private var scroll = HomeScrollState()
     private let smartModel = HomeSmartSectionsModel.shared
     private let session = HomeSessionManager.shared
     private let recommendations = RecommendationManager.shared
@@ -29,7 +31,7 @@ struct HomeView: View {
                 let layout = HomeCardLayout(width: geometry.size.width)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 26) {
-                        header.echoReveal(0)
+                        HomeHeaderMotion(scroll: scroll) { header }.echoReveal(0)
                         ForEach(Array(HomeConfiguration.decode(storedLayout).sections.enumerated()), id: \.element.id) { index, section in
                             homeSection(section, layout: layout)
                                 .echoReveal(index + 1)
@@ -39,13 +41,19 @@ struct HomeView: View {
                     .padding(.top, 8)
                     // The playing song's colors wash over the top of Home and scroll away with it.
                     .background(alignment: .top) {
-                        EchoAmbientGlow(height: 520).offset(y: -260)
+                        HomeGlowMotion(scroll: scroll) { EchoAmbientGlow(height: 520) }.offset(y: -260)
                     }
                     // ContentView already reserves the live MiniPlayer and tab safe areas.
                     .padding(.bottom, 24)
                 }
                 .scrollIndicators(.hidden)
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top
+                } action: { _, offset in
+                    scroll.offset = offset
+                }
                 .echoBackground()
+                .overlay(alignment: .top) { HomeCompactBar(scroll: scroll) }
             }
             .toolbarVisibility(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) { SettingsView() }
@@ -294,5 +302,69 @@ struct HomeView: View {
         player.play(song: current, url: url, queue: queue)
         player.allSongs = library.songs
         player.fillAutoNext(from: library.songs)
+    }
+}
+
+@Observable
+final class HomeScrollState {
+    var offset: CGFloat = 0
+}
+
+/// The title stretches when Home is pulled down, and drifts and fades as it scrolls away.
+private struct HomeHeaderMotion<Content: View>: View {
+    let scroll: HomeScrollState
+    @ViewBuilder let content: Content
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let y = reduceMotion ? 0 : scroll.offset
+        content
+            .scaleEffect(y < 0 ? 1 + min(0.14, -y / 500) : 1, anchor: .leading)
+            .offset(y: y > 0 ? y * 0.3 : 0)
+            .opacity(y > 0 ? max(0, 1 - y / 140) : 1)
+    }
+}
+
+/// The song's color wash moves slower than the page and stretches on overscroll.
+private struct HomeGlowMotion<Content: View>: View {
+    let scroll: HomeScrollState
+    @ViewBuilder let content: Content
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let y = reduceMotion ? 0 : scroll.offset
+        content
+            .scaleEffect(y < 0 ? 1 + min(0.5, -y / 320) : 1, anchor: .top)
+            .offset(y: y > 0 ? y * 0.45 : y)
+    }
+}
+
+/// A compact title on frosted glass fades in once the large title has scrolled away.
+private struct HomeCompactBar: View {
+    let scroll: HomeScrollState
+
+    var body: some View {
+        let progress = min(1, max(0, (scroll.offset - 70) / 50))
+        Text("homeview_title")
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .offset(y: 8 * (1 - progress))
+            .background {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .mask {
+                        LinearGradient(stops: [
+                            .init(color: .black, location: 0),
+                            .init(color: .black, location: 0.6),
+                            .init(color: .clear, location: 1)
+                        ], startPoint: .top, endPoint: .bottom)
+                    }
+                    .padding(.bottom, -18)
+                    .ignoresSafeArea(edges: .top)
+            }
+            .opacity(progress)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }
