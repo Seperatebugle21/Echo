@@ -131,20 +131,10 @@ struct FavoritesView: View {
                 ForEach(processedSongs) { song in
                     HStack(spacing: 12) {
                         
-                        if let data = song.coverData,
-                           let image = UIImage(data: data) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 50, height: 50)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            Image(systemName: "music.note")
-                                .font(.title2)
-                                .frame(width: 50, height: 50)
-                                .background(.thinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
+                        // Decoded off the main thread and cached; never per row in the body.
+                        CachedSongArtwork(data: song.coverData ?? song.imageData)
+                            .frame(width: 50, height: 50)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(song.title)

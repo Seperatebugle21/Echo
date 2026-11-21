@@ -5,8 +5,9 @@ struct HomeLocalAlbumSection: View {
     var zoom: Namespace.ID? = nil
     @Environment(MusicLibraryManager.self) private var library
     @State private var selection: [String] = []
+    /// Grouped off the main thread once per library change, not in every body pass.
+    @State private var albums: [AlbumGroup] = []
     private let session = HomeSessionManager.shared
-    private var albums: [AlbumGroup] { LibraryAlbums.groups(from: library.songs) }
     private var shown: [AlbumGroup] {
         let byID = Dictionary(albums.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         return selection.compactMap { byID[$0] }
@@ -43,11 +44,21 @@ struct HomeLocalAlbumSection: View {
                 .scrollClipDisabled()
                 .scrollTargetBehavior(.viewAligned)
             }
-            .task(id: albums.map(\.id)) { selection = session.albumSelection(from: albums.map(\.id)) }
+            .task(id: library.songRevision) { await refresh() }
         } else {
             Color.clear.frame(height: 0)
-                .task(id: albums.map(\.id)) { selection = session.albumSelection(from: albums.map(\.id)) }
+                .task(id: library.songRevision) { await refresh() }
         }
+    }
+}
+
+private extension HomeLocalAlbumSection {
+    func refresh() async {
+        let songs = library.songs
+        let grouped = await Task.detached(priority: .userInitiated) { LibraryAlbums.groups(from: songs) }.value
+        guard !Task.isCancelled else { return }
+        albums = grouped
+        selection = session.albumSelection(from: grouped.map(\.id))
     }
 }
 

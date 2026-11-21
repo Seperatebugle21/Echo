@@ -926,7 +926,9 @@ private struct ExpandedPlayerSurface: View {
             // only its visibility flips, without animation, at the hand-off.
             if artworkFrame.width > 0, let cover = renderedArtwork.cover {
                 let start = compactArtwork
-                let scale = NowPlayingView.artworkScale(
+                // The small header cover of the lyrics and queue view does not breathe.
+                let compactLanding = artworkFrame.width < 120
+                let scale = compactLanding ? 1 : NowPlayingView.artworkScale(
                     isPlaying: audioPlayer.isPlaying, isPreparing: audioPlayer.isPreparingAudio)
                 let landing = artworkFrame.offsetBy(dx: 0, dy: edgeBleed)
                 let target = landing.insetBy(dx: landing.width * (1 - scale) / 2,
@@ -937,7 +939,8 @@ private struct ExpandedPlayerSurface: View {
                     width: start.frame.width + (target.width - start.frame.width) * p,
                     height: start.frame.height + (target.height - start.frame.height) * p
                 )
-                let radius = start.radius + (NowPlayingView.artworkCornerRadius * scale - start.radius) * p
+                let landingRadius = compactLanding ? 10 : NowPlayingView.artworkCornerRadius * scale
+                let radius = start.radius + (landingRadius - start.radius) * p
                 Image(uiImage: cover)
                     .resizable()
                     .scaledToFill()

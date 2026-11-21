@@ -35,6 +35,10 @@ struct NowPlayingView: View {
     @State private var previousBounce = 0
     @State private var nextBounce = 0
     @Namespace private var sheetZoom
+    @Namespace private var coverSpace
+    /// Lyrics or queue in place of the large cover; kept while the player is closed.
+    @State private var panel: NowPlayingPanel?
+    @State private var panelFrame: CGRect = .zero
 
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
@@ -45,9 +49,7 @@ struct NowPlayingView: View {
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
 
-    @State private var showQueue = false
     @State private var showPlaylistPicker = false
-    @State private var showLyrics = false
     @State private var transcriptEpisode: PodcastEpisode?
 
     private var images: PlayerArtworkImages { renderedArtwork ?? localArtwork }
@@ -70,16 +72,32 @@ struct NowPlayingView: View {
 
                 closeHandle
 
-                Spacer(minLength: 0)
+                if let panel {
+                    // MARK: - Lyrics / queue (the cover shrinks into the header)
 
-                artwork
+                    if let song = audioPlayer.currentSong {
+                        compactHeader(song)
+                    }
 
-                Spacer(minLength: 0)
+                    panelContent(panel)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { panelFrame = $0 }
+                        .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.asymmetric(
+                            insertion: AnyTransition.offset(y: 40).combined(with: AnyTransition.opacity),
+                            removal: AnyTransition.offset(y: 24).combined(with: AnyTransition.opacity)))
+                } else {
+                    Spacer(minLength: 0)
 
-                // MARK: - Song Info
+                    artwork
 
-                if let song = audioPlayer.currentSong {
-                    songInfo(song)
+                    Spacer(minLength: 0)
+
+                    // MARK: - Song Info
+
+                    if let song = audioPlayer.currentSong {
+                        songInfo(song)
+                            .transition(AnyTransition.opacity)
+                    }
                 }
 
                 if let errorKey = audioPlayer.playbackErrorKey {
@@ -113,6 +131,7 @@ struct NowPlayingView: View {
             }
             .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
                        value: audioPlayer.playbackErrorKey)
+            .onChange(of: panel) { if panel == nil { panelFrame = .zero } }
             // A recognized vertical drag cannot also release a playback button.
             .disabled(closingDragInProgress)
         }
@@ -138,11 +157,6 @@ struct NowPlayingView: View {
 
         // MARK: - Sheets (they grow out of the button that opened them)
 
-        .sheet(isPresented: $showQueue) {
-            QueueView()
-                .navigationTransition(.zoom(sourceID: "queue", in: sheetZoom))
-        }
-
         .sheet(isPresented: $showPlaylistPicker) {
             if let song = audioPlayer.currentSong {
                 PlaylistPickerView(song: song)
@@ -154,13 +168,69 @@ struct NowPlayingView: View {
             PodcastTranscriptView(episode: episode)
                 .navigationTransition(.zoom(sourceID: "transcript", in: sheetZoom))
         }
+    }
 
-        .sheet(isPresented: $showLyrics) {
-            NavigationStack {
-                LyricsView()
-            }
-            .navigationTransition(.zoom(sourceID: "lyrics", in: sheetZoom))
+    // MARK: - Panels
+
+    private func toggle(_ target: NowPlayingPanel) {
+        withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.52, dampingFraction: 0.86)) {
+            panel = panel == target ? nil : target
         }
+    }
+
+    @ViewBuilder
+    private func panelContent(_ panel: NowPlayingPanel) -> some View {
+        switch panel {
+        case .lyrics: LyricsScroller(embedded: true).id(NowPlayingPanel.lyrics)
+        case .queue: NowPlayingQueuePanel().id(NowPlayingPanel.queue)
+        }
+    }
+
+    /// Apple Music style: the cover lands top-left, next to the song's title.
+    private func compactHeader(_ song: Song) -> some View {
+        HStack(spacing: 14) {
+            Group {
+                if let image = images.cover {
+                    Image(uiImage: image).resizable().scaledToFill()
+                } else {
+                    ZStack {
+                        Rectangle().fill(.white.opacity(0.12))
+                        Image(systemName: "music.note").font(.title2).foregroundStyle(.white.opacity(0.8))
+                    }
+                }
+            }
+            .frame(width: 64, height: 64)
+            .clipShape(.rect(cornerRadius: 10, style: .continuous))
+            .matchedGeometryEffect(id: "cover", in: coverSpace)
+            .onGeometryChange(for: CGRect.self) { proxy in
+                proxy.frame(in: .named(Self.coordinateSpaceName))
+            } action: { frame in
+                onArtworkFrame?(frame)
+            }
+            .opacity(artworkHidden ? 0 : 1)
+            .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+            .onTapGesture { if let panel { toggle(panel) } }
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(song.title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                NowPlayingArtistButton(song: song)
+                    .font(.subheadline)
+            }
+            .id(song.id)
+            .transition(songInfoTransition)
+
+            Spacer(minLength: 0)
+
+            NowPlayingOptionsButton(song: song,
+                addToPlaylist: { showPlaylistPicker = true },
+                showLyrics: { if panel != .lyrics { toggle(.lyrics) } })
+        }
+        .padding(.horizontal, 24)
+        .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: song.id)
     }
 
     // MARK: - Song info
@@ -182,7 +252,7 @@ struct NowPlayingView: View {
 
             NowPlayingOptionsButton(song: song,
                 addToPlaylist: { showPlaylistPicker = true },
-                showLyrics: { showLyrics = true })
+                showLyrics: { toggle(.lyrics) })
         }
         .padding(.horizontal, 28)
         .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: song.id)
@@ -309,8 +379,9 @@ struct NowPlayingView: View {
                 actionButton("music.note.list", zoomID: "playlist", label: "add_to_playlist_action") {
                     showPlaylistPicker = true
                 }
-                actionButton("quote.bubble", zoomID: "lyrics", label: "lyrics_action") {
-                    showLyrics = true
+                actionButton(panel == .lyrics ? "quote.bubble.fill" : "quote.bubble", zoomID: "lyrics",
+                             label: "lyrics_action", active: panel == .lyrics) {
+                    toggle(.lyrics)
                 }
             }
 
@@ -321,25 +392,33 @@ struct NowPlayingView: View {
                 }
             }
 
-            actionButton("list.bullet", zoomID: "queue", label: "queue_action") {
-                showQueue = true
+            actionButton("list.bullet", zoomID: "queue", label: "queue_action", active: panel == .queue) {
+                toggle(.queue)
             }
         }
         .padding(.horizontal, 24)
     }
 
-    private func actionButton(_ symbol: String, zoomID: String, label: String,
+    private func actionButton(_ symbol: String, zoomID: String, label: String, active: Bool = false,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.9))
+                .foregroundStyle(active ? Color.black : .white.opacity(0.9))
+                .contentTransition(.symbolEffect(.replace))
                 .frame(width: 44, height: 44)
+                .background {
+                    Circle()
+                        .fill(.white.opacity(active ? 0.92 : 0))
+                        .scaleEffect(active ? 0.86 : 0.4)
+                }
                 .contentShape(.circle)
+                .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: active)
         }
         .buttonStyle(EchoPlayerControlStyle())
         .matchedTransitionSource(id: zoomID, in: sheetZoom)
         .accessibilityLabel(LocalizedStringKey(label))
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 
     private var closeHandle: some View {
@@ -368,7 +447,9 @@ struct NowPlayingView: View {
                     let startedOnSlider = sliderFrame
                         .insetBy(dx: -12, dy: -12)
                         .contains(value.startLocation)
-                    dragMayClose = !startedOnSlider
+                    // Lyrics and the queue scroll; only the header and controls pull the player down.
+                    let startedOnPanel = panel != nil && panelFrame.contains(value.startLocation)
+                    dragMayClose = !startedOnSlider && !startedOnPanel
                         && value.translation.height > 0
                         && abs(value.translation.height) > abs(value.translation.width)
                 }
@@ -421,6 +502,7 @@ struct NowPlayingView: View {
         return Color.clear
             .frame(maxWidth: 360, maxHeight: 360)
             .aspectRatio(1, contentMode: .fit)
+            .matchedGeometryEffect(id: "cover", in: coverSpace)
             .overlay {
                 ZStack {
                     if let image = images.cover {

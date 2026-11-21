@@ -190,10 +190,10 @@ private struct PodcastsOverview: View {
         // This overview has a bounded number of sections. Preserve their state
         // and layout as they leave the viewport; long result lists stay lazy.
         VStack(alignment: .leading, spacing: 32) {
-            PodcastsHeader()
+            PodcastsHeader().echoReveal(0)
 
             if let episode = continuing.first {
-                PodcastResumeHero(episode: episode)
+                PodcastResumeHero(episode: episode).echoReveal(1)
             }
 
             if continuing.count > 1 {
@@ -201,6 +201,7 @@ private struct PodcastsOverview: View {
                     title: "podcasts_continue",
                     episodes: Array(continuing.dropFirst().prefix(8))
                 )
+                .echoReveal(2).echoScrollSection()
             }
 
             PodcastRecommendationsSection(
@@ -209,14 +210,22 @@ private struct PodcastsOverview: View {
                 failed: recommendationsFailed,
                 retry: retryRecommendations
             )
+            .echoReveal(3).echoScrollSection()
 
-            PodcastLibraryLinks()
+            PodcastLibraryLinks().echoReveal(4).echoScrollSection()
 
             if !savedEpisodes.isEmpty {
                 PodcastSavedEpisodesSection(episodes: Array(savedEpisodes.prefix(4)))
+                    .echoReveal(5).echoScrollSection()
             }
         }
         .padding(.bottom, 32)
+        // The artwork of what you are listening to tints the top of the page.
+        .background(alignment: .top) {
+            if let episode = continuing.first {
+                PodcastAmbientGlow(url: episode.artworkURL).offset(y: -260)
+            }
+        }
     }
 }
 
@@ -240,9 +249,9 @@ private struct PodcastsHeader: View {
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 44, height: 44)
-                    .background(.regularMaterial, in: .circle)
+                    .glassEffect(.regular.interactive(), in: .circle)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(HomePressStyle())
             .accessibilityLabel("podcasts_downloads")
         }
         .padding(.horizontal)
@@ -276,6 +285,7 @@ private struct PodcastResumeHero: View {
             } label: {
                 HStack(spacing: 16) {
                     PodcastArtwork(url: episode.artworkURL, size: 92)
+                        .echoArtworkGlow(radius: 16, opacity: 0.6)
                         .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
 
                     VStack(alignment: .leading, spacing: 7) {
@@ -299,7 +309,7 @@ private struct PodcastResumeHero: View {
                 }
                 .contentShape(.rect)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(HomePressStyle())
 
             if let progress {
                 ProgressView(value: progress)
@@ -407,7 +417,7 @@ private struct PodcastLibraryShortcut: View {
             }
             .contentShape(.rect(cornerRadius: 24))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HomePressStyle())
     }
 }
 
@@ -474,13 +484,16 @@ private struct PodcastShowCards: View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 15) {
                 ForEach(shows) { show in
-                    PodcastShowCard(show: show)
+                    PodcastShowCard(show: show).echoRailItem()
                 }
             }
-            .padding(.horizontal)
+            .scrollTargetLayout()
             .padding(.vertical, 6)
         }
         .scrollIndicators(.hidden)
+        .contentMargins(.horizontal, 16, for: .scrollContent)
+        .scrollClipDisabled()
+        .scrollTargetBehavior(.viewAligned)
     }
 }
 
@@ -497,7 +510,7 @@ private struct PodcastShowCard: View {
             VStack(alignment: .leading, spacing: 8) {
                 PodcastArtwork(url: show.artworkURL, size: 150)
                     .matchedTransitionSource(id: show.id, in: transition)
-                    .shadow(color: .black.opacity(0.18), radius: 7, y: 4)
+                    .homeCoverShadow()
 
                 Text(show.title)
                     .font(.headline)
@@ -512,7 +525,7 @@ private struct PodcastShowCard: View {
             .frame(width: 150, alignment: .leading)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HomePressStyle())
         .transaction { transaction in
             if reduceMotion { transaction.disablesAnimations = true }
         }
@@ -555,14 +568,17 @@ private struct PodcastEpisodeStrip: View {
                 GlassEffectContainer(spacing: 14) {
                     LazyHStack(spacing: 14) {
                         ForEach(episodes) { episode in
-                            PodcastEpisodeCompactCard(episode: episode)
+                            PodcastEpisodeCompactCard(episode: episode).echoRailItem()
                         }
                     }
+                    .scrollTargetLayout()
                 }
-                .padding(.horizontal)
                 .padding(.vertical, 6)
             }
             .scrollIndicators(.hidden)
+            .contentMargins(.horizontal, 16, for: .scrollContent)
+            .scrollClipDisabled()
+            .scrollTargetBehavior(.viewAligned)
         }
     }
 }
@@ -801,7 +817,7 @@ private struct PodcastShowLink: View {
                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
             }.contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HomePressStyle())
         .transaction { if reduceMotion { $0.disablesAnimations = true } }
     }
 }
@@ -817,11 +833,17 @@ struct PodcastDetailView: View {
 
     var body: some View {
         ScrollView {
-            GlassEffectContainer(spacing: 24) {
+            // A glass container around hundreds of lazy rows made opening a show stutter.
+            Group {
                 LazyVStack(alignment: .leading, spacing: 24) {
                     VStack(spacing: 16) {
                         PodcastArtwork(url: show.artworkURL, size: 210)
+                            .echoArtworkGlow(radius: 26, opacity: 0.7)
+                            .shadow(color: .black.opacity(0.22), radius: 18, y: 10)
+                            .padding(.bottom, 6)
+                            .echoReveal(0)
                         Text(show.title).font(.title.bold()).multilineTextAlignment(.center)
+                            .echoReveal(1)
                         Text(show.author).foregroundStyle(.secondary)
                         if let description = store.state.showDescriptions[show.id], !description.isEmpty {
                             Text(description).font(.subheadline).foregroundStyle(.secondary)
@@ -841,7 +863,7 @@ struct PodcastDetailView: View {
                     if !loading && !failed && episodes.isEmpty {
                         ContentUnavailableView("podcasts_no_episodes", systemImage: "dot.radiowaves.left.and.right")
                     }
-                    let filtered = episodes.filter { $0.matches(query) }
+                    let filtered = query.isEmpty ? episodes : episodes.filter { $0.matches(query) }
                     if !query.isEmpty && filtered.isEmpty && !loading && !episodes.isEmpty {
                         ContentUnavailableView.search(text: query)
                     }
@@ -989,5 +1011,42 @@ struct PodcastEpisodeMenu: View {
                 .frame(width: 44, height: 44).contentShape(Rectangle())
         }
         .accessibilityLabel("podcasts_episode_options")
+    }
+}
+
+/// A soft wash of a podcast's artwork colors behind the top of a page.
+private struct PodcastAmbientGlow: View {
+    let url: URL?
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var image: UIImage?
+
+    var body: some View {
+        ZStack {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .blur(radius: 60)
+                    .transition(.opacity)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 460)
+        .clipped()
+        .saturation(1.4)
+        .opacity(colorScheme == .dark ? 0.5 : 0.35)
+        .mask {
+            LinearGradient(colors: [.black, .black.opacity(0.6), .clear], startPoint: .top, endPoint: .bottom)
+        }
+        .animation(EchoMotion.ambient, value: image == nil)
+        .task(id: url) {
+            guard let url else { image = nil; return }
+            let loaded = await PodcastArtworkCache.shared.image(for: url)
+            guard !Task.isCancelled else { return }
+            image = loaded
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }

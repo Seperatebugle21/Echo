@@ -1235,6 +1235,8 @@ struct ArtistDetailView: View {
             }
         }
 
+        .scrollContentBackground(.hidden)
+        .background { EchoArtworkWash(data: songs.first(where: { $0.coverData != nil })?.coverData) }
         .echoBackground()
 
         .navigationTitle(artist.name)
@@ -1299,7 +1301,7 @@ struct AlbumsView: View {
 
     @State private var searchText = ""
 
-    private var allAlbums: [AlbumGroup] { LibraryAlbums.groups(from: library.songs) }
+    @State private var allAlbums: [AlbumGroup] = []
 
     private var albums: [AlbumGroup] {
 
@@ -1364,6 +1366,12 @@ struct AlbumsView: View {
         .navigationTitle(
             "libraryview_albums"
         )
+        .task(id: library.songRevision) {
+            let all = library.songs
+            let grouped = await Task.detached(priority: .userInitiated) { LibraryAlbums.groups(from: all) }.value
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.2)) { allAlbums = grouped }
+        }
 
         .searchable(
             text: $searchText,
@@ -1380,10 +1388,10 @@ struct AlbumDetailView: View {
     @State private var sortOption: FavoritesSortOption = .custom
     @State private var selectedSong: Song?
     @State private var findMissing = false
+    /// Regrouping the whole library on every body pass made opening an album stutter.
+    @State private var liveSongs: [Song]?
 
-    private var songs: [Song] {
-        LibraryAlbums.groups(from: library.songs).first { $0.id == album.id }?.songs ?? []
-    }
+    private var songs: [Song] { liveSongs ?? album.songs }
     private var processedSongs: [Song] {
         let filtered = AlbumSongSelection.filtered(songs, query: searchText)
         switch sortOption {
@@ -1431,10 +1439,21 @@ struct AlbumDetailView: View {
                 if processedSongs.isEmpty { Text("catalog_no_search_results").foregroundStyle(.secondary) }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background { EchoArtworkWash(data: songs.first.flatMap { $0.coverData ?? $0.imageData }) }
         .echoBackground()
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "album_search")
+        .task(id: library.songRevision) {
+            let all = library.songs
+            let id = album.id
+            let grouped = await Task.detached(priority: .userInitiated) {
+                LibraryAlbums.groups(from: all).first { $0.id == id }?.songs ?? []
+            }.value
+            guard !Task.isCancelled else { return }
+            liveSongs = grouped
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Group {

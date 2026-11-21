@@ -25,37 +25,9 @@ struct SongOptionsView: View {
             // Song informatie — blijft vast staan
             HStack(spacing: 15) {
                 
-                if let data = song.coverData,
-                   let image = UIImage(data: data) {
-                    
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(
-                            width: 65,
-                            height: 65
-                        )
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 12
-                            )
-                        )
-                    
-                } else {
-                    
-                    Image(systemName: "music.note")
-                        .font(.title)
-                        .frame(
-                            width: 65,
-                            height: 65
-                        )
-                        .background(.thinMaterial)
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 12
-                            )
-                        )
-                }
+                CachedSongArtwork(data: song.coverData ?? song.imageData)
+                    .frame(width: 65, height: 65)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 
                 
                 VStack(

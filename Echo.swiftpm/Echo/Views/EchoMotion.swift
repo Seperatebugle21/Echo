@@ -91,7 +91,7 @@ private struct EchoRevealModifier: ViewModifier {
         content
             .opacity(shown ? 1 : 0)
             .offset(y: shown || reduceMotion ? 0 : 26)
-            .blur(radius: shown || reduceMotion ? 0 : 6)
+            .blur(radius: shown || reduceMotion ? 0 : 4)
             .onAppear {
                 guard !shown else { return }
                 let delay = Double(min(index, 8)) * 0.055
@@ -274,6 +274,50 @@ struct EchoAmbientGlow: View {
             guard !Task.isCancelled else { return }
             image = prepared
         }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+/// A page background washed in one cover's colors, for album, artist and show pages.
+/// Respects Echo's custom and charcoal themes by leaving their base visible.
+struct EchoArtworkWash: View {
+    let data: Data?
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var image: UIImage?
+    private let theme = EchoTheme.shared
+
+    private var drawsBase: Bool {
+        theme.mode != "custom" && !theme.backgroundFromArtwork
+            && !(colorScheme == .dark && theme.darkStyle == "charcoal")
+    }
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            if drawsBase { Color(uiColor: .systemGroupedBackground) }
+            ZStack {
+                if let image {
+                    EchoLivingBackdrop(image: image, animated: false, dim: 0)
+                        .transition(.opacity)
+                }
+            }
+            .frame(height: 520)
+            .opacity(colorScheme == .dark ? 0.55 : 0.4)
+            .mask {
+                LinearGradient(stops: [
+                    .init(color: .black, location: 0),
+                    .init(color: .black.opacity(0.6), location: 0.5),
+                    .init(color: .clear, location: 1)
+                ], startPoint: .top, endPoint: .bottom)
+            }
+        }
+        .animation(EchoMotion.ambient, value: image == nil)
+        .task(id: data) {
+            let prepared = await PlayerArtworkImages.prepareBackdrop(data)
+            guard !Task.isCancelled else { return }
+            image = prepared
+        }
+        .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
