@@ -35,7 +35,6 @@ struct NowPlayingView: View {
     @State private var previousBounce = 0
     @State private var nextBounce = 0
     @Namespace private var sheetZoom
-    @Namespace private var coverSpace
     /// Lyrics or queue in place of the large cover; kept while the player is closed.
     @State private var panel: NowPlayingPanel?
     /// Mounted shortly after the cover starts gliding, so building the lyrics or
@@ -43,6 +42,16 @@ struct NowPlayingView: View {
     @State private var shownPanel: NowPlayingPanel?
     @State private var panelToken = 0
     @State private var panelFrame: CGRect = .zero
+    // One cover and one title block glide between these slots (in the content's own space).
+    @State private var bigCoverSlot: CGRect = .zero
+    @State private var smallCoverSlot: CGRect = .zero
+    @State private var bigTitleSlot: CGRect = .zero
+    @State private var smallTitleSlot: CGRect = .zero
+    @State private var contentWidth: CGFloat = 0
+    // The same slots in the expanding surface's space, for the flying cover.
+    @State private var bigCoverSurface: CGRect = .zero
+    @State private var smallCoverSurface: CGRect = .zero
+    private static let contentSpace = "EchoNowPlayingContent"
 
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
@@ -87,8 +96,10 @@ struct NowPlayingView: View {
                         if let shownPanel {
                             panelContent(shownPanel)
                                 .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.asymmetric(
-                                    insertion: AnyTransition.offset(y: 28).combined(with: AnyTransition.opacity),
-                                    removal: AnyTransition.opacity))
+                                    insertion: AnyTransition.offset(y: 70)
+                                        .combined(with: AnyTransition.scale(scale: 0.94, anchor: .top))
+                                        .combined(with: AnyTransition.opacity),
+                                    removal: AnyTransition.offset(y: 30).combined(with: AnyTransition.opacity)))
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -97,7 +108,7 @@ struct NowPlayingView: View {
                 } else {
                     Spacer(minLength: 0)
 
-                    artwork
+                    bigCoverPlaceholder
 
                     Spacer(minLength: 0)
 
@@ -140,7 +151,14 @@ struct NowPlayingView: View {
             }
             .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
                        value: audioPlayer.playbackErrorKey)
+            .coordinateSpace(.named(Self.contentSpace))
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { contentWidth = $0 }
+            // The cover and title live above the layout and glide between their slots.
+            .overlay(alignment: .topLeading) { movingLayer }
             .onChange(of: panel) { if panel == nil { panelFrame = .zero } }
+            .onChange(of: reportedCoverFrame, initial: true) { _, frame in
+                if frame.width > 0 { onArtworkFrame?(frame) }
+            }
             // A recognized vertical drag cannot also release a playback button.
             .disabled(closingDragInProgress)
         }
@@ -198,9 +216,9 @@ struct NowPlayingView: View {
         } else {
             withAnimation(morph) { panel = target }
             Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 260))
+                try? await Task.sleep(for: .milliseconds(reduceMotion ? 0 : 200))
                 guard panelToken == token, panel == target else { return }
-                withAnimation(.easeOut(duration: 0.32)) { shownPanel = target }
+                withAnimation(.spring(response: 0.55, dampingFraction: 0.74)) { shownPanel = target }
             }
         }
     }
@@ -214,49 +232,77 @@ struct NowPlayingView: View {
     }
 
     /// Apple Music style: the cover lands top-left, next to the song's title.
+    /// Only empty slots here; the real cover and title glide into them.
     private func compactHeader(_ song: Song) -> some View {
         HStack(spacing: 14) {
-            Group {
-                if let image = images.cover {
-                    Image(uiImage: image).resizable().scaledToFill()
-                } else {
-                    ZStack {
-                        Rectangle().fill(.white.opacity(0.12))
-                        Image(systemName: "music.note").font(.title2).foregroundStyle(.white.opacity(0.8))
-                    }
+            Color.clear
+                .frame(width: 64, height: 64)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.contentSpace)) } action: {
+                    smallCoverSlot = $0
                 }
-            }
-            .frame(width: 64, height: 64)
-            .clipShape(.rect(cornerRadius: 10, style: .continuous))
-            .matchedGeometryEffect(id: "cover", in: coverSpace)
-            .onGeometryChange(for: CGRect.self) { proxy in
-                proxy.frame(in: .named(Self.coordinateSpaceName))
-            } action: { frame in
-                onArtworkFrame?(frame)
-            }
-            .opacity(artworkHidden ? 0 : 1)
-            .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
-            .onTapGesture { if let panel { toggle(panel) } }
-            .accessibilityHidden(true)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.coordinateSpaceName)) } action: {
+                    smallCoverSurface = $0
+                }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(song.title)
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                NowPlayingArtistButton(song: song)
-                    .font(.subheadline)
-            }
-            .id(song.id)
-            .transition(songInfoTransition)
-
-            Spacer(minLength: 0)
+            Color.clear
+                .frame(maxWidth: .infinity)
+                .frame(height: 64)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.contentSpace)) } action: {
+                    smallTitleSlot = $0
+                }
 
             NowPlayingOptionsButton(song: song,
                 addToPlaylist: { showPlaylistPicker = true },
                 showLyrics: { if panel != .lyrics { toggle(.lyrics) } })
         }
         .padding(.horizontal, 24)
+    }
+
+    // MARK: - Moving cover and title
+
+    private var reportedCoverFrame: CGRect {
+        panel == nil ? bigCoverSurface : (smallCoverSurface.width > 0 ? smallCoverSurface : bigCoverSurface)
+    }
+
+    /// Before the header has been laid out once, its slots follow from its fixed layout.
+    private var smallCoverTarget: CGRect {
+        smallCoverSlot.width > 0 ? smallCoverSlot : CGRect(x: 24, y: 50, width: 64, height: 64)
+    }
+
+    private var smallTitleTarget: CGRect {
+        smallTitleSlot.width > 0 ? smallTitleSlot
+            : CGRect(x: 102, y: 50, width: max(40, contentWidth - 198), height: 64)
+    }
+
+    @ViewBuilder
+    private var movingLayer: some View {
+        let big = panel == nil
+        let cover = big ? bigCoverSlot : smallCoverTarget
+        if cover.width > 0 {
+            coverLayer(frame: cover, big: big)
+        }
+        if let song = audioPlayer.currentSong {
+            let slot = big ? bigTitleSlot : smallTitleTarget
+            if slot.width > 0 {
+                titleLayer(song, slot: slot, big: big)
+            }
+        }
+    }
+
+    private func titleLayer(_ song: Song, slot: CGRect, big: Bool) -> some View {
+        let scale: CGFloat = big ? 1 : 0.76
+        return VStack(alignment: .leading, spacing: 4) {
+            ScrollingText(text: song.title)
+                .font(.title2.weight(.bold))
+                .foregroundStyle(.white)
+                .frame(height: 30)
+            NowPlayingArtistButton(song: song)
+        }
+        .id(song.id)
+        .transition(songInfoTransition)
+        .frame(width: max(1, slot.width / scale), height: 58, alignment: .leading)
+        .scaleEffect(scale, anchor: .topLeading)
+        .offset(x: slot.minX, y: slot.midY - 29 * scale)
         .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: song.id)
     }
 
@@ -264,25 +310,22 @@ struct NowPlayingView: View {
 
     private func songInfo(_ song: Song) -> some View {
         HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                ScrollingText(text: song.title)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(height: 30)
-
-                NowPlayingArtistButton(song: song)
-            }
-            .id(song.id)
-            .transition(songInfoTransition)
-
-            Spacer(minLength: 0)
+            Color.clear
+                .frame(maxWidth: .infinity)
+                .frame(height: 58)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.contentSpace)) } action: { frame in
+                    if bigTitleSlot.width > 0 {
+                        withAnimation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion)) { bigTitleSlot = frame }
+                    } else {
+                        bigTitleSlot = frame
+                    }
+                }
 
             NowPlayingOptionsButton(song: song,
                 addToPlaylist: { showPlaylistPicker = true },
                 showLyrics: { toggle(.lyrics) })
         }
         .padding(.horizontal, 28)
-        .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: song.id)
     }
 
     /// New songs slide in from the side they come from.
@@ -523,71 +566,86 @@ struct NowPlayingView: View {
             removal: AnyTransition.offset(x: -distance).combined(with: shrink))
     }
 
-    private var artwork: some View {
-        let playing = artworkScale == 1
-        let shape = RoundedRectangle(cornerRadius: Self.artworkCornerRadius, style: .continuous)
-        return Color.clear
+    /// Reserves the large cover's square; the cover itself is drawn by `coverLayer`.
+    private var bigCoverPlaceholder: some View {
+        Color.clear
             .frame(maxWidth: 360, maxHeight: 360)
             .aspectRatio(1, contentMode: .fit)
-            .matchedGeometryEffect(id: "cover", in: coverSpace)
-            .overlay {
-                ZStack {
-                    if let image = images.cover {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .id(ObjectIdentifier(image))
-                            .transition(artworkTransition)
-                    } else {
-                        ZStack {
-                            Rectangle().fill(.white.opacity(0.12))
-                            Image(systemName: "music.note")
-                                .font(.system(size: 90))
-                                .foregroundStyle(.white.opacity(0.8))
-                        }
-                        .transition(.opacity)
-                    }
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.contentSpace)) } action: { frame in
+                if bigCoverSlot.width > 0 {
+                    withAnimation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion)) { bigCoverSlot = frame }
+                } else {
+                    bigCoverSlot = frame
                 }
-                .clipShape(shape)
-                .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
-                           value: images.cover.map { ObjectIdentifier($0) })
             }
-            .onGeometryChange(for: CGRect.self) { proxy in
-                proxy.frame(in: .named(Self.coordinateSpaceName))
-            } action: { frame in
-                onArtworkFrame?(frame)
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.coordinateSpaceName)) } action: {
+                bigCoverSurface = $0
             }
-            .opacity(artworkHidden ? 0 : 1)
-            // Light from the artwork itself falls behind it.
-            // No live blur: the glow is the already blurred thumbnail with a soft
-            // gradient edge, and the shadow is cast by a plain shape, so moving the
-            // cover never re-renders an offscreen blur.
-            .background {
-                ZStack {
-                    if let glow = images.background {
-                        Image(uiImage: glow)
-                            .resizable()
-                            .scaledToFill()
-                            .saturation(1.4)
-                            .mask { EllipticalGradient(colors: [.black, .black.opacity(0.7), .clear], center: .center) }
-                            .scaleEffect(playing ? 1.25 : 1.05)
-                            .offset(y: playing ? 24 : 12)
-                            .opacity(artworkHidden ? 0 : playing ? 0.9 : 0.55)
-                            .animation(.easeOut(duration: 0.45), value: artworkHidden)
-                    }
-                    shape
-                        .fill(.black)
-                        .shadow(color: .black.opacity(playing ? 0.4 : 0.25),
-                                radius: playing ? 28 : 16, y: playing ? 18 : 8)
-                        .opacity(artworkHidden ? 0 : 1)
-                }
-                .allowsHitTesting(false)
-            }
-            .scaleEffect(artworkScale)
-            .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
             .padding(.horizontal, 28)
             .layoutPriority(1)
             .accessibilityHidden(true)
+    }
+
+    /// The one cover in Now Playing. It glides and resizes between the large slot and the
+    /// lyrics/queue header, breathes with play/pause when large, and changes with the song.
+    private func coverLayer(frame: CGRect, big: Bool) -> some View {
+        let playing = artworkScale == 1
+        let radius: CGFloat = big ? Self.artworkCornerRadius : 10
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        return ZStack {
+            if let image = images.cover {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .id(ObjectIdentifier(image))
+                    .transition(artworkTransition)
+            } else {
+                ZStack {
+                    Rectangle().fill(.white.opacity(0.12))
+                    Image(systemName: "music.note")
+                        .font(.system(size: big ? 90 : 24))
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+                .transition(.opacity)
+            }
+        }
+        .frame(width: frame.width, height: frame.height)
+        .clipShape(shape)
+        .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
+                   value: images.cover.map { ObjectIdentifier($0) })
+        .opacity(artworkHidden ? 0 : 1)
+        // Light from the artwork itself falls behind it. No live blur: the glow is the
+        // already blurred thumbnail with a soft gradient edge, and the shadow is cast by
+        // a plain shape, so moving the cover never re-renders an offscreen blur.
+        .background {
+            ZStack {
+                if let glow = images.background {
+                    Image(uiImage: glow)
+                        .resizable()
+                        .scaledToFill()
+                        .saturation(1.4)
+                        .mask { EllipticalGradient(colors: [.black, .black.opacity(0.7), .clear], center: .center) }
+                        .scaleEffect(playing ? 1.25 : 1.05)
+                        .offset(y: playing ? 24 : 12)
+                        .opacity(artworkHidden || !big ? 0 : playing ? 0.9 : 0.55)
+                        .animation(.easeOut(duration: 0.45), value: artworkHidden)
+                }
+                shape
+                    .fill(.black)
+                    .shadow(color: .black.opacity(big ? (playing ? 0.4 : 0.25) : 0.3),
+                            radius: big ? (playing ? 28 : 16) : 10, y: big ? (playing ? 18 : 8) : 5)
+                    .opacity(artworkHidden ? 0 : 1)
+            }
+            .allowsHitTesting(false)
+        }
+        .scaleEffect(big ? artworkScale : 1)
+        .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
+        .contentShape(shape)
+        // Tapping the small cover brings the large one back.
+        .onTapGesture { if let panel { toggle(panel) } }
+        .allowsHitTesting(!big)
+        .offset(x: frame.minX, y: frame.minY)
+        .accessibilityHidden(true)
     }
 }
 

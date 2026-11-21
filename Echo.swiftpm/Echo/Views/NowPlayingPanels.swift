@@ -24,6 +24,8 @@ struct LyricsScroller: View {
     @State private var resumeTask: Task<Void, Never>?
     /// The first position is set instantly, so opening lyrics never scrolls through the song.
     @State private var placed = false
+    /// Drives the one-time cascade when the lyrics appear.
+    @State private var entered = false
 
     private var anchor: UnitPoint { UnitPoint(x: 0.5, y: embedded ? 0.24 : 0.3) }
 
@@ -50,7 +52,9 @@ struct LyricsScroller: View {
                                 distance: activeIndex < 0 ? index + 1 : index - activeIndex,
                                 userScrolling: userScrolling,
                                 size: embedded ? 30 : 32,
-                                reduceMotion: reduceMotion
+                                reduceMotion: reduceMotion,
+                                entered: entered,
+                                order: min(abs(index - max(activeIndex, 0)), 10)
                             ) {
                                 audioPlayer.seek(to: line.time)
                                 userScrolling = false
@@ -120,6 +124,10 @@ struct LyricsScroller: View {
             .onAppear {
                 parseLyrics()
                 if activeIndex >= 0 { proxy.scrollTo(activeIndex, anchor: anchor) }
+                Task { @MainActor in
+                    await Task.yield()
+                    entered = true
+                }
             }
             .onChange(of: lines.count) {
                 if activeIndex >= 0 { proxy.scrollTo(activeIndex, anchor: anchor) }
@@ -235,6 +243,8 @@ private struct LyricsLineRow: View {
     let userScrolling: Bool
     let size: CGFloat
     let reduceMotion: Bool
+    var entered = true
+    var order = 0
     let action: () -> Void
 
     private var isCurrent: Bool { distance == 0 }
@@ -276,6 +286,14 @@ private struct LyricsLineRow: View {
             value: distance
         )
         .animation(.easeInOut(duration: 0.3), value: userScrolling)
+        // Lines spring in one after another, starting at the sung line.
+        .offset(y: entered || reduceMotion ? 0 : 44)
+        .opacity(entered ? 1 : 0)
+        .animation(
+            reduceMotion ? .easeOut(duration: 0.2)
+                : .spring(response: 0.6, dampingFraction: 0.72).delay(Double(order) * 0.045),
+            value: entered
+        )
     }
 }
 
@@ -312,6 +330,7 @@ struct NowPlayingQueuePanel: View {
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showAutoNext = true
+    @State private var entered = false
 
     private var upcoming: [Song] {
         Array(audioPlayer.queue.dropFirst(audioPlayer.currentIndex + 1))
@@ -335,9 +354,10 @@ struct NowPlayingQueuePanel: View {
             let songs = upcoming
             if !songs.isEmpty {
                 header("queue_up_next")
-                ForEach(songs) { song in
+                ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
                     Button { audioPlayer.playFromQueue(song) } label: { QueuePanelRow(song: song) }
                         .buttonStyle(HomePressStyle())
+                        .cascade(entered, order: index + 1, reduceMotion: reduceMotion)
                         .panelRow()
                 }
                 .onMove { from, to in
@@ -372,13 +392,14 @@ struct NowPlayingQueuePanel: View {
                 .panelRow()
 
                 if showAutoNext {
-                    ForEach(audioPlayer.autoNextQueue) { song in
+                    ForEach(Array(audioPlayer.autoNextQueue.enumerated()), id: \.element.id) { index, song in
                         Button {
                             if let url = audioPlayer.getURL(for: song) {
                                 audioPlayer.play(song: song, url: url, queue: [])
                             }
                         } label: { QueuePanelRow(song: song).opacity(0.8) }
                             .buttonStyle(HomePressStyle())
+                            .cascade(entered, order: songs.count + index + 2, reduceMotion: reduceMotion)
                             .panelRow()
                     }
                 }
@@ -407,6 +428,12 @@ struct NowPlayingQueuePanel: View {
             ], startPoint: .top, endPoint: .bottom)
         }
         .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: upcoming.map(\.id))
+        .onAppear {
+            Task { @MainActor in
+                await Task.yield()
+                entered = true
+            }
+        }
     }
 
     private func header(_ key: LocalizedStringKey) -> some View {
@@ -438,6 +465,17 @@ private struct QueuePanelRow: View {
 }
 
 private extension View {
+    /// Rows spring in one after another the first time the panel appears.
+    func cascade(_ entered: Bool, order: Int, reduceMotion: Bool) -> some View {
+        offset(y: entered || reduceMotion ? 0 : 40)
+            .opacity(entered ? 1 : 0)
+            .animation(
+                reduceMotion ? .easeOut(duration: 0.2)
+                    : .spring(response: 0.55, dampingFraction: 0.72).delay(Double(min(order, 12)) * 0.04),
+                value: entered
+            )
+    }
+
     func panelRow() -> some View {
         listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
