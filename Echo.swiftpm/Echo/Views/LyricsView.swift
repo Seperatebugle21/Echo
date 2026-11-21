@@ -16,6 +16,7 @@ struct LyricsView: View {
     @State private var lines: [LyricLine] = []
     @State private var isUserScrolling = false
     @State private var scrollResetTimer: Timer?
+    @State private var backdrop: UIImage?
     
     // 35% vanaf de bovenkant
     private let customScrollAnchor =
@@ -113,9 +114,14 @@ struct LyricsView: View {
                                         
                                         .scaleEffect(
                                             isCurrent
-                                            ? 1.03
+                                            ? 1.04
                                             : 1.0,
                                             anchor: .leading
+                                        )
+                                        // The sung line glows softly.
+                                        .shadow(
+                                            color: .white.opacity(isCurrent ? 0.35 : 0),
+                                            radius: isCurrent ? 12 : 0
                                         )
                                         
                                         .frame(
@@ -299,73 +305,16 @@ struct LyricsView: View {
         .tint(.white)
     }
 
-    @ViewBuilder
+    /// Prepared once per song, off the main thread. The view body runs on every
+    /// playback tick, so it must never decode or blur the artwork itself.
     private var lyricsBackground: some View {
-        
-        if
-            let song =
-                audioPlayer.currentSong,
-            let data =
-                song.coverData
-                ?? song.imageData,
-            let image =
-                UIImage(data: data)
-        {
-            
-            GeometryReader { geometry in
-                
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    
-                    .frame(
-                        width:
-                            geometry.size.width,
-                        height:
-                            geometry.size.height
-                    )
-                    
-                    .scaleEffect(1.4)
-                    
-                    // Zware blur zoals Now Playing
-                    .blur(radius: 70)
-                    
-                    .saturation(1.2)
-                    
-                    // Donker genoeg zodat witte tekst
-                    // altijd leesbaar blijft
-                    .overlay {
-                        
-                        Color.black
-                            .opacity(0.38)
-                    }
-                    
-                    .overlay {
-                        
-                        LinearGradient(
-                            colors: [
-                                
-                                Color.black
-                                    .opacity(0.12),
-                                
-                                Color.black
-                                    .opacity(0.18),
-                                
-                                Color.black
-                                    .opacity(0.42)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-                    
-                    .clipped()
+        EchoLivingBackdrop(image: backdrop, dim: 0.4)
+            .task(id: audioPlayer.currentSong?.id) {
+                let song = audioPlayer.currentSong
+                let prepared = await PlayerArtworkImages.prepareBackdrop(song?.coverData ?? song?.imageData)
+                guard !Task.isCancelled else { return }
+                backdrop = prepared
             }
-            
-        } else {
-            
-            Color.black
-        }
     }
     
     

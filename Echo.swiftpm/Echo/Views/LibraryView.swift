@@ -10,6 +10,7 @@ struct LibraryView: View {
     @State private var isImporting = false
     @State private var importProgress = 0
     @State private var importTotal = 0
+    @Namespace private var zoom
 
     @Environment(MusicLibraryManager.self)
     private var library
@@ -112,6 +113,7 @@ struct LibraryView: View {
                                 NavigationLink {
 
                                     SongsView()
+                                        .echoZoomDestination("lib-songs", in: zoom)
 
                                 } label: {
 
@@ -132,12 +134,15 @@ struct LibraryView: View {
                                                 library.songs
                                         )
                                     }
+                                    .echoZoomSource("lib-songs", in: zoom)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(HomePressStyle())
+                                .echoRailItem()
 
                                 NavigationLink {
 
                                     PlaylistsView()
+                                        .echoZoomDestination("lib-playlists", in: zoom)
 
                                 } label: {
 
@@ -158,12 +163,15 @@ struct LibraryView: View {
                                                 library.playlists
                                         )
                                     }
+                                    .echoZoomSource("lib-playlists", in: zoom)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(HomePressStyle())
+                                .echoRailItem()
 
                                 NavigationLink {
 
                                     FavoritesView()
+                                        .echoZoomDestination("lib-favorites", in: zoom)
 
                                 } label: {
 
@@ -184,19 +192,28 @@ struct LibraryView: View {
                                                 library.favoriteSongs
                                         )
                                     }
+                                    .echoZoomSource("lib-favorites", in: zoom)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(HomePressStyle())
+                                .echoRailItem()
 
-                                NavigationLink { FavoriteAlbumsView() } label: {
+                                NavigationLink { FavoriteAlbumsView().echoZoomDestination("lib-favorite-albums", in: zoom) } label: {
                                     LibraryFeatureCard(title: "library_favorite_albums",
                                         subtitle: String(format: String(localized: "favorite_albums_count"), FavoriteAlbumsStore.shared.albums.count)) {
                                         FavoriteAlbumsFeatureArtwork(albums: FavoriteAlbumsStore.shared.albums)
                                     }
-                                }.buttonStyle(.plain)
+                                    .echoZoomSource("lib-favorite-albums", in: zoom)
+                                }.buttonStyle(HomePressStyle())
+                                .echoRailItem()
                             }
-                            .padding(.horizontal)
+                            .scrollTargetLayout()
+                            .padding(.vertical, 6)
                         }
+                        .contentMargins(.horizontal, 16, for: .scrollContent)
+                        .scrollClipDisabled()
+                        .scrollTargetBehavior(.viewAligned)
                     }
+                    .echoReveal(0)
 
                     VStack(
                         alignment: .leading,
@@ -226,6 +243,7 @@ struct LibraryView: View {
                             NavigationLink {
 
                                 ArtistsView()
+                                    .echoZoomDestination("lib-artists", in: zoom)
 
                             } label: {
 
@@ -247,12 +265,14 @@ struct LibraryView: View {
                                         artists: artists
                                     )
                                 }
+                                .echoZoomSource("lib-artists", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
 
                             NavigationLink {
 
                                 AlbumsView()
+                                    .echoZoomDestination("lib-albums", in: zoom)
 
                             } label: {
 
@@ -275,12 +295,14 @@ struct LibraryView: View {
                                             albumGroups
                                     )
                                 }
+                                .echoZoomSource("lib-albums", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
 
                             NavigationLink {
 
                                 RecentAddedView()
+                                    .echoZoomDestination("lib-added", in: zoom)
 
                             } label: {
 
@@ -296,12 +318,14 @@ struct LibraryView: View {
                                             recentlyAddedSongs
                                     )
                                 }
+                                .echoZoomSource("lib-added", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
 
                             NavigationLink {
 
                                 RecentPlayedView()
+                                    .echoZoomDestination("lib-played", in: zoom)
 
                             } label: {
 
@@ -318,15 +342,23 @@ struct LibraryView: View {
                                             recentlyPlayedSongs
                                     )
                                 }
+                                .echoZoomSource("lib-played", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
                         }
                         .padding(.horizontal)
                     }
+                    .echoReveal(1)
+                    .echoScrollSection()
                     PodcastLibraryFolders()
                         .padding(.horizontal)
+                        .echoReveal(2)
+                        .echoScrollSection()
                 }
                 .padding(.top, 8)
+                .background(alignment: .top) {
+                    EchoAmbientGlow(height: 460).offset(y: -260)
+                }
                 .padding(.bottom, 120)
             }
 
@@ -482,6 +514,7 @@ struct LibraryFeatureCard<
                         style: .continuous
                     )
                 )
+                .homeCoverShadow()
 
             Text(title)
                 .font(.headline)
@@ -1140,8 +1173,12 @@ struct ArtistDetailView: View {
                         ArtistArtworkView(
                             songs: songs
                         )
-                        .frame(width: 160, height: 160)
+                        .frame(width: 180, height: 180)
                         .clipShape(Circle())
+                        .echoArtworkGlow(radius: 26, opacity: 0.7)
+                        .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
+                        .padding(.bottom, 6)
+                        .echoReveal(0)
 
                         Text(artist.name)
                             .font(.title2.bold())
@@ -1362,14 +1399,23 @@ struct AlbumDetailView: View {
             Section {
                 VStack(spacing: 12) {
                     if let first = songs.first {
-                        SongArtworkView(song: first, cornerRadius: 20).frame(width: 180, height: 180)
+                        SongArtworkView(song: first, cornerRadius: 22).frame(width: 220, height: 220)
+                            .echoArtworkGlow(radius: 26, opacity: 0.7)
+                            .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
+                            .padding(.bottom, 8)
+                            .echoReveal(0)
                     }
-                    Text(album.name).font(.title2.bold())
-                    Text(album.artist).foregroundStyle(.secondary)
-                    Text("songs_count_format \(songs.count)").font(.subheadline).foregroundStyle(.secondary)
+                    VStack(spacing: 6) {
+                        Text(album.name).font(.title2.bold()).multilineTextAlignment(.center)
+                        Text(album.artist).foregroundStyle(.secondary)
+                        Text("songs_count_format \(songs.count)").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    .echoReveal(1)
                     AlbumPlaybackControls(songs: processedSongs)
+                        .echoReveal(2)
                     Button("album_find_missing", systemImage: "arrow.down.circle") { findMissing = true }
                         .buttonStyle(.bordered)
+                        .echoReveal(3)
                 }
                 .frame(maxWidth: .infinity).padding(.vertical)
                 .listRowBackground(Color.clear)
@@ -1612,23 +1658,10 @@ struct ArtistArtworkView: View {
 
             Group {
 
-                if
-                    let song =
-                        songs.first(
-                            where: {
-                                $0.coverData
-                                != nil
-                            }
-                        ),
-                    let data =
-                        song.coverData,
-                    let image =
-                        UIImage(data: data)
-                {
+                // Decoded once off the main thread and cached, not in every body pass.
+                if let data = songs.first(where: { $0.coverData != nil })?.coverData {
 
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
+                    CachedSongArtwork(data: data)
 
                 } else {
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Only this subtree reads playback state. Home's recommendations never observe time ticks.
 struct HomeNowPlayingSpotlight: View {
@@ -76,6 +77,15 @@ struct HomeNowPlayingCardFace: View {
     let size: CGSize
     var showsPlaybackSymbol = false
     @Environment(AudioPlayerManager.self) private var player
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// The cover's frame inside a face of `size`; the expanding player flies the cover from here.
+    static func coverFrame(for size: CGSize) -> CGRect {
+        let side = min(116, size.width * 0.34)
+        return CGRect(x: size.width - 29 - side, y: (size.height - side) / 2, width: side, height: side)
+    }
+
+    private var playing: Bool { player.currentSong?.id == song.id && player.isPlaying }
 
     var body: some View {
         let coverSide = min(116, size.width * 0.34)
@@ -83,22 +93,37 @@ struct HomeNowPlayingCardFace: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(LocalizedStringKey(player.currentSong == nil ? "home_ready_to_play" : "home_now_playing"))
                     .font(.system(size: 9, weight: .semibold)).tracking(2)
-                Text(song.title).font(.title3.bold()).lineLimit(2)
-                Text(song.artist).font(.subheadline).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
+                    .contentTransition(.opacity)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(song.title).font(.title3.bold()).lineLimit(2)
+                    Text(song.artist).font(.subheadline).foregroundStyle(.white.opacity(0.85)).lineLimit(1)
+                }
+                .id(song.id)
+                .transition(reduceMotion ? AnyTransition.opacity
+                    : AnyTransition.asymmetric(
+                        insertion: AnyTransition.offset(y: 12).combined(with: AnyTransition.opacity),
+                        removal: AnyTransition.offset(y: -12).combined(with: AnyTransition.opacity)))
                 HomePlaybackWave()
                     .frame(height: 28).padding(.top, 2)
                 HomePlaybackProgress(isActive: player.currentSong != nil)
             }.frame(maxWidth: .infinity, alignment: .leading)
             ZStack(alignment: .bottomTrailing) {
-                HomeVinyl().frame(width: coverSide, height: coverSide).offset(x: 16)
+                // The record slides out from behind the sleeve and spins while the song plays.
+                HomeSpinningVinyl(song: song, spinning: playing && !reduceMotion)
+                    .frame(width: coverSide, height: coverSide)
+                    .offset(x: playing ? 22 : 10)
                 SongArtworkView(song: song, cornerRadius: 12)
+                    .id(song.id)
+                    .transition(AnyTransition.scale(scale: 0.9).combined(with: AnyTransition.opacity))
                     .frame(width: coverSide, height: coverSide).homeCoverShadow().offset(x: -6)
             }.frame(width: coverSide + 14, height: coverSide).accessibilityHidden(true)
         }
         .foregroundStyle(.white).padding(16)
         .frame(width: size.width, height: size.height)
-        .background { HomeArtworkSurface(song: song) }
+        .background { HomeSpotlightSurface(song: song, animated: playing) }
         .clipShape(.rect(cornerRadius: 22))
+        .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: song.id)
+        .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: playing)
         .overlay(alignment: .trailing) {
             if showsPlaybackSymbol {
                 HomeSpotlightPlaybackSymbol().background(.white, in: .circle)
@@ -198,14 +223,80 @@ private struct HomePlaybackWave: View {
 }
 
 private struct HomeVinyl: View {
+    let song: Song
     var body: some View {
         ZStack {
             Circle().fill(Color(white: 0.08))
             ForEach([0.58, 0.72, 0.86, 0.97], id: \.self) { scale in
                 Circle().stroke(.white.opacity(0.1), lineWidth: 1).scaleEffect(scale)
             }
-            Circle().fill(Color.accentColor).scaleEffect(0.26)
+            // A light streak across the grooves makes the rotation visible.
+            Circle()
+                .fill(AngularGradient(colors: [.clear, .white.opacity(0.14), .clear, .clear,
+                                               .white.opacity(0.1), .clear], center: .center, angle: .zero))
+            SongArtworkView(song: song, cornerRadius: 0)
+                .clipShape(.circle)
+                .overlay { Circle().fill(Color.accentColor.opacity(0.18)) }
+                .scaleEffect(0.36)
             Circle().fill(.black).scaleEffect(0.06)
         }.overlay { Circle().stroke(.white.opacity(0.15), lineWidth: 1) }
+    }
+}
+
+/// Rotation keeps its angle when playback pauses, so the record stops instead of resetting.
+private struct HomeSpinningVinyl: View {
+    let song: Song
+    let spinning: Bool
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var baseAngle: Double = 0
+    @State private var spinStart: Date?
+    @State private var visible = true
+    private let degreesPerSecond = 55.0
+
+    private var active: Bool { spinning && visible && scenePhase == .active }
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: !active)) { context in
+            let running = spinStart.map { max(0, context.date.timeIntervalSince($0)) } ?? 0
+            HomeVinyl(song: song)
+                .rotationEffect(.degrees(baseAngle + running * degreesPerSecond))
+        }
+        .onAppear { visible = true }
+        .onDisappear { visible = false }
+        .onScrollVisibilityChange(threshold: 0.01) { visible = $0 }
+        .onChange(of: active, initial: true) { _, isActive in
+            if isActive {
+                if spinStart == nil { spinStart = Date() }
+            } else if let start = spinStart {
+                baseAngle = (baseAngle + Date().timeIntervalSince(start) * degreesPerSecond)
+                    .truncatingRemainder(dividingBy: 360)
+                spinStart = nil
+            }
+        }
+    }
+}
+
+/// The card's background: the song's own colors, softly drifting while it plays.
+private struct HomeSpotlightSurface: View {
+    let song: Song
+    let animated: Bool
+    @State private var backdrop: UIImage?
+    @State private var visible = true
+
+    var body: some View {
+        ZStack {
+            Color.accentColor.opacity(0.25)
+            EchoLivingBackdrop(image: backdrop, animated: animated && visible, dim: 0.22)
+            LinearGradient(colors: [.black.opacity(0.05), .black.opacity(0.45)],
+                           startPoint: .top, endPoint: .bottom)
+        }
+        .onScrollVisibilityChange(threshold: 0.01) { visible = $0 }
+        .task(id: song.id) {
+            let prepared = await PlayerArtworkImages.prepareBackdrop(song.coverData ?? song.imageData)
+            guard !Task.isCancelled else { return }
+            backdrop = prepared
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }

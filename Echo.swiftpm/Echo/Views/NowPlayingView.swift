@@ -12,6 +12,19 @@ struct NowPlayingView: View {
     var renderedArtwork: PlayerArtworkImages? = nil
     var drawsBackground = true
     var tracksSliderGeometry = true
+    /// While the expanding surface flies its own copy of the cover, the real one waits hidden.
+    var artworkHidden = false
+    /// Reports the cover's frame in `NowPlayingView.coordinateSpaceName`.
+    var onArtworkFrame: ((CGRect) -> Void)? = nil
+
+    /// Declared by the expanding surface so the flying cover can land exactly on the real one.
+    static let coordinateSpaceName = "EchoNowPlayingSpace"
+    static let artworkCornerRadius: CGFloat = 22
+
+    /// Apple-style breathing: the cover sits back slightly while paused.
+    static func artworkScale(isPlaying: Bool, isPreparing: Bool) -> CGFloat {
+        isPlaying || isPreparing ? 1 : 0.86
+    }
 
     @State private var sliderFrame: CGRect = .zero
     @State private var isScrubbing = false
@@ -19,7 +32,9 @@ struct NowPlayingView: View {
     @State private var localArtwork = PlayerArtworkImages.empty
     @GestureState private var closeDragActive = false
     @State private var closingDragInProgress = false
-
+    @State private var previousBounce = 0
+    @State private var nextBounce = 0
+    @Namespace private var sheetZoom
 
     @Environment(AudioPlayerManager.self)
     private var audioPlayer
@@ -27,10 +42,15 @@ struct NowPlayingView: View {
     @Environment(\.dismiss)
     private var dismiss
 
+    @Environment(\.accessibilityReduceMotion)
+    private var reduceMotion
+
     @State private var showQueue = false
     @State private var showPlaylistPicker = false
     @State private var showLyrics = false
     @State private var transcriptEpisode: PodcastEpisode?
+
+    private var images: PlayerArtworkImages { renderedArtwork ?? localArtwork }
 
     var body: some View {
 
@@ -39,64 +59,37 @@ struct NowPlayingView: View {
             // MARK: - Background
 
             if drawsBackground {
-                NowPlayingBackdrop(image: (renderedArtwork ?? localArtwork).background)
+                NowPlayingBackdrop(image: images.background)
                     .ignoresSafeArea()
             }
 
 
             // MARK: - Content
 
-            VStack(spacing: 25) {
-
-                // MARK: Close Button
+            VStack(spacing: 22) {
 
                 closeHandle
 
                 Spacer(minLength: 0)
 
-
-                // MARK: - Artwork
-
                 artwork
 
+                Spacer(minLength: 0)
 
                 // MARK: - Song Info
 
                 if let song = audioPlayer.currentSong {
-
-                    HStack(alignment: .center) {
-
-                        VStack(
-                            alignment: .leading,
-                            spacing: 5
-                        ) {
-
-                            Text(song.title)
-                                .font(
-                                    .title2
-                                        .weight(.bold)
-                                )
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-
-                            NowPlayingArtistButton(song: song)
-                        }
-
-                        Spacer()
-
-                        NowPlayingOptionsButton(song: song,
-                            addToPlaylist: { showPlaylistPicker = true },
-                            showLyrics: { showLyrics = true })
-                    }
-                    .padding(.horizontal, 28)
+                    songInfo(song)
                 }
-
 
                 if let errorKey = audioPlayer.playbackErrorKey {
                     HStack(spacing: 12) {
                         Text(LocalizedStringKey(errorKey)).font(.footnote).foregroundStyle(.white)
                         Button("audio_retry") { audioPlayer.retryPlayback() }.buttonStyle(.bordered).tint(.white)
-                    }.padding(.horizontal, 28).accessibilityElement(children: .contain)
+                    }
+                    .padding(.horizontal, 28)
+                    .accessibilityElement(children: .contain)
+                    .transition(.blurReplace)
                 }
 
                 // MARK: - Progress
@@ -109,236 +102,17 @@ struct NowPlayingView: View {
                 if audioPlayer.isPodcast {
                     PodcastPlaybackControls()
                 } else {
-                HStack(spacing: 35) {
-
-                    // Shuffle
-
-                    Button {
-                        audioPlayer.toggleShuffle()
-                    } label: {
-
-                        Image(
-                            systemName: "shuffle"
-                        )
-                        .font(.title2)
-                        .foregroundStyle(
-                            audioPlayer.shuffleEnabled
-                            ? Color.accentColor
-                            : Color.white
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "shuffle_action"
-                        )
-                    )
-
-
-                    // Previous
-
-                    Button {
-                        audioPlayer.previous()
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "backward.fill"
-                        )
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "previous_track_action"
-                        )
-                    )
-
-
-                    // Play / Pause
-
-                    Button {
-                        audioPlayer.togglePlayPause()
-                    } label: {
-
-                        Image(
-                            systemName:
-                                audioPlayer.isPlaying
-                                ? "pause.circle.fill"
-                                : "play.circle.fill"
-                        )
-                        .font(
-                            .system(size: 70)
-                        )
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        audioPlayer.isPlaying
-                        ? LocalizedStringKey(
-                            "pause_action"
-                        )
-                        : LocalizedStringKey(
-                            "play_action"
-                        )
-                    )
-
-
-                    // Next
-
-                    Button {
-                        audioPlayer.next()
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "forward.fill"
-                        )
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "next_track_action"
-                        )
-                    )
-
-
-                    // Repeat
-
-                    Button {
-                        audioPlayer.toggleRepeat()
-                    } label: {
-
-                        Image(
-                            systemName:
-                                audioPlayer.repeatMode
-                                == .one
-                                ? "repeat.1"
-                                : "repeat"
-                        )
-                        .font(.title2)
-                        .foregroundStyle(
-                            audioPlayer.repeatMode
-                            == .off
-                            ? Color.white
-                            : Color.accentColor
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "repeat_action"
-                        )
-                    )
-                }
-
-
+                    playbackControls
                 }
 
                 // MARK: - Bottom Actions
 
-                HStack {
+                bottomActions
 
-                    // AirPlay
-
-                    AirPlayButton(
-                        tintColor: .white,
-                        activeTintColor: .white
-                    )
-                    .frame(
-                        width: 30,
-                        height: 30
-                    )
-
-
-                    Spacer()
-
-
-                    if !audioPlayer.isPodcast {
-                    // Add to Playlist
-
-                    Button {
-                        showPlaylistPicker = true
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "music.note.list"
-                        )
-                        .font(.title3)
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "add_to_playlist_action"
-                        )
-                    )
-
-
-                    // Lyrics
-
-                    Button {
-                        showLyrics = true
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "quote.bubble"
-                        )
-                        .font(.title3)
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "lyrics_action"
-                        )
-                    )
-
-
-                    }
-                    if let id = audioPlayer.currentSong?.podcastEpisodeID,
-                       let episode = PodcastStore.shared.state.episodes[id] {
-                        Button {
-                            transcriptEpisode = episode
-                        } label: {
-                            Image(systemName: "text.bubble")
-                                .font(.title3)
-                                .foregroundStyle(.white)
-                                .frame(width: 44, height: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("podcasts_transcript")
-                    }
-                    // Queue
-
-                    Button {
-                        showQueue = true
-                    } label: {
-
-                        Image(
-                            systemName:
-                                "list.bullet"
-                        )
-                        .font(.title3)
-                        .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(
-                        LocalizedStringKey(
-                            "queue_action"
-                        )
-                    )
-                }
-                .padding(.horizontal, 30)
-
-
-                Spacer(minLength: 12)
+                Spacer(minLength: 8)
             }
+            .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
+                       value: audioPlayer.playbackErrorKey)
             // A recognized vertical drag cannot also release a playback button.
             .disabled(closingDragInProgress)
         }
@@ -362,49 +136,211 @@ struct NowPlayingView: View {
             localArtwork = images
         }
 
-        // MARK: - Queue Sheet
+        // MARK: - Sheets (they grow out of the button that opened them)
 
-        .sheet(
-            isPresented: $showQueue
-        ) {
+        .sheet(isPresented: $showQueue) {
             QueueView()
+                .navigationTransition(.zoom(sourceID: "queue", in: sheetZoom))
         }
 
-
-        // MARK: - Playlist Sheet
-
-        .sheet(
-            isPresented:
-                $showPlaylistPicker
-        ) {
-
-            if let song =
-                audioPlayer.currentSong
-            {
-
-                PlaylistPickerView(
-                    song: song
-                )
+        .sheet(isPresented: $showPlaylistPicker) {
+            if let song = audioPlayer.currentSong {
+                PlaylistPickerView(song: song)
+                    .navigationTransition(.zoom(sourceID: "playlist", in: sheetZoom))
             }
         }
-
 
         .sheet(item: $transcriptEpisode) { episode in
             PodcastTranscriptView(episode: episode)
+                .navigationTransition(.zoom(sourceID: "transcript", in: sheetZoom))
         }
 
-        // MARK: - Lyrics Sheet
-
-        .sheet(
-            isPresented: $showLyrics
-        ) {
-
+        .sheet(isPresented: $showLyrics) {
             NavigationStack {
                 LyricsView()
             }
+            .navigationTransition(.zoom(sourceID: "lyrics", in: sheetZoom))
         }
     }
 
+    // MARK: - Song info
+
+    private func songInfo(_ song: Song) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                ScrollingText(text: song.title)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(height: 30)
+
+                NowPlayingArtistButton(song: song)
+            }
+            .id(song.id)
+            .transition(songInfoTransition)
+
+            Spacer(minLength: 0)
+
+            NowPlayingOptionsButton(song: song,
+                addToPlaylist: { showPlaylistPicker = true },
+                showLyrics: { showLyrics = true })
+        }
+        .padding(.horizontal, 28)
+        .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: song.id)
+    }
+
+    /// New songs slide in from the side they come from.
+    private var songInfoTransition: AnyTransition {
+        guard !reduceMotion else { return AnyTransition.opacity }
+        let distance: CGFloat
+        switch audioPlayer.lastPlaybackDirection {
+        case .next: distance = 44
+        case .previous: distance = -44
+        case .fade: distance = 0
+        }
+        return AnyTransition.asymmetric(
+            insertion: AnyTransition.offset(x: distance).combined(with: AnyTransition.opacity),
+            removal: AnyTransition.offset(x: -distance).combined(with: AnyTransition.opacity)
+        )
+    }
+
+    // MARK: - Controls
+
+    private var playbackControls: some View {
+        HStack(spacing: 0) {
+
+            toggleButton(symbol: "shuffle", active: audioPlayer.shuffleEnabled,
+                         label: "shuffle_action") {
+                audioPlayer.toggleShuffle()
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                previousBounce += 1
+                audioPlayer.previous()
+            } label: {
+                Image(systemName: "backward.fill")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .symbolEffect(.bounce.down, options: .speed(1.4), value: previousBounce)
+                    .frame(width: 64, height: 64)
+                    .contentShape(.circle)
+            }
+            .buttonStyle(EchoPlayerControlStyle())
+            .accessibilityLabel(LocalizedStringKey("previous_track_action"))
+
+            Spacer(minLength: 0)
+
+            Button {
+                audioPlayer.togglePlayPause()
+            } label: {
+                Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 46, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .contentTransition(.symbolEffect(.replace.downUp.byLayer))
+                    .frame(width: 84, height: 84)
+                    .contentShape(.circle)
+            }
+            .buttonStyle(EchoPlayerControlStyle(pressedScale: 0.8))
+            .accessibilityLabel(
+                audioPlayer.isPlaying
+                ? LocalizedStringKey("pause_action")
+                : LocalizedStringKey("play_action")
+            )
+
+            Spacer(minLength: 0)
+
+            Button {
+                nextBounce += 1
+                audioPlayer.next()
+            } label: {
+                Image(systemName: "forward.fill")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .symbolEffect(.bounce.down, options: .speed(1.4), value: nextBounce)
+                    .frame(width: 64, height: 64)
+                    .contentShape(.circle)
+            }
+            .buttonStyle(EchoPlayerControlStyle())
+            .accessibilityLabel(LocalizedStringKey("next_track_action"))
+
+            Spacer(minLength: 0)
+
+            toggleButton(symbol: audioPlayer.repeatMode == .one ? "repeat.1" : "repeat",
+                         active: audioPlayer.repeatMode != .off, label: "repeat_action") {
+                audioPlayer.toggleRepeat()
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+
+    /// Shuffle and repeat light up with a soft pill instead of only changing color.
+    private func toggleButton(symbol: String, active: Bool, label: String,
+                              action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(active ? Color.accentColor : .white.opacity(0.8))
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: 44, height: 44)
+                .background {
+                    Circle()
+                        .fill(.white.opacity(active ? 0.16 : 0))
+                        .scaleEffect(active ? 1 : 0.4)
+                }
+                .contentShape(.circle)
+                .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: active)
+        }
+        .buttonStyle(EchoPlayerControlStyle(halo: false))
+        .accessibilityLabel(LocalizedStringKey(label))
+        .accessibilityAddTraits(active ? .isSelected : [])
+    }
+
+    private var bottomActions: some View {
+        HStack(spacing: 6) {
+
+            AirPlayButton(tintColor: .white, activeTintColor: .white)
+                .frame(width: 30, height: 30)
+                .frame(width: 44, height: 44)
+
+            Spacer()
+
+            if !audioPlayer.isPodcast {
+                actionButton("music.note.list", zoomID: "playlist", label: "add_to_playlist_action") {
+                    showPlaylistPicker = true
+                }
+                actionButton("quote.bubble", zoomID: "lyrics", label: "lyrics_action") {
+                    showLyrics = true
+                }
+            }
+
+            if let id = audioPlayer.currentSong?.podcastEpisodeID,
+               let episode = PodcastStore.shared.state.episodes[id] {
+                actionButton("text.bubble", zoomID: "transcript", label: "podcasts_transcript") {
+                    transcriptEpisode = episode
+                }
+            }
+
+            actionButton("list.bullet", zoomID: "queue", label: "queue_action") {
+                showQueue = true
+            }
+        }
+        .padding(.horizontal, 24)
+    }
+
+    private func actionButton(_ symbol: String, zoomID: String, label: String,
+                              action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 44, height: 44)
+                .contentShape(.circle)
+        }
+        .buttonStyle(EchoPlayerControlStyle())
+        .matchedTransitionSource(id: zoomID, in: sheetZoom)
+        .accessibilityLabel(LocalizedStringKey(label))
+    }
 
     private var closeHandle: some View {
         Button {
@@ -460,86 +396,82 @@ struct NowPlayingView: View {
 
     // MARK: - Artwork
 
-    @ViewBuilder
-    private var artwork: some View {
-
-        if let image = (renderedArtwork ?? localArtwork).cover {
-
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(
-                    width: 280,
-                    height: 280
-                )
-                .clipShape(
-                    RoundedRectangle(
-                        cornerRadius: 20,
-                        style: .continuous
-                    )
-                )
-                .shadow(
-                    color:
-                        .black.opacity(0.30),
-                    radius: 22,
-                    y: 12
-                )
-
-        } else {
-
-            ZStack {
-
-                RoundedRectangle(
-                    cornerRadius: 20,
-                    style: .continuous
-                )
-                .fill(
-                    .white.opacity(0.12)
-                )
-
-                Image(
-                    systemName:
-                        "music.note"
-                )
-                .font(
-                    .system(size: 100)
-                )
-                .foregroundStyle(
-                    .white.opacity(0.8)
-                )
-            }
-            .frame(
-                width: 280,
-                height: 280
-            )
-        }
+    private var artworkScale: CGFloat {
+        Self.artworkScale(isPlaying: audioPlayer.isPlaying, isPreparing: audioPlayer.isPreparingAudio)
     }
 
-
-    // MARK: - Time
-
-    private func formatTime(
-        _ time: Double
-    ) -> String {
-
-        guard
-            time.isFinite,
-            time >= 0
-        else {
-            return "0:00"
+    private var artworkTransition: AnyTransition {
+        guard !reduceMotion else { return AnyTransition.opacity }
+        let distance: CGFloat
+        switch audioPlayer.lastPlaybackDirection {
+        case .next: distance = 70
+        case .previous: distance = -70
+        case .fade:
+            return AnyTransition.scale(scale: 0.94).combined(with: AnyTransition.opacity)
         }
+        let shrink = AnyTransition.scale(scale: 0.92).combined(with: AnyTransition.opacity)
+        return AnyTransition.asymmetric(
+            insertion: AnyTransition.offset(x: distance).combined(with: shrink),
+            removal: AnyTransition.offset(x: -distance).combined(with: shrink))
+    }
 
-        let minutes =
-            Int(time) / 60
-
-        let seconds =
-            Int(time) % 60
-
-        return String(
-            format: "%d:%02d",
-            minutes,
-            seconds
-        )
+    private var artwork: some View {
+        let playing = artworkScale == 1
+        let shape = RoundedRectangle(cornerRadius: Self.artworkCornerRadius, style: .continuous)
+        return Color.clear
+            .frame(maxWidth: 360, maxHeight: 360)
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                ZStack {
+                    if let image = images.cover {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .id(ObjectIdentifier(image))
+                            .transition(artworkTransition)
+                    } else {
+                        ZStack {
+                            Rectangle().fill(.white.opacity(0.12))
+                            Image(systemName: "music.note")
+                                .font(.system(size: 90))
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                        .transition(.opacity)
+                    }
+                }
+                .clipShape(shape)
+                .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
+                           value: images.cover.map { ObjectIdentifier($0) })
+            }
+            .onGeometryChange(for: CGRect.self) { proxy in
+                proxy.frame(in: .named(Self.coordinateSpaceName))
+            } action: { frame in
+                onArtworkFrame?(frame)
+            }
+            .opacity(artworkHidden ? 0 : 1)
+            // Light from the artwork itself falls behind it.
+            .background {
+                if let glow = images.background {
+                    Image(uiImage: glow)
+                        .resizable()
+                        .scaledToFill()
+                        .clipShape(shape)
+                        .blur(radius: 28)
+                        .saturation(1.4)
+                        .opacity(artworkHidden ? 0 : playing ? 0.85 : 0.5)
+                        .scaleEffect(playing ? 1.02 : 0.9)
+                        .offset(y: playing ? 26 : 14)
+                        .animation(.easeOut(duration: 0.45), value: artworkHidden)
+                        .allowsHitTesting(false)
+                }
+            }
+            .shadow(color: .black.opacity(artworkHidden ? 0 : playing ? 0.4 : 0.25),
+                    radius: playing ? 30 : 16, y: playing ? 18 : 8)
+            .scaleEffect(artworkScale)
+            .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
+            .padding(.horizontal, 28)
+            .layoutPriority(1)
+            .accessibilityHidden(true)
     }
 }
 
@@ -549,6 +481,30 @@ struct PlayerArtworkImages: @unchecked Sendable {
     let cover: UIImage?
     let background: UIImage?
     static let empty = PlayerArtworkImages(cover: nil, background: nil)
+
+    /// Only the small blurred backdrop, for pages that tint themselves with the song's colors.
+    static func prepareBackdrop(_ data: Data?) async -> UIImage? {
+        guard let data else { return nil }
+        return await Task.detached(priority: .utility) {
+            guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: 180,
+                kCGImageSourceShouldCacheImmediately: true
+            ]
+            guard let small = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+            return PlayerArtworkImages.blurred(small).map { UIImage(cgImage: $0) } ?? UIImage(cgImage: small)
+        }.value
+    }
+
+    static func blurred(_ image: CGImage) -> CGImage? {
+        let input = CIImage(cgImage: image)
+        let output = input.clampedToExtent()
+            .applyingGaussianBlur(sigma: 20)
+            .cropped(to: input.extent)
+        return CIContext(options: [.cacheIntermediates: false]).createCGImage(output, from: input.extent)
+    }
 
     static func prepare(_ data: Data?) async -> PlayerArtworkImages {
         guard let data else { return .empty }
@@ -574,15 +530,8 @@ struct PlayerArtworkImages: @unchecked Sendable {
             }
 
             var background: UIImage?
-            if let small = thumbnail(180) {
-                let input = CIImage(cgImage: small)
-                let blurred = input.clampedToExtent()
-                    .applyingGaussianBlur(sigma: 20)
-                    .cropped(to: input.extent)
-                let context = CIContext(options: [.cacheIntermediates: false])
-                if let output = context.createCGImage(blurred, from: input.extent) {
-                    background = UIImage(cgImage: output)
-                }
+            if let small = thumbnail(180), let output = PlayerArtworkImages.blurred(small) {
+                background = UIImage(cgImage: output)
             }
             return PlayerArtworkImages(
                 cover: UIImage(cgImage: cover),
@@ -593,39 +542,14 @@ struct PlayerArtworkImages: @unchecked Sendable {
 }
 
 // Used by both standalone Now Playing and the interactive transition.
-// No live blur shader or repeated image decoding during a drag.
+// No live blur shader or repeated image decoding during a drag: the drifting
+// layers only move an already blurred thumbnail.
 struct NowPlayingBackdrop: View {
     let image: UIImage?
+    var animated = true
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                if let image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                        .saturation(1.25)
-                } else {
-                    LinearGradient(
-                        colors: [Color(white: 0.22), Color(white: 0.10)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                }
-
-                Color.black.opacity(0.42)
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.08),
-                        Color.black.opacity(0.18),
-                        Color.black.opacity(0.58)
-                    ],
-                    startPoint: .top, endPoint: .bottom
-                )
-            }
-            .frame(width: geometry.size.width, height: geometry.size.height)
-            .clipped()
-        }
+        EchoLivingBackdrop(image: image, animated: animated)
     }
 }
 
@@ -637,6 +561,7 @@ private struct NowPlayingProgress: View {
     @State private var scrubPlaybackGeneration: UUID?
 
     @Environment(AudioPlayerManager.self) private var audioPlayer
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var sliderFrame: CGRect
     @Binding var isScrubbing: Bool
     let tracksGeometry: Bool
@@ -647,12 +572,20 @@ private struct NowPlayingProgress: View {
             GeometryReader { geometry in
                 let width = max(1, geometry.size.width - 14)
                 let fraction = min(1, max(0, displayPosition / max(1, audioPlayer.duration)))
-                ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.25)).frame(height: 4)
-                    Capsule().fill(.white).frame(width: max(0, width * fraction + 7), height: 4)
-                    Circle().fill(.white).frame(width: 14, height: 14)
-                        .offset(x: width * fraction)
-                }
+                // The bar swells while you hold it, like the system media controls.
+                Capsule()
+                    .fill(.white.opacity(scrub.isActive ? 0.3 : 0.22))
+                    .overlay(alignment: .leading) {
+                        Rectangle()
+                            .fill(.white.opacity(scrub.isActive ? 1 : 0.88))
+                            .frame(width: min(geometry.size.width, max(0, width * fraction + 7)))
+                    }
+                    .clipShape(.capsule)
+                    .frame(height: 12)
+                    .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion)) { bar in
+                        bar.scaleEffect(y: scrub.isActive ? 1 : 0.42)
+                    }
+                    .frame(maxHeight: .infinity)
                 .frame(height: 44)
                 .contentShape(Rectangle())
                 .highPriorityGesture(
@@ -741,11 +674,14 @@ private struct NowPlayingProgress: View {
                             )
                         )
                     }
-                    .font(.caption)
+                    .font(.caption.weight(.medium))
                     .monospacedDigit()
                     .foregroundStyle(
-                        .white.opacity(0.65)
+                        .white.opacity(scrub.isActive ? 0.95 : 0.6)
                     )
+                    .animation(EchoMotion.motion(EchoMotion.snappy, reduceMotion: reduceMotion)) { labels in
+                        labels.offset(y: scrub.isActive ? 4 : 0)
+                    }
                 }
                 .padding(.horizontal, 28)
 

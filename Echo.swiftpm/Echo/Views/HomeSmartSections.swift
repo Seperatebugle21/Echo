@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeSmartSections: View {
     let coverWidth: CGFloat
     let selectedSection: HomeSection
+    var zoom: Namespace.ID? = nil
     @Environment(AudioPlayerManager.self) private var player
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model = HomeSmartSectionsModel.shared
@@ -162,18 +163,29 @@ struct HomeSmartSections: View {
             ScrollView(.horizontal) {
                 LazyHStack(alignment: .top, spacing: 12) {
                     ForEach(Array(model.albums.prefix(12))) { album in
-                        NavigationLink { AlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar) } label: {
+                        NavigationLink {
+                            AlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar)
+                                .echoZoomDestination("smart-album-" + album.id, in: zoom)
+                        } label: {
                             VStack(alignment: .leading, spacing: 5) {
                                 if let song = album.songs.first {
-                                    SongArtworkView(song: song, cornerRadius: 13).frame(width: coverWidth, height: coverWidth).homeCoverShadow()
+                                    SongArtworkView(song: song, cornerRadius: 13).frame(width: coverWidth, height: coverWidth)
+                                        .echoZoomSource("smart-album-" + album.id, in: zoom)
+                                        .homeCoverShadow()
                                 }
                                 Text(album.name).font(.subheadline.weight(.semibold)).lineLimit(2)
                                 Text(album.artist).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                             }.frame(width: coverWidth, alignment: .leading)
                         }.buttonStyle(HomePressStyle()).albumFavoriteActions(FavoriteAlbum(album: album))
+                            .echoRailItem()
                     }
-                }.padding(.horizontal, 20).padding(.vertical, 8)
+                }
+                .scrollTargetLayout()
+                .padding(.vertical, 8)
             }.scrollIndicators(.hidden)
+                .contentMargins(.horizontal, 20, for: .scrollContent)
+                .scrollClipDisabled()
+                .scrollTargetBehavior(.viewAligned)
         }
     }
     private var timeMachine: some View {

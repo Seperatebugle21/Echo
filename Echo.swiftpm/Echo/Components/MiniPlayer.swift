@@ -91,10 +91,11 @@ struct MiniPlayer: View {
                 } label: {
                     Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 19, weight: .semibold))
-                        .contentTransition(.symbolEffect(.replace))
+                        .contentTransition(.symbolEffect(.replace.downUp.byLayer))
                         .frame(width: 44, height: 44)
+                        .contentShape(.circle)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(EchoPlayerControlStyle(halo: false, pressedScale: 0.78))
                 .accessibilityLabel(audioPlayer.playbackErrorKey != nil ? LocalizedStringKey("audio_retry") : LocalizedStringKey(audioPlayer.isPlaying ? "Pause" : "Play"))
             }
             .padding(.leading, 14)

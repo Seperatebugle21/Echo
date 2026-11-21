@@ -18,6 +18,7 @@ struct HomeView: View {
     @State private var selectedSong: Song?
     @State private var optionsFeedback = 0
     @State private var podcastRecommendations = PodcastRecommendationsModel()
+    @Namespace private var zoom
     private let smartModel = HomeSmartSectionsModel.shared
     private let session = HomeSessionManager.shared
     private let recommendations = RecommendationManager.shared
@@ -27,13 +28,19 @@ struct HomeView: View {
             GeometryReader { geometry in
                 let layout = HomeCardLayout(width: geometry.size.width)
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        header
-                        ForEach(HomeConfiguration.decode(storedLayout).sections) { section in
+                    VStack(alignment: .leading, spacing: 26) {
+                        header.echoReveal(0)
+                        ForEach(Array(HomeConfiguration.decode(storedLayout).sections.enumerated()), id: \.element.id) { index, section in
                             homeSection(section, layout: layout)
+                                .echoReveal(index + 1)
+                                .echoScrollSection()
                         }
                     }
                     .padding(.top, 8)
+                    // The playing song's colors wash over the top of Home and scroll away with it.
+                    .background(alignment: .top) {
+                        EchoAmbientGlow(height: 520).offset(y: -260)
+                    }
                     // ContentView already reserves the live MiniPlayer and tab safe areas.
                     .padding(.bottom, 24)
                 }
@@ -85,7 +92,7 @@ struct HomeView: View {
                 }
             }
         case .forYou:
-            if !mixes.isEmpty { HomeForYouSection(mixes: mixes, width: layout.mix, play: play) }
+            if !mixes.isEmpty { HomeForYouSection(mixes: mixes, width: layout.mix, play: play, zoom: zoom) }
         case .recentlyPlayed:
             if !recent.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
@@ -104,7 +111,7 @@ struct HomeView: View {
             }
         case .discovery:
             HomeDiscoverySection(recommendations: podcastRecommendations.shows, playSong: play, width: layout.discovery)
-        case .albums: HomeLocalAlbumSection(coverWidth: layout.song)
+        case .albums: HomeLocalAlbumSection(coverWidth: layout.song, zoom: zoom)
         case .favorites:
             if !favorites.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
@@ -123,7 +130,7 @@ struct HomeView: View {
         case .favoriteAlbums:
             homeLibraryShortcut(title: "library_favorite_albums", symbol: "heart.fill") { FavoriteAlbumsView() }
         default:
-            HomeSmartSections(coverWidth: layout.song, selectedSection: section)
+            HomeSmartSections(coverWidth: layout.song, selectedSection: section, zoom: zoom)
         }
     }
 
@@ -169,25 +176,33 @@ struct HomeView: View {
             HomeSectionTitle(title: "home_quick_access").padding(.horizontal, 20)
             ScrollView(.horizontal) {
                 HStack(spacing: 10) {
-                    NavigationLink { FavoritesView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                    NavigationLink { FavoritesView().toolbarVisibility(.visible, for: .navigationBar).echoZoomDestination("home-fav", in: zoom) } label: {
                         HomeQuickAccessCard(title: "libraryview_favorites", symbol: "heart.fill", count: favorites.count,
                                             playlists: false, song: favorites.first, width: layout.access, accent: true)
+                            .echoZoomSource("home-fav", in: zoom)
                     }
-                    NavigationLink { RecentPlayedView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                    NavigationLink { RecentPlayedView().toolbarVisibility(.visible, for: .navigationBar).echoZoomDestination("home-recent", in: zoom) } label: {
                         HomeQuickAccessCard(title: "home_recent", symbol: "clock", count: recent.count,
                                             playlists: false, song: recent.first, width: layout.access)
+                            .echoZoomSource("home-recent", in: zoom)
                     }
-                    NavigationLink { SongsView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                    NavigationLink { SongsView().toolbarVisibility(.visible, for: .navigationBar).echoZoomDestination("home-songs", in: zoom) } label: {
                         HomeQuickAccessCard(title: "tab_songs", symbol: "music.note", count: localSongs.count,
                                             playlists: false, song: added.first, width: layout.access)
+                            .echoZoomSource("home-songs", in: zoom)
                     }
-                    NavigationLink { PlaylistsView().toolbarVisibility(.visible, for: .navigationBar) } label: {
+                    NavigationLink { PlaylistsView().toolbarVisibility(.visible, for: .navigationBar).echoZoomDestination("home-playlists", in: zoom) } label: {
                         HomeQuickAccessCard(title: "libraryview_playlists", symbol: "music.note.list", count: library.playlists.count,
                                             playlists: true, song: playlistArtworkSong, width: layout.access)
+                            .echoZoomSource("home-playlists", in: zoom)
                     }
-                }.buttonStyle(HomePressStyle()).padding(.horizontal, 20).padding(.vertical, 8)
+                }.buttonStyle(HomePressStyle())
+                    .scrollTargetLayout()
+                    .padding(.vertical, 8)
             }.scrollIndicators(.hidden)
+                .contentMargins(.horizontal, 20, for: .scrollContent)
                 .scrollClipDisabled()
+                .scrollTargetBehavior(.viewAligned)
         }
     }
 
@@ -210,18 +225,29 @@ struct HomeView: View {
                 LazyHStack(alignment: .top, spacing: 12) {
                     ForEach(artistIDs, id: \.self) { id in
                         if let artist = library.artistGroupsByID[id] {
-                            NavigationLink { ArtistDetailView(artist: artist).toolbarVisibility(.visible, for: .navigationBar) } label: {
+                            NavigationLink {
+                                ArtistDetailView(artist: artist).toolbarVisibility(.visible, for: .navigationBar)
+                                    .echoZoomDestination("home-artist-" + id, in: zoom)
+                            } label: {
                                 VStack(spacing: 7) {
                                     ArtistArtworkView(songs: artist.songs).frame(width: width, height: width)
-                                        .clipShape(.circle).homeCoverShadow().accessibilityHidden(true)
+                                        .clipShape(.circle)
+                                        .echoZoomSource("home-artist-" + id, in: zoom)
+                                        .homeCoverShadow().accessibilityHidden(true)
                                     Text(artist.name).font(.subheadline.weight(.medium)).lineLimit(2)
                                         .multilineTextAlignment(.center)
                                 }.frame(width: width)
                             }.buttonStyle(HomePressStyle())
+                                .echoRailItem()
                         }
                     }
-                }.padding(.horizontal, 20).padding(.vertical, 8)
+                }
+                .scrollTargetLayout()
+                .padding(.vertical, 8)
             }.scrollIndicators(.hidden)
+                .contentMargins(.horizontal, 20, for: .scrollContent)
+                .scrollClipDisabled()
+                .scrollTargetBehavior(.viewAligned)
         }
     }
 

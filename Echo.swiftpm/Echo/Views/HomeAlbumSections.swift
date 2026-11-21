@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HomeLocalAlbumSection: View {
     let coverWidth: CGFloat
+    var zoom: Namespace.ID? = nil
     @Environment(MusicLibraryManager.self) private var library
     @State private var selection: [String] = []
     private let session = HomeSessionManager.shared
@@ -17,19 +18,30 @@ struct HomeLocalAlbumSection: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 12) {
                         ForEach(shown) { album in
-                            NavigationLink { AlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar) } label: {
+                            NavigationLink {
+                                AlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar)
+                                    .echoZoomDestination("home-album-" + album.id, in: zoom)
+                            } label: {
                                 VStack(alignment: .leading, spacing: 7) {
                                     if let song = album.songs.first {
-                                        SongArtworkView(song: song, cornerRadius: 14).frame(width: coverWidth, height: coverWidth).homeCoverShadow()
+                                        SongArtworkView(song: song, cornerRadius: 14).frame(width: coverWidth, height: coverWidth)
+                                            .echoZoomSource("home-album-" + album.id, in: zoom)
+                                            .homeCoverShadow()
                                     }
                                     Text(album.name).font(.headline).lineLimit(2)
                                     Text(album.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                 }.frame(width: coverWidth, alignment: .leading)
                             }.buttonStyle(HomePressStyle())
                                 .albumFavoriteActions(FavoriteAlbum(album: album))
+                                .echoRailItem()
                         }
-                    }.padding(.horizontal, 20).padding(.vertical, 8)
+                    }
+                    .scrollTargetLayout()
+                    .padding(.vertical, 8)
                 }
+                .contentMargins(.horizontal, 20, for: .scrollContent)
+                .scrollClipDisabled()
+                .scrollTargetBehavior(.viewAligned)
             }
             .task(id: albums.map(\.id)) { selection = session.albumSelection(from: albums.map(\.id)) }
         } else {
@@ -58,9 +70,15 @@ struct HomeOnlineAlbumSection: View {
                                     }.frame(width: coverWidth, alignment: .leading)
                                 }.buttonStyle(HomePressStyle())
                                     .albumFavoriteActions(FavoriteAlbum(album: album))
+                                    .echoRailItem()
                             }
-                        }.padding(.horizontal, 20).padding(.vertical, 8)
+                        }
+                        .scrollTargetLayout()
+                        .padding(.vertical, 8)
                     }
+                    .contentMargins(.horizontal, 20, for: .scrollContent)
+                    .scrollClipDisabled()
+                    .scrollTargetBehavior(.viewAligned)
                 }
             }
         }

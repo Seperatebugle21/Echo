@@ -18,8 +18,11 @@ struct PodcastPlaybackControls: View {
                 Image(systemName: "gobackward.15").font(.title2).frame(width: 44, height: 44)
             }.accessibilityLabel("podcasts_skip_back")
             Button { player.togglePlayPause() } label: {
-                Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 70))
+                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 46, weight: .semibold))
+                    .contentTransition(.symbolEffect(.replace.downUp.byLayer))
+                    .frame(width: 84, height: 84)
+                    .contentShape(.circle)
             }.accessibilityLabel(player.isPlaying ? Text("podcasts_pause") : Text("podcasts_play"))
             Button { player.seek(to: player.currentTime + 30) } label: {
                 Image(systemName: "goforward.30").font(.title2).frame(width: 44, height: 44)
@@ -28,7 +31,7 @@ struct PodcastPlaybackControls: View {
                 Image(systemName: "forward.end.fill").frame(width: 44, height: 44)
             }.accessibilityLabel("podcasts_next_episode")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(EchoPlayerControlStyle())
         .foregroundStyle(.white)
     }
 }

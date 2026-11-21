@@ -656,6 +656,9 @@ final class MiniPlayerPresentation {
     private(set) var isVisible = false
     private(set) var isExpanded = false
     private(set) var isTrackingOpening = false
+    /// True once Now Playing rests fully open: its own cover is shown again and
+    /// the flying copy used during the transition is removed.
+    private(set) var artworkSettled = false
     private var isTrackingClosing = false
     private var token = UUID()
 
@@ -668,6 +671,7 @@ final class MiniPlayerPresentation {
         homeCardSong = nil
         sourceFrame = dockFrame
         token = UUID()
+        artworkSettled = false
         isVisible = true
         return true
     }
@@ -719,6 +723,7 @@ final class MiniPlayerPresentation {
         sourceFrame = frame
         homeCardSong = song
         token = UUID()
+        artworkSettled = false
         isVisible = true
         let openingToken = token
         Task { @MainActor in
@@ -738,6 +743,7 @@ final class MiniPlayerPresentation {
         if !isTrackingClosing {
             isTrackingClosing = true
             token = UUID()
+            artworkSettled = false
         }
         var transaction = Transaction(animation: nil)
         transaction.disablesAnimations = true
@@ -765,13 +771,17 @@ final class MiniPlayerPresentation {
         // This is the interaction destination, not an animation-completion flag.
         // Buttons and closing gestures must work while a tap-open is still moving.
         isExpanded = open
+        artworkSettled = false
         let animation: Animation = reduceMotion
-            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 0.92)
+            ? .linear(duration: 0.12)
+            : open ? .spring(response: 0.48, dampingFraction: 0.88)
+                   : .spring(response: 0.42, dampingFraction: 0.9)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
             guard self.token == currentToken else { return }
             self.isVisible = open
+            self.artworkSettled = open
             if self.homeCardSong != nil {
                 // At full size the source rectangle no longer affects the surface.
                 // Every close keeps the original Now Playing -> MiniPlayer transition.
@@ -797,6 +807,7 @@ final class MiniPlayerPresentation {
         isTrackingClosing = false
         progress = isExpanded ? 1 : 0
         isVisible = isExpanded
+        artworkSettled = isExpanded
     }
 
     func reset() {
@@ -805,6 +816,7 @@ final class MiniPlayerPresentation {
         progress = 0
         isVisible = false
         isExpanded = false
+        artworkSettled = false
         isTrackingOpening = false
         isTrackingClosing = false
     }
@@ -817,8 +829,23 @@ private struct ExpandedPlayerSurface: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @State private var renderedArtwork = PlayerArtworkImages.empty
+    @State private var artworkFrame: CGRect = .zero
     // Extend only the surface, keeping controls at their original safe-area positions.
     private let edgeBleed: CGFloat = 2
+
+    /// The cover flies between the compact player and Now Playing instead of fading.
+    private var flyingArtwork: Bool {
+        renderedArtwork.cover != nil && artworkFrame.width > 0 && !presentation.artworkSettled
+    }
+
+    /// Where the compact cover sits inside the surface when it is collapsed.
+    private var compactArtwork: (frame: CGRect, radius: CGFloat) {
+        if presentation.homeCardSong != nil {
+            // Mirrors HomeNowPlayingCardFace's layout.
+            return (HomeNowPlayingCardFace.coverFrame(for: presentation.sourceFrame.size), 12)
+        }
+        return (CGRect(x: 14, y: 10, width: 32, height: 32), 6)
+    }
 
     private var rectangle: CGRect {
         let source = presentation.sourceFrame.offsetBy(
@@ -845,7 +872,7 @@ private struct ExpandedPlayerSurface: View {
         ZStack(alignment: .topLeading) {
             // Same backdrop, same full-screen dimensions at EVERY progress value.
             // Its top pixels are revealed first; no temporary black surface.
-            NowPlayingBackdrop(image: renderedArtwork.background)
+            NowPlayingBackdrop(image: renderedArtwork.background, animated: presentation.isVisible)
                 .frame(width: bounds.width, height: bounds.height + 2 * edgeBleed)
                 .opacity(backgroundProgress)
                 .allowsHitTesting(false)
@@ -863,12 +890,19 @@ private struct ExpandedPlayerSurface: View {
                 },
                 renderedArtwork: renderedArtwork,
                 drawsBackground: false,
-                tracksSliderGeometry: presentation.isExpanded
+                tracksSliderGeometry: presentation.isExpanded,
+                artworkHidden: flyingArtwork,
+                onArtworkFrame: { frame in
+                    if frame.width > 0 && artworkFrame != frame { artworkFrame = frame }
+                }
             )
             .padding(.top, safeInsets.top)
             .padding(.bottom, safeInsets.bottom)
             .frame(width: bounds.width, height: bounds.height)
-            .offset(y: edgeBleed * p)
+            .coordinateSpace(.named(NowPlayingView.coordinateSpaceName))
+            // Controls rise into place while the surface grows.
+            .offset(y: edgeBleed * p + 36 * (1 - p))
+            .scaleEffect(0.96 + 0.04 * p, anchor: .top)
             .opacity(min(1, max(0, (p - 0.08) / 0.27)))
             .accessibilityHidden(!presentation.isVisible)
             .allowsHitTesting(presentation.isExpanded)
@@ -884,6 +918,35 @@ private struct ExpandedPlayerSurface: View {
                 MiniPlayerTransitionRow(backgroundProgress: backgroundProgress)
                     .frame(width: max(52, presentation.sourceFrame.width), height: 52)
                     .opacity(compactOpacity)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+
+            // Stays mounted so a close starts from where the real cover rests;
+            // only its visibility flips, without animation, at the hand-off.
+            if artworkFrame.width > 0, let cover = renderedArtwork.cover {
+                let start = compactArtwork
+                let scale = NowPlayingView.artworkScale(
+                    isPlaying: audioPlayer.isPlaying, isPreparing: audioPlayer.isPreparingAudio)
+                let landing = artworkFrame.offsetBy(dx: 0, dy: edgeBleed)
+                let target = landing.insetBy(dx: landing.width * (1 - scale) / 2,
+                                             dy: landing.height * (1 - scale) / 2)
+                let frame = CGRect(
+                    x: start.frame.minX + (target.minX - start.frame.minX) * p,
+                    y: start.frame.minY + (target.minY - start.frame.minY) * p,
+                    width: start.frame.width + (target.width - start.frame.width) * p,
+                    height: start.frame.height + (target.height - start.frame.height) * p
+                )
+                let radius = start.radius + (NowPlayingView.artworkCornerRadius * scale - start.radius) * p
+                Image(uiImage: cover)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: max(1, frame.width), height: max(1, frame.height))
+                    .clipShape(RoundedRectangle(cornerRadius: max(0, radius), style: .continuous))
+                    .shadow(color: .black.opacity(0.4 * Double(min(1, max(0, p)))),
+                            radius: 30 * max(0, p), y: 18 * max(0, p))
+                    .offset(x: frame.minX, y: frame.minY)
+                    .opacity(flyingArtwork ? 1 : 0)
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
