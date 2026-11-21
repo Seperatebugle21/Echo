@@ -45,6 +45,16 @@ import UIKit
         }
     }
 
+    /// Removes the activity at once, e.g. because iOS shows its own background-task progress.
+    func dismiss() {
+        endLeftoversOnce()
+        last = nil
+        dismissed = false
+        guard let activity else { return }
+        self.activity = nil
+        Task { await activity.end(nil, dismissalPolicy: .immediate) }
+    }
+
     private func start(_ state: State) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled,
               UIApplication.shared.applicationState == .active else { return }

@@ -72,7 +72,8 @@ enum FetchBackgroundState {
         trackPendingItems()
         beginGrace()
         startTicker()
-        FetchLiveActivity.shared.update(liveState())
+        // Decide on the Live Activity only after asking iOS for background time.
+        defer { syncLiveActivity() }
         guard !submitted, task == nil, UIApplication.shared.applicationState == .active else { return }
         guard !identifiers.isEmpty else { status = "No permitted task identifier for \(Bundle.main.bundleIdentifier ?? "?")"; return }
         var problems: [String] = []
@@ -102,7 +103,11 @@ enum FetchBackgroundState {
         if UIApplication.shared.applicationState != .active, added + failed > 0 {
             notify(added: added, failed: failed)
         }
-        FetchLiveActivity.shared.finish(liveState(finished: true))
+        if submitted || task != nil {
+            FetchLiveActivity.shared.dismiss()
+        } else {
+            FetchLiveActivity.shared.finish(liveState(finished: true))
+        }
         batch = []
         ticker?.cancel(); ticker = nil
         task?.progress.completedUnitCount = task?.progress.totalUnitCount ?? 0
@@ -164,7 +169,7 @@ enum FetchBackgroundState {
                 self?.trackPendingItems()
                 self?.refreshGrace()
                 self?.updateProgress()
-                if let self { FetchLiveActivity.shared.update(self.liveState()) }
+                self?.syncLiveActivity()
                 try? await Task.sleep(for: .seconds(1))
             }
         }
@@ -184,6 +189,16 @@ enum FetchBackgroundState {
         task.progress.totalUnitCount = Int64(max(items.count, 1) * 100)
         task.progress.completedUnitCount = Int64(units * 100)
         task.updateTitle(title, subtitle: subtitle)
+    }
+
+    /// One progress view at a time: while iOS runs the background task it shows its own
+    /// progress in the Dynamic Island, so Echo's Live Activity only appears without it.
+    private func syncLiveActivity() {
+        if submitted || task != nil {
+            FetchLiveActivity.shared.dismiss()
+        } else {
+            FetchLiveActivity.shared.update(liveState())
+        }
     }
 
     private func liveState(finished: Bool = false) -> FetchLiveActivity.State {
