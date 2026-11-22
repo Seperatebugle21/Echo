@@ -24,6 +24,7 @@ struct PlaylistDetailView: View {
     @State private var searchText = ""
     @State private var sortOption: FavoritesSortOption = .custom
     @State private var heroImage: UIImage?
+    @State private var searching = false
     
     var songs: [Song] {
         _ = clockDate
@@ -95,7 +96,8 @@ struct PlaylistDetailView: View {
                                   heroImage: hasOwnCover ? heroImage : nil,
                                   collage: hasOwnCover ? [] : collage,
                                   cardStyle: true,
-                                  searchText: $searchText) { colors in
+                                  searchText: $searchText,
+                                  searchActive: $searching) { colors in
             VStack(alignment: .leading, spacing: 12) {
                 EchoCollectionPill(text: Text(LocalizedStringKey(isSmart ? "smart_editor_title" : "collection_kind_playlist")), tint: colors.tint)
 
@@ -165,9 +167,8 @@ struct PlaylistDetailView: View {
         .navigationTitle(currentPlaylist.displayName())
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
             ToolbarItem(placement: .topBarTrailing) {
-                if !songs.isEmpty {
+                if !songs.isEmpty && !searching {
                     Menu {
                         Picker(LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"), selection: $sortOption) {
                             ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }

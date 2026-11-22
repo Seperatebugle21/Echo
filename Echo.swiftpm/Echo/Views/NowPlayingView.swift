@@ -861,25 +861,6 @@ struct NowPlayingView: View {
             }
         }
         .opacity(artworkHidden ? 0 : 1)
-        // Light from the artwork itself falls behind it. No live blur: the glow is the
-        // already blurred thumbnail with a soft gradient edge, and the shadow is cast by
-        // a plain shape, so moving the cover never re-renders an offscreen blur.
-        .background {
-            ZStack {
-                if let glow = images.background {
-                    Image(uiImage: glow)
-                        .resizable()
-                        .scaledToFill()
-                        .saturation(1.4)
-                        .mask { EllipticalGradient(colors: [.black, .black.opacity(0.7), .clear], center: .center) }
-                        .scaleEffect(playing ? 1.25 : 1.05)
-                        .offset(y: playing ? 24 : 12)
-                        .opacity(artworkHidden || !card ? 0 : playing ? 0.9 : 0.55)
-                        .animation(.easeOut(duration: 0.45), value: artworkHidden)
-                }
-            }
-            .allowsHitTesting(false)
-        }
         .scaleEffect(card ? artworkScale : 1)
         .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
         // Follows the finger when swiped; the neighbor moves along beside it.
@@ -900,12 +881,8 @@ struct NowPlayingView: View {
             .scaledToFill()
             .frame(width: size.width, height: size.height)
             .clipShape(shape)
-            .background {
-                shape
-                    .fill(.black)
-                    .shadow(color: .black.opacity(shadow ? (playing ? 0.4 : 0.25) : 0),
-                            radius: playing ? 28 : 16, y: playing ? 18 : 8)
-            }
+            // Only a soft shadow of the cover itself: no glow and no shape behind it.
+            .shadow(color: .black.opacity(shadow ? 0.3 : 0), radius: 20, y: 12)
     }
 
     private func coverPlaceholder(size: CGSize, shape: RoundedRectangle, big: Bool) -> some View {

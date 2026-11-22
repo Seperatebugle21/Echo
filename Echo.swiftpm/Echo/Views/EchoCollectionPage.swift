@@ -98,6 +98,8 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
     /// Always show the cover as a rounded card (playlists).
     var cardStyle = false
     var searchText: Binding<String>? = nil
+    /// Lets the page hide its own toolbar buttons while searching.
+    var searchActive: Binding<Bool>? = nil
     @ViewBuilder let info: (EchoCollectionColors) -> Info
     @ViewBuilder let rows: (EchoCollectionColors) -> Rows
 
@@ -106,8 +108,16 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
     @State private var style: EchoCollectionStyle?
     @State private var loaded = false
     @State private var pull = EchoPullState()
-    @State private var searching = false
+    @State private var localSearching = false
     @State private var pastThreshold = false
+    @State private var pageWidth: CGFloat = 390
+
+    private var searching: Bool {
+        get { searchActive?.wrappedValue ?? localSearching }
+        nonmutating set {
+            if let searchActive { searchActive.wrappedValue = newValue } else { localSearching = newValue }
+        }
+    }
     @FocusState private var searchFocused: Bool
 
     private static var searchThreshold: CGFloat { 90 }
@@ -132,7 +142,8 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     if searching {
-                        Color.clear.frame(height: topInset + 64)
+                        // Results start right under the search field in the bar.
+                        Color.clear.frame(height: topInset + 6)
                     } else {
                         hero(topInset: topInset)
                         info(colors)
@@ -162,11 +173,7 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
                     openSearch()
                 }
             }
-            .overlay(alignment: .top) {
-                if searchText != nil {
-                    searchChrome(topInset: topInset, tint: colors.tint)
-                }
-            }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { pageWidth = $0 }
         }
         .background {
             ZStack {
@@ -181,7 +188,29 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
         // No bar or blur at the top: the cover runs to the edge of the screen.
         .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
         .scrollEdgeEffectHidden(true, for: .top)
-        .toolbar(searching ? .hidden : .visible, for: .navigationBar)
+        // The search pill and, while searching, the search field live in the bar itself,
+        // between the back and sort buttons.
+        .toolbar {
+            if searchText != nil {
+                ToolbarItem(placement: .principal) {
+                    if searching {
+                        searchField
+                    } else {
+                        EchoPullSearchPill(pull: pull, threshold: Self.searchThreshold, tint: colors.tint)
+                    }
+                }
+                if searching {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: closeSearch) {
+                            Image(systemName: "xmark")
+                        }
+                        .accessibilityLabel("action_close")
+                        .tint(.primary)
+                    }
+                }
+            }
+        }
+        .navigationBarBackButtonHidden(searching)
         .sensoryFeedback(.impact(weight: .light), trigger: pastThreshold) { _, past in
             past && EchoHaptics.allows(essential: false)
         }
@@ -212,47 +241,27 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
     }
 
     @ViewBuilder
-    private func searchChrome(topInset: CGFloat, tint: Color) -> some View {
-        if searching, let searchText {
-            HStack(spacing: 10) {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    TextField("collection_search", text: searchText)
-                        .focused($searchFocused)
-                        .submitLabel(.search)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                    if !searchText.wrappedValue.isEmpty {
-                        Button { searchText.wrappedValue = "" } label: {
-                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("action_close")
+    private var searchField: some View {
+        if let searchText {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                TextField("collection_search", text: searchText)
+                    .focused($searchFocused)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                if !searchText.wrappedValue.isEmpty {
+                    Button { searchText.wrappedValue = "" } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 14)
-                .frame(height: 44)
-                .glassEffect(.regular.interactive(), in: .capsule)
-
-                Button(action: closeSearch) {
-                    Image(systemName: "xmark")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 44, height: 44)
-                        .glassEffect(.regular.interactive(), in: .circle)
-                }
-                .buttonStyle(HomePressStyle())
-                .accessibilityLabel("action_close")
             }
-            .padding(.horizontal, 16)
-            .padding(.top, topInset + 6)
-            .transition(AnyTransition.move(edge: .top).combined(with: AnyTransition.opacity))
-        } else {
-            EchoPullSearchPill(pull: pull, threshold: Self.searchThreshold, tint: tint)
-                .padding(.top, topInset + 8)
-                .allowsHitTesting(false)
+            .padding(.horizontal, 14)
+            .frame(width: max(200, pageWidth - 110), height: 38)
+            .background(.ultraThinMaterial, in: .capsule)
         }
     }
 

@@ -477,7 +477,8 @@ class AudioPlayerManager:
 
     /// Lets "colors from the cover" follow the song that is playing.
     func updateThemeArtwork() {
-        let song = currentSong
+        // Before anything plays, follow the song Home shows: the last one played.
+        let song = currentSong ?? MusicLibraryManager.shared.lastPlayedSong
         Task { @MainActor in
             let theme = EchoTheme.shared
             guard theme.usesArtworkColors, let song else { theme.showArtwork(nil, key: nil); return }

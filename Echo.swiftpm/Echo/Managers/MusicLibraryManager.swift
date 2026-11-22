@@ -588,6 +588,14 @@ class MusicLibraryManager {
         print("Cache gewist")
     }
     
+    /// The most recently played song (or, if none was played yet, the newest one).
+    var lastPlayedSong: Song? {
+        let music = songs.filter { $0.podcastEpisodeID == nil }
+        return music.filter { $0.lastPlayed != nil }
+            .max { ($0.lastPlayed ?? .distantPast) < ($1.lastPlayed ?? .distantPast) }
+            ?? music.max { $0.dateAdded < $1.dateAdded }
+    }
+
     func markAsPlayed(_ song: Song) {
         
         if let index = songs.firstIndex(where: {

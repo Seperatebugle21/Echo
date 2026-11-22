@@ -1225,9 +1225,7 @@ struct ArtistDetailView: View {
         }
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
-        }
+
         .safeAreaInset(edge: .top) {
             if library.isLoadingArtists {
                 ProgressView("libraryview_loading_artists")
@@ -1413,6 +1411,7 @@ struct AlbumDetailView: View {
     /// Regrouping the whole library on every body pass made opening an album stutter.
     @State private var liveSongs: [Song]?
     private let favorites = FavoriteAlbumsStore.shared
+    @State private var searching = false
 
     private var songs: [Song] { liveSongs ?? album.songs }
     private var processedSongs: [Song] {
@@ -1438,7 +1437,7 @@ struct AlbumDetailView: View {
     }
 
     var body: some View {
-        EchoCollectionPage(artworkData: coverData, searchText: $searchText) { colors in
+        EchoCollectionPage(artworkData: coverData, searchText: $searchText, searchActive: $searching) { colors in
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 6) {
                     EchoCollectionPill(text: Text("collection_kind_album"), tint: colors.tint)
@@ -1504,16 +1503,16 @@ struct AlbumDetailView: View {
             liveSongs = grouped
         }
         .toolbar {
-            // No title in the bar: the page's own title sits under the cover.
-            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {
-                        ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
-                    }
-                } label: { Image(systemName: "arrow.up.arrow.down") }
-                .accessibilityLabel("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE")
-                .tint(.primary)
+            if !searching {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {
+                            ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
+                        }
+                    } label: { Image(systemName: "arrow.up.arrow.down") }
+                    .accessibilityLabel("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE")
+                    .tint(.primary)
+                }
             }
         }
         .sheet(item: $selectedSong) { SongOptionsView(song: $0) }

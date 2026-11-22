@@ -165,6 +165,10 @@ struct ContentView: View {
         } message: {
             Text(LocalizedStringKey(PodcastStore.shared.errorKey ?? "podcasts_playback_error"))
         }
+        // "Colors from the cover" also works before anything plays, using the last song.
+        .task(id: "\(EchoTheme.shared.usesArtworkColors)-\(audioPlayer.currentSong == nil ? MusicLibraryManager.shared.songRevision : 0)") {
+            audioPlayer.updateThemeArtwork()
+        }
         .onChange(of: audioPlayer.currentSong?.id) {
             if audioPlayer.currentSong == nil { presentation.reset() }
             if presentation.entranceSong?.id != audioPlayer.currentSong?.id {
