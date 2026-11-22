@@ -42,10 +42,10 @@ enum EchoWidgetSnapshotPublisher {
         // Only cheap, main-thread-bound facts here; artwork, files and WidgetKit run
         // in the background so a widget refresh never costs a frame.
         let pickSongs = Array(picks.prefix(4))
-        let favorites = Dictionary(uniqueKeysWithValues: (pickSongs + (displayed.map { [$0] } ?? [])).map { song in
+        let favorites = Dictionary((pickSongs + (displayed.map { [$0] } ?? [])).map { song in
             (song.id, song.podcastEpisodeID.map { PodcastStore.shared.state.savedEpisodeIDs.contains($0) }
                 ?? library.isFavorite(song))
-        })
+        }, uniquingKeysWith: { first, _ in first })
         let isPlaying = current != nil && player.isPlaying
         let language = EchoLanguage.current.rawValue
         Task.detached(priority: .utility) {

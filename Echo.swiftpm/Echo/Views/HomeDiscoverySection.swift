@@ -25,7 +25,7 @@ struct HomeDiscoverySection: View {
     }
 
     private var songs: [Song] {
-        let byID = Dictionary(uniqueKeysWithValues: library.songs.map { ($0.id, $0) })
+        let byID = Dictionary(library.songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         return songIDs.compactMap { byID[$0] }.filter { $0.lastPlayed == nil }
     }
 
