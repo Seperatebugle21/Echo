@@ -160,6 +160,9 @@ struct EchoLivingBackdrop: View {
         GeometryReader { geometry in
             let size = geometry.size
             ZStack {
+                // Opaque base: while one cover's colours fade into the next, both are
+                // partly transparent, and the app must never show through.
+                Color(white: 0.08)
                 ZStack {
                     if let image {
                         EchoDriftingArtwork(

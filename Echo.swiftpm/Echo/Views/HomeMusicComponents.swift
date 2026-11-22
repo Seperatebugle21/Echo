@@ -283,13 +283,8 @@ private struct HomeMixCollectionView: View {
 private struct HomeCoverShadow: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
     func body(content: Content) -> some View {
-        // Drawn once into a texture with room for the shadow, then only moved while
-        // scrolling, instead of recomputing a shadow for every cover in every frame.
         content
             .shadow(color: .black.opacity(colorScheme == .dark ? 0.38 : 0.18), radius: 10, x: 0, y: 6)
-            .padding(22)
-            .drawingGroup()
-            .padding(-22)
     }
 }
 

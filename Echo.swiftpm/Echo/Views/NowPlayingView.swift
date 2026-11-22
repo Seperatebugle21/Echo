@@ -369,9 +369,10 @@ struct NowPlayingView: View {
         previousArt = earlierArt
     }
 
-    private func coverTransition(width: CGFloat, full: Bool) -> AnyTransition {
+    private func coverTransition(width: CGFloat, inset: CGFloat, full: Bool) -> AnyTransition {
         guard !reduceMotion, !full, slideMode != .fade else { return AnyTransition.opacity }
-        let distance = (width + Self.coverGap) * (slideMode == .forward ? 1 : -1)
+        // Far enough that the outgoing cover leaves the screen completely.
+        let distance = (width + max(inset, 0) + Self.coverGap) * (slideMode == .forward ? 1 : -1)
         return AnyTransition.asymmetric(insertion: AnyTransition.offset(x: distance),
                                         removal: AnyTransition.offset(x: -distance))
     }
@@ -824,7 +825,7 @@ struct NowPlayingView: View {
                         .id("placeholder")
                 }
             }
-            .transition(coverTransition(width: frame.width, full: full))
+            .transition(coverTransition(width: frame.width, inset: frame.minX, full: full))
 
             // While swiping, the next (or previous) cover waits right beside it.
             if big && !full && coverSwipe != 0 {
@@ -853,7 +854,8 @@ struct NowPlayingView: View {
         // well past the cover, so it never cuts the shadow into square corners.
         .mask {
             ZStack {
-                Rectangle().padding(-140).opacity(full ? 0 : 1)
+                // Wide enough sideways for covers sliding fully off screen.
+                Rectangle().padding(.vertical, -140).padding(.horizontal, -1200).opacity(full ? 0 : 1)
                 LinearGradient(stops: [
                     .init(color: .black, location: 0),
                     .init(color: .black, location: 0.55),
