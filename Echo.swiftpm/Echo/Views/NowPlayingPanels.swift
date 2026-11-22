@@ -433,7 +433,7 @@ private struct QueuePanelRow: View {
     let song: Song
     var body: some View {
         HStack(spacing: 12) {
-            CachedSongArtwork(data: song.coverData ?? song.imageData)
+            SongCoverImage(song: song, pixels: 160)
                 .frame(width: 46, height: 46)
                 .clipShape(.rect(cornerRadius: 9, style: .continuous))
             VStack(alignment: .leading, spacing: 2) {

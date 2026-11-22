@@ -90,11 +90,14 @@ final class EchoPullState {
 /// Pulling down stretches the cover over the top and reveals a search pill; pull far
 /// enough and let go to search inside the page.
 struct EchoCollectionPage<Info: View, Rows: View>: View {
-    let artworkData: Data?
+    /// Artwork bytes the page already has (a playlist's own cover)…
+    var artworkData: Data? = nil
+    /// …or the song whose cover the page shows; read off the main thread.
+    var artworkSong: Song? = nil
     /// Shown instead of the artwork from `artworkData`, e.g. a playlist's own cover.
     var heroImage: UIImage? = nil
     /// Up to four covers shown as a 2×2 collage (playlists without their own cover).
-    var collage: [Data] = []
+    var collage: [Song] = []
     /// Always show the cover as a rounded card (playlists).
     var cardStyle = false
     var searchText: Binding<String>? = nil
@@ -133,6 +136,10 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
     }
 
     /// Collages and covers with a light border sit on the page as a rounded card.
+    private var styleKey: String {
+        "\(artworkData?.count ?? 0)|\(artworkSong?.id.uuidString ?? "")|\(artworkSong?.artworkRevision ?? 0)"
+    }
+
     private var card: Bool { cardStyle || (style?.lightEdges ?? false) }
 
     var body: some View {
@@ -214,8 +221,9 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
         .sensoryFeedback(.impact(weight: .light), trigger: pastThreshold) { _, past in
             past && EchoHaptics.allows(essential: false)
         }
-        .task(id: artworkData) {
-            let loadedStyle = await EchoCollectionStyle.load(artworkData)
+        .task(id: styleKey) {
+            let data = artworkData ?? (await SongArtworkLoader.data(for: artworkSong))
+            let loadedStyle = await EchoCollectionStyle.load(data)
             guard !Task.isCancelled else { return }
             style = loadedStyle
             loaded = true
@@ -226,10 +234,6 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
 
     private func openSearch() {
         withAnimation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion)) { searching = true }
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(120))
-            searchFocused = true
-        }
     }
 
     private func closeSearch() {
@@ -261,7 +265,15 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
             }
             .padding(.horizontal, 14)
             .frame(width: max(200, pageWidth - 110), height: 38)
-            .background(.ultraThinMaterial, in: .capsule)
+            .glassEffect(.regular.interactive(), in: .capsule)
+            // The field only exists once the bar shows it: focus it then, so the
+            // keyboard opens right away.
+            .onAppear {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(50))
+                    searchFocused = true
+                }
+            }
         }
     }
 
@@ -314,7 +326,11 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
                     .scaledToFill()
                     .transition(.opacity)
             } else if loaded {
-                CachedSongArtwork(data: artworkData)
+                if let artworkSong {
+                    SongCoverImage(song: artworkSong, pixels: 1000)
+                } else {
+                    CachedSongArtwork(data: artworkData)
+                }
             }
         }
         .animation(.easeOut(duration: 0.2), value: image == nil)
@@ -362,7 +378,7 @@ private struct EchoPullSearchPill: View {
 
 /// Four covers in a square, for playlists without their own cover.
 struct EchoCoverCollage: View {
-    let covers: [Data]
+    let covers: [Song]
     var body: some View {
         let tiles = Array(covers.prefix(4))
         GeometryReader { geometry in
@@ -380,13 +396,19 @@ struct EchoCoverCollage: View {
         }
     }
 
-    private func tile(_ tiles: [Data], _ index: Int, _ side: CGFloat) -> some View {
+    @ViewBuilder
+    private func tile(_ tiles: [Song], _ index: Int, _ side: CGFloat) -> some View {
         // Two covers repeat crosswise; three repeat the first in the last corner.
         let order = tiles.count == 2 ? [0, 1, 1, 0] : [0, 1, 2, 3]
-        let data = tiles.isEmpty ? nil : tiles[order[index] % tiles.count]
-        return CachedSongArtwork(data: data)
-            .frame(width: side, height: side)
-            .clipped()
+        Group {
+            if tiles.isEmpty {
+                CachedSongArtwork(data: nil)
+            } else {
+                SongCoverImage(song: tiles[order[index] % tiles.count], pixels: 500)
+            }
+        }
+        .frame(width: side, height: side)
+        .clipped()
     }
 }
 

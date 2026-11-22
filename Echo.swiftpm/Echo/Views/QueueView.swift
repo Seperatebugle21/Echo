@@ -174,7 +174,7 @@ struct QueueView: View {
     // MARK: - Helper Views
     // Decoded once off the main thread and cached; rows never decode artwork in their body.
     private func songCoverImage(for song: Song) -> some View {
-        CachedSongArtwork(data: song.coverData ?? song.imageData)
+        SongCoverImage(song: song, pixels: 160)
             .frame(width: 48, height: 48)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }

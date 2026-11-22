@@ -99,7 +99,7 @@ struct NowPlayingView: View {
     /// Changes when the song or its artwork changes.
     private var songArtworkKey: String {
         guard let song = audioPlayer.currentSong else { return "none" }
-        return "\(song.id)-\((song.coverData ?? song.imageData)?.count ?? 0)"
+        return "\(song.id)-\(song.artworkRevision)"
     }
 
     var body: some View {
@@ -334,7 +334,7 @@ struct NowPlayingView: View {
     /// Brings in the current song's cover and title together, sliding like a swipe.
     private func showCurrentSong() async {
         let song = audioPlayer.currentSong
-        let prepared = await PlayerArtworkImages.cached(song.flatMap { $0.coverData ?? $0.imageData })
+        let prepared = await PlayerArtworkImages.cached(song: song)
         guard !Task.isCancelled else { return }
         if shownSong == nil || song == nil || shownSong?.id == song?.id || reduceMotion {
             var transaction = Transaction()
@@ -360,8 +360,8 @@ struct NowPlayingView: View {
         // Prepare the covers on either side for swiping and the next skip.
         let upcoming = audioPlayer.miniPlayerNextSong
         let earlier = audioPlayer.miniPlayerPreviousSong
-        let upcomingArt = await PlayerArtworkImages.cached(upcoming.flatMap { $0.coverData ?? $0.imageData })
-        let earlierArt = await PlayerArtworkImages.cached(earlier.flatMap { $0.coverData ?? $0.imageData })
+        let upcomingArt = await PlayerArtworkImages.cached(song: upcoming)
+        let earlierArt = await PlayerArtworkImages.cached(song: earlier)
         guard !Task.isCancelled else { return }
         nextSong = upcoming
         nextArt = upcomingArt
@@ -849,14 +849,17 @@ struct NowPlayingView: View {
                 .opacity(full ? 1 : 0)
                 .allowsHitTesting(false)
         }
+        // Only the full-screen cover fades out at the bottom. Otherwise the mask reaches
+        // well past the cover, so it never cuts the shadow into square corners.
         .mask {
             ZStack {
-                Rectangle().opacity(full ? 0 : 1)
+                Rectangle().padding(-140).opacity(full ? 0 : 1)
                 LinearGradient(stops: [
                     .init(color: .black, location: 0),
                     .init(color: .black, location: 0.55),
                     .init(color: .clear, location: 1)
                 ], startPoint: .top, endPoint: .bottom)
+                .frame(width: frame.width, height: frame.height)
                 .opacity(full ? 1 : 0)
             }
         }
@@ -930,6 +933,26 @@ struct PlayerArtworkImages: @unchecked Sendable {
 
     /// Same as `prepare`, but remembers recent covers, so skipping to a song whose cover
     /// was prepared ahead (the next and previous songs are) shows it at once.
+    /// The song's prepared artwork, keyed by song and artwork revision: nothing is
+    /// read or hashed on the main thread, and a cached song returns at once.
+    static func cached(song: Song?) async -> PlayerArtworkImages {
+        guard let song else { return .empty }
+        let key = song.id.hashValue &+ song.artworkRevision &* 31
+        if let hit = await PlayerArtworkCache.shared.images(for: key) { return hit }
+        let data = await SongArtworkLoader.data(for: song)
+        let images = await prepare(data)
+        await PlayerArtworkCache.shared.remember(images, for: key)
+        return images
+    }
+
+    /// The blurred backdrop for a song, read and prepared off the main thread.
+    static func prepareBackdrop(song: Song?) async -> UIImage? {
+        if let song, let hit = await PlayerArtworkCache.shared.images(for: song.id.hashValue &+ song.artworkRevision &* 31) {
+            return hit.background
+        }
+        return await prepareBackdrop(await SongArtworkLoader.data(for: song))
+    }
+
     static func cached(_ data: Data?) async -> PlayerArtworkImages {
         guard let data else { return .empty }
         let key = data.count &+ data.hashValue

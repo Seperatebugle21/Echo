@@ -12,7 +12,8 @@ enum EchoWidgetSnapshotPublisher {
         Task { @MainActor in
             pendingUpdate?.cancel()
             pendingUpdate = Task { @MainActor in
-                do { try await Task.sleep(for: .milliseconds(150)) }
+                // After any song-change animation, and coalescing bursts of changes.
+                do { try await Task.sleep(for: .milliseconds(1200)) }
                 catch { return }
                 refresh()
             }
@@ -20,7 +21,8 @@ enum EchoWidgetSnapshotPublisher {
     }
 
     @MainActor private static var pendingUpdate: Task<Void, Never>?
-    @MainActor private static var artworkCache: [UUID: (source: Data, thumbnail: Data)] = [:]
+    /// Widget thumbnails by song and artwork revision, built off the main thread.
+    private static let thumbnails = NSCache<NSString, NSData>()
     private static let logger = Logger(subsystem: "com.echomusic.app", category: "Widgets")
 
     @MainActor static func refresh() {
@@ -31,44 +33,47 @@ enum EchoWidgetSnapshotPublisher {
             favoriteSongIDs: library.favoriteSongIDs, recommendationManager: RecommendationManager.shared)
         let existing = Dictionary(library.songs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let picks = (session.recommendedSongs ?? []).compactMap { existing[$0.id] }.filter {
-            guard let url = library.getURL(for: $0) else { return false }
-            return FileManager.default.fileExists(atPath: url.path)
+            HomeFileCheck.exists($0, library: library)
         }
         let current = player.currentSong.flatMap { $0.podcastEpisodeID != nil ? $0 : existing[$0.id] }
         let displayed = current ?? library.songs.sorted {
             ($0.lastPlayed ?? $0.dateAdded) > ($1.lastPlayed ?? $1.dateAdded)
         }.first
-        let items = Array(picks.prefix(4)).map { item($0, library: library) }
-        let snapshot = EchoWidgetSnapshot(updatedAt: Date(), songs: items,
-            currentSong: displayed.map { item($0, library: library) },
-            isPlaying: current != nil && player.isPlaying,
-            language: EchoLanguage.current.rawValue)
-        let keepIDs = Set(items.map(\.id) + (displayed.map { [$0.id] } ?? []))
-        artworkCache = artworkCache.filter { keepIDs.contains($0.key) }
-        let previous = EchoWidgetSnapshotStore.load()
-        guard snapshot.songs != previous.songs || snapshot.currentSong != previous.currentSong
-                || snapshot.isPlaying != previous.isPlaying || snapshot.language != previous.language else { return }
-        do {
-            try EchoWidgetSnapshotStore.save(snapshot)
-            for kind in EchoWidgetKinds.homeScreen { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
-        } catch {
-            logger.error("Widget snapshot failed; check App Group entitlements: \(error.localizedDescription, privacy: .public)")
+        // Only cheap, main-thread-bound facts here; artwork, files and WidgetKit run
+        // in the background so a widget refresh never costs a frame.
+        let pickSongs = Array(picks.prefix(4))
+        let favorites = Dictionary(uniqueKeysWithValues: (pickSongs + (displayed.map { [$0] } ?? [])).map { song in
+            (song.id, song.podcastEpisodeID.map { PodcastStore.shared.state.savedEpisodeIDs.contains($0) }
+                ?? library.isFavorite(song))
+        })
+        let isPlaying = current != nil && player.isPlaying
+        let language = EchoLanguage.current.rawValue
+        Task.detached(priority: .utility) {
+            let items = pickSongs.map { item($0, favorite: favorites[$0.id] ?? false) }
+            let snapshot = EchoWidgetSnapshot(updatedAt: Date(), songs: items,
+                currentSong: displayed.map { item($0, favorite: favorites[$0.id] ?? false) },
+                isPlaying: isPlaying, language: language)
+            let previous = EchoWidgetSnapshotStore.load()
+            guard snapshot.songs != previous.songs || snapshot.currentSong != previous.currentSong
+                    || snapshot.isPlaying != previous.isPlaying || snapshot.language != previous.language else { return }
+            do {
+                try EchoWidgetSnapshotStore.save(snapshot)
+                for kind in EchoWidgetKinds.homeScreen { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
+            } catch {
+                logger.error("Widget snapshot failed; check App Group entitlements: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 
-    @MainActor private static func item(_ song: Song, library: MusicLibraryManager) -> EchoWidgetSongItem {
-        var thumbnail: Data?
-        if let source = song.coverData ?? song.imageData {
-            if let cached = artworkCache[song.id], cached.source == source { thumbnail = cached.thumbnail }
-            else if let generated = thumbnailData(from: source) {
-                artworkCache[song.id] = (source, generated)
-                thumbnail = generated
-            }
+    private static func item(_ song: Song, favorite: Bool) -> EchoWidgetSongItem {
+        let key = "\(song.id.uuidString)|\(song.artworkRevision)" as NSString
+        var thumbnail = thumbnails.object(forKey: key) as Data?
+        if thumbnail == nil, let source = song.coverData ?? song.imageData, let generated = thumbnailData(from: source) {
+            thumbnails.setObject(generated as NSData, forKey: key)
+            thumbnail = generated
         }
         return EchoWidgetSongItem(id: song.id, title: song.title, artist: song.artist,
-            artworkData: thumbnail, isFavorite: song.podcastEpisodeID.map {
-                PodcastStore.shared.state.savedEpisodeIDs.contains($0)
-            } ?? library.isFavorite(song))
+            artworkData: thumbnail, isFavorite: favorite)
     }
 
     private static func thumbnailData(from data: Data) -> Data? {

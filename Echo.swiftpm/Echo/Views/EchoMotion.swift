@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import CoreImage
 
 /// Echo's shared motion language. Every screen uses the same few springs, so
 /// presses, transitions and scrolling feel like one continuous system.
@@ -91,7 +92,6 @@ private struct EchoRevealModifier: ViewModifier {
         content
             .opacity(shown ? 1 : 0)
             .offset(y: shown || reduceMotion ? 0 : 26)
-            .blur(radius: shown || reduceMotion ? 0 : 4)
             .onAppear {
                 guard !shown else { return }
                 let delay = Double(min(index, 8)) * 0.055
@@ -193,47 +193,148 @@ struct EchoLivingBackdrop: View {
     }
 }
 
-private struct EchoDriftingArtwork: View {
+/// Three slowly turning, drifting layers of the blurred cover. Animated by Core
+/// Animation in the render server, so the motion stays smooth even while the app
+/// itself is busy, and SwiftUI never redraws for it.
+private struct EchoDriftingArtwork: UIViewRepresentable {
     let image: UIImage
     let size: CGSize
     let animated: Bool
 
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !animated)) { context in
-            let t = animated ? context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 36_000) : 0
-            let side = max(size.width, size.height)
-            ZStack {
-                // A full cover so the edges are never visible, even when rotated.
-                layer(side: side * 1.6, angle: t * 4, x: CGFloat(sin(t / 13)) * size.width * 0.12,
-                      y: CGFloat(cos(t / 17)) * size.height * 0.06, opacity: 1, soft: false)
-                layer(side: side * 1.05, angle: -t * 7 + 110, x: CGFloat(cos(t / 9)) * size.width * 0.28,
-                      y: CGFloat(sin(t / 11)) * size.height * 0.18, opacity: 0.85, soft: true)
-                layer(side: side * 0.8, angle: t * 10 + 230, x: CGFloat(sin(t / 7 + 1)) * size.width * 0.3,
-                      y: CGFloat(cos(t / 8 + 2)) * size.height * 0.24, opacity: 0.7, soft: true)
+    func makeUIView(context: Context) -> EchoDriftView { EchoDriftView() }
+
+    func updateUIView(_ view: EchoDriftView, context: Context) {
+        view.configure(image: image, size: size, animated: animated)
+    }
+}
+
+final class EchoDriftView: UIView {
+    private struct Layer {
+        let scale: CGFloat
+        let degreesPerSecond: Double
+        let startAngle: Double
+        let drift: CGSize
+        let driftPeriod: Double
+        let opacity: Float
+        let soft: Bool
+    }
+
+    private static let specs = [
+        Layer(scale: 1.6, degreesPerSecond: 4, startAngle: 0, drift: CGSize(width: 0.12, height: 0.06),
+              driftPeriod: 82, opacity: 1, soft: false),
+        Layer(scale: 1.05, degreesPerSecond: -7, startAngle: 110, drift: CGSize(width: 0.28, height: 0.18),
+              driftPeriod: 57, opacity: 0.85, soft: true),
+        Layer(scale: 0.8, degreesPerSecond: 10, startAngle: 230, drift: CGSize(width: 0.3, height: 0.24),
+              driftPeriod: 44, opacity: 0.7, soft: true),
+    ]
+    private static let context = CIContext(options: [.cacheIntermediates: false])
+
+    private var layersByIndex: [CALayer] = []
+    private var imageID: ObjectIdentifier?
+    private var builtSize: CGSize = .zero
+    private var running = true
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isUserInteractionEnabled = false
+        clipsToBounds = true
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    func configure(image: UIImage, size: CGSize, animated: Bool) {
+        guard size.width > 0, size.height > 0 else { return }
+        if imageID != ObjectIdentifier(image) {
+            imageID = ObjectIdentifier(image)
+            let contents = Self.saturated(image) ?? image.cgImage
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            for layer in layersByIndex { layer.contents = contents }
+            CATransaction.commit()
+            if layersByIndex.isEmpty { build(size: size, contents: contents) }
+        }
+        if size != builtSize, !layersByIndex.isEmpty {
+            let contents = layersByIndex.first?.contents
+            layersByIndex.forEach { $0.removeFromSuperlayer() }
+            layersByIndex = []
+            build(size: size, contents: contents)
+        }
+        setRunning(animated)
+    }
+
+    private func build(size: CGSize, contents: Any?) {
+        builtSize = size
+        let side = max(size.width, size.height)
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        for spec in Self.specs {
+            let layer = CALayer()
+            let edge = side * spec.scale
+            layer.bounds = CGRect(x: 0, y: 0, width: edge, height: edge)
+            layer.position = center
+            layer.contents = contents
+            layer.contentsGravity = .resizeAspectFill
+            layer.opacity = spec.opacity
+            if spec.soft {
+                let mask = CAGradientLayer()
+                mask.type = .radial
+                mask.frame = layer.bounds
+                mask.colors = [UIColor.black.cgColor, UIColor.black.withAlphaComponent(0.6).cgColor, UIColor.clear.cgColor]
+                mask.locations = [0.24, 0.6, 1]
+                mask.startPoint = CGPoint(x: 0.5, y: 0.5)
+                mask.endPoint = CGPoint(x: 1, y: 1)
+                layer.mask = mask
             }
-            .frame(width: size.width, height: size.height)
-            .saturation(1.35)
+            let start = spec.startAngle * .pi / 180
+            layer.transform = CATransform3DMakeRotation(start, 0, 0, 1)
+
+            let spin = CABasicAnimation(keyPath: "transform.rotation.z")
+            spin.fromValue = start
+            spin.toValue = start + (spec.degreesPerSecond > 0 ? 2 : -2) * .pi
+            spin.duration = 360 / abs(spec.degreesPerSecond)
+            spin.repeatCount = .infinity
+            layer.add(spin, forKey: "spin")
+
+            let drift = CABasicAnimation(keyPath: "position")
+            drift.fromValue = CGPoint(x: center.x - spec.drift.width * size.width, y: center.y - spec.drift.height * size.height)
+            drift.toValue = CGPoint(x: center.x + spec.drift.width * size.width, y: center.y + spec.drift.height * size.height)
+            drift.duration = spec.driftPeriod / 2
+            drift.autoreverses = true
+            drift.repeatCount = .infinity
+            drift.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            layer.add(drift, forKey: "drift")
+
+            self.layer.addSublayer(layer)
+            layersByIndex.append(layer)
         }
     }
 
-    @ViewBuilder
-    private func layer(side: CGFloat, angle: Double, x: CGFloat, y: CGFloat,
-                       opacity: Double, soft: Bool) -> some View {
-        Image(uiImage: image)
-            .resizable()
-            .scaledToFill()
-            .frame(width: side, height: side)
-            .mask {
-                if soft {
-                    RadialGradient(colors: [.black, .black.opacity(0.6), .clear],
-                                   center: .center, startRadius: side * 0.12, endRadius: side * 0.5)
-                } else {
-                    Rectangle()
-                }
-            }
-            .rotationEffect(.degrees(angle))
-            .offset(x: x, y: y)
-            .opacity(opacity)
+    /// Pauses in place and resumes from the same spot.
+    private func setRunning(_ run: Bool) {
+        guard run != running else { return }
+        running = run
+        let root = layer
+        if run {
+            let paused = root.timeOffset
+            root.speed = 1
+            root.timeOffset = 0
+            root.beginTime = 0
+            root.beginTime = root.convertTime(CACurrentMediaTime(), from: nil) - paused
+        } else {
+            let now = root.convertTime(CACurrentMediaTime(), from: nil)
+            root.speed = 0
+            root.timeOffset = now
+        }
+    }
+
+    /// The colors a little richer, like the previous `.saturation(1.35)`, done once per cover.
+    private static func saturated(_ image: UIImage) -> CGImage? {
+        guard let cg = image.cgImage else { return nil }
+        let input = CIImage(cgImage: cg)
+        guard let filter = CIFilter(name: "CIColorControls") else { return cg }
+        filter.setValue(input, forKey: kCIInputImageKey)
+        filter.setValue(1.35, forKey: kCIInputSaturationKey)
+        guard let output = filter.outputImage else { return cg }
+        return context.createCGImage(output, from: input.extent) ?? cg
     }
 }
 
@@ -270,8 +371,7 @@ struct EchoAmbientGlow: View {
         }
         .animation(EchoMotion.ambient, value: image.map { ObjectIdentifier($0) })
         .task(id: player.currentSong?.id) {
-            let data = player.currentSong?.coverData ?? player.currentSong?.imageData
-            let prepared = await PlayerArtworkImages.prepareBackdrop(data)
+            let prepared = await PlayerArtworkImages.prepareBackdrop(song: player.currentSong)
             guard !Task.isCancelled else { return }
             image = prepared
         }

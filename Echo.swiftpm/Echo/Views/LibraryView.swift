@@ -1163,7 +1163,7 @@ struct ArtistDetailView: View {
     let artist: ArtistGroup
     @State private var searchText = ""
 
-    private var heroData: Data? { songs.first(where: { $0.coverData != nil })?.coverData }
+    private var heroSong: Song? { songs.first(where: { SongArtworkStore.shared.hasArtwork(for: $0.id) }) }
 
     private var songs: [Song] {
         library.artistGroupsByID[artist.id]?.songs ?? artist.songs.compactMap { library.song(withID: $0.id) }
@@ -1179,7 +1179,7 @@ struct ArtistDetailView: View {
     }
 
     var body: some View {
-        EchoCollectionPage(artworkData: heroData, searchText: $searchText) { colors in
+        EchoCollectionPage(artworkSong: heroSong, searchText: $searchText) { colors in
             VStack(alignment: .leading, spacing: 12) {
                 EchoCollectionPill(text: Text("collection_kind_artist"), tint: colors.tint)
 
@@ -1242,7 +1242,7 @@ struct ArtistDetailView: View {
             play(song, queue: sortedSongs)
         } label: {
             HStack(spacing: 14) {
-                CachedSongArtwork(data: song.coverData ?? song.imageData)
+                SongCoverImage(song: song, pixels: 160)
                     .frame(width: 48, height: 48)
                     .clipShape(.rect(cornerRadius: 10, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
@@ -1424,7 +1424,6 @@ struct AlbumDetailView: View {
         case .lastPlayed: return filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
         }
     }
-    private var coverData: Data? { songs.first.flatMap { $0.coverData ?? $0.imageData } }
 
     private var meta: String {
         let year = songs.compactMap(\.releaseYear).min().map(String.init)
@@ -1437,7 +1436,7 @@ struct AlbumDetailView: View {
     }
 
     var body: some View {
-        EchoCollectionPage(artworkData: coverData, searchText: $searchText, searchActive: $searching) { colors in
+        EchoCollectionPage(artworkSong: songs.first, searchText: $searchText, searchActive: $searching) { colors in
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 6) {
                     EchoCollectionPill(text: Text("collection_kind_album"), tint: colors.tint)
@@ -1541,7 +1540,9 @@ struct AlbumDetailView: View {
 
     private var artistLabel: some View {
         HStack(spacing: 10) {
-            CachedSongArtwork(data: coverData)
+            Group {
+                if let first = songs.first { SongCoverImage(song: first, pixels: 90, symbolFont: .caption2) }
+            }
                 .frame(width: 26, height: 26)
                 .clipShape(.circle)
             Text(album.artist)
@@ -1804,7 +1805,7 @@ struct RawSongArtwork: View {
 
     var body: some View {
 
-        CachedSongArtwork(data: song.coverData ?? song.imageData)
+        SongCoverImage(song: song, pixels: 500)
     }
 }
 
@@ -1818,10 +1819,10 @@ struct ArtistArtworkView: View {
 
             Group {
 
-                // Decoded once off the main thread and cached, not in every body pass.
-                if let data = songs.first(where: { $0.coverData != nil })?.coverData {
+                // The index says which song has a cover; nothing is read while drawing.
+                if let song = songs.first(where: { SongArtworkStore.shared.hasArtwork(for: $0.id) }) {
 
-                    CachedSongArtwork(data: data)
+                    SongCoverImage(song: song, pixels: 500)
 
                 } else {
 

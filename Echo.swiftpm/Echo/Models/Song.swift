@@ -286,6 +286,20 @@ final class SongArtworkStore: @unchecked Sendable {
         io.sync {}
     }
 
+    /// Whether a song has artwork, answered from the index without reading any file.
+    func hasArtwork(for id: UUID) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        let listed = indexLocked()
+        for name in [Kind.cover.fileName(for: id), Kind.image.fileName(for: id)] {
+            if let change = pending[name] {
+                if change != nil { return true }
+            } else if listed.contains(name) {
+                return true
+            }
+        }
+        return false
+    }
+
     private func indexLocked() -> Set<String> {
         if let index { return index }
         let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []

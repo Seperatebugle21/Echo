@@ -38,7 +38,8 @@ struct HomeView: View {
                                 .echoScrollSection()
                         }
                     }
-                    .padding(.top, 8)
+                    // The compact bar below adds 44 points on top; this keeps the header where it was.
+                    .padding(.top, -36)
                     // The playing song's colors wash over the top of Home and scroll away with it.
                     .background(alignment: .top) {
                         HomeGlowMotion(scroll: scroll) { EchoAmbientGlow(height: 520) }.offset(y: -260)
@@ -52,8 +53,10 @@ struct HomeView: View {
                 } action: { _, offset in
                     scroll.offset = offset
                 }
+                // iOS's own soft edge blur under the compact title: a light blur, no white.
+                .scrollEdgeEffectStyle(.soft, for: .top)
+                .safeAreaBar(edge: .top) { HomeCompactBar(scroll: scroll) }
                 .echoBackground()
-                .overlay(alignment: .top) { HomeCompactBar(scroll: scroll) }
             }
             .toolbarVisibility(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) { SettingsView() }
@@ -361,19 +364,6 @@ private struct HomeCompactBar: View {
             .frame(maxWidth: .infinity)
             .frame(height: 44)
             .offset(y: 8 * (1 - progress))
-            .background {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .mask {
-                        LinearGradient(stops: [
-                            .init(color: .black, location: 0),
-                            .init(color: .black, location: 0.6),
-                            .init(color: .clear, location: 1)
-                        ], startPoint: .top, endPoint: .bottom)
-                    }
-                    .padding(.bottom, -18)
-                    .ignoresSafeArea(edges: .top)
-            }
             .opacity(progress)
             .allowsHitTesting(false)
             .accessibilityHidden(true)

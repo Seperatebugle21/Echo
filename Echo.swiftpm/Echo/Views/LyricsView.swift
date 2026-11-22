@@ -20,7 +20,7 @@ struct LyricsView: View {
         }
         .task(id: audioPlayer.currentSong?.id) {
             let song = audioPlayer.currentSong
-            let prepared = await PlayerArtworkImages.prepareBackdrop(song?.coverData ?? song?.imageData)
+            let prepared = await PlayerArtworkImages.prepareBackdrop(song: song)
             guard !Task.isCancelled else { return }
             backdrop = prepared
         }

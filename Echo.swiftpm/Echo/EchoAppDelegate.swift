@@ -23,6 +23,7 @@ final class EchoAppDelegate:
 
         PodcastNotifications.shared.registerBackgroundTask()
         FetchBackgroundState.startObserving()
+        EchoDiagnostics.shared.start()
         configureSiriMediaContext()
         PythonSelfTest.runIfRequested()
 

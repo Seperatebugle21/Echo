@@ -222,58 +222,130 @@ private struct HomePlaybackWave: View {
     }
 }
 
-private struct HomeVinyl: View {
-    let song: Song
-    var body: some View {
-        ZStack {
-            Circle().fill(Color(white: 0.08))
-            ForEach([0.58, 0.72, 0.86, 0.97], id: \.self) { scale in
-                Circle().stroke(.white.opacity(0.1), lineWidth: 1).scaleEffect(scale)
-            }
-            // A light streak across the grooves makes the rotation visible.
-            Circle()
-                .fill(AngularGradient(colors: [.clear, .white.opacity(0.14), .clear, .clear,
-                                               .white.opacity(0.1), .clear], center: .center, angle: .zero))
-            SongArtworkView(song: song, cornerRadius: 0)
-                .clipShape(.circle)
-                .overlay { Circle().fill(Color.accentColor.opacity(0.18)) }
-                .scaleEffect(0.36)
-            Circle().fill(.black).scaleEffect(0.06)
-        }.overlay { Circle().stroke(.white.opacity(0.15), lineWidth: 1) }
-    }
-}
-
-/// Rotation keeps its angle when playback pauses, so the record stops instead of resetting.
+/// The record: static grooves in SwiftUI, and a turning label and light streak drawn
+/// by Core Animation, so it keeps spinning smoothly even while the app is busy.
 private struct HomeSpinningVinyl: View {
     let song: Song
     let spinning: Bool
     @Environment(\.scenePhase) private var scenePhase
-    @State private var baseAngle: Double = 0
-    @State private var spinStart: Date?
     @State private var visible = true
-    private let degreesPerSecond = 55.0
 
     private var active: Bool {
         spinning && visible && scenePhase == .active && !EchoPowerState.shared.lowPower
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !active)) { context in
-            let running = spinStart.map { max(0, context.date.timeIntervalSince($0)) } ?? 0
-            HomeVinyl(song: song)
-                .rotationEffect(.degrees(baseAngle + running * degreesPerSecond))
+        ZStack {
+            Circle().fill(Color(white: 0.08))
+            ForEach([0.58, 0.72, 0.86, 0.97], id: \.self) { scale in
+                Circle().stroke(.white.opacity(0.1), lineWidth: 1).scaleEffect(scale)
+            }
+            HomeVinylSpinner(song: song, spinning: active, tint: UIColor(Color.accentColor))
+            Circle().fill(.black).scaleEffect(0.06)
         }
+        .overlay { Circle().stroke(.white.opacity(0.15), lineWidth: 1) }
         .onAppear { visible = true }
         .onDisappear { visible = false }
         .onScrollVisibilityChange(threshold: 0.01) { visible = $0 }
-        .onChange(of: active, initial: true) { _, isActive in
-            if isActive {
-                if spinStart == nil { spinStart = Date() }
-            } else if let start = spinStart {
-                baseAngle = (baseAngle + Date().timeIntervalSince(start) * degreesPerSecond)
-                    .truncatingRemainder(dividingBy: 360)
-                spinStart = nil
-            }
+    }
+}
+
+private struct HomeVinylSpinner: UIViewRepresentable {
+    let song: Song
+    let spinning: Bool
+    let tint: UIColor
+
+    func makeUIView(context: Context) -> HomeVinylSpinnerView { HomeVinylSpinnerView() }
+
+    func updateUIView(_ view: HomeVinylSpinnerView, context: Context) {
+        view.show(song: song, tint: tint)
+        view.setSpinning(spinning)
+    }
+}
+
+final class HomeVinylSpinnerView: UIView {
+    private let rotor = CALayer()
+    private let streak = CAGradientLayer()
+    private let label = CALayer()
+    private let labelTint = CALayer()
+    private var songKey: SongArtworkKey?
+    private var spinning = true
+    private var loadTask: Task<Void, Never>?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isUserInteractionEnabled = false
+        streak.type = .conic
+        streak.startPoint = CGPoint(x: 0.5, y: 0.5)
+        streak.endPoint = CGPoint(x: 0.5, y: 0)
+        streak.colors = [UIColor.clear, UIColor.white.withAlphaComponent(0.14), UIColor.clear, UIColor.clear,
+                         UIColor.white.withAlphaComponent(0.1), UIColor.clear].map(\.cgColor)
+        label.contentsGravity = .resizeAspectFill
+        label.masksToBounds = true
+        label.backgroundColor = UIColor(white: 0.2, alpha: 1).cgColor
+        rotor.addSublayer(streak)
+        rotor.addSublayer(label)
+        label.addSublayer(labelTint)
+        layer.addSublayer(rotor)
+        let spin = CABasicAnimation(keyPath: "transform.rotation.z")
+        spin.fromValue = 0
+        spin.toValue = 2 * Double.pi
+        spin.duration = 360.0 / 55.0
+        spin.repeatCount = .infinity
+        rotor.add(spin, forKey: "spin")
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        rotor.frame = bounds
+        streak.frame = bounds
+        streak.cornerRadius = bounds.width / 2
+        streak.masksToBounds = true
+        let side = bounds.width * 0.36
+        label.frame = CGRect(x: (bounds.width - side) / 2, y: (bounds.height - side) / 2, width: side, height: side)
+        label.cornerRadius = side / 2
+        labelTint.frame = label.bounds
+        CATransaction.commit()
+    }
+
+    func show(song: Song, tint: UIColor) {
+        labelTint.backgroundColor = tint.withAlphaComponent(0.18).cgColor
+        let key = SongArtworkKey(song, pixels: 150)
+        guard key != songKey else { return }
+        songKey = key
+        if let cached = SongArtworkLoader.cachedImage(key) {
+            label.contents = cached.cgImage
+            return
+        }
+        loadTask?.cancel()
+        loadTask = Task { @MainActor [weak self] in
+            let image = await SongArtworkLoader.image(for: song, key: key)
+            guard !Task.isCancelled, let self, self.songKey == key else { return }
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            self.label.contents = image?.cgImage
+            CATransaction.commit()
+        }
+    }
+
+    /// Stops in place and continues from the same angle.
+    func setSpinning(_ run: Bool) {
+        guard run != spinning else { return }
+        spinning = run
+        if run {
+            let paused = rotor.timeOffset
+            rotor.speed = 1
+            rotor.timeOffset = 0
+            rotor.beginTime = 0
+            rotor.beginTime = rotor.convertTime(CACurrentMediaTime(), from: nil) - paused
+        } else {
+            let now = rotor.convertTime(CACurrentMediaTime(), from: nil)
+            rotor.speed = 0
+            rotor.timeOffset = now
         }
     }
 }
@@ -294,7 +366,7 @@ private struct HomeSpotlightSurface: View {
         }
         .onScrollVisibilityChange(threshold: 0.01) { visible = $0 }
         .task(id: song.id) {
-            let prepared = await PlayerArtworkImages.prepareBackdrop(song.coverData ?? song.imageData)
+            let prepared = await PlayerArtworkImages.prepareBackdrop(song: song)
             guard !Task.isCancelled else { return }
             backdrop = prepared
         }

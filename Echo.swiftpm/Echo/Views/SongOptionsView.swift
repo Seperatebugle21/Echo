@@ -25,7 +25,7 @@ struct SongOptionsView: View {
             // Song informatie — blijft vast staan
             HStack(spacing: 15) {
                 
-                CachedSongArtwork(data: song.coverData ?? song.imageData)
+                SongCoverImage(song: song, pixels: 200)
                     .frame(width: 65, height: 65)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 

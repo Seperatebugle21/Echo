@@ -132,7 +132,7 @@ struct FavoritesView: View {
                     HStack(spacing: 12) {
                         
                         // Decoded off the main thread and cached; never per row in the body.
-                        CachedSongArtwork(data: song.coverData ?? song.imageData)
+                        SongCoverImage(song: song, pixels: 160)
                             .frame(width: 50, height: 50)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         

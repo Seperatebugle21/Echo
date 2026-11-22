@@ -3,6 +3,7 @@ import UIKit
 
 struct DeveloperView: View {
     @AppStorage("developerShowLyricsSources") private var showLyricsSources = false
+    @AppStorage(EchoHitchMonitor.enabledKey) private var hitchMonitor = false
     @AppStorage("developerMaxDownloadChunks")
     private var maxDownloadChunks: Int = 4
 
@@ -17,6 +18,18 @@ struct DeveloperView: View {
     var body: some View {
 
         Form {
+            Section {
+                NavigationLink {
+                    EchoDiagnosticsView()
+                } label: {
+                    Label("developer_diagnostics_log", systemImage: "list.bullet.rectangle")
+                }
+                Toggle("developer_hitch_monitor", isOn: $hitchMonitor)
+            } header: {
+                Text("developer_diagnostics_section")
+            } footer: {
+                Text("developer_diagnostics_detail")
+            }
             Section {
                 Toggle("developer_lyrics_sources", isOn: $showLyricsSources)
             } footer: {

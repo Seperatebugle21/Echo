@@ -77,22 +77,23 @@ struct PlaylistDetailView: View {
 
     private var hasOwnCover: Bool { currentPlaylist.imageData != nil || currentPlaylist.builtinCoverID != nil }
 
-    /// Up to four different covers from the playlist, for the collage.
-    private var collageData: [Data] {
-        var seen = Set<Int>()
-        var covers: [Data] = []
-        for song in songs {
-            guard let data = song.coverData ?? song.imageData else { continue }
-            let key = data.count &+ data.hashValue
-            if seen.insert(key).inserted { covers.append(data) }
-            if covers.count == 4 { break }
+    /// Up to four songs from different albums that have a cover, for the collage.
+    /// Decided from the artwork index and album names; no artwork is read here.
+    private var collageSongs: [Song] {
+        var seen = Set<String>()
+        var picked: [Song] = []
+        for song in songs where SongArtworkStore.shared.hasArtwork(for: song.id) {
+            let album = "\(song.album ?? song.title)|\(song.artist)".lowercased()
+            if seen.insert(album).inserted { picked.append(song) }
+            if picked.count == 4 { break }
         }
-        return covers
+        return picked
     }
 
     private var playlistPage: some View {
-        let collage = collageData
-        return EchoCollectionPage(artworkData: currentPlaylist.imageData ?? collage.first,
+        let collage = collageSongs
+        return EchoCollectionPage(artworkData: currentPlaylist.imageData,
+                                  artworkSong: collage.first,
                                   heroImage: hasOwnCover ? heroImage : nil,
                                   collage: hasOwnCover ? [] : collage,
                                   cardStyle: true,
@@ -206,7 +207,7 @@ struct PlaylistDetailView: View {
             }
         } label: {
             HStack(spacing: 14) {
-                CachedSongArtwork(data: song.coverData ?? song.imageData)
+                SongCoverImage(song: song, pixels: 160)
                     .frame(width: 48, height: 48)
                     .clipShape(.rect(cornerRadius: 10, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
@@ -336,7 +337,7 @@ struct PlaylistDetailView: View {
                 ForEach(processedSongs) { song in
                     HStack(spacing: 12) {
                         // Decoded off the main thread and cached; never per row in the body.
-                        CachedSongArtwork(data: song.coverData ?? song.imageData)
+                        SongCoverImage(song: song, pixels: 160)
                             .frame(width: 50, height: 50)
                             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         

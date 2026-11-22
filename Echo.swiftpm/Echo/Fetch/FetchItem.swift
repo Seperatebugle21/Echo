@@ -98,8 +98,12 @@ final class FetchItem: Identifiable {
     var automaticRetryCount: Int { retryBudget.used }
     func consumeAutomaticRetry(after error: Error? = nil) -> Bool { retryBudget.consume(after: error) }
 
+    /// Set by the app's diagnostics log; called on every status change.
+    static var statusObserver: ((FetchItem, FetchStatus, FetchStatus) -> Void)?
+
     var status: FetchStatus = .queued {
         didSet {
+            Self.statusObserver?(self, oldValue, status)
             let next: FetchQueueState
             switch status { case .completed: next = .completed; case .failed: next = .failed; default: next = .pending }
             if queueState != next { queueState = next }

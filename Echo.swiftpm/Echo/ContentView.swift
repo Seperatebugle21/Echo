@@ -114,6 +114,10 @@ struct ContentView: View {
                 .ignoresSafeArea()
             }
         }
+        // Settings > Developer > measure hitches: a small live counter.
+        .overlay(alignment: .topLeading) {
+            EchoHitchBadge().padding(.leading, 18).padding(.top, 2)
+        }
         // Keep customization reachable even if Home, Search and Settings are removed.
         .overlay(alignment: .topTrailing) {
             if !tabConfiguration.tabs.contains(where: { [.home, .search, .settings].contains($0) }) {
@@ -542,9 +546,9 @@ struct PlayerCoverLaunchSource: ViewModifier {
             .onGeometryChange(for: CGRect.self) { proxy in
                 proxy.frame(in: .global)
             } action: { geometry.frame = $0 }
-            .task(id: song.coverData ?? song.imageData) {
+            .task(id: SongArtworkKey(song, pixels: 500)) {
                 launchImage = nil
-                let image = await ArtworkThumbnailStore.shared.thumbnail(song.coverData ?? song.imageData)
+                let image = await SongArtworkLoader.image(for: song, key: SongArtworkKey(song, pixels: 500))
                 guard !Task.isCancelled else { return }
                 launchImage = image
             }
@@ -982,14 +986,16 @@ private struct ExpandedPlayerSurface: View {
         .contentShape(shape)
         .clipShape(shape)
         // Preserve the continuous Liquid Glass surface throughout expansion and closing.
-        .glassEffect(.regular.interactive(), in: shape)
+        // Glass only while it moves: fully open, the player is opaque anyway and the
+        // glass would be recomputed over the whole screen for nothing.
+        .glassEffect(presentation.isExpanded && presentation.artworkSettled ? Glass.identity : Glass.regular.interactive(),
+                     in: shape)
         .offset(x: rect.minX, y: rect.minY)
         .accessibilityAction(.escape) {
             presentation.close(reduceMotion: reduceMotion)
         }
-        .task(id: audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData) {
-            let data = audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData
-            let images = await PlayerArtworkImages.cached(data)
+        .task(id: "\(audioPlayer.currentSong?.id.uuidString ?? "")-\(audioPlayer.currentSong?.artworkRevision ?? 0)") {
+            let images = await PlayerArtworkImages.cached(song: audioPlayer.currentSong)
             guard !Task.isCancelled else { return }
             renderedArtwork = images
         }
