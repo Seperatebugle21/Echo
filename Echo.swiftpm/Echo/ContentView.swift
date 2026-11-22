@@ -985,7 +985,7 @@ private struct ExpandedPlayerSurface: View {
         }
         .task(id: audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData) {
             let data = audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData
-            let images = await PlayerArtworkImages.prepare(data)
+            let images = await PlayerArtworkImages.cached(data)
             guard !Task.isCancelled else { return }
             renderedArtwork = images
         }

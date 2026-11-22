@@ -72,14 +72,35 @@ struct NowPlayingView: View {
     // Swiping the cover to change songs
     @State private var coverSwipe: CGFloat = 0
     @State private var swipeIsHorizontal: Bool?
-    @State private var awaitingSwipedCover = false
+    @State private var swipeCommitting = false
+    // What the cover and title show. They change together, in one slide, once the
+    // new song's cover is ready (normally instantly: neighbors are prepared ahead).
+    @State private var shownSong: Song?
+    @State private var shown = PlayerArtworkImages.empty
+    @State private var slideMode = CoverSlide.forward
+    // The songs on either side, so a swipe shows the next cover right beside the finger.
+    @State private var nextSong: Song?
+    @State private var nextArt = PlayerArtworkImages.empty
+    @State private var previousSong: Song?
+    @State private var previousArt = PlayerArtworkImages.empty
     // Lyrics: the controls step aside after a few quiet seconds
     @State private var controlsHidden = false
     @State private var idleTask: Task<Void, Never>?
     @AppStorage(ThemeSettingsView.fullCoverKey) private var fullCover = false
     @State private var transcriptEpisode: PodcastEpisode?
 
-    private var images: PlayerArtworkImages { renderedArtwork ?? localArtwork }
+    private enum CoverSlide { case forward, backward, fade }
+    private static let coverGap: CGFloat = 26
+
+    private var images: PlayerArtworkImages {
+        shownSong != nil || audioPlayer.currentSong == nil ? shown : (renderedArtwork ?? localArtwork)
+    }
+
+    /// Changes when the song or its artwork changes.
+    private var songArtworkKey: String {
+        guard let song = audioPlayer.currentSong else { return "none" }
+        return "\(song.id)-\((song.coverData ?? song.imageData)?.count ?? 0)"
+    }
 
     var body: some View {
 
@@ -185,14 +206,6 @@ struct NowPlayingView: View {
                     if controlsHidden { withAnimation(EchoMotion.fluid) { controlsHidden = false } }
                 }
             }
-            .onChange(of: images.cover.map { ObjectIdentifier($0) }) {
-                // The swiped-away cover's song has its own cover now: bring the new one in.
-                guard awaitingSwipedCover else { return }
-                awaitingSwipedCover = false
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) { coverSwipe = 0 }
-            }
             .onChange(of: reportedCoverFrame, initial: true) { _, frame in
                 if frame.width > 0 { onArtworkFrame?(frame) }
             }
@@ -218,13 +231,7 @@ struct NowPlayingView: View {
             dragMayClose = nil
         }
 
-        .task(id: audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData) {
-            guard renderedArtwork == nil else { return }
-            let data = audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData
-            let images = await PlayerArtworkImages.prepare(data)
-            guard !Task.isCancelled else { return }
-            localArtwork = images
-        }
+        .task(id: songArtworkKey) { await showCurrentSong() }
 
         // MARK: - Sheets (they grow out of the button that opened them)
 
@@ -272,45 +279,109 @@ struct NowPlayingView: View {
 
     // MARK: - Swiping the cover
 
+    private var coverTravel: CGFloat { max(bigCoverSlot.width, 200) + Self.coverGap }
+
     private var coverSwipeGesture: some Gesture {
         DragGesture(minimumDistance: 14)
             .onChanged { value in
-                guard panel == nil, !closingDragInProgress, !awaitingSwipedCover else { return }
+                guard panel == nil, !closingDragInProgress, !swipeCommitting else { return }
                 if swipeIsHorizontal == nil {
                     swipeIsHorizontal = abs(value.translation.width) > abs(value.translation.height)
                 }
                 guard swipeIsHorizontal == true else { return }
+                let x = value.translation.width
+                let hasNeighbor = x < 0 ? nextSong != nil : previousSong != nil
                 var transaction = Transaction()
                 transaction.disablesAnimations = true
-                withTransaction(transaction) { coverSwipe = value.translation.width }
+                withTransaction(transaction) {
+                    // Follows the finger; resists where the queue ends.
+                    coverSwipe = hasNeighbor ? max(-coverTravel, min(coverTravel, x)) : 24 * x / (abs(x) + 80)
+                }
             }
             .onEnded { value in
                 let horizontal = swipeIsHorizontal == true
                 swipeIsHorizontal = nil
-                guard horizontal, panel == nil, !awaitingSwipedCover else { return }
+                guard horizontal, panel == nil, !swipeCommitting else { return }
                 let dx = value.translation.width
                 let vx = value.velocity.width
                 let direction = abs(vx) > 600 ? (vx < 0 ? 1 : -1) : abs(dx) > 100 ? (dx < 0 ? 1 : -1) : 0
-                guard direction != 0 else {
+                let target = direction == 1 ? nextSong : direction == -1 ? previousSong : nil
+                guard let target else {
                     withAnimation(EchoMotion.release) { coverSwipe = 0 }
                     return
                 }
-                let width = max(contentWidth, 320)
-                withAnimation(.easeIn(duration: 0.16), completionCriteria: .logicallyComplete) {
-                    coverSwipe = direction == 1 ? -width : width
+                let art = direction == 1 ? nextArt : previousArt
+                swipeCommitting = true
+                withAnimation(.spring(response: 0.34, dampingFraction: 0.95), completionCriteria: .logicallyComplete) {
+                    coverSwipe = direction == 1 ? -coverTravel : coverTravel
                 } completion: {
                     swipeHaptic += 1
-                    awaitingSwipedCover = true
-                    if direction == 1 { audioPlayer.next() } else { audioPlayer.previous() }
-                    // Same cover on the next song, or it never loads: slide back in anyway.
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(700))
-                        guard awaitingSwipedCover else { return }
-                        awaitingSwipedCover = false
-                        withAnimation(EchoMotion.release) { coverSwipe = 0 }
+                    // The neighbor now sits in the middle: make it the shown cover in the
+                    // same instant, so nothing animates a second time.
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) {
+                        shown = art
+                        shownSong = target
+                        coverSwipe = 0
                     }
+                    if direction == 1 { audioPlayer.next() } else { audioPlayer.playMiniPlayerPrevious(target) }
+                    swipeCommitting = false
                 }
             }
+    }
+
+    /// Brings in the current song's cover and title together, sliding like a swipe.
+    private func showCurrentSong() async {
+        let song = audioPlayer.currentSong
+        let prepared = await PlayerArtworkImages.cached(song.flatMap { $0.coverData ?? $0.imageData })
+        guard !Task.isCancelled else { return }
+        if shownSong == nil || song == nil || shownSong?.id == song?.id || reduceMotion {
+            var transaction = Transaction()
+            transaction.disablesAnimations = !(shownSong?.id == song?.id && shown.cover !== prepared.cover)
+            withTransaction(transaction) {
+                shown = prepared
+                shownSong = song
+            }
+        } else {
+            // Let the player finish starting the new song before anything moves.
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            switch audioPlayer.lastPlaybackDirection {
+            case .next: slideMode = .forward
+            case .previous: slideMode = .backward
+            case .fade: slideMode = .fade
+            }
+            withAnimation(slideMode == .fade ? .easeInOut(duration: 0.35) : .spring(response: 0.48, dampingFraction: 0.92)) {
+                shown = prepared
+                shownSong = song
+            }
+        }
+        // Prepare the covers on either side for swiping and the next skip.
+        let upcoming = audioPlayer.miniPlayerNextSong
+        let earlier = audioPlayer.miniPlayerPreviousSong
+        let upcomingArt = await PlayerArtworkImages.cached(upcoming.flatMap { $0.coverData ?? $0.imageData })
+        let earlierArt = await PlayerArtworkImages.cached(earlier.flatMap { $0.coverData ?? $0.imageData })
+        guard !Task.isCancelled else { return }
+        nextSong = upcoming
+        nextArt = upcomingArt
+        previousSong = earlier
+        previousArt = earlierArt
+    }
+
+    private func coverTransition(width: CGFloat, full: Bool) -> AnyTransition {
+        guard !reduceMotion, !full, slideMode != .fade else { return AnyTransition.opacity }
+        let distance = (width + Self.coverGap) * (slideMode == .forward ? 1 : -1)
+        return AnyTransition.asymmetric(insertion: AnyTransition.offset(x: distance),
+                                        removal: AnyTransition.offset(x: -distance))
+    }
+
+    private var titleTransition: AnyTransition {
+        guard !reduceMotion, slideMode != .fade else { return AnyTransition.opacity }
+        let distance: CGFloat = slideMode == .forward ? 90 : -90
+        return AnyTransition.asymmetric(
+            insertion: AnyTransition.offset(x: distance).combined(with: AnyTransition.opacity),
+            removal: AnyTransition.offset(x: -distance).combined(with: AnyTransition.opacity))
     }
 
     private func toggle(_ target: NowPlayingPanel) {
@@ -408,7 +479,7 @@ struct NowPlayingView: View {
         return ZStack(alignment: .topLeading) {
             Color.clear.allowsHitTesting(false)
             // The title is drawn below the cover, so while gliding it passes underneath.
-            if let song = audioPlayer.currentSong {
+            if let song = shownSong ?? audioPlayer.currentSong {
                 let slot = big ? bigTitleSlot : smallTitleTarget
                 if slot.width > 0 {
                     titleLayer(song, slot: slot, big: big)
@@ -442,11 +513,10 @@ struct NowPlayingView: View {
             NowPlayingArtistButton(song: song)
         }
         .id(song.id)
-        .transition(songInfoTransition)
+        .transition(titleTransition)
         .frame(width: max(1, slot.width / scale), height: 58, alignment: .leading)
         .scaleEffect(scale, anchor: .topLeading)
         .offset(x: slot.minX, y: slot.midY - 29 * scale)
-        .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: song.id)
     }
 
     // MARK: - Song info
@@ -741,21 +811,34 @@ struct NowPlayingView: View {
         let radius: CGFloat = full ? 0 : big ? Self.artworkCornerRadius : 10
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         let card = big && !full
+        let cardShadow = card && !artworkHidden
         return ZStack {
-            if let image = images.cover {
-                // The same view in every mode, so it can glide between them; it only
-                // drifts and breathes while it fills the screen.
-                EchoMovingArtwork(image: image, animated: false)
-                    .id(ObjectIdentifier(image))
-                    .transition(full ? AnyTransition.opacity : artworkTransition)
-            } else {
-                ZStack {
-                    Rectangle().fill(.white.opacity(0.12))
-                    Image(systemName: "music.note")
-                        .font(.system(size: big ? 90 : 24))
-                        .foregroundStyle(.white.opacity(0.8))
+            // Each cover is clipped on its own, so the outgoing and incoming covers can
+            // travel side by side across the screen like a carousel.
+            Group {
+                if let image = images.cover {
+                    coverCard(image, size: frame.size, shape: shape, shadow: cardShadow, playing: playing)
+                        .id(ObjectIdentifier(image))
+                } else {
+                    coverPlaceholder(size: frame.size, shape: shape, big: big)
+                        .id("placeholder")
                 }
-                .transition(.opacity)
+            }
+            .transition(coverTransition(width: frame.width, full: full))
+
+            // While swiping, the next (or previous) cover waits right beside it.
+            if big && !full && coverSwipe != 0 {
+                let forward = coverSwipe < 0
+                let neighbor = forward ? nextArt.cover : previousArt.cover
+                Group {
+                    if let neighbor {
+                        coverCard(neighbor, size: frame.size, shape: shape, shadow: cardShadow, playing: playing)
+                    } else {
+                        coverPlaceholder(size: frame.size, shape: shape, big: big)
+                    }
+                }
+                .offset(x: (forward ? 1 : -1) * (frame.width + Self.coverGap))
+                .opacity((forward ? nextSong : previousSong) == nil ? 0 : 1)
             }
         }
         .frame(width: frame.width, height: frame.height)
@@ -777,9 +860,6 @@ struct NowPlayingView: View {
                 .opacity(full ? 1 : 0)
             }
         }
-        .clipShape(shape)
-        .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
-                   value: images.cover.map { ObjectIdentifier($0) })
         .opacity(artworkHidden ? 0 : 1)
         // Light from the artwork itself falls behind it. No live blur: the glow is the
         // already blurred thumbnail with a soft gradient edge, and the shadow is cast by
@@ -797,26 +877,46 @@ struct NowPlayingView: View {
                         .opacity(artworkHidden || !card ? 0 : playing ? 0.9 : 0.55)
                         .animation(.easeOut(duration: 0.45), value: artworkHidden)
                 }
-                shape
-                    .fill(.black)
-                    .shadow(color: .black.opacity(big ? (playing ? 0.4 : 0.25) : 0.3),
-                            radius: big ? (playing ? 28 : 16) : 10, y: big ? (playing ? 18 : 8) : 5)
-                    .opacity(artworkHidden || full ? 0 : 1)
             }
             .allowsHitTesting(false)
         }
         .scaleEffect(card ? artworkScale : 1)
         .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
-        // Follows the finger when swiped, tilting slightly like a card.
-        .offset(x: big ? coverSwipe : 0)
-        .rotationEffect(.degrees(big && !full ? Double(coverSwipe / max(1, contentWidth)) * 8 : 0))
-        .opacity(big ? 1 - min(0.5, Double(abs(coverSwipe) / max(1, contentWidth)) * 0.6) : 1)
+        // Follows the finger when swiped; the neighbor moves along beside it.
+        .offset(x: big && !full ? coverSwipe : 0)
         .contentShape(shape)
         // Tapping the small cover brings the large one back.
         .onTapGesture { if let panel { toggle(panel) } }
         .allowsHitTesting(!big)
         .offset(x: frame.minX, y: frame.minY)
         .accessibilityHidden(true)
+    }
+
+    /// One cover, clipped to its shape, casting its own shadow so it can travel.
+    private func coverCard(_ image: UIImage, size: CGSize, shape: RoundedRectangle,
+                           shadow: Bool, playing: Bool) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(width: size.width, height: size.height)
+            .clipShape(shape)
+            .background {
+                shape
+                    .fill(.black)
+                    .shadow(color: .black.opacity(shadow ? (playing ? 0.4 : 0.25) : 0),
+                            radius: playing ? 28 : 16, y: playing ? 18 : 8)
+            }
+    }
+
+    private func coverPlaceholder(size: CGSize, shape: RoundedRectangle, big: Bool) -> some View {
+        ZStack {
+            Rectangle().fill(.white.opacity(0.12))
+            Image(systemName: "music.note")
+                .font(.system(size: big ? 90 : 24))
+                .foregroundStyle(.white.opacity(0.8))
+        }
+        .frame(width: size.width, height: size.height)
+        .clipShape(shape)
     }
 }
 
@@ -849,6 +949,17 @@ struct PlayerArtworkImages: @unchecked Sendable {
             .applyingGaussianBlur(sigma: 20)
             .cropped(to: input.extent)
         return CIContext(options: [.cacheIntermediates: false]).createCGImage(output, from: input.extent)
+    }
+
+    /// Same as `prepare`, but remembers recent covers, so skipping to a song whose cover
+    /// was prepared ahead (the next and previous songs are) shows it at once.
+    static func cached(_ data: Data?) async -> PlayerArtworkImages {
+        guard let data else { return .empty }
+        let key = data.count &+ data.hashValue
+        if let hit = await PlayerArtworkCache.shared.images(for: key) { return hit }
+        let images = await prepare(data)
+        await PlayerArtworkCache.shared.remember(images, for: key)
+        return images
     }
 
     static func prepare(_ data: Data?) async -> PlayerArtworkImages {
@@ -1047,5 +1158,18 @@ private struct NowPlayingProgress: View {
         guard time.isFinite && time >= 0 else { return "0:00" }
         let seconds = Int(time)
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
+    }
+}
+
+actor PlayerArtworkCache {
+    static let shared = PlayerArtworkCache()
+    private var store: [Int: PlayerArtworkImages] = [:]
+    private var order: [Int] = []
+
+    func images(for key: Int) -> PlayerArtworkImages? { store[key] }
+
+    func remember(_ images: PlayerArtworkImages, for key: Int) {
+        if store.updateValue(images, forKey: key) == nil { order.append(key) }
+        while order.count > 8 { store[order.removeFirst()] = nil }
     }
 }
