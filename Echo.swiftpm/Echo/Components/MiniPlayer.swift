@@ -105,8 +105,8 @@ struct MiniPlayer: View {
             .padding(.trailing, 4)
             .frame(height: 52)
             .contentShape(Rectangle())
-            .sensoryFeedback(.impact(weight: .light), trigger: playHaptic)
-            .sensoryFeedback(.impact(flexibility: .soft), trigger: skipHaptic)
+            .sensoryFeedback(.impact(weight: .light), trigger: playHaptic) { _, _ in EchoHaptics.allows(essential: true) }
+            .sensoryFeedback(.impact(flexibility: .soft), trigger: skipHaptic) { _, _ in EchoHaptics.allows(essential: true) }
             .onChange(of: current.id) {
                 // Remote controls / automatic advance invalidate captured pages.
                 presentation.cancelOpening(reduceMotion: reduceMotion)

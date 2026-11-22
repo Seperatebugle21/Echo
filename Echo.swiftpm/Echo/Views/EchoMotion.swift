@@ -439,3 +439,19 @@ struct EchoHeroArtwork<Fallback: View>: View {
             .accessibilityHidden(true)
     }
 }
+
+// MARK: - Haptics
+
+/// Settings > Appearance > Haptic feedback: full, limited (default) or off.
+/// Limited keeps only the essentials: play/pause and swiping to another song.
+enum EchoHaptics {
+    static let key = "hapticsLevel"
+
+    static func allows(essential: Bool) -> Bool {
+        switch UserDefaults.standard.string(forKey: key) ?? "limited" {
+        case "off": return false
+        case "full": return true
+        default: return essential
+        }
+    }
+}

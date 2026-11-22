@@ -68,6 +68,7 @@ struct NowPlayingView: View {
     // Haptics
     @State private var playHaptic = 0
     @State private var panelHaptic = 0
+    @State private var swipeHaptic = 0
     // Swiping the cover to change songs
     @State private var coverSwipe: CGFloat = 0
     @State private var swipeIsHorizontal: Bool?
@@ -201,10 +202,12 @@ struct NowPlayingView: View {
         .contentShape(Rectangle())
         .simultaneousGesture(closeDrag)
         .simultaneousGesture(TapGesture().onEnded { wakeControls() })
-        .sensoryFeedback(.impact(weight: .medium), trigger: playHaptic)
-        .sensoryFeedback(.impact(flexibility: .soft), trigger: nextBounce)
-        .sensoryFeedback(.impact(flexibility: .soft), trigger: previousBounce)
-        .sensoryFeedback(.selection, trigger: panelHaptic)
+        // Limited (default): play/pause and swiping to another song. Full adds the rest.
+        .sensoryFeedback(.impact(weight: .medium), trigger: playHaptic) { _, _ in EchoHaptics.allows(essential: true) }
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: swipeHaptic) { _, _ in EchoHaptics.allows(essential: true) }
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: nextBounce) { _, _ in EchoHaptics.allows(essential: false) }
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: previousBounce) { _, _ in EchoHaptics.allows(essential: false) }
+        .sensoryFeedback(.selection, trigger: panelHaptic) { _, _ in EchoHaptics.allows(essential: false) }
         .task(id: closeDragActive) {
             guard !closeDragActive else { return }
             await Task.yield()
@@ -296,14 +299,9 @@ struct NowPlayingView: View {
                 withAnimation(.easeIn(duration: 0.16), completionCriteria: .logicallyComplete) {
                     coverSwipe = direction == 1 ? -width : width
                 } completion: {
+                    swipeHaptic += 1
                     awaitingSwipedCover = true
-                    if direction == 1 {
-                        nextBounce += 1
-                        audioPlayer.next()
-                    } else {
-                        previousBounce += 1
-                        audioPlayer.previous()
-                    }
+                    if direction == 1 { audioPlayer.next() } else { audioPlayer.previous() }
                     // Same cover on the next song, or it never loads: slide back in anyway.
                     Task { @MainActor in
                         try? await Task.sleep(for: .milliseconds(700))
@@ -1035,8 +1033,12 @@ private struct NowPlayingProgress: View {
                 }
                 .padding(.horizontal, 28)
                 // A tick when you grab the bar, and a firmer one at either end.
-                .sensoryFeedback(.selection, trigger: scrub.isActive) { _, active in active }
-                .sensoryFeedback(.impact(weight: .light), trigger: scrubAtEdge) { _, atEdge in atEdge }
+                .sensoryFeedback(.selection, trigger: scrub.isActive) { _, active in
+                    active && EchoHaptics.allows(essential: false)
+                }
+                .sensoryFeedback(.impact(weight: .light), trigger: scrubAtEdge) { _, atEdge in
+                    atEdge && EchoHaptics.allows(essential: false)
+                }
 
 
 
