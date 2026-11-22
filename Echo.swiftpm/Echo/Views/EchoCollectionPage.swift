@@ -222,7 +222,8 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
             past && EchoHaptics.allows(essential: false)
         }
         .task(id: styleKey) {
-            let data = artworkData ?? (await SongArtworkLoader.data(for: artworkSong))
+            var data = artworkData
+            if data == nil { data = await SongArtworkLoader.data(for: artworkSong) }
             let loadedStyle = await EchoCollectionStyle.load(data)
             guard !Task.isCancelled else { return }
             style = loadedStyle
