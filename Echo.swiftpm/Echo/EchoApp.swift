@@ -59,6 +59,8 @@ struct EchoApp: App {
     // Restore the Home selection before the first Home body is rendered.
     @State private var catalog = OnlineMusicCatalogStore.shared
 
+    @State private var showsLaunchSplash = true
+
 
     var body: some Scene {
 
@@ -100,6 +102,13 @@ struct EchoApp: App {
                 value:
                     hasCompletedEchoOnboarding
             )
+            .overlay {
+                if showsLaunchSplash {
+                    EchoLaunchSplash(isReady: !library.isLoadingArtists) {
+                        showsLaunchSplash = false
+                    }
+                }
+            }
 
 
             // MARK: - Language

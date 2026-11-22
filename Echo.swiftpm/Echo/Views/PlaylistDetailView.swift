@@ -23,6 +23,8 @@ struct PlaylistDetailView: View {
     @State private var builtinCover: String?
     @State private var searchText = ""
     @State private var sortOption: FavoritesSortOption = .custom
+    @State private var heroImage: UIImage?
+    @State private var searching = false
     
     var songs: [Song] {
         _ = clockDate
@@ -61,28 +63,225 @@ struct PlaylistDetailView: View {
         return String(format: format, selectedSongs.count)
     }
     
+    // MARK: - Page (Joi Tunes style); editing keeps the list below
+
     var body: some View {
+        Group {
+            if editMode == .active {
+                editingList
+            } else {
+                playlistPage
+            }
+        }
+    }
+
+    private var hasOwnCover: Bool { currentPlaylist.imageData != nil || currentPlaylist.builtinCoverID != nil }
+
+    /// Up to four songs from different albums that have a cover, for the collage.
+    /// Decided from the artwork index and album names; no artwork is read here.
+    private var collageSongs: [Song] {
+        var seen = Set<String>()
+        var picked: [Song] = []
+        for song in songs where SongArtworkStore.shared.hasArtwork(for: song.id) {
+            let album = "\(song.album ?? song.title)|\(song.artist)".lowercased()
+            if seen.insert(album).inserted { picked.append(song) }
+            if picked.count == 4 { break }
+        }
+        return picked
+    }
+
+    private var playlistPage: some View {
+        let collage = collageSongs
+        return EchoCollectionPage(artworkData: currentPlaylist.imageData,
+                                  artworkSong: collage.first,
+                                  heroImage: hasOwnCover ? heroImage : nil,
+                                  collage: hasOwnCover ? [] : collage,
+                                  cardStyle: true,
+                                  searchText: $searchText,
+                                  searchActive: $searching) { colors in
+            VStack(alignment: .leading, spacing: 12) {
+                EchoCollectionPill(text: Text(LocalizedStringKey(isSmart ? "smart_editor_title" : "collection_kind_playlist")), tint: colors.tint)
+
+                Text(currentPlaylist.displayName())
+                    .font(.system(size: 34, weight: .heavy))
+                    .foregroundStyle(colors.tint)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("songs_count_format \(songs.count)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 12) {
+                    EchoCollectionIconButton(symbol: isSmart ? "slider.horizontal.3" : "pencil",
+                                             tint: colors.tint,
+                                             label: LocalizedStringKey(isSmart ? "smart_edit_rules" : "action_edit")) {
+                        if isSmart { showSmartEditor = true } else { withAnimation { editMode = .active } }
+                    }
+                    if !isSmart {
+                        EchoCollectionIconButton(symbol: "plus", tint: colors.tint, label: "add_music_action") {
+                            showSongPicker = true
+                        }
+                    }
+                    EchoCollectionIconButton(symbol: "photo", tint: colors.tint, label: "select_cover_image_accessibility") {
+                        coverData = currentPlaylist.imageData
+                        builtinCover = currentPlaylist.builtinCoverID
+                        showCoverGallery = true
+                    }
+                    Spacer(minLength: 0)
+                    if !songs.isEmpty {
+                        EchoCollectionPlayButtons(tint: colors.tint,
+                                                  shuffle: { playPlaylist(shuffle: true) },
+                                                  play: { playPlaylist() })
+                    }
+                }
+                .padding(.top, 4)
+
+                EchoCollectionDivider(tint: colors.tint)
+                    .padding(.top, 6)
+            }
+        } rows: { colors in
+            LazyVStack(spacing: 0) {
+                if songs.isEmpty {
+                    ContentUnavailableView {
+                        Label(LocalizedStringKey("no_songs_title"), systemImage: "music.note.list")
+                    } description: {
+                        Text(LocalizedStringKey(isSmart ? "smart_empty" : "add_songs_to_playlist_description"))
+                    }
+                    .padding(.top, 20)
+                } else if processedSongs.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                        .padding(.top, 20)
+                } else {
+                    ForEach(processedSongs) { song in
+                        playlistRow(song, tint: colors.tint)
+                    }
+                    if isSmart {
+                        Text("smart_remove_detail")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                    }
+                }
+            }
+        }
+        .navigationTitle(currentPlaylist.displayName())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if !songs.isEmpty && !searching {
+                    Menu {
+                        Picker(LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"), selection: $sortOption) {
+                            ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
+                        }
+                    } label: { Image(systemName: "arrow.up.arrow.down") }
+                    .accessibilityLabel(LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"))
+                    .tint(.primary)
+                }
+            }
+        }
+        .task(id: "\(currentPlaylist.builtinCoverID ?? "")|\(currentPlaylist.imageData?.count ?? 0)") {
+            let image = await CoverThumbnailCache.shared.image(
+                data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID, pixels: 900)
+            guard !Task.isCancelled else { return }
+            heroImage = image
+        }
+        .onReceive(clock) { clockDate = $0 }
+        .sheet(isPresented: $showSmartEditor) { SmartPlaylistEditor(playlist: currentPlaylist) }
+        .sheet(isPresented: $showCoverGallery, onDismiss: saveCover) {
+            PlaylistCoverGallery(imageData: $coverData, builtinCoverID: $builtinCover)
+        }
+        .sheet(isPresented: $showSongPicker) {
+            SongPickerView(playlist: playlist)
+        }
+    }
+
+    private func playlistRow(_ song: Song, tint: Color) -> some View {
+        let isCurrent = audioPlayer.currentSong?.id == song.id
+        return Button {
+            if let url = library.getURL(for: song) {
+                audioPlayer.lastPlaybackDirection = .fade
+                audioPlayer.play(song: song, url: url, queue: processedSongs)
+                audioPlayer.allSongs = library.songs
+                audioPlayer.fillAutoNext(from: library.songs)
+            }
+        } label: {
+            HStack(spacing: 14) {
+                SongCoverImage(song: song, pixels: 160)
+                    .frame(width: 48, height: 48)
+                    .clipShape(.rect(cornerRadius: 10, style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(song.title)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .lineLimit(1)
+                    Text(song.artist)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if isCurrent {
+                    Image(systemName: "waveform")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .symbolEffect(.variableColor.iterative, isActive: audioPlayer.isPlaying)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+            .background {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(tint.opacity(isCurrent ? 0.14 : 0))
+                    .padding(.horizontal, 8)
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(HomePressStyle())
+        .animation(.easeInOut(duration: 0.25), value: isCurrent)
+        .contextMenu {
+            if isSmart {
+                Button("smart_remove_five_days", systemImage: "minus.circle", role: .destructive) {
+                    library.removeSong(song, from: currentPlaylist)
+                }
+            }
+        }
+    }
+
+    // MARK: - Editing list
+
+    private var editingList: some View {
         List(selection: $selectedSongs) {
             // MARK: Header Sectie
             if searchText.isEmpty {
                 Section {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 14) {
+                        // The playlist cover, large and slowly moving, fading into the page.
                         Button {
                             coverData = currentPlaylist.imageData
                             builtinCover = currentPlaylist.builtinCoverID
                             showCoverGallery = true
                         } label: {
-                            PlaylistCoverArtwork(data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID)
-                                .frame(width: 150, height: 150).clipShape(.rect(cornerRadius: 20))
-                        }.buttonStyle(.plain).accessibilityLabel("select_cover_image_accessibility")
+                            EchoHeroArtwork(image: heroImage) {
+                                PlaylistCoverArtwork(data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID)
+                            }
+                        }
+                        .buttonStyle(HomePressStyle())
+                        .accessibilityLabel("select_cover_image_accessibility")
 
-                        Text(currentPlaylist.displayName())
-                            .font(.largeTitle)
-                            .bold()
-                        
-                        Text("songs_count_format \(songs.count)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        VStack(spacing: 6) {
+                            Text(currentPlaylist.displayName())
+                                .font(.largeTitle)
+                                .bold()
+                                .multilineTextAlignment(.center)
+
+                            Text("songs_count_format \(songs.count)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.top, -64)
+                        .padding(.horizontal, 16)
+                        .echoReveal(0)
                         
                         if !songs.isEmpty {
                             HStack(spacing: 12) {
@@ -104,7 +303,9 @@ struct PlaylistDetailView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical)
+                    .padding(.bottom, 16)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
                 .selectionDisabled(true)
             }
@@ -135,20 +336,10 @@ struct PlaylistDetailView: View {
                 Section {
                 ForEach(processedSongs) { song in
                     HStack(spacing: 12) {
-                        if let data = song.coverData,
-                           let image = UIImage(data: data) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 50, height: 50)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            Image(systemName: "music.note")
-                                .font(.title2)
-                                .frame(width: 50, height: 50)
-                                .background(.thinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
+                        // Decoded off the main thread and cached; never per row in the body.
+                        SongCoverImage(song: song, pixels: 160)
+                            .frame(width: 50, height: 50)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(song.title)
@@ -203,8 +394,18 @@ struct PlaylistDetailView: View {
             prompt: Text(LocalizedStringKey("MUSIC_APP_PLAYLIST_SEARCH_PLACEHOLDER_TEXT"))
         )
         .environment(\.editMode, $editMode)
+        .scrollContentBackground(.hidden)
+        .background {
+            EchoArtworkWash(data: currentPlaylist.imageData ?? songs.first.flatMap { $0.coverData ?? $0.imageData })
+        }
         .echoBackground()
         .navigationTitle(currentPlaylist.displayName())
+        .task(id: "\(currentPlaylist.builtinCoverID ?? "")|\(currentPlaylist.imageData?.count ?? 0)") {
+            let image = await CoverThumbnailCache.shared.image(
+                data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID, pixels: 900)
+            guard !Task.isCancelled else { return }
+            heroImage = image
+        }
         .onReceive(clock) { clockDate = $0 }
         .sheet(isPresented: $showSmartEditor) { SmartPlaylistEditor(playlist: currentPlaylist) }
         .sheet(isPresented: $showCoverGallery, onDismiss: saveCover) {

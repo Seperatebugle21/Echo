@@ -39,12 +39,14 @@ class MusicLibraryManager {
     var songs: [Song] = [] {
         didSet {
             songRevision &+= 1
-            scheduleArtistUpdate()
+            // Play dates do not change who the artists are.
+            if !playDateOnlyChange { scheduleArtistUpdate() }
             if !isRestoringLibrary { saveSongs() }
         }
     }
 
     @ObservationIgnored private var isRestoringLibrary = true
+    @ObservationIgnored private var playDateOnlyChange = false
     private(set) var songRevision: UInt64 = 0
     private(set) var favoriteRevision: UInt64 = 0
     @ObservationIgnored private lazy var songPersistence = SongLibraryPersistence(url: songsFileURL)
@@ -586,13 +588,22 @@ class MusicLibraryManager {
         print("Cache gewist")
     }
     
+    /// The most recently played song (or, if none was played yet, the newest one).
+    var lastPlayedSong: Song? {
+        let music = songs.filter { $0.podcastEpisodeID == nil }
+        return music.filter { $0.lastPlayed != nil }
+            .max { ($0.lastPlayed ?? .distantPast) < ($1.lastPlayed ?? .distantPast) }
+            ?? music.max { $0.dateAdded < $1.dateAdded }
+    }
+
     func markAsPlayed(_ song: Song) {
         
         if let index = songs.firstIndex(where: {
             $0.id == song.id
         }) {
-            
+            playDateOnlyChange = true
             songs[index].lastPlayed = Date()
+            playDateOnlyChange = false
         }
     }
     

@@ -2,10 +2,12 @@ import SwiftUI
 
 struct HomeLocalAlbumSection: View {
     let coverWidth: CGFloat
+    var zoom: Namespace.ID? = nil
     @Environment(MusicLibraryManager.self) private var library
     @State private var selection: [String] = []
+    /// Grouped off the main thread once per library change, not in every body pass.
+    @State private var albums: [AlbumGroup] = []
     private let session = HomeSessionManager.shared
-    private var albums: [AlbumGroup] { LibraryAlbums.groups(from: library.songs) }
     private var shown: [AlbumGroup] {
         let byID = Dictionary(albums.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         return selection.compactMap { byID[$0] }
@@ -17,25 +19,46 @@ struct HomeLocalAlbumSection: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 12) {
                         ForEach(shown) { album in
-                            NavigationLink { AlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar) } label: {
+                            NavigationLink {
+                                AlbumDetailView(album: album).toolbarVisibility(.visible, for: .navigationBar)
+                                    .echoZoomDestination("home-album-" + album.id, in: zoom)
+                            } label: {
                                 VStack(alignment: .leading, spacing: 7) {
                                     if let song = album.songs.first {
-                                        SongArtworkView(song: song, cornerRadius: 14).frame(width: coverWidth, height: coverWidth).homeCoverShadow()
+                                        SongArtworkView(song: song, cornerRadius: 14).frame(width: coverWidth, height: coverWidth)
+                                            .echoZoomSource("home-album-" + album.id, in: zoom)
+                                            .homeCoverShadow()
                                     }
                                     Text(album.name).font(.headline).lineLimit(2)
                                     Text(album.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                 }.frame(width: coverWidth, alignment: .leading)
                             }.buttonStyle(HomePressStyle())
                                 .albumFavoriteActions(FavoriteAlbum(album: album))
+                                .echoRailItem()
                         }
-                    }.padding(.horizontal, 20).padding(.vertical, 8)
+                    }
+                    .scrollTargetLayout()
+                    .padding(.vertical, 8)
                 }
+                .contentMargins(.horizontal, 20, for: .scrollContent)
+                .scrollClipDisabled()
+                .scrollTargetBehavior(.viewAligned)
             }
-            .task(id: albums.map(\.id)) { selection = session.albumSelection(from: albums.map(\.id)) }
+            .task(id: library.songRevision) { await refresh() }
         } else {
             Color.clear.frame(height: 0)
-                .task(id: albums.map(\.id)) { selection = session.albumSelection(from: albums.map(\.id)) }
+                .task(id: library.songRevision) { await refresh() }
         }
+    }
+}
+
+private extension HomeLocalAlbumSection {
+    func refresh() async {
+        let songs = library.songs
+        let grouped = await Task.detached(priority: .userInitiated) { LibraryAlbums.groups(from: songs) }.value
+        guard !Task.isCancelled else { return }
+        albums = grouped
+        selection = session.albumSelection(from: grouped.map(\.id))
     }
 }
 
@@ -58,9 +81,15 @@ struct HomeOnlineAlbumSection: View {
                                     }.frame(width: coverWidth, alignment: .leading)
                                 }.buttonStyle(HomePressStyle())
                                     .albumFavoriteActions(FavoriteAlbum(album: album))
+                                    .echoRailItem()
                             }
-                        }.padding(.horizontal, 20).padding(.vertical, 8)
+                        }
+                        .scrollTargetLayout()
+                        .padding(.vertical, 8)
                     }
+                    .contentMargins(.horizontal, 20, for: .scrollContent)
+                    .scrollClipDisabled()
+                    .scrollTargetBehavior(.viewAligned)
                 }
             }
         }

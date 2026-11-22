@@ -114,6 +114,10 @@ struct ContentView: View {
                 .ignoresSafeArea()
             }
         }
+        // Settings > Developer > measure hitches: a small live counter.
+        .overlay(alignment: .topLeading) {
+            EchoHitchBadge().padding(.leading, 18).padding(.top, 2)
+        }
         // Keep customization reachable even if Home, Search and Settings are removed.
         .overlay(alignment: .topTrailing) {
             if !tabConfiguration.tabs.contains(where: { [.home, .search, .settings].contains($0) }) {
@@ -164,6 +168,10 @@ struct ContentView: View {
             Button("podcasts_ok", role: .cancel) { PodcastStore.shared.errorKey = nil }
         } message: {
             Text(LocalizedStringKey(PodcastStore.shared.errorKey ?? "podcasts_playback_error"))
+        }
+        // "Colors from the cover" also works before anything plays, using the last song.
+        .task(id: "\(EchoTheme.shared.usesArtworkColors)-\(audioPlayer.currentSong == nil ? MusicLibraryManager.shared.songRevision : 0)") {
+            audioPlayer.updateThemeArtwork()
         }
         .onChange(of: audioPlayer.currentSong?.id) {
             if audioPlayer.currentSong == nil { presentation.reset() }
@@ -538,9 +546,9 @@ struct PlayerCoverLaunchSource: ViewModifier {
             .onGeometryChange(for: CGRect.self) { proxy in
                 proxy.frame(in: .global)
             } action: { geometry.frame = $0 }
-            .task(id: song.coverData ?? song.imageData) {
+            .task(id: SongArtworkKey(song, pixels: 500)) {
                 launchImage = nil
-                let image = await ArtworkThumbnailStore.shared.thumbnail(song.coverData ?? song.imageData)
+                let image = await SongArtworkLoader.image(for: song, key: SongArtworkKey(song, pixels: 500))
                 guard !Task.isCancelled else { return }
                 launchImage = image
             }
@@ -656,6 +664,9 @@ final class MiniPlayerPresentation {
     private(set) var isVisible = false
     private(set) var isExpanded = false
     private(set) var isTrackingOpening = false
+    /// True once Now Playing rests fully open: its own cover is shown again and
+    /// the flying copy used during the transition is removed.
+    private(set) var artworkSettled = false
     private var isTrackingClosing = false
     private var token = UUID()
 
@@ -668,6 +679,7 @@ final class MiniPlayerPresentation {
         homeCardSong = nil
         sourceFrame = dockFrame
         token = UUID()
+        artworkSettled = false
         isVisible = true
         return true
     }
@@ -719,6 +731,7 @@ final class MiniPlayerPresentation {
         sourceFrame = frame
         homeCardSong = song
         token = UUID()
+        artworkSettled = false
         isVisible = true
         let openingToken = token
         Task { @MainActor in
@@ -738,6 +751,7 @@ final class MiniPlayerPresentation {
         if !isTrackingClosing {
             isTrackingClosing = true
             token = UUID()
+            artworkSettled = false
         }
         var transaction = Transaction(animation: nil)
         transaction.disablesAnimations = true
@@ -765,13 +779,17 @@ final class MiniPlayerPresentation {
         // This is the interaction destination, not an animation-completion flag.
         // Buttons and closing gestures must work while a tap-open is still moving.
         isExpanded = open
+        artworkSettled = false
         let animation: Animation = reduceMotion
-            ? .linear(duration: 0.12) : .spring(response: 0.42, dampingFraction: 0.92)
+            ? .linear(duration: 0.12)
+            : open ? .spring(response: 0.48, dampingFraction: 0.88)
+                   : .spring(response: 0.42, dampingFraction: 0.9)
         withAnimation(animation, completionCriteria: .removed) {
             progress = open ? 1 : 0
         } completion: {
             guard self.token == currentToken else { return }
             self.isVisible = open
+            self.artworkSettled = open
             if self.homeCardSong != nil {
                 // At full size the source rectangle no longer affects the surface.
                 // Every close keeps the original Now Playing -> MiniPlayer transition.
@@ -797,6 +815,7 @@ final class MiniPlayerPresentation {
         isTrackingClosing = false
         progress = isExpanded ? 1 : 0
         isVisible = isExpanded
+        artworkSettled = isExpanded
     }
 
     func reset() {
@@ -805,6 +824,7 @@ final class MiniPlayerPresentation {
         progress = 0
         isVisible = false
         isExpanded = false
+        artworkSettled = false
         isTrackingOpening = false
         isTrackingClosing = false
     }
@@ -817,8 +837,26 @@ private struct ExpandedPlayerSurface: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @State private var renderedArtwork = PlayerArtworkImages.empty
+    @State private var artworkFrame: CGRect = .zero
+    @AppStorage(ThemeSettingsView.fullCoverKey) private var fullCover = false
     // Extend only the surface, keeping controls at their original safe-area positions.
     private let edgeBleed: CGFloat = 2
+
+    /// The cover flies between the compact player and Now Playing instead of fading.
+    private var flyingArtwork: Bool {
+        // A full-screen cover stays in place and shrinks with the player instead of flying.
+        renderedArtwork.cover != nil && artworkFrame.width > 0 && !presentation.artworkSettled
+            && !(fullCover && artworkFrame.width >= 120)
+    }
+
+    /// Where the compact cover sits inside the surface when it is collapsed.
+    private var compactArtwork: (frame: CGRect, radius: CGFloat) {
+        if presentation.homeCardSong != nil {
+            // Mirrors HomeNowPlayingCardFace's layout.
+            return (HomeNowPlayingCardFace.coverFrame(for: presentation.sourceFrame.size), 12)
+        }
+        return (CGRect(x: 14, y: 10, width: 32, height: 32), 6)
+    }
 
     private var rectangle: CGRect {
         let source = presentation.sourceFrame.offsetBy(
@@ -845,7 +883,7 @@ private struct ExpandedPlayerSurface: View {
         ZStack(alignment: .topLeading) {
             // Same backdrop, same full-screen dimensions at EVERY progress value.
             // Its top pixels are revealed first; no temporary black surface.
-            NowPlayingBackdrop(image: renderedArtwork.background)
+            NowPlayingBackdrop(image: renderedArtwork.background, animated: presentation.isVisible)
                 .frame(width: bounds.width, height: bounds.height + 2 * edgeBleed)
                 .opacity(backgroundProgress)
                 .allowsHitTesting(false)
@@ -863,12 +901,20 @@ private struct ExpandedPlayerSurface: View {
                 },
                 renderedArtwork: renderedArtwork,
                 drawsBackground: false,
-                tracksSliderGeometry: presentation.isExpanded
+                tracksSliderGeometry: presentation.isExpanded,
+                artworkHidden: flyingArtwork,
+                onArtworkFrame: { frame in
+                    if frame.width > 0 && artworkFrame != frame { artworkFrame = frame }
+                },
+                topInset: safeInsets.top
             )
             .padding(.top, safeInsets.top)
             .padding(.bottom, safeInsets.bottom)
             .frame(width: bounds.width, height: bounds.height)
-            .offset(y: edgeBleed * p)
+            .coordinateSpace(.named(NowPlayingView.coordinateSpaceName))
+            // Controls rise into place while the surface grows.
+            .offset(y: edgeBleed * p + 36 * (1 - p))
+            .scaleEffect(0.96 + 0.04 * p, anchor: .top)
             .opacity(min(1, max(0, (p - 0.08) / 0.27)))
             .accessibilityHidden(!presentation.isVisible)
             .allowsHitTesting(presentation.isExpanded)
@@ -887,6 +933,51 @@ private struct ExpandedPlayerSurface: View {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
+
+            // Stays mounted so a close starts from where the real cover rests;
+            // only its visibility flips, without animation, at the hand-off.
+            if artworkFrame.width > 0, let cover = renderedArtwork.cover {
+                let start = compactArtwork
+                // The small header cover of the lyrics and queue view does not breathe.
+                let compactLanding = artworkFrame.width < 120
+                let fullLanding = fullCover && !compactLanding
+                let scale = compactLanding || fullLanding ? 1 : NowPlayingView.artworkScale(
+                    isPlaying: audioPlayer.isPlaying, isPreparing: audioPlayer.isPreparingAudio)
+                let landing = artworkFrame.offsetBy(dx: 0, dy: edgeBleed)
+                let target = landing.insetBy(dx: landing.width * (1 - scale) / 2,
+                                             dy: landing.height * (1 - scale) / 2)
+                let frame = CGRect(
+                    x: start.frame.minX + (target.minX - start.frame.minX) * p,
+                    y: start.frame.minY + (target.minY - start.frame.minY) * p,
+                    width: start.frame.width + (target.width - start.frame.width) * p,
+                    height: start.frame.height + (target.height - start.frame.height) * p
+                )
+                let landingRadius = compactLanding ? 10 : fullLanding ? 0 : NowPlayingView.artworkCornerRadius * scale
+                let radius = start.radius + (landingRadius - start.radius) * p
+                Image(uiImage: cover)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: max(1, frame.width), height: max(1, frame.height))
+                    // Landing full screen, the bottom fades like the real cover.
+                    .mask {
+                        ZStack {
+                            Rectangle().opacity(fullLanding ? 1 - Double(min(1, max(0, p))) : 1)
+                            LinearGradient(stops: [
+                                .init(color: .black, location: 0),
+                                .init(color: .black, location: 0.55),
+                                .init(color: .clear, location: 1)
+                            ], startPoint: .top, endPoint: .bottom)
+                            .opacity(fullLanding ? Double(min(1, max(0, p))) : 0)
+                        }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: max(0, radius), style: .continuous))
+                    .shadow(color: .black.opacity(0.4 * Double(min(1, max(0, p)))),
+                            radius: 30 * max(0, p), y: 18 * max(0, p))
+                    .offset(x: frame.minX, y: frame.minY)
+                    .opacity(flyingArtwork ? 1 : 0)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
         }
         .frame(
             width: max(1, rect.width), height: max(1, rect.height),
@@ -895,14 +986,16 @@ private struct ExpandedPlayerSurface: View {
         .contentShape(shape)
         .clipShape(shape)
         // Preserve the continuous Liquid Glass surface throughout expansion and closing.
-        .glassEffect(.regular.interactive(), in: shape)
+        // Glass only while it moves: fully open, the player is opaque anyway and the
+        // glass would be recomputed over the whole screen for nothing.
+        .glassEffect(presentation.isExpanded && presentation.artworkSettled ? Glass.identity : Glass.regular.interactive(),
+                     in: shape)
         .offset(x: rect.minX, y: rect.minY)
         .accessibilityAction(.escape) {
             presentation.close(reduceMotion: reduceMotion)
         }
-        .task(id: audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData) {
-            let data = audioPlayer.currentSong?.coverData ?? audioPlayer.currentSong?.imageData
-            let images = await PlayerArtworkImages.prepare(data)
+        .task(id: "\(audioPlayer.currentSong?.id.uuidString ?? "")-\(audioPlayer.currentSong?.artworkRevision ?? 0)") {
+            let images = await PlayerArtworkImages.cached(song: audioPlayer.currentSong)
             guard !Task.isCancelled else { return }
             renderedArtwork = images
         }

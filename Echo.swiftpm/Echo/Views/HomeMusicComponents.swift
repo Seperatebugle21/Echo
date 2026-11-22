@@ -9,14 +9,19 @@ struct HomeCardLayout {
     var mix: CGFloat { min(240, max(156, (width - 52) / 2.12)) }
 }
 
+/// Echo's press feel: the card sinks under your finger and springs back with a
+/// little life when you let go.
 struct HomePressStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(.primary)
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
-            .opacity(configuration.isPressed ? 0.88 : 1)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.95 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+            .animation(
+                reduceMotion ? nil : configuration.isPressed ? EchoMotion.snappy : EchoMotion.release,
+                value: configuration.isPressed
+            )
     }
 }
 
@@ -102,9 +107,15 @@ struct HomeSongRail: View {
             LazyHStack(alignment: .top, spacing: 12) {
                 ForEach(songs) { song in
                     HomeSongTile(song: song, width: width, play: { play(song) }, options: { options(song) })
+                        .echoRailItem()
                 }
-            }.padding(.horizontal, 20).padding(.vertical, 8)
+            }
+            .scrollTargetLayout()
+            .padding(.vertical, 8)
         }.scrollIndicators(.hidden)
+            .contentMargins(.horizontal, 20, for: .scrollContent)
+            .scrollClipDisabled()
+            .scrollTargetBehavior(.viewAligned)
     }
 }
 
@@ -131,8 +142,8 @@ private struct HomeSongTile: View {
         }
         .buttonStyle(HomePressStyle())
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { source.frame = $0 }
-        .task(id: song.coverData ?? song.imageData) {
-            let image = await ArtworkThumbnailStore.shared.thumbnail(song.coverData ?? song.imageData)
+        .task(id: SongArtworkKey(song, pixels: 500)) {
+            let image = await SongArtworkLoader.image(for: song, key: SongArtworkKey(song, pixels: 500))
             guard !Task.isCancelled else { return }
             launchImage = image
         }
@@ -173,6 +184,7 @@ struct HomeForYouSection: View {
     let mixes: [HomePersonalMix]
     let width: CGFloat
     let play: (Song, [Song]) -> Void
+    var zoom: Namespace.ID? = nil
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 180
     @State private var playbackFeedback = 0
 
@@ -186,6 +198,7 @@ struct HomeForYouSection: View {
                             NavigationLink {
                                 HomeMixCollectionView(kind: mix.kind)
                                     .toolbarVisibility(.visible, for: .navigationBar)
+                                    .echoZoomDestination("home-mix-" + mix.kind.rawValue, in: zoom)
                             } label: {
                                 VStack(alignment: .leading, spacing: 7) {
                                     Spacer(minLength: 50)
@@ -197,6 +210,7 @@ struct HomeForYouSection: View {
                                 .background { HomeArtworkSurface(song: mix.songs.first) }
                                 .clipShape(.rect(cornerRadius: 18))
                                 .contentShape(.rect(cornerRadius: 18))
+                                .echoZoomSource("home-mix-" + mix.kind.rawValue, in: zoom)
                                 .homeCoverShadow()
                             }.buttonStyle(HomePressStyle())
                             Button {
@@ -207,10 +221,15 @@ struct HomeForYouSection: View {
                             }.buttonStyle(HomePressStyle()).padding(14)
                                 .accessibilityLabel(Text("home_play_mix \(Text(mix.kind.title))"))
                         }
+                        .echoRailItem()
                     }
-                }.padding(.horizontal, 20).padding(.vertical, 8)
+                }
+                .scrollTargetLayout()
+                .padding(.vertical, 8)
             }.scrollIndicators(.hidden)
+                .contentMargins(.horizontal, 20, for: .scrollContent)
                 .scrollClipDisabled()
+                .scrollTargetBehavior(.viewAligned)
         }.sensoryFeedback(.selection, trigger: playbackFeedback)
     }
 }
@@ -223,7 +242,7 @@ private struct HomeMixCollectionView: View {
     @State private var selectedSong: Song?
     private var songs: [Song] {
         let available = library.songs.filter {
-            $0.podcastEpisodeID == nil && library.getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true
+            $0.podcastEpisodeID == nil && HomeFileCheck.exists($0, library: library)
         }
         let mixes = HomeSessionManager.shared.mixes(songs: available, favoriteSongIDs: library.favoriteSongIDs,
                                                    recommendationManager: .shared)
@@ -264,7 +283,8 @@ private struct HomeMixCollectionView: View {
 private struct HomeCoverShadow: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
     func body(content: Content) -> some View {
-        content.shadow(color: .black.opacity(colorScheme == .dark ? 0.32 : 0.17), radius: 7, x: 0, y: 4)
+        content
+            .shadow(color: .black.opacity(colorScheme == .dark ? 0.38 : 0.18), radius: 10, x: 0, y: 6)
     }
 }
 

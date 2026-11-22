@@ -10,6 +10,7 @@ struct LibraryView: View {
     @State private var isImporting = false
     @State private var importProgress = 0
     @State private var importTotal = 0
+    @Namespace private var zoom
 
     @Environment(MusicLibraryManager.self)
     private var library
@@ -18,9 +19,8 @@ struct LibraryView: View {
         library.artistGroups
     }
 
-    private var albumGroups: [AlbumGroup] {
-        LibraryAlbums.groups(from: library.songs)
-    }
+    /// Grouped off the main thread when the library changes, not in every body pass.
+    @State private var albumGroups: [AlbumGroup] = []
 
     private var recentlyAddedSongs: [Song] {
 
@@ -112,6 +112,7 @@ struct LibraryView: View {
                                 NavigationLink {
 
                                     SongsView()
+                                        .echoZoomDestination("lib-songs", in: zoom)
 
                                 } label: {
 
@@ -132,12 +133,15 @@ struct LibraryView: View {
                                                 library.songs
                                         )
                                     }
+                                    .echoZoomSource("lib-songs", in: zoom)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(HomePressStyle())
+                                .echoRailItem()
 
                                 NavigationLink {
 
                                     PlaylistsView()
+                                        .echoZoomDestination("lib-playlists", in: zoom)
 
                                 } label: {
 
@@ -158,12 +162,15 @@ struct LibraryView: View {
                                                 library.playlists
                                         )
                                     }
+                                    .echoZoomSource("lib-playlists", in: zoom)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(HomePressStyle())
+                                .echoRailItem()
 
                                 NavigationLink {
 
                                     FavoritesView()
+                                        .echoZoomDestination("lib-favorites", in: zoom)
 
                                 } label: {
 
@@ -184,19 +191,28 @@ struct LibraryView: View {
                                                 library.favoriteSongs
                                         )
                                     }
+                                    .echoZoomSource("lib-favorites", in: zoom)
                                 }
-                                .buttonStyle(.plain)
+                                .buttonStyle(HomePressStyle())
+                                .echoRailItem()
 
-                                NavigationLink { FavoriteAlbumsView() } label: {
+                                NavigationLink { FavoriteAlbumsView().echoZoomDestination("lib-favorite-albums", in: zoom) } label: {
                                     LibraryFeatureCard(title: "library_favorite_albums",
                                         subtitle: String(format: String(localized: "favorite_albums_count"), FavoriteAlbumsStore.shared.albums.count)) {
                                         FavoriteAlbumsFeatureArtwork(albums: FavoriteAlbumsStore.shared.albums)
                                     }
-                                }.buttonStyle(.plain)
+                                    .echoZoomSource("lib-favorite-albums", in: zoom)
+                                }.buttonStyle(HomePressStyle())
+                                .echoRailItem()
                             }
-                            .padding(.horizontal)
+                            .scrollTargetLayout()
+                            .padding(.vertical, 6)
                         }
+                        .contentMargins(.horizontal, 16, for: .scrollContent)
+                        .scrollClipDisabled()
+                        .scrollTargetBehavior(.viewAligned)
                     }
+                    .echoReveal(0)
 
                     VStack(
                         alignment: .leading,
@@ -226,6 +242,7 @@ struct LibraryView: View {
                             NavigationLink {
 
                                 ArtistsView()
+                                    .echoZoomDestination("lib-artists", in: zoom)
 
                             } label: {
 
@@ -247,12 +264,14 @@ struct LibraryView: View {
                                         artists: artists
                                     )
                                 }
+                                .echoZoomSource("lib-artists", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
 
                             NavigationLink {
 
                                 AlbumsView()
+                                    .echoZoomDestination("lib-albums", in: zoom)
 
                             } label: {
 
@@ -275,12 +294,14 @@ struct LibraryView: View {
                                             albumGroups
                                     )
                                 }
+                                .echoZoomSource("lib-albums", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
 
                             NavigationLink {
 
                                 RecentAddedView()
+                                    .echoZoomDestination("lib-added", in: zoom)
 
                             } label: {
 
@@ -296,12 +317,14 @@ struct LibraryView: View {
                                             recentlyAddedSongs
                                     )
                                 }
+                                .echoZoomSource("lib-added", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
 
                             NavigationLink {
 
                                 RecentPlayedView()
+                                    .echoZoomDestination("lib-played", in: zoom)
 
                             } label: {
 
@@ -318,15 +341,23 @@ struct LibraryView: View {
                                             recentlyPlayedSongs
                                     )
                                 }
+                                .echoZoomSource("lib-played", in: zoom)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(HomePressStyle())
                         }
                         .padding(.horizontal)
                     }
+                    .echoReveal(1)
+                    .echoScrollSection()
                     PodcastLibraryFolders()
                         .padding(.horizontal)
+                        .echoReveal(2)
+                        .echoScrollSection()
                 }
                 .padding(.top, 8)
+                .background(alignment: .top) {
+                    EchoAmbientGlow(height: 460).offset(y: -260)
+                }
                 .padding(.bottom, 120)
             }
 
@@ -367,6 +398,15 @@ struct LibraryView: View {
             }
             .sheet(isPresented: $showCreate) { CreatePlaylistView() }
             .sheet(isPresented: $showSmart) { SmartPlaylistEditor() }
+            .task(id: library.songRevision) {
+                let songs = library.songs
+                let grouped = await Task.detached(priority: .utility) { LibraryAlbums.groups(from: songs) }.value
+                guard !Task.isCancelled else { return }
+                // A changed play date leaves the albums as they are: no redraw needed.
+                let same = grouped.count == albumGroups.count
+                    && zip(grouped, albumGroups).allSatisfy { $0.id == $1.id && $0.songs.count == $1.songs.count }
+                if !same { albumGroups = grouped }
+            }
             .fileImporter(isPresented: $showImporter, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in
                 switch result {
                 case .success(let files):
@@ -482,6 +522,7 @@ struct LibraryFeatureCard<
                         style: .continuous
                     )
                 )
+                .homeCoverShadow()
 
             Text(title)
                 .font(.headline)
@@ -1120,99 +1161,71 @@ struct ArtistDetailView: View {
     private var audioPlayer
 
     let artist: ArtistGroup
+    @State private var searchText = ""
+
+    private var heroSong: Song? { songs.first(where: { SongArtworkStore.shared.hasArtwork(for: $0.id) }) }
 
     private var songs: [Song] {
         library.artistGroupsByID[artist.id]?.songs ?? artist.songs.compactMap { library.song(withID: $0.id) }
     }
 
+    private var sortedSongs: [Song] {
+        songs.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
+    private var shownSongs: [Song] {
+        guard !searchText.isEmpty else { return sortedSongs }
+        return sortedSongs.filter { FuzzySearch.matches(query: searchText, in: [$0.title, $0.album ?? "", $0.artist]) }
+    }
+
     var body: some View {
+        EchoCollectionPage(artworkSong: heroSong, searchText: $searchText) { colors in
+            VStack(alignment: .leading, spacing: 12) {
+                EchoCollectionPill(text: Text("collection_kind_artist"), tint: colors.tint)
 
-        List {
+                Text(artist.name)
+                    .font(.system(size: 34, weight: .heavy))
+                    .foregroundStyle(colors.tint)
+                    .fixedSize(horizontal: false, vertical: true)
 
-            Section {
+                Text(verbatim: String(format: String(localized: "libraryview_songs_count", locale: locale), songs.count))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
 
-                HStack {
-
-                    Spacer()
-
-                    VStack(spacing: 12) {
-
-                        ArtistArtworkView(
-                            songs: songs
-                        )
-                        .frame(width: 160, height: 160)
-                        .clipShape(Circle())
-
-                        Text(artist.name)
-                            .font(.title2.bold())
-
-                        Text(
-                            String(
-                                format: String(
-                                    localized: "libraryview_songs_count",
-                                    locale: locale
-                                ),
-                                songs.count
-                            )
-                        )
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-                }
-                .listRowBackground(
-                    Color.clear
-                )
-            }
-
-            Section(
-                "libraryview_songs"
-            ) {
-
-                ForEach(
-                    songs.sorted {
-                        $0.title
-                            .localizedCaseInsensitiveCompare(
-                                $1.title
-                            )
-                        == .orderedAscending
-                    }
-                ) { song in
-
-                    Button {
-
-                        play(
-                            song,
-                            queue: songs
-                        )
-
+                HStack(spacing: 12) {
+                    NavigationLink {
+                        ArtistCompletionView(name: artist.name)
                     } label: {
-
-                        LibrarySongRow(
-                            song: song
-                        )
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundStyle(colors.tint)
+                            .frame(width: 50, height: 50)
+                            .background(colors.tint.opacity(0.1), in: .circle)
+                            .overlay { Circle().strokeBorder(colors.tint.opacity(0.4), lineWidth: 1) }
+                            .contentShape(.circle)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(HomePressStyle())
+                    .accessibilityLabel("artist_find_online")
+                    Spacer(minLength: 0)
+                    EchoCollectionPlayButtons(tint: colors.tint,
+                                              shuffle: { playAll(shuffled: true) },
+                                              play: { playAll(shuffled: false) })
+                }
+                .padding(.top, 4)
+
+                EchoCollectionDivider(tint: colors.tint)
+                    .padding(.top, 6)
+            }
+        } rows: { colors in
+            LazyVStack(spacing: 0) {
+                ForEach(shownSongs) { song in
+                    artistSongRow(song, tint: colors.tint)
                 }
             }
         }
-
-        .echoBackground()
-
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Group {
-                NavigationLink {
-                    ArtistCompletionView(name: artist.name)
-                } label: {
-                    Label("artist_find_online", systemImage: "magnifyingglass")
-                }.labelStyle(.iconOnly)
-                }.tint(.primary)
-            }
-        }
+
         .safeAreaInset(edge: .top) {
             if library.isLoadingArtists {
                 ProgressView("libraryview_loading_artists")
@@ -1221,6 +1234,52 @@ struct ArtistDetailView: View {
                     .background(.regularMaterial)
             }
         }
+    }
+
+    private func artistSongRow(_ song: Song, tint: Color) -> some View {
+        let isCurrent = audioPlayer.currentSong?.id == song.id
+        return Button {
+            play(song, queue: sortedSongs)
+        } label: {
+            HStack(spacing: 14) {
+                SongCoverImage(song: song, pixels: 160)
+                    .frame(width: 48, height: 48)
+                    .clipShape(.rect(cornerRadius: 10, style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(song.title)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .lineLimit(1)
+                    Text(song.album ?? song.artist)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if isCurrent {
+                    Image(systemName: "waveform")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .symbolEffect(.variableColor.iterative, isActive: audioPlayer.isPlaying)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+            .background {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(tint.opacity(isCurrent ? 0.14 : 0))
+                    .padding(.horizontal, 8)
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(HomePressStyle())
+        .animation(.easeInOut(duration: 0.25), value: isCurrent)
+    }
+
+    private func playAll(shuffled: Bool) {
+        let queue = shuffled ? sortedSongs.shuffled() : sortedSongs
+        guard let first = queue.first else { return }
+        play(first, queue: queue)
     }
 
     private func play(
@@ -1262,7 +1321,7 @@ struct AlbumsView: View {
 
     @State private var searchText = ""
 
-    private var allAlbums: [AlbumGroup] { LibraryAlbums.groups(from: library.songs) }
+    @State private var allAlbums: [AlbumGroup] = []
 
     private var albums: [AlbumGroup] {
 
@@ -1327,6 +1386,12 @@ struct AlbumsView: View {
         .navigationTitle(
             "libraryview_albums"
         )
+        .task(id: library.songRevision) {
+            let all = library.songs
+            let grouped = await Task.detached(priority: .userInitiated) { LibraryAlbums.groups(from: all) }.value
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.2)) { allAlbums = grouped }
+        }
 
         .searchable(
             text: $searchText,
@@ -1343,10 +1408,12 @@ struct AlbumDetailView: View {
     @State private var sortOption: FavoritesSortOption = .custom
     @State private var selectedSong: Song?
     @State private var findMissing = false
+    /// Regrouping the whole library on every body pass made opening an album stutter.
+    @State private var liveSongs: [Song]?
+    private let favorites = FavoriteAlbumsStore.shared
+    @State private var searching = false
 
-    private var songs: [Song] {
-        LibraryAlbums.groups(from: library.songs).first { $0.id == album.id }?.songs ?? []
-    }
+    private var songs: [Song] { liveSongs ?? album.songs }
     private var processedSongs: [Song] {
         let filtered = AlbumSongSelection.filtered(songs, query: searchText)
         switch sortOption {
@@ -1357,49 +1424,94 @@ struct AlbumDetailView: View {
         case .lastPlayed: return filtered.sorted { ($0.lastPlayed ?? .distantPast) > ($1.lastPlayed ?? .distantPast) }
         }
     }
+
+    private var meta: String {
+        let year = songs.compactMap(\.releaseYear).min().map(String.init)
+        let count = String(format: String(localized: "libraryview_songs_count"), songs.count)
+        return [year, count].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    private var artistGroup: ArtistGroup? {
+        library.artistGroups.first { $0.name.localizedCaseInsensitiveCompare(album.artist) == .orderedSame }
+    }
+
     var body: some View {
-        List {
-            Section {
-                VStack(spacing: 12) {
-                    if let first = songs.first {
-                        SongArtworkView(song: first, cornerRadius: 20).frame(width: 180, height: 180)
+        EchoCollectionPage(artworkSong: songs.first, searchText: $searchText, searchActive: $searching) { colors in
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 6) {
+                    EchoCollectionPill(text: Text("collection_kind_album"), tint: colors.tint)
+                    if let genre = songs.compactMap(\.genre).first(where: { !$0.isEmpty }) {
+                        EchoCollectionPill(text: Text(verbatim: genre), tint: colors.tint)
                     }
-                    Text(album.name).font(.title2.bold())
-                    Text(album.artist).foregroundStyle(.secondary)
-                    Text("songs_count_format \(songs.count)").font(.subheadline).foregroundStyle(.secondary)
-                    AlbumPlaybackControls(songs: processedSongs)
-                    Button("album_find_missing", systemImage: "arrow.down.circle") { findMissing = true }
-                        .buttonStyle(.bordered)
                 }
-                .frame(maxWidth: .infinity).padding(.vertical)
-                .listRowBackground(Color.clear)
+                Text(album.name)
+                    .font(.system(size: 34, weight: .heavy))
+                    .foregroundStyle(colors.tint)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                artistLine
+
+                Text(verbatim: meta)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 12) {
+                    let favorite = FavoriteAlbum(album: album)
+                    let isFavorite = favorites.contains(favorite)
+                    EchoCollectionIconButton(symbol: isFavorite ? "star.fill" : "star",
+                                             tint: colors.tint,
+                                             label: LocalizedStringKey(isFavorite ? "album_remove_favorite" : "album_add_favorite")) {
+                        favorites.toggle(favorite)
+                    }
+                    EchoCollectionIconButton(symbol: "plus", tint: colors.tint, label: "album_find_missing") {
+                        findMissing = true
+                    }
+                    Spacer(minLength: 0)
+                    EchoCollectionPlayButtons(tint: colors.tint,
+                                              shuffle: { playAll(shuffled: true) },
+                                              play: { playAll(shuffled: false) })
+                }
+                .padding(.top, 4)
+
+                EchoCollectionDivider(tint: colors.tint)
+                    .padding(.top, 6)
             }
-            Section("libraryview_songs") {
-                ForEach(processedSongs) { song in
-                    Button { play(song) } label: { LibrarySongRow(song: song) }
-                        .buttonStyle(.plain)
-                        .contextMenu {
-                            Button("album_song_options", systemImage: "ellipsis") { selectedSong = song }
-                        }
+        } rows: { colors in
+            // All tracks share the album cover, so the rows show the track number instead.
+            LazyVStack(spacing: 0) {
+                let tracks = processedSongs
+                ForEach(Array(tracks.enumerated()), id: \.element.id) { index, song in
+                    albumTrackRow(song, number: index + 1, tint: colors.tint)
                 }
-                if processedSongs.isEmpty { Text("catalog_no_search_results").foregroundStyle(.secondary) }
+                if tracks.isEmpty {
+                    Text("catalog_no_search_results")
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 24)
+                }
             }
         }
-        .echoBackground()
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "album_search")
+        .task(id: library.songRevision) {
+            let all = library.songs
+            let id = album.id
+            let grouped = await Task.detached(priority: .userInitiated) {
+                LibraryAlbums.groups(from: all).first { $0.id == id }?.songs ?? []
+            }.value
+            guard !Task.isCancelled else { return }
+            liveSongs = grouped
+        }
         .toolbar {
-            ToolbarItemGroup(placement: .topBarTrailing) {
-                Group {
-                AlbumFavoriteButton(album: FavoriteAlbum(album: album)).labelStyle(.iconOnly)
-                Menu {
-                    Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {
-                        ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
-                    }
-                } label: { Image(systemName: "arrow.up.arrow.down.circle") }
-                .accessibilityLabel("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE")
-                }.tint(.primary)
+            if !searching {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {
+                            ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
+                        }
+                    } label: { Image(systemName: "arrow.up.arrow.down") }
+                    .accessibilityLabel("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE")
+                    .tint(.primary)
+                }
             }
         }
         .sheet(item: $selectedSong) { SongOptionsView(song: $0) }
@@ -1415,6 +1527,101 @@ struct AlbumDetailView: View {
             }
         }
     }
+
+    @ViewBuilder
+    private var artistLine: some View {
+        if let artistGroup {
+            NavigationLink { ArtistDetailView(artist: artistGroup) } label: { artistLabel }
+                .buttonStyle(HomePressStyle())
+        } else {
+            artistLabel
+        }
+    }
+
+    private var artistLabel: some View {
+        HStack(spacing: 10) {
+            Group {
+                if let first = songs.first { SongCoverImage(song: first, pixels: 90, symbolFont: .caption2) }
+            }
+                .frame(width: 26, height: 26)
+                .clipShape(.circle)
+            Text(album.artist)
+                .font(.headline)
+                .foregroundStyle(.primary.opacity(0.85))
+                .lineLimit(1)
+        }
+        .contentShape(.rect)
+    }
+
+    private func playAll(shuffled: Bool) {
+        let queue = AlbumSongSelection.queue(processedSongs, shuffled: shuffled)
+        guard let first = queue.first, let url = library.getURL(for: first) else { return }
+        audioPlayer.lastPlaybackDirection = .fade
+        audioPlayer.play(song: first, url: url, queue: queue)
+        audioPlayer.allSongs = library.songs
+        audioPlayer.fillAutoNext(from: library.songs)
+    }
+
+    private func albumTrackRow(_ song: Song, number: Int, tint: Color) -> some View {
+        let isCurrent = audioPlayer.currentSong?.id == song.id
+        return HStack(spacing: 0) {
+            Button { play(song) } label: {
+                HStack(spacing: 16) {
+                    ZStack {
+                        if isCurrent {
+                            Image(systemName: "waveform")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(tint)
+                                .symbolEffect(.variableColor.iterative, isActive: audioPlayer.isPlaying)
+                        } else {
+                            Text(verbatim: "\(number)")
+                                .font(.subheadline.weight(.medium))
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(width: 26)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(song.title)
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(tint)
+                            .lineLimit(1)
+                        Text(song.artist)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.leading, 20)
+                .padding(.vertical, 12)
+                .contentShape(.rect)
+            }
+            .buttonStyle(HomePressStyle())
+            Button { selectedSong = song } label: {
+                Image(systemName: "ellipsis")
+                    .rotationEffect(.degrees(90))
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 44, height: 44)
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 10)
+            .accessibilityLabel("album_song_options")
+        }
+        // The playing track sits on a soft tinted card, like Joi Tunes.
+        .background {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(tint.opacity(isCurrent ? 0.14 : 0))
+                .padding(.horizontal, 8)
+        }
+        .animation(.easeInOut(duration: 0.25), value: isCurrent)
+        .contextMenu {
+            Button("album_song_options", systemImage: "ellipsis") { selectedSong = song }
+        }
+    }
+
     private func play(_ song: Song) {
         guard let url = library.getURL(for: song) else { return }
         audioPlayer.lastPlaybackDirection = .fade
@@ -1598,7 +1805,7 @@ struct RawSongArtwork: View {
 
     var body: some View {
 
-        CachedSongArtwork(data: song.coverData ?? song.imageData)
+        SongCoverImage(song: song, pixels: 500)
     }
 }
 
@@ -1612,23 +1819,10 @@ struct ArtistArtworkView: View {
 
             Group {
 
-                if
-                    let song =
-                        songs.first(
-                            where: {
-                                $0.coverData
-                                != nil
-                            }
-                        ),
-                    let data =
-                        song.coverData,
-                    let image =
-                        UIImage(data: data)
-                {
+                // The index says which song has a cover; nothing is read while drawing.
+                if let song = songs.first(where: { SongArtworkStore.shared.hasArtwork(for: $0.id) }) {
 
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
+                    SongCoverImage(song: song, pixels: 500)
 
                 } else {
 

@@ -18,6 +18,7 @@ struct SettingsView: View {
                         Image(systemName: "waveform")
                             .font(.system(size: 30, weight: .semibold))
                             .foregroundStyle(Color.accentColor)
+                            .symbolEffect(.variableColor.iterative.dimInactiveLayers, options: .repeat(.periodic(delay: 2.5)))
                             .frame(width: 68, height: 68)
                             .background(Color.accentColor.opacity(0.12), in: .rect(cornerRadius: 22))
                         VStack(alignment: .leading, spacing: 5) {
@@ -26,6 +27,7 @@ struct SettingsView: View {
                         }
                     }
                     .padding(.vertical, 12)
+                    .echoReveal(0)
                     .listRowBackground(Color.clear)
                 }
                 personalization

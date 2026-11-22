@@ -19,6 +19,8 @@ struct MiniPlayer: View {
     @State private var settling = false
     @State private var blockedUntilRelease = false
     @State private var animationToken = UUID()
+    @State private var playHaptic = 0
+    @State private var skipHaptic = 0
 
     private enum DragAxis { case horizontal, vertical }
     private var snapAnimation: Animation {
@@ -87,20 +89,24 @@ struct MiniPlayer: View {
                 AirPlayButton()
                     .frame(width: 30, height: 44)
                 Button {
+                    playHaptic += 1
                     audioPlayer.togglePlayPause()
                 } label: {
                     Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 19, weight: .semibold))
-                        .contentTransition(.symbolEffect(.replace))
+                        .contentTransition(.symbolEffect(.replace.downUp.byLayer))
                         .frame(width: 44, height: 44)
+                        .contentShape(.circle)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(EchoPlayerControlStyle(halo: false, pressedScale: 0.78))
                 .accessibilityLabel(audioPlayer.playbackErrorKey != nil ? LocalizedStringKey("audio_retry") : LocalizedStringKey(audioPlayer.isPlaying ? "Pause" : "Play"))
             }
             .padding(.leading, 14)
             .padding(.trailing, 4)
             .frame(height: 52)
             .contentShape(Rectangle())
+            .sensoryFeedback(.impact(weight: .light), trigger: playHaptic) { _, _ in EchoHaptics.allows(essential: true) }
+            .sensoryFeedback(.impact(flexibility: .soft), trigger: skipHaptic) { _, _ in EchoHaptics.allows(essential: true) }
             .onChange(of: current.id) {
                 // Remote controls / automatic advance invalidate captured pages.
                 presentation.cancelOpening(reduceMotion: reduceMotion)
@@ -215,6 +221,7 @@ struct MiniPlayer: View {
             let liveTarget = direction == 1
                 ? audioPlayer.miniPlayerNextSong : audioPlayer.miniPlayerPreviousSong
             guard liveTarget?.id == target.id else { snapBack(); return }
+            skipHaptic += 1
             if direction == 1 { audioPlayer.next() }
             else { audioPlayer.playMiniPlayerPrevious(target) }
             reset()
@@ -238,7 +245,7 @@ struct MiniPlayer: View {
     private func songPage(_ song: Song, scrolling: Bool, selectedTransition: Bool = false) -> some View {
         HStack(spacing: 8) {
             ZStack {
-                MiniPlayerArtwork(data: showCovers ? (song.coverData ?? song.imageData) : nil)
+                MiniPlayerArtwork(song: showCovers ? song : nil)
                     .id(song.id)
                     .transition(selectedTransition ? .opacity : .identity)
             }
@@ -280,12 +287,12 @@ struct MiniPlayer: View {
 
 // Decode when artwork changes, rather than on every drag update.
 struct MiniPlayerArtwork: View {
-    let data: Data?
-    @State private var image: UIImage?
+    /// nil shows the music note (no song, or covers are turned off).
+    let song: Song?
     var body: some View {
         Group {
-            if let image {
-                Image(uiImage: image).resizable().scaledToFill()
+            if let song {
+                SongCoverImage(song: song, pixels: 120, symbolFont: .system(size: 15))
             } else {
                 Image(systemName: "music.note")
                     .font(.system(size: 15))
@@ -295,21 +302,6 @@ struct MiniPlayerArtwork: View {
         }
         .frame(width: 32, height: 32)
         .clipShape(.rect(cornerRadius: 6))
-        .task(id: data) {
-            image = nil
-            let thumbnail = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-                guard let data, let source = CGImageSourceCreateWithData(data as CFData, nil),
-                      let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-                        kCGImageSourceCreateThumbnailFromImageAlways: true,
-                        kCGImageSourceCreateThumbnailWithTransform: true,
-                        kCGImageSourceThumbnailMaxPixelSize: 96,
-                        kCGImageSourceShouldCacheImmediately: true
-                      ] as CFDictionary) else { return nil }
-                return UIImage(cgImage: cgImage)
-            }.value
-            guard !Task.isCancelled else { return }
-            image = thumbnail
-        }
     }
 }
 
@@ -414,7 +406,7 @@ struct MiniPlayerTransitionRow: View {
             let artistBrightness = artistStart + (0.85 - artistStart) * backgroundProgress
             HStack(spacing: 4) {
                 HStack(spacing: 8) {
-                    MiniPlayerArtwork(data: showCovers ? song.coverData : nil)
+                    MiniPlayerArtwork(song: showCovers ? song : nil)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(song.title)
                             .font(.system(size: 14, weight: .medium))

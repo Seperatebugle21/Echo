@@ -19,9 +19,8 @@ struct NowPlayingOptionsButton: View {
     var body: some View {
         Button { expanded = true } label: {
             Image(systemName: "ellipsis")
-                .font(.title3.weight(.semibold))
+                .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(.white)
-                .rotationEffect(.degrees(90))
                 .frame(width: 44, height: 44)
                 .contentShape(.rect)
                 .overlay(alignment: .topTrailing) {

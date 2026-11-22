@@ -218,7 +218,9 @@ struct AudioTransitionPreviewView: View {
         return VStack(alignment: .leading, spacing: 12) {
             Text(isFirst ? "audio_preview_first" : "audio_preview_second").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             HStack(spacing: 16) {
-                CachedSongArtwork(data: song?.coverData ?? song?.imageData)
+                Group {
+                    if let song { SongCoverImage(song: song, pixels: 240) } else { CachedSongArtwork(data: nil) }
+                }
                     .frame(width: 76, height: 76).clipShape(.rect(cornerRadius: 16))
                 VStack(alignment: .leading, spacing: 6) {
                     if let song {

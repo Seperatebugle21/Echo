@@ -197,6 +197,8 @@ private struct EchoBackgroundModifier: ViewModifier {
 }
 
 struct ThemeSettingsView: View {
+    /// Now Playing shows the cover across the top of the screen instead of as a card.
+    static let fullCoverKey = "nowPlayingFullCover"
     @Bindable private var theme = EchoTheme.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.echoSystemColorScheme) private var systemScheme

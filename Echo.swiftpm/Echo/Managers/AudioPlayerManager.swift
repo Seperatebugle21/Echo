@@ -459,8 +459,9 @@ class AudioPlayerManager:
 
         if artworkSongID != song.id {
             artworkSongID = song.id; lockscreenArtwork = nil; lockscreenArtworkTask?.cancel()
-            let data = song.coverData
             lockscreenArtworkTask = Task { @MainActor [weak self] in
+                // Read off the main thread: the artwork lives on disk.
+                let data = await SongArtworkLoader.data(for: song)
                 let image = await CoverThumbnailCache.shared.image(data: data, builtin: nil, pixels: 512)
                 guard !Task.isCancelled, let self, self.currentSong?.id == song.id, !self.isPreviewing else { return }
                 if let image { self.lockscreenArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image } }
@@ -477,11 +478,13 @@ class AudioPlayerManager:
 
     /// Lets "colors from the cover" follow the song that is playing.
     func updateThemeArtwork() {
-        let song = currentSong
+        // Before anything plays, follow the song Home shows: the last one played.
+        let song = currentSong ?? MusicLibraryManager.shared.lastPlayedSong
         Task { @MainActor in
             let theme = EchoTheme.shared
             guard theme.usesArtworkColors, let song else { theme.showArtwork(nil, key: nil); return }
-            theme.showArtwork(song.coverData ?? song.imageData, key: "\(song.id)-\(song.artworkRevision)")
+            let data = await SongArtworkLoader.data(for: song)
+            theme.showArtwork(data, key: "\(song.id)-\(song.artworkRevision)")
         }
     }
 
@@ -739,8 +742,14 @@ class AudioPlayerManager:
                         self.flowRecent.append(started.id)
                         if self.flowRecent.count > 40 { self.flowRecent.removeFirst(self.flowRecent.count - 40) }
                         self.requestFlowRefill()
-                        MusicLibraryManager.shared.markAsPlayed(started)
-                        self.donatePlaybackToSiri(song: started)
+                        // Bookkeeping waits until the song-change animation has finished:
+                        // marking a song as played changes the library, which several
+                        // screens react to.
+                        Task { @MainActor [weak self] in
+                            try? await Task.sleep(for: .milliseconds(1500))
+                            MusicLibraryManager.shared.markAsPlayed(started)
+                            self?.donatePlaybackToSiri(song: started)
+                        }
                         if identifier == nil { self.loadLyrics(for: started); self.fillQueue(from: queue) }
                     }
             }
@@ -1540,6 +1549,8 @@ class AudioPlayerManager:
     // MARK: - Timer
     // ========================================================
 
+    @ObservationIgnored private var timerTicks = 0
+
     private func startTimer() {
 
         timer?
@@ -1564,14 +1575,15 @@ class AudioPlayerManager:
 
 
                 guard !self.isPreviewing else { return }
-                self.duration = self.player?.duration ?? self.duration
-                guard !self.isPreviewing else { return }
-                self.prepareAutomaticTransition()
-                self.currentTime =
-                    self.player?
-                        .currentTime
-                    ??
-                    0
+                // Observation redraws every reader on each assignment, even of an equal
+                // value: only write what changed.
+                let newDuration = self.player?.duration ?? self.duration
+                if newDuration != self.duration { self.duration = newDuration }
+                self.timerTicks &+= 1
+                // Ten checks a second were not needed to start a crossfade on time.
+                if self.timerTicks % 5 == 0 { self.prepareAutomaticTransition() }
+                let newTime = self.player?.currentTime ?? 0
+                if newTime != self.currentTime { self.currentTime = newTime }
                 let rate = self.player?.currentRate ?? 1
                 if abs(rate - self.lastPublishedRate) > 0.001 {
                     self.lastPublishedRate = rate
