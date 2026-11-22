@@ -1153,6 +1153,7 @@ struct ArtistDetailView: View {
     private var audioPlayer
 
     let artist: ArtistGroup
+    @State private var searchText = ""
 
     private var heroData: Data? { songs.first(where: { $0.coverData != nil })?.coverData }
 
@@ -1164,8 +1165,13 @@ struct ArtistDetailView: View {
         songs.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 
+    private var shownSongs: [Song] {
+        guard !searchText.isEmpty else { return sortedSongs }
+        return sortedSongs.filter { FuzzySearch.matches(query: searchText, in: [$0.title, $0.album ?? "", $0.artist]) }
+    }
+
     var body: some View {
-        EchoCollectionPage(artworkData: heroData) { colors in
+        EchoCollectionPage(artworkData: heroData, searchText: $searchText) { colors in
             VStack(alignment: .leading, spacing: 12) {
                 EchoCollectionPill(text: Text("collection_kind_artist"), tint: colors.tint)
 
@@ -1204,13 +1210,16 @@ struct ArtistDetailView: View {
             }
         } rows: { colors in
             LazyVStack(spacing: 0) {
-                ForEach(sortedSongs) { song in
+                ForEach(shownSongs) { song in
                     artistSongRow(song, tint: colors.tint)
                 }
             }
         }
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
+        }
         .safeAreaInset(edge: .top) {
             if library.isLoadingArtists {
                 ProgressView("libraryview_loading_artists")
@@ -1421,7 +1430,7 @@ struct AlbumDetailView: View {
     }
 
     var body: some View {
-        EchoCollectionPage(artworkData: coverData) { colors in
+        EchoCollectionPage(artworkData: coverData, searchText: $searchText) { colors in
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 6) {
                     EchoCollectionPill(text: Text("collection_kind_album"), tint: colors.tint)
@@ -1477,7 +1486,6 @@ struct AlbumDetailView: View {
         }
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "album_search")
         .task(id: library.songRevision) {
             let all = library.songs
             let id = album.id
@@ -1488,6 +1496,8 @@ struct AlbumDetailView: View {
             liveSongs = grouped
         }
         .toolbar {
+            // No title in the bar: the page's own title sits under the cover.
+            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE", selection: $sortOption) {

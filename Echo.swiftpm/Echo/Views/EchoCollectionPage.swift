@@ -78,17 +78,39 @@ actor EchoCollectionStyleCache {
     }
 }
 
-/// An album or artist page: the cover at the top, the whole page filled with the
-/// cover's colors at once, and the title, buttons and tracks tinted to match.
-/// The cover stays still and centered; nothing zooms or drifts.
+/// Overscroll at the top of a collection page. Only the stretching cover and the
+/// search pill read it, so the page itself is not rebuilt while you pull.
+@MainActor @Observable
+final class EchoPullState {
+    var amount: CGFloat = 0
+}
+
+/// An album, artist or playlist page, like Joi Tunes: the cover at the top, the whole
+/// page filled with the cover's colors at once, tinted title, buttons and tracks.
+/// Pulling down stretches the cover over the top and reveals a search pill; pull far
+/// enough and let go to search inside the page.
 struct EchoCollectionPage<Info: View, Rows: View>: View {
     let artworkData: Data?
+    /// Shown instead of the artwork from `artworkData`, e.g. a playlist's own cover.
+    var heroImage: UIImage? = nil
+    /// Up to four covers shown as a 2×2 collage (playlists without their own cover).
+    var collage: [Data] = []
+    /// Always show the cover as a rounded card (playlists).
+    var cardStyle = false
+    var searchText: Binding<String>? = nil
     @ViewBuilder let info: (EchoCollectionColors) -> Info
     @ViewBuilder let rows: (EchoCollectionColors) -> Rows
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var style: EchoCollectionStyle?
     @State private var loaded = false
+    @State private var pull = EchoPullState()
+    @State private var searching = false
+    @State private var pastThreshold = false
+    @FocusState private var searchFocused: Bool
+
+    private static var searchThreshold: CGFloat { 90 }
 
     private var colors: EchoCollectionColors {
         guard let palette = style?.palette else { return .plain }
@@ -100,21 +122,52 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
         return EchoCollectionColors(tint: tint, background: background)
     }
 
+    /// Collages and covers with a light border sit on the page as a rounded card.
+    private var card: Bool { cardStyle || (style?.lightEdges ?? false) }
+
     var body: some View {
-        let card = style?.lightEdges ?? false
         let colors = self.colors
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                hero(card: card, colors: colors)
-                info(colors)
-                    .padding(.horizontal, 20)
-                    .padding(.top, card ? 18 : -24)
-                rows(colors)
-                    .padding(.top, 8)
+        GeometryReader { geometry in
+            let topInset = geometry.safeAreaInsets.top
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if searching {
+                        Color.clear.frame(height: topInset + 64)
+                    } else {
+                        hero(topInset: topInset)
+                        info(colors)
+                            .padding(.horizontal, 20)
+                            .padding(.top, card ? 18 : -24)
+                            .transition(.opacity)
+                    }
+                    rows(colors)
+                        .padding(.top, 8)
+                }
+                .padding(.bottom, 40)
+                .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion), value: searching)
             }
-            .padding(.bottom, 40)
+            .ignoresSafeArea(edges: .top)
+            .scrollDismissesKeyboard(.interactively)
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                -(geometry.contentOffset.y + geometry.contentInsets.top)
+            } action: { _, amount in
+                pull.amount = max(0, amount)
+                let past = amount > Self.searchThreshold
+                if past != pastThreshold { pastThreshold = past }
+            }
+            .onScrollPhaseChange { oldPhase, newPhase in
+                // Released past the threshold: open the search field.
+                if oldPhase == .interacting && newPhase != .interacting && pastThreshold
+                    && searchText != nil && !searching {
+                    openSearch()
+                }
+            }
+            .overlay(alignment: .top) {
+                if searchText != nil {
+                    searchChrome(topInset: topInset, tint: colors.tint)
+                }
+            }
         }
-        .ignoresSafeArea(edges: loaded && !card ? .top : [])
         .background {
             ZStack {
                 if colors.background.count > 1 {
@@ -125,7 +178,13 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
             }
             .ignoresSafeArea()
         }
-        .toolbarBackground(.hidden, for: .navigationBar)
+        // No bar or blur at the top: the cover runs to the edge of the screen.
+        .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
+        .scrollEdgeEffectHidden(true, for: .top)
+        .toolbar(searching ? .hidden : .visible, for: .navigationBar)
+        .sensoryFeedback(.impact(weight: .light), trigger: pastThreshold) { _, past in
+            past && EchoHaptics.allows(essential: false)
+        }
         .task(id: artworkData) {
             let loadedStyle = await EchoCollectionStyle.load(artworkData)
             guard !Task.isCancelled else { return }
@@ -134,31 +193,106 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
         }
     }
 
+    // MARK: Search
+
+    private func openSearch() {
+        withAnimation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion)) { searching = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
+            searchFocused = true
+        }
+    }
+
+    private func closeSearch() {
+        searchFocused = false
+        withAnimation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion)) {
+            searchText?.wrappedValue = ""
+            searching = false
+        }
+    }
+
     @ViewBuilder
-    private func hero(card: Bool, colors: EchoCollectionColors) -> some View {
-        let image = style?.cover
-        if card {
-            Color.clear
-                .aspectRatio(1, contentMode: .fit)
-                .overlay { cover(image) }
-                .clipShape(.rect(cornerRadius: 26, style: .continuous))
-                .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
-                .padding(.horizontal, 16)
-                .padding(.top, 6)
-                .accessibilityHidden(true)
-        } else {
-            Color.clear
-                .aspectRatio(1, contentMode: .fit)
-                .overlay { cover(image) }
-                .clipped()
-                .mask {
-                    LinearGradient(stops: [
-                        .init(color: .black, location: 0),
-                        .init(color: .black, location: 0.68),
-                        .init(color: .clear, location: 1)
-                    ], startPoint: .top, endPoint: .bottom)
+    private func searchChrome(topInset: CGFloat, tint: Color) -> some View {
+        if searching, let searchText {
+            HStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    TextField("collection_search", text: searchText)
+                        .focused($searchFocused)
+                        .submitLabel(.search)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                    if !searchText.wrappedValue.isEmpty {
+                        Button { searchText.wrappedValue = "" } label: {
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("action_close")
+                    }
                 }
-                .accessibilityHidden(true)
+                .padding(.horizontal, 14)
+                .frame(height: 44)
+                .glassEffect(.regular.interactive(), in: .capsule)
+
+                Button(action: closeSearch) {
+                    Image(systemName: "xmark")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 44, height: 44)
+                        .glassEffect(.regular.interactive(), in: .circle)
+                }
+                .buttonStyle(HomePressStyle())
+                .accessibilityLabel("action_close")
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, topInset + 6)
+            .transition(AnyTransition.move(edge: .top).combined(with: AnyTransition.opacity))
+        } else {
+            EchoPullSearchPill(pull: pull, threshold: Self.searchThreshold, tint: tint)
+                .padding(.top, topInset + 8)
+                .allowsHitTesting(false)
+        }
+    }
+
+    // MARK: Hero
+
+    @ViewBuilder
+    private func hero(topInset: CGFloat) -> some View {
+        let image = heroImage ?? style?.cover
+        if card {
+            EchoStretchingHero(pull: pull, anchor: .center) {
+                Color.clear
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay {
+                        if collage.count >= 2 && heroImage == nil {
+                            EchoCoverCollage(covers: collage)
+                        } else {
+                            cover(image)
+                        }
+                    }
+                    .clipShape(.rect(cornerRadius: 26, style: .continuous))
+                    .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, topInset + 4)
+            .accessibilityHidden(true)
+        } else {
+            EchoStretchingHero(pull: pull, anchor: .bottom) {
+                Color.clear
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay { cover(image) }
+                    .clipped()
+                    .mask {
+                        LinearGradient(stops: [
+                            .init(color: .black, location: 0),
+                            .init(color: .black, location: 0.68),
+                            .init(color: .clear, location: 1)
+                        ], startPoint: .top, endPoint: .bottom)
+                    }
+            }
+            .accessibilityHidden(true)
         }
     }
 
@@ -175,6 +309,75 @@ struct EchoCollectionPage<Info: View, Rows: View>: View {
             }
         }
         .animation(.easeOut(duration: 0.2), value: image == nil)
+    }
+}
+
+/// Grows with the pull so the cover always fills the top; nothing else redraws.
+private struct EchoStretchingHero<Content: View>: View {
+    let pull: EchoPullState
+    let anchor: UnitPoint
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        content
+            .scaleEffect(1 + pull.amount / 320, anchor: anchor)
+            .offset(y: anchor == .bottom ? 0 : -pull.amount / 2)
+    }
+}
+
+/// Appears while pulling down; fills in once letting go would open search.
+private struct EchoPullSearchPill: View {
+    let pull: EchoPullState
+    let threshold: CGFloat
+    let tint: Color
+
+    var body: some View {
+        let progress = min(1, max(0, (pull.amount - 20) / (threshold - 20)))
+        let ready = pull.amount >= threshold
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").font(.subheadline.weight(.semibold))
+            Text("collection_search").font(.subheadline.weight(.semibold))
+        }
+        .foregroundStyle(ready ? Color.black.opacity(0.8) : Color.primary)
+        .padding(.horizontal, 16)
+        .frame(height: 36)
+        .background {
+            Capsule().fill(ready ? AnyShapeStyle(tint) : AnyShapeStyle(.ultraThinMaterial))
+        }
+        .scaleEffect(0.7 + 0.3 * progress)
+        .opacity(progress)
+        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: ready)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Four covers in a square, for playlists without their own cover.
+struct EchoCoverCollage: View {
+    let covers: [Data]
+    var body: some View {
+        let tiles = Array(covers.prefix(4))
+        GeometryReader { geometry in
+            let half = geometry.size.width / 2
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    tile(tiles, 0, half)
+                    tile(tiles, 1, half)
+                }
+                HStack(spacing: 0) {
+                    tile(tiles, 2, half)
+                    tile(tiles, 3, half)
+                }
+            }
+        }
+    }
+
+    private func tile(_ tiles: [Data], _ index: Int, _ side: CGFloat) -> some View {
+        // Two covers repeat crosswise; three repeat the first in the last corner.
+        let order = tiles.count == 2 ? [0, 1, 1, 0] : [0, 1, 2, 3]
+        let data = tiles.isEmpty ? nil : tiles[order[index] % tiles.count]
+        return CachedSongArtwork(data: data)
+            .frame(width: side, height: side)
+            .clipped()
     }
 }
 

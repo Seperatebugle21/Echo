@@ -62,7 +62,193 @@ struct PlaylistDetailView: View {
         return String(format: format, selectedSongs.count)
     }
     
+    // MARK: - Page (Joi Tunes style); editing keeps the list below
+
     var body: some View {
+        Group {
+            if editMode == .active {
+                editingList
+            } else {
+                playlistPage
+            }
+        }
+    }
+
+    private var hasOwnCover: Bool { currentPlaylist.imageData != nil || currentPlaylist.builtinCoverID != nil }
+
+    /// Up to four different covers from the playlist, for the collage.
+    private var collageData: [Data] {
+        var seen = Set<Int>()
+        var covers: [Data] = []
+        for song in songs {
+            guard let data = song.coverData ?? song.imageData else { continue }
+            let key = data.count &+ data.hashValue
+            if seen.insert(key).inserted { covers.append(data) }
+            if covers.count == 4 { break }
+        }
+        return covers
+    }
+
+    private var playlistPage: some View {
+        let collage = collageData
+        return EchoCollectionPage(artworkData: currentPlaylist.imageData ?? collage.first,
+                                  heroImage: hasOwnCover ? heroImage : nil,
+                                  collage: hasOwnCover ? [] : collage,
+                                  cardStyle: true,
+                                  searchText: $searchText) { colors in
+            VStack(alignment: .leading, spacing: 12) {
+                EchoCollectionPill(text: Text(LocalizedStringKey(isSmart ? "smart_editor_title" : "collection_kind_playlist")), tint: colors.tint)
+
+                Text(currentPlaylist.displayName())
+                    .font(.system(size: 34, weight: .heavy))
+                    .foregroundStyle(colors.tint)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("songs_count_format \(songs.count)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 12) {
+                    EchoCollectionIconButton(symbol: isSmart ? "slider.horizontal.3" : "pencil",
+                                             tint: colors.tint,
+                                             label: LocalizedStringKey(isSmart ? "smart_edit_rules" : "action_edit")) {
+                        if isSmart { showSmartEditor = true } else { withAnimation { editMode = .active } }
+                    }
+                    if !isSmart {
+                        EchoCollectionIconButton(symbol: "plus", tint: colors.tint, label: "add_music_action") {
+                            showSongPicker = true
+                        }
+                    }
+                    EchoCollectionIconButton(symbol: "photo", tint: colors.tint, label: "select_cover_image_accessibility") {
+                        coverData = currentPlaylist.imageData
+                        builtinCover = currentPlaylist.builtinCoverID
+                        showCoverGallery = true
+                    }
+                    Spacer(minLength: 0)
+                    if !songs.isEmpty {
+                        EchoCollectionPlayButtons(tint: colors.tint,
+                                                  shuffle: { playPlaylist(shuffle: true) },
+                                                  play: { playPlaylist() })
+                    }
+                }
+                .padding(.top, 4)
+
+                EchoCollectionDivider(tint: colors.tint)
+                    .padding(.top, 6)
+            }
+        } rows: { colors in
+            LazyVStack(spacing: 0) {
+                if songs.isEmpty {
+                    ContentUnavailableView {
+                        Label(LocalizedStringKey("no_songs_title"), systemImage: "music.note.list")
+                    } description: {
+                        Text(LocalizedStringKey(isSmart ? "smart_empty" : "add_songs_to_playlist_description"))
+                    }
+                    .padding(.top, 20)
+                } else if processedSongs.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                        .padding(.top, 20)
+                } else {
+                    ForEach(processedSongs) { song in
+                        playlistRow(song, tint: colors.tint)
+                    }
+                    if isSmart {
+                        Text("smart_remove_detail")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                    }
+                }
+            }
+        }
+        .navigationTitle(currentPlaylist.displayName())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) { Color.clear.frame(width: 1, height: 1) }
+            ToolbarItem(placement: .topBarTrailing) {
+                if !songs.isEmpty {
+                    Menu {
+                        Picker(LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"), selection: $sortOption) {
+                            ForEach(FavoritesSortOption.allCases) { option in Text(option.localizedLabel).tag(option) }
+                        }
+                    } label: { Image(systemName: "arrow.up.arrow.down") }
+                    .accessibilityLabel(LocalizedStringKey("MUSIC_APP_SORT_MENU_SELECTION_HEADER_TITLE"))
+                    .tint(.primary)
+                }
+            }
+        }
+        .task(id: "\(currentPlaylist.builtinCoverID ?? "")|\(currentPlaylist.imageData?.count ?? 0)") {
+            let image = await CoverThumbnailCache.shared.image(
+                data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID, pixels: 900)
+            guard !Task.isCancelled else { return }
+            heroImage = image
+        }
+        .onReceive(clock) { clockDate = $0 }
+        .sheet(isPresented: $showSmartEditor) { SmartPlaylistEditor(playlist: currentPlaylist) }
+        .sheet(isPresented: $showCoverGallery, onDismiss: saveCover) {
+            PlaylistCoverGallery(imageData: $coverData, builtinCoverID: $builtinCover)
+        }
+        .sheet(isPresented: $showSongPicker) {
+            SongPickerView(playlist: playlist)
+        }
+    }
+
+    private func playlistRow(_ song: Song, tint: Color) -> some View {
+        let isCurrent = audioPlayer.currentSong?.id == song.id
+        return Button {
+            if let url = library.getURL(for: song) {
+                audioPlayer.lastPlaybackDirection = .fade
+                audioPlayer.play(song: song, url: url, queue: processedSongs)
+                audioPlayer.allSongs = library.songs
+                audioPlayer.fillAutoNext(from: library.songs)
+            }
+        } label: {
+            HStack(spacing: 14) {
+                CachedSongArtwork(data: song.coverData ?? song.imageData)
+                    .frame(width: 48, height: 48)
+                    .clipShape(.rect(cornerRadius: 10, style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(song.title)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .lineLimit(1)
+                    Text(song.artist)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if isCurrent {
+                    Image(systemName: "waveform")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .symbolEffect(.variableColor.iterative, isActive: audioPlayer.isPlaying)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+            .background {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(tint.opacity(isCurrent ? 0.14 : 0))
+                    .padding(.horizontal, 8)
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(HomePressStyle())
+        .animation(.easeInOut(duration: 0.25), value: isCurrent)
+        .contextMenu {
+            if isSmart {
+                Button("smart_remove_five_days", systemImage: "minus.circle", role: .destructive) {
+                    library.removeSong(song, from: currentPlaylist)
+                }
+            }
+        }
+    }
+
+    // MARK: - Editing list
+
+    private var editingList: some View {
         List(selection: $selectedSongs) {
             // MARK: Header Sectie
             if searchText.isEmpty {
