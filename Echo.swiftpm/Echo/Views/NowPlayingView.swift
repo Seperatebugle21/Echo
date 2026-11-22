@@ -274,19 +274,25 @@ struct NowPlayingView: View {
             : CGRect(x: 102, y: 50, width: max(40, contentWidth - 198), height: 64)
     }
 
-    @ViewBuilder
+    /// Each layer is positioned from the top-left corner of the content by its own slot.
+    /// The explicit top-leading stack matters: an overlay's implicit stack centers its
+    /// children on each other, which pushed the title down and the small cover sideways.
     private var movingLayer: some View {
         let big = panel == nil
         let cover = big ? bigCoverSlot : smallCoverTarget
-        if cover.width > 0 {
-            coverLayer(frame: cover, big: big)
-        }
-        if let song = audioPlayer.currentSong {
-            let slot = big ? bigTitleSlot : smallTitleTarget
-            if slot.width > 0 {
-                titleLayer(song, slot: slot, big: big)
+        return ZStack(alignment: .topLeading) {
+            Color.clear.allowsHitTesting(false)
+            if cover.width > 0 {
+                coverLayer(frame: cover, big: big)
+            }
+            if let song = audioPlayer.currentSong {
+                let slot = big ? bigTitleSlot : smallTitleTarget
+                if slot.width > 0 {
+                    titleLayer(song, slot: slot, big: big)
+                }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private func titleLayer(_ song: Song, slot: CGRect, big: Bool) -> some View {
