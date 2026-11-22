@@ -16,6 +16,8 @@ struct NowPlayingView: View {
     var artworkHidden = false
     /// Reports the cover's frame in `NowPlayingView.coordinateSpaceName`.
     var onArtworkFrame: ((CGRect) -> Void)? = nil
+    /// The safe-area inset above this view, so a full-screen cover can reach the top edge.
+    var topInset: CGFloat = 0
 
     /// Declared by the expanding surface so the flying cover can land exactly on the real one.
     static let coordinateSpaceName = "EchoNowPlayingSpace"
@@ -63,6 +65,7 @@ struct NowPlayingView: View {
     private var reduceMotion
 
     @State private var showPlaylistPicker = false
+    @AppStorage(ThemeSettingsView.fullCoverKey) private var fullCover = false
     @State private var transcriptEpisode: PodcastEpisode?
 
     private var images: PlayerArtworkImages { renderedArtwork ?? localArtwork }
@@ -261,7 +264,16 @@ struct NowPlayingView: View {
     // MARK: - Moving cover and title
 
     private var reportedCoverFrame: CGRect {
-        panel == nil ? bigCoverSurface : (smallCoverSurface.width > 0 ? smallCoverSurface : bigCoverSurface)
+        if panel == nil && fullCover && contentWidth > 0 {
+            // Full-screen cover: it starts at the top of the surface.
+            return CGRect(x: 0, y: 0, width: contentWidth, height: contentWidth)
+        }
+        return panel == nil ? bigCoverSurface : (smallCoverSurface.width > 0 ? smallCoverSurface : bigCoverSurface)
+    }
+
+    /// The full-screen cover's square, reaching up to the top edge of the screen.
+    private var fullCoverFrame: CGRect {
+        CGRect(x: 0, y: -topInset, width: contentWidth, height: contentWidth)
     }
 
     /// Before the header has been laid out once, its slots follow from its fixed layout.
@@ -279,7 +291,8 @@ struct NowPlayingView: View {
     /// children on each other, which pushed the title down and the small cover sideways.
     private var movingLayer: some View {
         let big = panel == nil
-        let cover = big ? bigCoverSlot : smallCoverTarget
+        let full = big && fullCover && contentWidth > 0
+        let cover = full ? fullCoverFrame : big ? bigCoverSlot : smallCoverTarget
         return ZStack(alignment: .topLeading) {
             Color.clear.allowsHitTesting(false)
             // The title is drawn below the cover, so while gliding it passes underneath.
@@ -290,7 +303,18 @@ struct NowPlayingView: View {
                 }
             }
             if cover.width > 0 {
-                coverLayer(frame: cover, big: big)
+                coverLayer(frame: cover, big: big, full: full)
+            }
+            // The cover now covers the close handle, so draw the handle again on top
+            // (the real one underneath still takes the taps).
+            if full {
+                Capsule()
+                    .fill(.white.opacity(0.7))
+                    .frame(width: 38, height: 5)
+                    .frame(width: contentWidth, height: 28)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                    .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -595,17 +619,18 @@ struct NowPlayingView: View {
 
     /// The one cover in Now Playing. It glides and resizes between the large slot and the
     /// lyrics/queue header, breathes with play/pause when large, and changes with the song.
-    private func coverLayer(frame: CGRect, big: Bool) -> some View {
+    private func coverLayer(frame: CGRect, big: Bool, full: Bool) -> some View {
         let playing = artworkScale == 1
-        let radius: CGFloat = big ? Self.artworkCornerRadius : 10
+        let radius: CGFloat = full ? 0 : big ? Self.artworkCornerRadius : 10
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        let card = big && !full
         return ZStack {
             if let image = images.cover {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
+                // The same view in every mode, so it can glide between them; it only
+                // drifts and breathes while it fills the screen.
+                EchoMovingArtwork(image: image, animated: full && playing)
                     .id(ObjectIdentifier(image))
-                    .transition(artworkTransition)
+                    .transition(full ? AnyTransition.opacity : artworkTransition)
             } else {
                 ZStack {
                     Rectangle().fill(.white.opacity(0.12))
@@ -617,6 +642,24 @@ struct NowPlayingView: View {
             }
         }
         .frame(width: frame.width, height: frame.height)
+        // Full screen: darker at the very top for the status bar, fading out at the bottom.
+        .overlay(alignment: .top) {
+            LinearGradient(colors: [.black.opacity(0.35), .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: frame.height * 0.25)
+                .opacity(full ? 1 : 0)
+                .allowsHitTesting(false)
+        }
+        .mask {
+            ZStack {
+                Rectangle().opacity(full ? 0 : 1)
+                LinearGradient(stops: [
+                    .init(color: .black, location: 0),
+                    .init(color: .black, location: 0.55),
+                    .init(color: .clear, location: 1)
+                ], startPoint: .top, endPoint: .bottom)
+                .opacity(full ? 1 : 0)
+            }
+        }
         .clipShape(shape)
         .animation(EchoMotion.motion(EchoMotion.fluid, reduceMotion: reduceMotion),
                    value: images.cover.map { ObjectIdentifier($0) })
@@ -634,18 +677,18 @@ struct NowPlayingView: View {
                         .mask { EllipticalGradient(colors: [.black, .black.opacity(0.7), .clear], center: .center) }
                         .scaleEffect(playing ? 1.25 : 1.05)
                         .offset(y: playing ? 24 : 12)
-                        .opacity(artworkHidden || !big ? 0 : playing ? 0.9 : 0.55)
+                        .opacity(artworkHidden || !card ? 0 : playing ? 0.9 : 0.55)
                         .animation(.easeOut(duration: 0.45), value: artworkHidden)
                 }
                 shape
                     .fill(.black)
                     .shadow(color: .black.opacity(big ? (playing ? 0.4 : 0.25) : 0.3),
                             radius: big ? (playing ? 28 : 16) : 10, y: big ? (playing ? 18 : 8) : 5)
-                    .opacity(artworkHidden ? 0 : 1)
+                    .opacity(artworkHidden || full ? 0 : 1)
             }
             .allowsHitTesting(false)
         }
-        .scaleEffect(big ? artworkScale : 1)
+        .scaleEffect(card ? artworkScale : 1)
         .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
         .contentShape(shape)
         // Tapping the small cover brings the large one back.

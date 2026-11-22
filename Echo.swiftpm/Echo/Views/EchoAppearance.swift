@@ -197,6 +197,9 @@ private struct EchoBackgroundModifier: ViewModifier {
 }
 
 struct ThemeSettingsView: View {
+    /// Now Playing shows the cover across the top of the screen instead of as a card.
+    static let fullCoverKey = "nowPlayingFullCover"
+    @AppStorage(ThemeSettingsView.fullCoverKey) private var fullCoverNowPlaying = false
     @Bindable private var theme = EchoTheme.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.echoSystemColorScheme) private var systemScheme
@@ -211,6 +214,13 @@ struct ThemeSettingsView: View {
     private let presets = ["182235", "000000", "202228", "F4E9D8", "DCEDE6", "364C43", "533859", "BDD5EF"]
     var body: some View {
         Form {
+            Section {
+                Toggle("appearance_full_cover", isOn: $fullCoverNowPlaying)
+            } header: {
+                Text("appearance_now_playing_section")
+            } footer: {
+                Text("appearance_full_cover_detail")
+            }
             Section("settings_appearance_title") {
                 Picker("settings_appearance_title", selection: $theme.mode) {
                     Text("appearance_system").tag("system")

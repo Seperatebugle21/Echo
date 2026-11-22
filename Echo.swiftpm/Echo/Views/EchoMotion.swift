@@ -322,3 +322,67 @@ struct EchoArtworkWash: View {
         .accessibilityHidden(true)
     }
 }
+
+// MARK: - Moving cover
+
+/// A cover that slowly drifts, zooms and breathes, filling its frame edge to edge.
+/// Your own files have no motion artwork like Apple Music's video covers, so the
+/// still image itself moves; only layer transforms change, 30 times a second.
+struct EchoMovingArtwork: View {
+    let image: UIImage?
+    var animated = true
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+
+    var body: some View {
+        GeometryReader { geometry in
+            let size = geometry.size
+            ZStack {
+                if let image {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0,
+                                            paused: !animated || reduceMotion || scenePhase != .active)) { context in
+                        let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 36_000)
+                        let moving = animated && !reduceMotion
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: size.width, height: size.height)
+                            .scaleEffect(moving ? 1.1 + 0.06 * CGFloat(sin(t / 9)) : 1.02)
+                            .offset(x: moving ? CGFloat(sin(t / 11)) * size.width * 0.035 : 0,
+                                    y: moving ? CGFloat(cos(t / 13)) * size.height * 0.025 : 0)
+                            .rotationEffect(.degrees(moving ? sin(t / 17) * 1.2 : 0))
+                    }
+                    .id(ObjectIdentifier(image))
+                    .transition(.opacity)
+                }
+            }
+            .frame(width: size.width, height: size.height)
+            .clipped()
+            .animation(EchoMotion.ambient, value: image.map { ObjectIdentifier($0) })
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Bottom blur
+
+/// Content blurs softly as it slides under the tab bar and mini player, like Joi Tunes.
+struct EchoBottomFade: View {
+    var height: CGFloat = 150
+
+    var body: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .mask {
+                LinearGradient(stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black.opacity(0.7), location: 0.45),
+                    .init(color: .black, location: 1)
+                ], startPoint: .top, endPoint: .bottom)
+            }
+            .frame(height: height)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}

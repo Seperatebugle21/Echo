@@ -260,6 +260,11 @@ private struct MiniPlayerDockModifier: ViewModifier {
                     }
             }
         }
+        // Content blurs softly under the tab bar and mini player.
+        .overlay(alignment: .bottom) {
+            EchoBottomFade(height: audioPlayer.currentSong != nil ? 150 : 80)
+                .ignoresSafeArea(edges: .bottom)
+        }
         // Keep the reserved dock slot above the tab bar when search gains focus.
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
@@ -830,6 +835,7 @@ private struct ExpandedPlayerSurface: View {
     @Environment(AudioPlayerManager.self) private var audioPlayer
     @State private var renderedArtwork = PlayerArtworkImages.empty
     @State private var artworkFrame: CGRect = .zero
+    @AppStorage(ThemeSettingsView.fullCoverKey) private var fullCover = false
     // Extend only the surface, keeping controls at their original safe-area positions.
     private let edgeBleed: CGFloat = 2
 
@@ -894,7 +900,8 @@ private struct ExpandedPlayerSurface: View {
                 artworkHidden: flyingArtwork,
                 onArtworkFrame: { frame in
                     if frame.width > 0 && artworkFrame != frame { artworkFrame = frame }
-                }
+                },
+                topInset: safeInsets.top
             )
             .padding(.top, safeInsets.top)
             .padding(.bottom, safeInsets.bottom)
@@ -928,7 +935,8 @@ private struct ExpandedPlayerSurface: View {
                 let start = compactArtwork
                 // The small header cover of the lyrics and queue view does not breathe.
                 let compactLanding = artworkFrame.width < 120
-                let scale = compactLanding ? 1 : NowPlayingView.artworkScale(
+                let fullLanding = fullCover && !compactLanding
+                let scale = compactLanding || fullLanding ? 1 : NowPlayingView.artworkScale(
                     isPlaying: audioPlayer.isPlaying, isPreparing: audioPlayer.isPreparingAudio)
                 let landing = artworkFrame.offsetBy(dx: 0, dy: edgeBleed)
                 let target = landing.insetBy(dx: landing.width * (1 - scale) / 2,
@@ -939,12 +947,24 @@ private struct ExpandedPlayerSurface: View {
                     width: start.frame.width + (target.width - start.frame.width) * p,
                     height: start.frame.height + (target.height - start.frame.height) * p
                 )
-                let landingRadius = compactLanding ? 10 : NowPlayingView.artworkCornerRadius * scale
+                let landingRadius = compactLanding ? 10 : fullLanding ? 0 : NowPlayingView.artworkCornerRadius * scale
                 let radius = start.radius + (landingRadius - start.radius) * p
                 Image(uiImage: cover)
                     .resizable()
                     .scaledToFill()
                     .frame(width: max(1, frame.width), height: max(1, frame.height))
+                    // Landing full screen, the bottom fades like the real cover.
+                    .mask {
+                        ZStack {
+                            Rectangle().opacity(fullLanding ? 1 - Double(min(1, max(0, p))) : 1)
+                            LinearGradient(stops: [
+                                .init(color: .black, location: 0),
+                                .init(color: .black, location: 0.55),
+                                .init(color: .clear, location: 1)
+                            ], startPoint: .top, endPoint: .bottom)
+                            .opacity(fullLanding ? Double(min(1, max(0, p))) : 0)
+                        }
+                    }
                     .clipShape(RoundedRectangle(cornerRadius: max(0, radius), style: .continuous))
                     .shadow(color: .black.opacity(0.4 * Double(min(1, max(0, p)))),
                             radius: 30 * max(0, p), y: 18 * max(0, p))
