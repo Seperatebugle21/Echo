@@ -535,9 +535,14 @@ struct NowPlayingView: View {
                     }
                 }
 
-            NowPlayingOptionsButton(song: song,
-                addToPlaylist: { showPlaylistPicker = true },
-                showLyrics: { toggle(.lyrics) })
+            HStack(spacing: 0) {
+                if song.podcastEpisodeID == nil {
+                    NowPlayingFavoriteButton(song: song)
+                }
+                NowPlayingOptionsButton(song: song,
+                    addToPlaylist: { showPlaylistPicker = true },
+                    showLyrics: { toggle(.lyrics) })
+            }
         }
         .padding(.horizontal, 28)
     }
@@ -1002,6 +1007,37 @@ struct PlayerArtworkImages: @unchecked Sendable {
 // Used by both standalone Now Playing and the interactive transition.
 // No live blur shader or repeated image decoding during a drag: the drifting
 // layers only move an already blurred thumbnail.
+/// Apple Music style star in a soft round button: fills at once when tapped, with a
+/// small pop, and saves the favorite straight away.
+struct NowPlayingFavoriteButton: View {
+    let song: Song
+    @Environment(MusicLibraryManager.self) private var library
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pop = 0
+
+    var body: some View {
+        let favorite = library.isFavorite(song)
+        Button {
+            pop += 1
+            library.toggleFavorite(song)
+        } label: {
+            Image(systemName: favorite ? "star.fill" : "star")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .contentTransition(.symbolEffect(.replace.downUp))
+                .symbolEffect(.bounce, options: .speed(1.3), value: reduceMotion ? 0 : pop)
+                .frame(width: 32, height: 32)
+                .background(.white.opacity(favorite ? 0.28 : 0.16), in: .circle)
+                .frame(width: 44, height: 44)
+                .contentShape(.circle)
+        }
+        .buttonStyle(EchoPlayerControlStyle(halo: false, pressedScale: 0.86))
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: pop) { _, _ in EchoHaptics.allows(essential: true) }
+        .accessibilityLabel(LocalizedStringKey(favorite ? "action_remove_from_favorites" : "action_add_to_favorites"))
+        .animation(.easeOut(duration: 0.2), value: favorite)
+    }
+}
+
 struct NowPlayingBackdrop: View {
     let image: UIImage?
     var animated = true
