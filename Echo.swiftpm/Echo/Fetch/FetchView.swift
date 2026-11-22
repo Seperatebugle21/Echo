@@ -27,19 +27,19 @@ struct FetchView: View {
                     spacing: 32
                 ) {
 
-                    header
-                    urlImportSection
-                    spotifySection
-                    musicSearchSection
-                    downloadsSection
-                    outputSection
+                    header.echoReveal(0)
+                    urlImportSection.echoReveal(1).echoScrollSection()
+                    spotifySection.echoReveal(2).echoScrollSection()
+                    musicSearchSection.echoReveal(3).echoScrollSection()
+                    downloadsSection.echoReveal(4).echoScrollSection()
+                    outputSection.echoReveal(5).echoScrollSection()
 
                     if apifySettings.downloadMethod == .youtube {
-                        apifySection
+                        apifySection.echoReveal(6).echoScrollSection()
                     }
 
                     if !manager.items.isEmpty {
-                        recentSection
+                        recentSection.echoReveal(7).echoScrollSection()
                     }
                 }
                 .padding(.bottom, 120)
@@ -203,7 +203,7 @@ struct FetchView: View {
                         in: Circle()
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(HomePressStyle())
             .accessibilityLabel(
                 "fetchview_fetch_url"
             )
@@ -291,7 +291,7 @@ struct FetchView: View {
                 )
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(HomePressStyle())
         .padding(.horizontal)
     }
 
@@ -360,7 +360,7 @@ struct FetchView: View {
                                     .green
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(HomePressStyle())
 
                         NavigationLink {
 
@@ -379,7 +379,7 @@ struct FetchView: View {
                                     .green
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(HomePressStyle())
                     }
                     .padding(.horizontal)
                 }
@@ -514,7 +514,7 @@ struct FetchView: View {
                                 .red
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(HomePressStyle())
 
                     NavigationLink {
 
@@ -534,7 +534,7 @@ struct FetchView: View {
                                 .purple
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(HomePressStyle())
                 }
                 .padding(.horizontal)
             }
@@ -675,7 +675,7 @@ struct FetchView: View {
                     )
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(HomePressStyle())
             .padding(.horizontal)
         }
     }
@@ -881,7 +881,7 @@ struct FetchView: View {
                         .foregroundStyle(.tertiary)
                     }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(HomePressStyle())
 
                 if !apifySettings.isConfigured {
 

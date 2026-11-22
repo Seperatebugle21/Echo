@@ -253,7 +253,9 @@ private struct HomeSpinningVinyl: View {
     @State private var visible = true
     private let degreesPerSecond = 55.0
 
-    private var active: Bool { spinning && visible && scenePhase == .active }
+    private var active: Bool {
+        spinning && visible && scenePhase == .active && !EchoPowerState.shared.lowPower
+    }
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !active)) { context in

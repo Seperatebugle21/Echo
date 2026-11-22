@@ -1153,6 +1153,9 @@ struct ArtistDetailView: View {
     private var audioPlayer
 
     let artist: ArtistGroup
+    @State private var heroImage: UIImage?
+
+    private var heroData: Data? { songs.first(where: { $0.coverData != nil })?.coverData }
 
     private var songs: [Song] {
         library.artistGroupsByID[artist.id]?.songs ?? artist.songs.compactMap { library.song(withID: $0.id) }
@@ -1168,20 +1171,19 @@ struct ArtistDetailView: View {
 
                     Spacer()
 
-                    VStack(spacing: 12) {
+                    VStack(spacing: 6) {
 
-                        ArtistArtworkView(
-                            songs: songs
-                        )
-                        .frame(width: 180, height: 180)
-                        .clipShape(Circle())
-                        .echoArtworkGlow(radius: 26, opacity: 0.7)
-                        .shadow(color: .black.opacity(0.25), radius: 18, y: 10)
-                        .padding(.bottom, 6)
-                        .echoReveal(0)
+                        // The artist's artwork, large and slowly moving, fading into the page.
+                        EchoHeroArtwork(image: heroImage) {
+                            ArtistArtworkView(songs: songs)
+                        }
+                        .padding(.bottom, -58)
 
                         Text(artist.name)
-                            .font(.title2.bold())
+                            .font(.largeTitle.bold())
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                            .echoReveal(0)
 
                         Text(
                             String(
@@ -1198,6 +1200,8 @@ struct ArtistDetailView: View {
 
                     Spacer()
                 }
+                .padding(.bottom, 16)
+                .listRowInsets(EdgeInsets())
                 .listRowBackground(
                     Color.clear
                 )
@@ -1236,8 +1240,13 @@ struct ArtistDetailView: View {
         }
 
         .scrollContentBackground(.hidden)
-        .background { EchoArtworkWash(data: songs.first(where: { $0.coverData != nil })?.coverData) }
+        .background { EchoArtworkWash(data: heroData) }
         .echoBackground()
+        .task(id: heroData) {
+            let prepared = await PlayerArtworkImages.prepare(heroData)
+            guard !Task.isCancelled else { return }
+            heroImage = prepared.cover
+        }
 
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)

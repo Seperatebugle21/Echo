@@ -65,6 +65,16 @@ struct NowPlayingView: View {
     private var reduceMotion
 
     @State private var showPlaylistPicker = false
+    // Haptics
+    @State private var playHaptic = 0
+    @State private var panelHaptic = 0
+    // Swiping the cover to change songs
+    @State private var coverSwipe: CGFloat = 0
+    @State private var swipeIsHorizontal: Bool?
+    @State private var awaitingSwipedCover = false
+    // Lyrics: the controls step aside after a few quiet seconds
+    @State private var controlsHidden = false
+    @State private var idleTask: Task<Void, Never>?
     @AppStorage(ThemeSettingsView.fullCoverKey) private var fullCover = false
     @State private var transcriptEpisode: PodcastEpisode?
 
@@ -133,22 +143,29 @@ struct NowPlayingView: View {
                     .transition(.blurReplace)
                 }
 
-                // MARK: - Progress
+                if !immersiveLyrics {
+                    // MARK: - Progress
 
-                NowPlayingProgress(sliderFrame: $sliderFrame, isScrubbing: $isScrubbing,
-                                   tracksGeometry: tracksSliderGeometry && !closingDragInProgress)
+                    NowPlayingProgress(sliderFrame: $sliderFrame, isScrubbing: $isScrubbing,
+                                       tracksGeometry: tracksSliderGeometry && !closingDragInProgress)
+                        .transition(controlsTransition)
 
-                // MARK: - Playback Controls
+                    // MARK: - Playback Controls
 
-                if audioPlayer.isPodcast {
-                    PodcastPlaybackControls()
-                } else {
-                    playbackControls
+                    Group {
+                        if audioPlayer.isPodcast {
+                            PodcastPlaybackControls()
+                        } else {
+                            playbackControls
+                        }
+                    }
+                    .transition(controlsTransition)
+
+                    // MARK: - Bottom Actions
+
+                    bottomActions
+                        .transition(controlsTransition)
                 }
-
-                // MARK: - Bottom Actions
-
-                bottomActions
 
                 Spacer(minLength: 8)
             }
@@ -158,7 +175,23 @@ struct NowPlayingView: View {
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { contentWidth = $0 }
             // The cover and title live above the layout and glide between their slots.
             .overlay(alignment: .topLeading) { movingLayer }
-            .onChange(of: panel) { if panel == nil { panelFrame = .zero } }
+            .onChange(of: panel) {
+                if panel == nil { panelFrame = .zero }
+                if panel == .lyrics {
+                    scheduleControlsHide()
+                } else {
+                    idleTask?.cancel()
+                    if controlsHidden { withAnimation(EchoMotion.fluid) { controlsHidden = false } }
+                }
+            }
+            .onChange(of: images.cover.map { ObjectIdentifier($0) }) {
+                // The swiped-away cover's song has its own cover now: bring the new one in.
+                guard awaitingSwipedCover else { return }
+                awaitingSwipedCover = false
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { coverSwipe = 0 }
+            }
             .onChange(of: reportedCoverFrame, initial: true) { _, frame in
                 if frame.width > 0 { onArtworkFrame?(frame) }
             }
@@ -167,6 +200,11 @@ struct NowPlayingView: View {
         }
         .contentShape(Rectangle())
         .simultaneousGesture(closeDrag)
+        .simultaneousGesture(TapGesture().onEnded { wakeControls() })
+        .sensoryFeedback(.impact(weight: .medium), trigger: playHaptic)
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: nextBounce)
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: previousBounce)
+        .sensoryFeedback(.selection, trigger: panelHaptic)
         .task(id: closeDragActive) {
             guard !closeDragActive else { return }
             await Task.yield()
@@ -202,7 +240,83 @@ struct NowPlayingView: View {
 
     // MARK: - Panels
 
+    // MARK: - Immersive lyrics
+
+    private var immersiveLyrics: Bool { controlsHidden && panel == .lyrics }
+
+    private var controlsTransition: AnyTransition {
+        reduceMotion ? AnyTransition.opacity
+            : AnyTransition.offset(y: 36).combined(with: AnyTransition.opacity)
+    }
+
+    private func scheduleControlsHide() {
+        idleTask?.cancel()
+        guard panel == .lyrics else { return }
+        idleTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled, panel == .lyrics, !isScrubbing, !closingDragInProgress else { return }
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.9)) { controlsHidden = true }
+        }
+    }
+
+    /// Any touch brings the controls back and restarts the quiet timer.
+    private func wakeControls() {
+        if controlsHidden {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.86)) { controlsHidden = false }
+        }
+        scheduleControlsHide()
+    }
+
+    // MARK: - Swiping the cover
+
+    private var coverSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 14)
+            .onChanged { value in
+                guard panel == nil, !closingDragInProgress, !awaitingSwipedCover else { return }
+                if swipeIsHorizontal == nil {
+                    swipeIsHorizontal = abs(value.translation.width) > abs(value.translation.height)
+                }
+                guard swipeIsHorizontal == true else { return }
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { coverSwipe = value.translation.width }
+            }
+            .onEnded { value in
+                let horizontal = swipeIsHorizontal == true
+                swipeIsHorizontal = nil
+                guard horizontal, panel == nil, !awaitingSwipedCover else { return }
+                let dx = value.translation.width
+                let vx = value.velocity.width
+                let direction = abs(vx) > 600 ? (vx < 0 ? 1 : -1) : abs(dx) > 100 ? (dx < 0 ? 1 : -1) : 0
+                guard direction != 0 else {
+                    withAnimation(EchoMotion.release) { coverSwipe = 0 }
+                    return
+                }
+                let width = max(contentWidth, 320)
+                withAnimation(.easeIn(duration: 0.16), completionCriteria: .logicallyComplete) {
+                    coverSwipe = direction == 1 ? -width : width
+                } completion: {
+                    awaitingSwipedCover = true
+                    if direction == 1 {
+                        nextBounce += 1
+                        audioPlayer.next()
+                    } else {
+                        previousBounce += 1
+                        audioPlayer.previous()
+                    }
+                    // Same cover on the next song, or it never loads: slide back in anyway.
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(700))
+                        guard awaitingSwipedCover else { return }
+                        awaitingSwipedCover = false
+                        withAnimation(EchoMotion.release) { coverSwipe = 0 }
+                    }
+                }
+            }
+    }
+
     private func toggle(_ target: NowPlayingPanel) {
+        panelHaptic += 1
         panelToken += 1
         let token = panelToken
         let morph: Animation = reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.5, dampingFraction: 0.88)
@@ -403,6 +517,7 @@ struct NowPlayingView: View {
             Spacer(minLength: 0)
 
             Button {
+                playHaptic += 1
                 audioPlayer.togglePlayPause()
             } label: {
                 Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
@@ -542,6 +657,7 @@ struct NowPlayingView: View {
         DragGesture(minimumDistance: 8, coordinateSpace: .global)
             .updating($closeDragActive) { _, active, _ in active = true }
             .onChanged { value in
+                if dragMayClose == nil { wakeControls() }
                 guard !isScrubbing else { return }
                 if dragMayClose == nil {
                     // Preserve seeking, even if a slider drag is slightly diagonal.
@@ -612,6 +728,9 @@ struct NowPlayingView: View {
             .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.coordinateSpaceName)) } action: {
                 bigCoverSurface = $0
             }
+            // Swipe the cover sideways for the next or previous song.
+            .contentShape(Rectangle())
+            .gesture(coverSwipeGesture)
             .padding(.horizontal, 28)
             .layoutPriority(1)
             .accessibilityHidden(true)
@@ -690,6 +809,10 @@ struct NowPlayingView: View {
         }
         .scaleEffect(card ? artworkScale : 1)
         .animation(EchoMotion.motion(EchoMotion.bouncy, reduceMotion: reduceMotion), value: artworkScale)
+        // Follows the finger when swiped, tilting slightly like a card.
+        .offset(x: big ? coverSwipe : 0)
+        .rotationEffect(.degrees(big && !full ? Double(coverSwipe / max(1, contentWidth)) * 8 : 0))
+        .opacity(big ? 1 - min(0.5, Double(abs(coverSwipe) / max(1, contentWidth)) * 0.6) : 1)
         .contentShape(shape)
         // Tapping the small cover brings the large one back.
         .onTapGesture { if let panel { toggle(panel) } }
@@ -790,6 +913,9 @@ private struct NowPlayingProgress: View {
     @Binding var isScrubbing: Bool
     let tracksGeometry: Bool
     private var displayPosition: Double { scrub.isActive ? scrub.position : audioPlayer.currentTime }
+    private var scrubAtEdge: Bool {
+        scrub.isActive && (scrub.position <= 0.25 || scrub.position >= scrub.duration - 0.25)
+    }
     var body: some View {
         VStack(spacing: 5) {
 
@@ -908,6 +1034,9 @@ private struct NowPlayingProgress: View {
                     }
                 }
                 .padding(.horizontal, 28)
+                // A tick when you grab the bar, and a firmer one at either end.
+                .sensoryFeedback(.selection, trigger: scrub.isActive) { _, active in active }
+                .sensoryFeedback(.impact(weight: .light), trigger: scrubAtEdge) { _, atEdge in atEdge }
 
 
 

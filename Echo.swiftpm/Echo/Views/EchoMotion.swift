@@ -165,6 +165,7 @@ struct EchoLivingBackdrop: View {
                         EchoDriftingArtwork(
                             image: image, size: size,
                             animated: animated && !reduceMotion && scenePhase == .active
+                                && !EchoPowerState.shared.lowPower
                         )
                         .id(ObjectIdentifier(image))
                         .transition(.opacity)
@@ -339,10 +340,11 @@ struct EchoMovingArtwork: View {
             let size = geometry.size
             ZStack {
                 if let image {
+                    let lowPower = EchoPowerState.shared.lowPower
                     TimelineView(.animation(minimumInterval: 1.0 / 30.0,
-                                            paused: !animated || reduceMotion || scenePhase != .active)) { context in
+                                            paused: !animated || reduceMotion || lowPower || scenePhase != .active)) { context in
                         let t = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 36_000)
-                        let moving = animated && !reduceMotion
+                        let moving = animated && !reduceMotion && !lowPower
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFill()
@@ -383,6 +385,57 @@ struct EchoBottomFade: View {
             }
             .frame(height: height)
             .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Low Power Mode
+
+/// Continuous decorative motion (drifting backdrops, moving covers, the spinning
+/// record) pauses while Low Power Mode is on.
+@MainActor @Observable
+final class EchoPowerState {
+    static let shared = EchoPowerState()
+    private(set) var lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+    @ObservationIgnored private var observer: NSObjectProtocol?
+
+    private init() {
+        observer = NotificationCenter.default.addObserver(
+            forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main
+        ) { _ in
+            Task { @MainActor in
+                EchoPowerState.shared.lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+            }
+        }
+    }
+}
+
+// MARK: - Hero artwork
+
+/// A large, slowly moving cover that fades out at the bottom, used at the top of
+/// playlist and artist pages (album pages run it edge to edge).
+struct EchoHeroArtwork<Fallback: View>: View {
+    let image: UIImage?
+    var cornerRadius: CGFloat = 28
+    @ViewBuilder var fallback: Fallback
+
+    var body: some View {
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                ZStack {
+                    if image == nil { fallback }
+                    EchoMovingArtwork(image: image, animated: true)
+                }
+                .mask {
+                    LinearGradient(stops: [
+                        .init(color: .black, location: 0),
+                        .init(color: .black, location: 0.6),
+                        .init(color: .clear, location: 1)
+                    ], startPoint: .top, endPoint: .bottom)
+                }
+            }
+            .clipShape(.rect(cornerRadius: cornerRadius, style: .continuous))
             .accessibilityHidden(true)
     }
 }

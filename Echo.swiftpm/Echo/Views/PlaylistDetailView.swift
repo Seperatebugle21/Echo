@@ -23,6 +23,7 @@ struct PlaylistDetailView: View {
     @State private var builtinCover: String?
     @State private var searchText = ""
     @State private var sortOption: FavoritesSortOption = .custom
+    @State private var heroImage: UIImage?
     
     var songs: [Song] {
         _ = clockDate
@@ -66,23 +67,33 @@ struct PlaylistDetailView: View {
             // MARK: Header Sectie
             if searchText.isEmpty {
                 Section {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 14) {
+                        // The playlist cover, large and slowly moving, fading into the page.
                         Button {
                             coverData = currentPlaylist.imageData
                             builtinCover = currentPlaylist.builtinCoverID
                             showCoverGallery = true
                         } label: {
-                            PlaylistCoverArtwork(data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID)
-                                .frame(width: 150, height: 150).clipShape(.rect(cornerRadius: 20))
-                        }.buttonStyle(.plain).accessibilityLabel("select_cover_image_accessibility")
+                            EchoHeroArtwork(image: heroImage) {
+                                PlaylistCoverArtwork(data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID)
+                            }
+                        }
+                        .buttonStyle(HomePressStyle())
+                        .accessibilityLabel("select_cover_image_accessibility")
 
-                        Text(currentPlaylist.displayName())
-                            .font(.largeTitle)
-                            .bold()
-                        
-                        Text("songs_count_format \(songs.count)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        VStack(spacing: 6) {
+                            Text(currentPlaylist.displayName())
+                                .font(.largeTitle)
+                                .bold()
+                                .multilineTextAlignment(.center)
+
+                            Text("songs_count_format \(songs.count)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.top, -64)
+                        .padding(.horizontal, 16)
+                        .echoReveal(0)
                         
                         if !songs.isEmpty {
                             HStack(spacing: 12) {
@@ -104,7 +115,9 @@ struct PlaylistDetailView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical)
+                    .padding(.bottom, 16)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
                 .selectionDisabled(true)
             }
@@ -193,8 +206,18 @@ struct PlaylistDetailView: View {
             prompt: Text(LocalizedStringKey("MUSIC_APP_PLAYLIST_SEARCH_PLACEHOLDER_TEXT"))
         )
         .environment(\.editMode, $editMode)
+        .scrollContentBackground(.hidden)
+        .background {
+            EchoArtworkWash(data: currentPlaylist.imageData ?? songs.first.flatMap { $0.coverData ?? $0.imageData })
+        }
         .echoBackground()
         .navigationTitle(currentPlaylist.displayName())
+        .task(id: "\(currentPlaylist.builtinCoverID ?? "")|\(currentPlaylist.imageData?.count ?? 0)") {
+            let image = await CoverThumbnailCache.shared.image(
+                data: currentPlaylist.imageData, builtin: currentPlaylist.builtinCoverID, pixels: 900)
+            guard !Task.isCancelled else { return }
+            heroImage = image
+        }
         .onReceive(clock) { clockDate = $0 }
         .sheet(isPresented: $showSmartEditor) { SmartPlaylistEditor(playlist: currentPlaylist) }
         .sheet(isPresented: $showCoverGallery, onDismiss: saveCover) {

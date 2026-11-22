@@ -19,6 +19,8 @@ struct MiniPlayer: View {
     @State private var settling = false
     @State private var blockedUntilRelease = false
     @State private var animationToken = UUID()
+    @State private var playHaptic = 0
+    @State private var skipHaptic = 0
 
     private enum DragAxis { case horizontal, vertical }
     private var snapAnimation: Animation {
@@ -87,6 +89,7 @@ struct MiniPlayer: View {
                 AirPlayButton()
                     .frame(width: 30, height: 44)
                 Button {
+                    playHaptic += 1
                     audioPlayer.togglePlayPause()
                 } label: {
                     Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
@@ -102,6 +105,8 @@ struct MiniPlayer: View {
             .padding(.trailing, 4)
             .frame(height: 52)
             .contentShape(Rectangle())
+            .sensoryFeedback(.impact(weight: .light), trigger: playHaptic)
+            .sensoryFeedback(.impact(flexibility: .soft), trigger: skipHaptic)
             .onChange(of: current.id) {
                 // Remote controls / automatic advance invalidate captured pages.
                 presentation.cancelOpening(reduceMotion: reduceMotion)
@@ -216,6 +221,7 @@ struct MiniPlayer: View {
             let liveTarget = direction == 1
                 ? audioPlayer.miniPlayerNextSong : audioPlayer.miniPlayerPreviousSong
             guard liveTarget?.id == target.id else { snapBack(); return }
+            skipHaptic += 1
             if direction == 1 { audioPlayer.next() }
             else { audioPlayer.playMiniPlayerPrevious(target) }
             reset()
