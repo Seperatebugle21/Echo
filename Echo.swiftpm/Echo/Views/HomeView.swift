@@ -269,8 +269,10 @@ struct HomeView: View {
 
     private func prepare() {
         // getURL builds a path; check the file to exclude missing/download-in-progress tracks.
+        // Files only need checking once: a play date or other metadata change would
+        // otherwise check every song on disk while a song-change animation runs.
         localSongs = library.songs.filter {
-            $0.podcastEpisodeID == nil && library.getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true
+            $0.podcastEpisodeID == nil && HomeFileCheck.exists($0, library: library)
         }
         let localIDs = Set(localSongs.map(\.id))
         favorites = library.favoriteSongs.filter { localIDs.contains($0.id) }
@@ -375,5 +377,19 @@ private struct HomeCompactBar: View {
             .opacity(progress)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+    }
+}
+
+/// Remembers which song files exist; only songs not seen before touch the disk.
+@MainActor
+enum HomeFileCheck {
+    private static var present = Set<String>()
+
+    static func exists(_ song: Song, library: MusicLibraryManager) -> Bool {
+        let key = "\(song.id)|\(song.fileName)"
+        if present.contains(key) { return true }
+        guard let url = library.getURL(for: song), FileManager.default.fileExists(atPath: url.path) else { return false }
+        present.insert(key)
+        return true
     }
 }

@@ -19,9 +19,8 @@ struct LibraryView: View {
         library.artistGroups
     }
 
-    private var albumGroups: [AlbumGroup] {
-        LibraryAlbums.groups(from: library.songs)
-    }
+    /// Grouped off the main thread when the library changes, not in every body pass.
+    @State private var albumGroups: [AlbumGroup] = []
 
     private var recentlyAddedSongs: [Song] {
 
@@ -399,6 +398,15 @@ struct LibraryView: View {
             }
             .sheet(isPresented: $showCreate) { CreatePlaylistView() }
             .sheet(isPresented: $showSmart) { SmartPlaylistEditor() }
+            .task(id: library.songRevision) {
+                let songs = library.songs
+                let grouped = await Task.detached(priority: .utility) { LibraryAlbums.groups(from: songs) }.value
+                guard !Task.isCancelled else { return }
+                // A changed play date leaves the albums as they are: no redraw needed.
+                let same = grouped.count == albumGroups.count
+                    && zip(grouped, albumGroups).allSatisfy { $0.id == $1.id && $0.songs.count == $1.songs.count }
+                if !same { albumGroups = grouped }
+            }
             .fileImporter(isPresented: $showImporter, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in
                 switch result {
                 case .success(let files):

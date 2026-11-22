@@ -116,7 +116,7 @@ struct SmartMusicCollectionView: View {
         }.echoBackground().navigationTitle(title).navigationBarTitleDisplayMode(.inline)
             .task(id: library.songRevision) {
                 songs = songIDs.compactMap { library.song(withID: $0) }.filter {
-                    library.getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true
+                    HomeFileCheck.exists($0, library: library)
                 }
             }
             .sheet(item: $selectedSong) { SongOptionsView(song: $0) }

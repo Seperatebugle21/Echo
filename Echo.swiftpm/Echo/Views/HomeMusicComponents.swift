@@ -242,7 +242,7 @@ private struct HomeMixCollectionView: View {
     @State private var selectedSong: Song?
     private var songs: [Song] {
         let available = library.songs.filter {
-            $0.podcastEpisodeID == nil && library.getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true
+            $0.podcastEpisodeID == nil && HomeFileCheck.exists($0, library: library)
         }
         let mixes = HomeSessionManager.shared.mixes(songs: available, favoriteSongIDs: library.favoriteSongIDs,
                                                    recommendationManager: .shared)

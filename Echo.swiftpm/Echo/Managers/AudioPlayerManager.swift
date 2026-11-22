@@ -739,8 +739,14 @@ class AudioPlayerManager:
                         self.flowRecent.append(started.id)
                         if self.flowRecent.count > 40 { self.flowRecent.removeFirst(self.flowRecent.count - 40) }
                         self.requestFlowRefill()
-                        MusicLibraryManager.shared.markAsPlayed(started)
-                        self.donatePlaybackToSiri(song: started)
+                        // Bookkeeping waits until the song-change animation has finished:
+                        // marking a song as played changes the library, which several
+                        // screens react to.
+                        Task { @MainActor [weak self] in
+                            try? await Task.sleep(for: .milliseconds(1500))
+                            MusicLibraryManager.shared.markAsPlayed(started)
+                            self?.donatePlaybackToSiri(song: started)
+                        }
                         if identifier == nil { self.loadLyrics(for: started); self.fillQueue(from: queue) }
                     }
             }

@@ -39,12 +39,14 @@ class MusicLibraryManager {
     var songs: [Song] = [] {
         didSet {
             songRevision &+= 1
-            scheduleArtistUpdate()
+            // Play dates do not change who the artists are.
+            if !playDateOnlyChange { scheduleArtistUpdate() }
             if !isRestoringLibrary { saveSongs() }
         }
     }
 
     @ObservationIgnored private var isRestoringLibrary = true
+    @ObservationIgnored private var playDateOnlyChange = false
     private(set) var songRevision: UInt64 = 0
     private(set) var favoriteRevision: UInt64 = 0
     @ObservationIgnored private lazy var songPersistence = SongLibraryPersistence(url: songsFileURL)
@@ -591,8 +593,9 @@ class MusicLibraryManager {
         if let index = songs.firstIndex(where: {
             $0.id == song.id
         }) {
-            
+            playDateOnlyChange = true
             songs[index].lastPlayed = Date()
+            playDateOnlyChange = false
         }
     }
     

@@ -140,7 +140,7 @@ struct HomeDiscoverySection: View {
 
         let unheard = library.songs.filter {
             $0.lastPlayed == nil && $0.podcastEpisodeID == nil
-                && library.getURL(for: $0).map { FileManager.default.fileExists(atPath: $0.path) } == true
+                && HomeFileCheck.exists($0, library: library)
         }
         let validSongs = Set(unheard.map(\.id))
         songIDs = songIDs.filter { validSongs.contains($0) }
