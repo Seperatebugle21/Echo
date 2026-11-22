@@ -19,6 +19,8 @@ struct MiniPlayer: View {
     @State private var settling = false
     @State private var blockedUntilRelease = false
     @State private var animationToken = UUID()
+    @State private var tapFeedback = 0
+    @State private var swipeFeedback = 0
 
     private enum DragAxis { case horizontal, vertical }
     private var snapAnimation: Animation {
@@ -87,6 +89,7 @@ struct MiniPlayer: View {
                 AirPlayButton()
                     .frame(width: 30, height: 44)
                 Button {
+                    tapFeedback += 1
                     audioPlayer.togglePlayPause()
                 } label: {
                     Image(systemName: audioPlayer.isPlaying ? "pause.fill" : "play.fill")
@@ -94,13 +97,15 @@ struct MiniPlayer: View {
                         .contentTransition(.symbolEffect(.replace))
                         .frame(width: 44, height: 44)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.echoPress)
+                .sensoryFeedback(.impact(weight: .light), trigger: tapFeedback)
                 .accessibilityLabel(audioPlayer.playbackErrorKey != nil ? LocalizedStringKey("audio_retry") : LocalizedStringKey(audioPlayer.isPlaying ? "Pause" : "Play"))
             }
             .padding(.leading, 14)
             .padding(.trailing, 4)
             .frame(height: 52)
             .contentShape(Rectangle())
+            .sensoryFeedback(.selection, trigger: swipeFeedback)
             .onChange(of: current.id) {
                 // Remote controls / automatic advance invalidate captured pages.
                 presentation.cancelOpening(reduceMotion: reduceMotion)
@@ -215,6 +220,7 @@ struct MiniPlayer: View {
             let liveTarget = direction == 1
                 ? audioPlayer.miniPlayerNextSong : audioPlayer.miniPlayerPreviousSong
             guard liveTarget?.id == target.id else { snapBack(); return }
+            swipeFeedback += 1
             if direction == 1 { audioPlayer.next() }
             else { audioPlayer.playMiniPlayerPrevious(target) }
             reset()

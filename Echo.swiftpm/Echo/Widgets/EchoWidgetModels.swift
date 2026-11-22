@@ -8,6 +8,10 @@ enum EchoWidgetKinds {
     // Preserve the kind so existing recent-song widgets migrate to Quick Picks.
     static let quickPicks = "com.echomusic.app.widget.recent-songs"
     static let homeScreen = [rounded, cover, edge, compact, quickPicks]
+    static let playPauseControl = "com.echomusic.app.control.play-pause"
+    static let nextControl = "com.echomusic.app.control.next"
+    static let flowControl = "com.echomusic.app.control.flow"
+    static let openControl = "com.echomusic.app.control.open"
 }
 
 struct EchoWidgetSongItem: Codable, Hashable, Identifiable {

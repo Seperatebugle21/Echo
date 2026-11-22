@@ -6,6 +6,8 @@
     <string>Use your microphone to talk to Echo Intelligence.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>Transcribe your spoken questions for Echo Intelligence. Offline Only requires on-device recognition.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Save share cards for songs, lyrics and your listening recap to Photos.</string>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
 

@@ -31,6 +31,9 @@ struct NowPlayingView: View {
     @State private var showPlaylistPicker = false
     @State private var showLyrics = false
     @State private var transcriptEpisode: PodcastEpisode?
+    @State private var transportFeedback = 0
+    @State private var toggleFeedback = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
 
@@ -114,6 +117,7 @@ struct NowPlayingView: View {
                     // Shuffle
 
                     Button {
+                        toggleFeedback += 1
                         audioPlayer.toggleShuffle()
                     } label: {
 
@@ -127,7 +131,7 @@ struct NowPlayingView: View {
                             : Color.white
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.echoPress)
                     .accessibilityLabel(
                         LocalizedStringKey(
                             "shuffle_action"
@@ -138,6 +142,7 @@ struct NowPlayingView: View {
                     // Previous
 
                     Button {
+                        transportFeedback += 1
                         audioPlayer.previous()
                     } label: {
 
@@ -148,7 +153,7 @@ struct NowPlayingView: View {
                         .font(.title2)
                         .foregroundStyle(.white)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.echoPress)
                     .accessibilityLabel(
                         LocalizedStringKey(
                             "previous_track_action"
@@ -159,6 +164,7 @@ struct NowPlayingView: View {
                     // Play / Pause
 
                     Button {
+                        transportFeedback += 1
                         audioPlayer.togglePlayPause()
                     } label: {
 
@@ -172,8 +178,9 @@ struct NowPlayingView: View {
                             .system(size: 70)
                         )
                         .foregroundStyle(.white)
+                        .contentTransition(.symbolEffect(.replace))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.echoPress)
                     .accessibilityLabel(
                         audioPlayer.isPlaying
                         ? LocalizedStringKey(
@@ -188,6 +195,7 @@ struct NowPlayingView: View {
                     // Next
 
                     Button {
+                        transportFeedback += 1
                         audioPlayer.next()
                     } label: {
 
@@ -198,7 +206,7 @@ struct NowPlayingView: View {
                         .font(.title2)
                         .foregroundStyle(.white)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.echoPress)
                     .accessibilityLabel(
                         LocalizedStringKey(
                             "next_track_action"
@@ -209,6 +217,7 @@ struct NowPlayingView: View {
                     // Repeat
 
                     Button {
+                        toggleFeedback += 1
                         audioPlayer.toggleRepeat()
                     } label: {
 
@@ -227,13 +236,15 @@ struct NowPlayingView: View {
                             : Color.accentColor
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.echoPress)
                     .accessibilityLabel(
                         LocalizedStringKey(
                             "repeat_action"
                         )
                     )
                 }
+                .sensoryFeedback(.impact(weight: .medium), trigger: transportFeedback)
+                .sensoryFeedback(.selection, trigger: toggleFeedback)
 
 
                 }
@@ -480,10 +491,14 @@ struct NowPlayingView: View {
                 )
                 .shadow(
                     color:
-                        .black.opacity(0.30),
-                    radius: 22,
-                    y: 12
+                        .black.opacity(audioPlayer.isPlaying ? 0.38 : 0.22),
+                    radius: audioPlayer.isPlaying ? 26 : 14,
+                    y: audioPlayer.isPlaying ? 14 : 6
                 )
+                // Like the system player: the cover settles back while paused.
+                .scaleEffect(audioPlayer.isPlaying || reduceMotion ? 1 : 0.86)
+                .animation(reduceMotion ? nil : .spring(response: 0.45, dampingFraction: 0.72),
+                           value: audioPlayer.isPlaying)
 
         } else {
 

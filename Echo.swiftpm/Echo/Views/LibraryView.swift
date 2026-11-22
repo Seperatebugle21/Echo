@@ -193,6 +193,13 @@ struct LibraryView: View {
                                         FavoriteAlbumsFeatureArtwork(albums: FavoriteAlbumsStore.shared.albums)
                                     }
                                 }.buttonStyle(.plain)
+
+                                NavigationLink { ListeningRecapView() } label: {
+                                    LibraryFeatureCard(title: "recap_title",
+                                        subtitle: EchoLocalization.string("recap_library_subtitle")) {
+                                        RecapFeatureArtwork()
+                                    }
+                                }.buttonStyle(.plain)
                             }
                             .padding(.horizontal)
                         }

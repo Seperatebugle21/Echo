@@ -10,7 +10,8 @@ struct NowPlayingOptionsButton: View {
     @State private var expanded = false
     @State private var pending: Action?
     @State private var destination: Destination?
-    private enum Action { case flow, shuffle, playlist, lyrics, artist, album, sleep }
+    @State private var sharePayload: SongSharePayload?
+    private enum Action { case flow, shuffle, playlist, lyrics, artist, album, sleep, share }
     private enum Destination: String, Identifiable {
         case artist, album, sleep
         var id: String { rawValue }
@@ -42,6 +43,7 @@ struct NowPlayingOptionsButton: View {
                         Divider().padding(.vertical, 5)
                         action("add_to_playlist_action", icon: "music.note.list", .playlist)
                         action("lyrics_action", icon: "quote.bubble", .lyrics)
+                        action("share_action", icon: "square.and.arrow.up", .share)
                         Divider().padding(.vertical, 5)
                         action("player_go_artist", icon: "person", .artist)
                             .disabled(ArtistCredits.names(for: song).isEmpty)
@@ -75,6 +77,7 @@ struct NowPlayingOptionsButton: View {
             .presentationCompactAdaptation(.popover)
             .onDisappear { performPendingAction() }
         }
+        .sheet(item: $sharePayload) { payload in SongShareSheet(payload: payload) }
         .sheet(item: $destination) { destination in
             switch destination {
             case .sleep: SleepTimerView()
@@ -121,6 +124,7 @@ struct NowPlayingOptionsButton: View {
         case .artist: destination = .artist
         case .album: destination = .album
         case .sleep: destination = .sleep
+        case .share: sharePayload = SongSharePayload(song: song)
         }
     }
 }

@@ -51,6 +51,9 @@ enum EchoWidgetSnapshotPublisher {
         do {
             try EchoWidgetSnapshotStore.save(snapshot)
             for kind in EchoWidgetKinds.homeScreen { WidgetCenter.shared.reloadTimelines(ofKind: kind) }
+            if snapshot.isPlaying != previous.isPlaying {
+                ControlCenter.shared.reloadControls(ofKind: EchoWidgetKinds.playPauseControl)
+            }
         } catch {
             logger.error("Widget snapshot failed; check App Group entitlements: \(error.localizedDescription, privacy: .public)")
         }

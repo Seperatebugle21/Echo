@@ -16,6 +16,7 @@ struct LyricsView: View {
     @State private var lines: [LyricLine] = []
     @State private var isUserScrolling = false
     @State private var scrollResetTimer: Timer?
+    @State private var sharePayload: SongSharePayload?
     
     // 35% vanaf de bovenkant
     private let customScrollAnchor =
@@ -124,6 +125,13 @@ struct LyricsView: View {
                                         )
                                 }
                                 .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button {
+                                        shareLyrics(selecting: index)
+                                    } label: {
+                                        Label("share_lyric_action", systemImage: "quote.bubble")
+                                    }
+                                }
                                 .id(index)
                                 
                                 .animation(
@@ -232,6 +240,22 @@ struct LyricsView: View {
             .dark,
             for: .navigationBar
         )
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    shareLyrics(selecting: nil)
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .tint(.white)
+                .accessibilityLabel("share_lyrics_title")
+                .disabled(audioPlayer.currentSong == nil
+                          || (lines.isEmpty && (audioPlayer.currentLyrics ?? "").isEmpty))
+            }
+        }
+        .sheet(item: $sharePayload) { payload in
+            SongShareSheet(payload: payload)
+        }
         
         
         // MARK: - Updates
@@ -598,6 +622,29 @@ struct LyricsView: View {
 }
     
     
+    // MARK: - Sharing
+
+    /// Opens the share card with the non-empty lyric lines; `index` is a synced line to preselect.
+    private func shareLyrics(selecting index: Int?) {
+        guard let song = audioPlayer.currentSong else { return }
+        let source = lines.isEmpty
+            ? (audioPlayer.currentLyrics ?? "").components(separatedBy: .newlines)
+            : lines.map(\.text)
+        var kept: [String] = []
+        var selected: Set<Int> = []
+        for (position, text) in source.enumerated() {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            if let index, position == index || position == index + 1, selected.count < 2 {
+                selected.insert(kept.count)
+            }
+            kept.append(trimmed)
+        }
+        guard !kept.isEmpty else { return }
+        sharePayload = SongSharePayload(song: song, lyricLines: kept, initialLyricSelection: selected)
+    }
+
+
     // MARK: - Plain Lyrics
     
     @ViewBuilder

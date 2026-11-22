@@ -7,6 +7,7 @@ struct SongOptionsView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var showDeleteConfirmation = false
+    @State private var sharePayload: SongSharePayload?
     
     let song: Song
     
@@ -202,6 +203,15 @@ struct SongOptionsView: View {
                     }
                     
                     
+                    // Delen als kaart
+                    Button {
+                        sharePayload = SongSharePayload(song: song)
+                    } label: {
+                        Label("share_action", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    
+                    
                     Divider()
                         .padding(.vertical, 8)
                     
@@ -274,6 +284,9 @@ struct SongOptionsView: View {
             }
         }
         .tint(.primary)
+        .sheet(item: $sharePayload) { payload in
+            SongShareSheet(payload: payload).tint(.accentColor)
+        }
         .presentationDetents([
             .height(450)
         ])

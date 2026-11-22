@@ -2,12 +2,12 @@ import AppIntents
 import Foundation
 
 enum EchoWidgetAction: String, AppEnum {
-    case toggle, previous, next, favorite, play
+    case toggle, previous, next, favorite, play, flow
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "widget_intent_action_type"
     static var caseDisplayRepresentations: [Self: DisplayRepresentation] = [
         .toggle: "widget_intent_action_toggle", .previous: "widget_intent_action_previous",
         .next: "widget_intent_action_next", .favorite: "widget_intent_action_favorite",
-        .play: "widget_intent_action_play"
+        .play: "widget_intent_action_play", .flow: "widget_intent_action_flow"
     ]
 }
 
@@ -32,8 +32,45 @@ struct EchoWidgetPlaybackIntent: AudioPlaybackIntent {
     }
 }
 
+/// Control Center / Lock Screen play-pause toggle. Runs in the app process like the widget buttons.
+struct EchoControlPlaybackIntent: SetValueIntent, AudioPlaybackIntent {
+    static var title: LocalizedStringResource = "control_play_pause_title"
+    static var openAppWhenRun: Bool = false
+    @Parameter(title: "control_play_pause_title") var value: Bool
+
+    init() { value = false }
+
+    @MainActor func perform() async throws -> some IntentResult {
+        #if !ECHO_WIDGET_EXTENSION
+        EchoWidgetPlaybackController.setPlaying(value)
+        #endif
+        return .result()
+    }
+}
+
+/// Opens Echo from a Control Center control.
+struct EchoOpenAppIntent: AppIntent {
+    static var title: LocalizedStringResource = "control_open_title"
+    static var openAppWhenRun: Bool = true
+
+    init() {}
+
+    @MainActor func perform() async throws -> some IntentResult { .result() }
+}
+
 #if !ECHO_WIDGET_EXTENSION
 @MainActor enum EchoWidgetPlaybackController {
+    /// Starts or pauses playback; without a current song it resumes the song the widgets show.
+    static func setPlaying(_ playing: Bool) {
+        let player = AudioPlayerManager.shared
+        if player.currentSong != nil {
+            player.setPlaybackDesired(playing)
+            EchoWidgetSnapshotPublisher.refresh()
+        } else if playing {
+            try? perform(.play, songID: nil)
+        }
+    }
+
     enum PlaybackError: LocalizedError {
         case missingSong
         var errorDescription: String? { EchoLocalization.string("widget_intent_error_missing_song") }
@@ -46,6 +83,11 @@ struct EchoWidgetPlaybackIntent: AudioPlaybackIntent {
         if action == .next, player.currentSong != nil { player.next(); return }
         if action == .previous, player.currentSong != nil { player.previous(); return }
         if action == .toggle, player.currentSong != nil { player.togglePlayPause(); return }
+        if action == .flow {
+            player.allSongs = library.songs
+            player.startEchoFlow()
+            return
+        }
         let id = songID ?? player.currentSong?.id ?? EchoWidgetSnapshotStore.load().currentSong?.id
         if let episode = PodcastStore.shared.state.episodes.values.first(where: { $0.playbackID == id }) {
             if action == .favorite { PodcastStore.shared.toggleSaved(episode) }

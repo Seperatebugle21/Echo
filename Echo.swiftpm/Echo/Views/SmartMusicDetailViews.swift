@@ -54,6 +54,11 @@ struct ListeningStatisticsView: View {
                     statistic("smart_week_change", difference.formatted(.number.precision(.fractionLength(0)).sign(strategy: .always())) + "%")
                 }
             } else { Section { Text("smart_history_unavailable").font(.caption).foregroundStyle(.secondary) } }
+            Section {
+                NavigationLink { ListeningRecapView() } label: {
+                    Label("recap_open", systemImage: "chart.bar.xaxis")
+                }
+            }
         }
         .echoBackground().navigationTitle("smart_week").navigationBarTitleDisplayMode(.inline)
         .task(id: engine.revision) { await model.updateListening() }

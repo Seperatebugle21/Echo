@@ -12,5 +12,7 @@ struct EchoWidgets: WidgetBundle {
         EchoCompactPlayerWidget()
         EchoQuickPicksWidget()
         EchoDownloadActivityWidget()
+        // Nested, so the bundle stays within the result builder's item limit.
+        EchoControlsBundle().body
     }
 }
