@@ -282,14 +282,15 @@ struct NowPlayingView: View {
         let cover = big ? bigCoverSlot : smallCoverTarget
         return ZStack(alignment: .topLeading) {
             Color.clear.allowsHitTesting(false)
-            if cover.width > 0 {
-                coverLayer(frame: cover, big: big)
-            }
+            // The title is drawn below the cover, so while gliding it passes underneath.
             if let song = audioPlayer.currentSong {
                 let slot = big ? bigTitleSlot : smallTitleTarget
                 if slot.width > 0 {
                     titleLayer(song, slot: slot, big: big)
                 }
+            }
+            if cover.width > 0 {
+                coverLayer(frame: cover, big: big)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

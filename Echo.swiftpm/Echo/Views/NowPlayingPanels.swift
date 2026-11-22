@@ -18,7 +18,9 @@ struct LyricsScroller: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("developerShowLyricsSources") private var showLyricsSources = false
     @State private var selectedProvider = LyricsProvider.automatic
-    @State private var lines: [LyricLine] = []
+    /// Parsed while the body is built (and cached per lyrics text), so the very first
+    /// frame already shows the final lines instead of plain text that is then replaced.
+    private var lines: [LyricLine] { LyricsParseCache.shared.lines(for: audioPlayer.currentSyncedLyrics) }
     @State private var activeIndex = -1
     @State private var userScrolling = false
     @State private var resumeTask: Task<Void, Never>?
@@ -122,7 +124,6 @@ struct LyricsScroller: View {
                 }
             }
             .onAppear {
-                parseLyrics()
                 if activeIndex >= 0 { proxy.scrollTo(activeIndex, anchor: anchor) }
                 Task { @MainActor in
                     await Task.yield()
@@ -133,8 +134,6 @@ struct LyricsScroller: View {
                 if activeIndex >= 0 { proxy.scrollTo(activeIndex, anchor: anchor) }
             }
         }
-        .onChange(of: audioPlayer.currentSyncedLyrics) { parseLyrics() }
-        .onChange(of: audioPlayer.currentLyrics) { parseLyrics() }
         .onChange(of: audioPlayer.currentSong?.id) {
             selectedProvider = .automatic
             activeIndex = -1
@@ -149,23 +148,6 @@ struct LyricsScroller: View {
         withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.7, dampingFraction: 0.86)) {
             proxy.scrollTo(index, anchor: anchor)
         }
-    }
-
-    private func parseLyrics() {
-        guard let synced = audioPlayer.currentSyncedLyrics else {
-            lines = []
-            return
-        }
-        lines = synced.components(separatedBy: .newlines).compactMap(Self.parseLine)
-    }
-
-    private static func parseLine(_ line: String) -> LyricLine? {
-        guard line.hasPrefix("["), let closing = line.firstIndex(of: "]") else { return nil }
-        let timeString = String(line[line.index(after: line.startIndex)..<closing])
-        let text = String(line[line.index(after: closing)...]).trimmingCharacters(in: .whitespaces)
-        let parts = timeString.split(separator: ":")
-        guard parts.count == 2, let minutes = Double(parts[0]), let seconds = Double(parts[1]) else { return nil }
-        return LyricLine(time: minutes * 60 + seconds, text: text)
     }
 
     @ViewBuilder
@@ -480,5 +462,31 @@ private extension View {
         listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 5, leading: 24, bottom: 5, trailing: 24))
+    }
+}
+
+/// Remembers the parsed lines of the last lyrics text.
+@MainActor
+final class LyricsParseCache {
+    static let shared = LyricsParseCache()
+    private var source: String?
+    private var parsed: [LyricLine] = []
+
+    func lines(for synced: String?) -> [LyricLine] {
+        guard let synced else { return [] }
+        if synced != source {
+            source = synced
+            parsed = synced.components(separatedBy: .newlines).compactMap(Self.parseLine)
+        }
+        return parsed
+    }
+
+    private static func parseLine(_ line: String) -> LyricLine? {
+        guard line.hasPrefix("["), let closing = line.firstIndex(of: "]") else { return nil }
+        let timeString = String(line[line.index(after: line.startIndex)..<closing])
+        let text = String(line[line.index(after: closing)...]).trimmingCharacters(in: .whitespaces)
+        let parts = timeString.split(separator: ":")
+        guard parts.count == 2, let minutes = Double(parts[0]), let seconds = Double(parts[1]) else { return nil }
+        return LyricLine(time: minutes * 60 + seconds, text: text)
     }
 }
