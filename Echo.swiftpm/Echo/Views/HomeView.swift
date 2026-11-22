@@ -21,7 +21,6 @@ struct HomeView: View {
     @Namespace private var zoom
     /// Written while scrolling; only the small motion views read it, so Home's body is never rebuilt per frame.
     @State private var scroll = HomeScrollState()
-    @State private var headerHeight: CGFloat = 52
     private let smartModel = HomeSmartSectionsModel.shared
     private let session = HomeSessionManager.shared
     private let recommendations = RecommendationManager.shared
@@ -32,8 +31,7 @@ struct HomeView: View {
                 let layout = HomeCardLayout(width: geometry.size.width)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 26) {
-                        // The real header stays pinned above the scroll view; this keeps its room.
-                        Color.clear.frame(height: headerHeight)
+                        header.echoReveal(0)
                         ForEach(Array(HomeConfiguration.decode(storedLayout).sections.enumerated()), id: \.element.id) { index, section in
                             homeSection(section, layout: layout)
                                 .echoReveal(index + 1)
@@ -55,18 +53,7 @@ struct HomeView: View {
                     scroll.offset = offset
                 }
                 .echoBackground()
-                // Pinned like Joi Tunes: the header stays put, content slides under a soft
-                // blur, and the header turns slightly see-through while scrolled.
-                .overlay(alignment: .top) {
-                    header
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                            if abs(height - headerHeight) > 0.5 { headerHeight = height }
-                        }
-                        .padding(.top, 8)
-                        .padding(.bottom, 14)
-                        .background { HomeHeaderBlur(scroll: scroll) }
-                        .echoReveal(0)
-                }
+                .overlay(alignment: .top) { HomeCompactBar(scroll: scroll) }
             }
             .toolbarVisibility(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) { SettingsView() }
@@ -342,9 +329,8 @@ private struct HomeHeaderMotion<Content: View>: View {
         let y = reduceMotion ? 0 : scroll.offset
         content
             .scaleEffect(y < 0 ? 1 + min(0.14, -y / 500) : 1, anchor: anchor)
-            // Follows the page when pulled down; otherwise stays pinned.
-            .offset(y: y < 0 ? -y : 0)
-            .opacity(y > 0 ? max(0.78, 1 - y / 220) : 1)
+            .offset(y: y > 0 ? y * 0.3 : 0)
+            .opacity(y > 0 ? max(0, 1 - y / 140) : 1)
     }
 }
 
@@ -362,23 +348,30 @@ private struct HomeGlowMotion<Content: View>: View {
     }
 }
 
-/// The frosted band behind the pinned header; it appears once content slides under it.
-private struct HomeHeaderBlur: View {
+/// A compact title on frosted glass fades in once the large title has scrolled away.
+private struct HomeCompactBar: View {
     let scroll: HomeScrollState
 
     var body: some View {
-        let progress = min(1, max(0, scroll.offset / 36))
-        Rectangle()
-            .fill(.ultraThinMaterial)
-            .mask {
-                LinearGradient(stops: [
-                    .init(color: .black, location: 0),
-                    .init(color: .black, location: 0.62),
-                    .init(color: .clear, location: 1)
-                ], startPoint: .top, endPoint: .bottom)
+        let progress = min(1, max(0, (scroll.offset - 70) / 50))
+        Text("homeview_title")
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .offset(y: 8 * (1 - progress))
+            .background {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .mask {
+                        LinearGradient(stops: [
+                            .init(color: .black, location: 0),
+                            .init(color: .black, location: 0.6),
+                            .init(color: .clear, location: 1)
+                        ], startPoint: .top, endPoint: .bottom)
+                    }
+                    .padding(.bottom, -18)
+                    .ignoresSafeArea(edges: .top)
             }
-            .padding(.bottom, -24)
-            .ignoresSafeArea(edges: .top)
             .opacity(progress)
             .allowsHitTesting(false)
             .accessibilityHidden(true)

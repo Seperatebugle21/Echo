@@ -97629,73 +97629,73 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The cover fills the top of Now Playing, slowly moves and fades into the colors below."
+            "value" : "The cover fills the top of Now Playing and fades into the colors below."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "De cover vult de bovenkant van Nu aan het spelen, beweegt langzaam en vervaagt naar de kleuren eronder."
+            "value" : "De cover vult de bovenkant van Nu aan het spelen en vervaagt naar de kleuren eronder."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La pochette remplit le haut de l’écran À l’écoute, bouge lentement et se fond dans les couleurs en dessous."
+            "value" : "La pochette remplit le haut de l’écran À l’écoute et se fond dans les couleurs en dessous."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Das Cover füllt den oberen Teil der Wiedergabe, bewegt sich langsam und geht in die Farben darunter über."
+            "value" : "Das Cover füllt den oberen Teil der Wiedergabe und geht in die Farben darunter über."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La portada llena la parte superior de Reproduciendo, se mueve lentamente y se funde con los colores de abajo."
+            "value" : "La portada llena la parte superior de Reproduciendo y se funde con los colores de abajo."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La copertina riempie la parte alta di In riproduzione, si muove lentamente e sfuma nei colori sottostanti."
+            "value" : "La copertina riempie la parte alta di In riproduzione e sfuma nei colori sottostanti."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A capa preenche o topo de A reproduzir, move-se lentamente e esbate-se nas cores abaixo."
+            "value" : "A capa preenche o topo de A reproduzir e esbate-se nas cores abaixo."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Okładka wypełnia górę ekranu Teraz odtwarzane, powoli się porusza i przechodzi w kolory poniżej."
+            "value" : "Okładka wypełnia górę ekranu Teraz odtwarzane i przechodzi w kolory poniżej."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kapak Şimdi Çalıyor ekranının üstünü doldurur, yavaşça hareket eder ve alttaki renklere karışır."
+            "value" : "Kapak Şimdi Çalıyor ekranının üstünü doldurur ve alttaki renklere karışır."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "カバーが再生中画面の上部を埋め、ゆっくり動きながら下の色へ溶け込みます。"
+            "value" : "カバーが再生中画面の上部を埋め、下の色へ溶け込みます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "커버가 지금 재생 중 화면 상단을 채우고 천천히 움직이며 아래 색상으로 자연스럽게 이어집니다."
+            "value" : "커버가 지금 재생 중 화면 상단을 채우고 아래 색상으로 자연스럽게 이어집니다."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "封面铺满正在播放的顶部，缓慢移动并渐隐到下方的颜色中。"
+            "value" : "封面铺满正在播放的顶部，并渐隐到下方的颜色中。"
           }
         }
       }
@@ -98081,6 +98081,160 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有限仅在播放/暂停和滑动切换歌曲时振动。完整还会在跳过按钮、歌词、队列和拖动进度时振动。"
+          }
+        }
+      }
+    },
+    "collection_kind_album" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Álbum"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Álbum"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Album"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Albüm"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アルバム"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앨범"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "专辑"
+          }
+        }
+      }
+    },
+    "collection_kind_artist" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artist"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artiest"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artiste"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Künstler"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Artista"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wykonawca"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sanatçı"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アーティスト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아티스트"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "艺人"
           }
         }
       }

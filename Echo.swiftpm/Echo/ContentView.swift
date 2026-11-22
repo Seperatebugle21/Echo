@@ -260,11 +260,6 @@ private struct MiniPlayerDockModifier: ViewModifier {
                     }
             }
         }
-        // Content blurs softly under the tab bar and mini player.
-        .overlay(alignment: .bottom) {
-            EchoBottomFade(height: audioPlayer.currentSong != nil ? 150 : 80)
-                .ignoresSafeArea(edges: .bottom)
-        }
         // Keep the reserved dock slot above the tab bar when search gains focus.
         .ignoresSafeArea(.keyboard, edges: .bottom)
     }
@@ -841,7 +836,9 @@ private struct ExpandedPlayerSurface: View {
 
     /// The cover flies between the compact player and Now Playing instead of fading.
     private var flyingArtwork: Bool {
+        // A full-screen cover stays in place and shrinks with the player instead of flying.
         renderedArtwork.cover != nil && artworkFrame.width > 0 && !presentation.artworkSettled
+            && !(fullCover && artworkFrame.width >= 120)
     }
 
     /// Where the compact cover sits inside the surface when it is collapsed.

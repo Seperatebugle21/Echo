@@ -349,7 +349,7 @@ struct EchoMovingArtwork: View {
                             .resizable()
                             .scaledToFill()
                             .frame(width: size.width, height: size.height)
-                            .scaleEffect(moving ? 1.1 + 0.06 * CGFloat(sin(t / 9)) : 1.02)
+                            .scaleEffect(moving ? 1.1 + 0.06 * CGFloat(sin(t / 9)) : 1)
                             .offset(x: moving ? CGFloat(sin(t / 11)) * size.width * 0.035 : 0,
                                     y: moving ? CGFloat(cos(t / 13)) * size.height * 0.025 : 0)
                             .rotationEffect(.degrees(moving ? sin(t / 17) * 1.2 : 0))
@@ -425,7 +425,7 @@ struct EchoHeroArtwork<Fallback: View>: View {
             .overlay {
                 ZStack {
                     if image == nil { fallback }
-                    EchoMovingArtwork(image: image, animated: true)
+                    EchoMovingArtwork(image: image, animated: false)
                 }
                 .mask {
                     LinearGradient(stops: [

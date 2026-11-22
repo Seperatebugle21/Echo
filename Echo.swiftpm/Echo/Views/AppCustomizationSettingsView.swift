@@ -18,6 +18,7 @@ struct AppCustomizationSettingsView: View {
                 }
                 CustomizationAppPreview(sections: home.sections, tabs: tabs)
                 AccentColorPanel()
+                PlayerFeelPanel()
                 VStack(alignment: .leading, spacing: 12) {
                     Text("customization_layout_title").font(.title3.bold()).accessibilityAddTraits(.isHeader)
                     NavigationLink { HomeSettingsView() } label: {
@@ -253,5 +254,41 @@ extension View {
     func customizationSurface(cornerRadius: CGFloat = 22) -> some View {
         background(.thinMaterial, in: .rect(cornerRadius: cornerRadius))
             .overlay { RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(.primary.opacity(0.07)) }
+    }
+}
+
+/// Now Playing's cover style and how much the app taps back.
+private struct PlayerFeelPanel: View {
+    @AppStorage(ThemeSettingsView.fullCoverKey) private var fullCover = false
+    @AppStorage(EchoHaptics.key) private var hapticsLevel = "limited"
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("appearance_now_playing_section").font(.title3.bold()).accessibilityAddTraits(.isHeader)
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("appearance_full_cover", isOn: $fullCover)
+                    .font(.headline)
+                Text("appearance_full_cover_detail")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(.thinMaterial, in: .rect(cornerRadius: 22, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("haptics_title").font(.headline)
+                Picker("haptics_title", selection: $hapticsLevel) {
+                    Text("haptics_full").tag("full")
+                    Text("haptics_limited").tag("limited")
+                    Text("haptics_off").tag("off")
+                }
+                .pickerStyle(.segmented)
+                Text("haptics_detail")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(.thinMaterial, in: .rect(cornerRadius: 22, style: .continuous))
+        }
     }
 }

@@ -745,7 +745,7 @@ struct NowPlayingView: View {
             if let image = images.cover {
                 // The same view in every mode, so it can glide between them; it only
                 // drifts and breathes while it fills the screen.
-                EchoMovingArtwork(image: image, animated: full && playing)
+                EchoMovingArtwork(image: image, animated: false)
                     .id(ObjectIdentifier(image))
                     .transition(full ? AnyTransition.opacity : artworkTransition)
             } else {
