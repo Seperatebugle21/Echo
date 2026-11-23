@@ -221,6 +221,11 @@ struct NowPlayingView: View {
         .sensoryFeedback(.impact(flexibility: .soft), trigger: nextBounce) { _, _ in EchoHaptics.allows(essential: false) }
         .sensoryFeedback(.impact(flexibility: .soft), trigger: previousBounce) { _, _ in EchoHaptics.allows(essential: false) }
         .sensoryFeedback(.selection, trigger: panelHaptic) { _, _ in EchoHaptics.allows(essential: false) }
+        // The screen stays on while the lyrics are open in the visible player.
+        .onChange(of: panel == .lyrics && tracksSliderGeometry, initial: true) { _, reading in
+            UIApplication.shared.isIdleTimerDisabled = reading
+        }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .task(id: closeDragActive) {
             guard !closeDragActive else { return }
             await Task.yield()

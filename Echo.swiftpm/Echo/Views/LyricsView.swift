@@ -24,6 +24,9 @@ struct LyricsView: View {
             guard !Task.isCancelled else { return }
             backdrop = prepared
         }
+        // The screen stays on while reading lyrics.
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
         .navigationTitle(Text(LocalizedStringKey("lyrics_navigation_title")))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
