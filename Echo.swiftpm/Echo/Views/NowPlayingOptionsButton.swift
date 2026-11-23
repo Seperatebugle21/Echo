@@ -53,13 +53,17 @@ struct NowPlayingOptionsButton: View {
                             .frame(maxWidth: .infinity, alignment: .leading).padding(12)
                         Divider()
                     }
+                    // The whole row opens AirPlay, like the other rows: the system
+                    // route picker is stretched invisibly over it.
                     HStack {
                         Label("AirPlay", systemImage: "airplay.audio")
                         Spacer()
-                        AirPlayButton(tintColor: .label, activeTintColor: .label)
-                            .frame(width: 44, height: 44)
+                    }
+                    .padding(12).frame(minHeight: 44)
+                    .overlay {
+                        AirPlayButton(tintColor: .clear, activeTintColor: .clear)
                             .accessibilityLabel("AirPlay")
-                    }.padding(.horizontal, 12)
+                    }
                     Button { select(.sleep) } label: {
                         HStack {
                             Label("sleep_title", systemImage: "moon")
@@ -74,20 +78,22 @@ struct NowPlayingOptionsButton: View {
             .presentationCompactAdaptation(.popover)
             .onDisappear { performPendingAction() }
         }
-        .sheet(item: $destination) { destination in
+        .sheet(item: Binding(get: { destination == .sleep ? destination : nil },
+                             set: { if $0 == nil { destination = nil } })) { _ in
+            SleepTimerView()
+        }
+        // Artist and album open full screen, with a back button, like a pushed page.
+        .fullScreenCover(item: Binding(get: { destination == .sleep ? nil : destination },
+                                       set: { if $0 == nil { destination = nil } })) { destination in
             switch destination {
-            case .sleep: SleepTimerView()
+            case .sleep: EmptyView()
             case .artist:
                 PlayerArtistDestination(song: song)
             case .album:
                 if let album {
                     NavigationStack {
                         AlbumDetailView(album: album)
-                            .toolbar { ToolbarItem(placement: .confirmationAction) {
-                                Group {
-                                Button("action_done") { self.destination = nil }.tint(.primary)
-                                }.tint(.primary)
-                            } }
+                            .playerDestinationBackButton { self.destination = nil }
                     }
                 }
             }
@@ -139,11 +145,23 @@ private struct PlayerArtistDestination: View {
                     }.navigationTitle("nowplaying_choose_artist")
                 }
             }
-            .toolbar { ToolbarItem(placement: .confirmationAction) {
-                Group {
-                Button("action_done") { dismiss() }.tint(.primary)
-                }.tint(.primary)
-            } }
+            .playerDestinationBackButton { dismiss() }
+        }
+    }
+}
+
+private extension View {
+    /// The back chevron of a page opened full screen from the player.
+    func playerDestinationBackButton(_ close: @escaping () -> Void) -> some View {
+        toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: close) {
+                    Image(systemName: "chevron.backward")
+                        .font(.body.weight(.semibold))
+                }
+                .accessibilityLabel("action_close")
+                .tint(.primary)
+            }
         }
     }
 }

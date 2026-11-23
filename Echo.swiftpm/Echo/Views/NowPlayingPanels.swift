@@ -29,6 +29,8 @@ struct LyricsScroller: View {
     /// Drives the one-time cascade when the lyrics appear.
     @State private var entered = false
 
+    private static let topID = "lyrics-top"
+
     private var anchor: UnitPoint { UnitPoint(x: 0.5, y: embedded ? 0.24 : 0.3) }
 
     var body: some View {
@@ -36,6 +38,7 @@ struct LyricsScroller: View {
             ScrollView(.vertical, showsIndicators: false) {
                 // Lazy: only the lines on screen are built and rendered.
                 LazyVStack(alignment: .leading, spacing: embedded ? 22 : 26) {
+                    Color.clear.frame(height: 0).id(Self.topID)
                     if lines.isEmpty {
                         if let lyrics = audioPlayer.currentLyrics, !lyrics.isEmpty {
                             Text(lyrics)
@@ -133,11 +136,17 @@ struct LyricsScroller: View {
             .onChange(of: lines.count) {
                 if activeIndex >= 0 { proxy.scrollTo(activeIndex, anchor: anchor) }
             }
-        }
-        .onChange(of: audioPlayer.currentSong?.id) {
-            selectedProvider = .automatic
-            activeIndex = -1
-            placed = false
+            // A new song starts at the top of its lyrics.
+            .onChange(of: audioPlayer.currentSong?.id) {
+                selectedProvider = .automatic
+                activeIndex = -1
+                placed = false
+                resumeTask?.cancel()
+                userScrolling = false
+                withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.55, dampingFraction: 0.9)) {
+                    proxy.scrollTo(Self.topID, anchor: .top)
+                }
+            }
         }
         .onChange(of: showLyricsSources) { if !showLyricsSources { selectedProvider = .automatic } }
         .onDisappear { resumeTask?.cancel() }
